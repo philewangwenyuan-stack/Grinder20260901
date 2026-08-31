@@ -44,5 +44,6 @@ tools/mediamtx/mediamtx.tar.gz
 .vscode/
 .idea/
 *.swp
+catkin_ws/t-inspect-*
 Thumbs.db
 .DS_Store
