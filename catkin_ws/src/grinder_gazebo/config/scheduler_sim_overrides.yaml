@@ -1,0 +1,48 @@
+# Simulation-only overrides loaded after grinder_scheduler/config/scheduler.yaml.
+# They isolate the simulator from production services while preserving the APP
+# protocol and local video path.
+
+map_topic: /slamware_ros_sdk_server_node/map
+odom_topic: /slamware_ros_sdk_server_node/odom
+left_image_topic: /slamware_ros_sdk_server_node/left_image_raw
+right_image_topic: /slamware_ros_sdk_server_node/right_image_raw
+depth_image_colorized_topic: /slamware_ros_sdk_server_node/depth_image_colorized
+use_depth_colorized_image: false
+
+# Match the shortened simulation box and diff-drive costmap footprint:
+# x=[-0.30, 1.00], y=[-0.47, 0.47].
+vehicle_length: 1.30
+vehicle_width: 0.94
+
+persist_state_dir: temp/grinder_scheduler_sim_state
+stcm_local_dir: maps/sim_raw
+live_preview_file: temp/sim/aurora_map_preview_latest.jpg
+planned_path_preview_dir: temp/sim/planned_path_previews
+first_frame_save_dir: temp/sim
+save_first_frame_on_startup: false
+
+start_aurora_driver: false
+radar_mapping_mode_default_on_startup: false
+radar_clear_before_import_delay_sec: 0.05
+radar_relocalization_after_import_delay_sec: 0.1
+radar_relocalization_service_wait_sec: 1.0
+
+# Never contact production services from a simulation launch.
+file_upload_on_map_save: false
+mqtt_enabled: false
+stream_enabled: false
+
+# Preserve local APP video using the bundled x86-64 MediaMTX binary.
+local_rtsp_enabled: true
+local_rtsp_host: 0.0.0.0
+local_rtsp_public_host: auto
+local_rtsp_port: 8554
+local_rtsp_fps: 10
+local_rtsp_width: 640
+local_rtsp_start_server: true
+local_rtsp_encoder: auto
+local_rtsp_mediamtx_path: tools/mediamtx/mediamtx
+local_rtsp_log_dir: temp/sim
+
+sl_linka_host: 0.0.0.0
+sl_linka_port: 8002

@@ -1,0 +1,67 @@
+<launch>
+  <arg name="gui" default="true" />
+  <arg name="paused" default="false" />
+  <arg name="visual_mesh" default="false" />
+  <arg name="start_navigation" default="true" />
+  <arg name="navigation_local_planner" default="rpp" />
+  <arg name="local_rtsp_enabled" default="true" />
+  <arg name="sl_linka_port" default="8002" />
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
+  <arg name="yaw" default="0.0" />
+
+  <param name="use_sim_time" value="true" />
+
+  <include file="$(find grinder_gazebo)/launch/spawn_x920.launch">
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="visual_mesh" value="$(arg visual_mesh)" />
+    <arg name="x" value="$(arg x)" />
+    <arg name="y" value="$(arg y)" />
+    <arg name="yaw" value="$(arg yaw)" />
+  </include>
+
+  <node pkg="grinder_gazebo" type="chassis_sim_node.py" name="grinder_chassis_sim" output="screen">
+    <param name="wheel_track_m" value="0.70" />
+    <param name="wheel_radius_m" value="0.1475" />
+    <param name="gear_ratio" value="60.0" />
+    <param name="max_motor_rpm" value="3000.0" />
+    <!-- Same manual wheel direction mapping as chassis_driver.yaml. -->
+    <param name="drive_left_sign" value="-1" />
+    <param name="drive_right_sign" value="-1" />
+    <param name="drive_swap_lr" value="false" />
+    <param name="sim_drive_axis_sign" value="1" />
+    <param name="command_timeout" value="0.5" />
+    <param name="sim_command_topic" value="/grinder/sim/cmd_vel" />
+    <param name="sim_odom_topic" value="/odom" />
+  </node>
+
+  <node pkg="grinder_gazebo" type="slamware_sim_bridge.py" name="slamware_sim_bridge" output="screen">
+    <param name="sim_odom_topic" value="/odom" />
+    <param name="left_image_input" value="/grinder/sim/left/image_raw" />
+    <param name="right_image_input" value="/grinder/sim/right/image_raw" />
+    <param name="world_width_m" value="50.0" />
+    <param name="world_height_m" value="50.0" />
+    <param name="column_size_m" value="0.9" />
+    <param name="column_spacing_m" value="6.0" />
+    <param name="column_edge_margin_m" value="4.0" />
+    <param name="map_resolution" value="0.05" />
+  </node>
+
+  <include file="$(find grinder_gazebo)/launch/scheduler_sim.launch">
+    <arg name="local_rtsp_enabled" value="$(arg local_rtsp_enabled)" />
+    <arg name="sl_linka_port" value="$(arg sl_linka_port)" />
+  </include>
+
+  <include if="$(arg start_navigation)"
+           file="$(find teb_local_planner_tutorials)/launch/robot_diff_drive.launch">
+    <arg name="local_planner" value="$(arg navigation_local_planner)" />
+    <arg name="use_sim_time" value="true" />
+  </include>
+
+  <!-- The real navigation profile uses STVL. Gazebo's 2D laser only needs the
+       standard layer, which is available in every ROS Noetic navigation build. -->
+  <rosparam if="$(arg start_navigation)"
+            command="load"
+            file="$(find grinder_gazebo)/config/navigation_sim_overrides.yaml" />
+</launch>

@@ -1,0 +1,73 @@
+<!-- 
+  Simulate a differential drive robot with the teb_local_planner and costmap conversion enabled in stage:
+  - stage
+  - map_server
+  - move_base
+  - costmap_converter
+  - static map
+  - amcl
+  - rviz view
+ -->
+<launch>
+
+        <!--  ************** Global Parameters ***************  -->
+	<arg name="use_sim_time" default="false" />
+        <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+	<arg name="ip_address" default="192.168.11.1" />
+	<arg name="local_planner" default="teb" doc="Local controller profile: teb or rpp" />
+
+        <!--  ************** Navigation ***************  -->
+	<node pkg="move_base" type="move_base" respawn="true" name="move_base" output="screen">
+  	  	<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/costmap_common_params.yaml" command="load" ns="global_costmap" />
+  	 	<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/costmap_common_params.yaml" command="load" ns="local_costmap" />
+  		<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/local_costmap_params.yaml" command="load" />
+  		<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/global_costmap_params.yaml" command="load" />
+		<rosparam if="$(eval arg('local_planner') == 'teb')"
+		          file="$(find teb_local_planner_tutorials)/cfg/diff_drive/teb_local_planner_params.yaml"
+		          command="load" />
+		<rosparam if="$(eval arg('local_planner') == 'rpp')"
+		          file="$(find teb_local_planner_tutorials)/cfg/diff_drive/rpp_local_planner_params.yaml"
+		          command="load" />
+		<!-- Here we load our costmap conversion settings -->
+		<rosparam if="$(eval arg('local_planner') == 'teb')"
+		          file="$(find teb_local_planner_tutorials)/cfg/diff_drive/costmap_converter_params.yaml"
+		          command="load" />
+
+		<!-- <param name="base_global_planner" value="global_planner/GlobalPlanner" />
+		<param name="planner_frequency" value="1.0" />
+		<param name="planner_patience" value="5.0" /> -->
+		<param name="base_global_planner" value="carrot_planner/CarrotPlanner" />
+		<param name="planner_frequency" value="3.0" />
+		<param name="planner_patience" value="5.0" />
+		<param name="CarrotPlanner/use_external_plan" value="true" />
+		<param name="CarrotPlanner/external_plan_topic" value="/grinder/navigation/active_segment_plan" />
+		<param name="CarrotPlanner/external_plan_max_age_s" value="2.0" />
+		<param name="CarrotPlanner/external_plan_goal_tolerance_m" value="0.5" />
+		<param name="CarrotPlanner/external_plan_wait_timeout_s" value="0.2" />
+
+		<param name="base_local_planner"
+		       value="$(eval 'regulated_pure_pursuit_controller/RegulatedPurePursuitController' if arg('local_planner') == 'rpp' else 'teb_local_planner/TebLocalPlannerROS')" />
+		<param name="controller_frequency" value="10.0" />
+		<param name="controller_patience" value="10.0" />
+		<rosparam param="conservative_reset/layer_names">[obstacle_layer]</rosparam>
+		<param name="conservative_reset/force_updating" value="true" />
+		<rosparam param="aggressive_reset/layer_names">[obstacle_layer]</rosparam>
+		<param name="aggressive_reset/force_updating" value="true" />
+	</node>
+	<!-- <node pkg="topic_tools" type="relay" name="scan_relay" args="/slamware_ros_sdk_server_node/scan /scan" />
+	<node pkg="topic_tools" type="relay" name="map_relay" args="/slamware_ros_sdk_server_node/map /map" /> -->
+
+	<!--  ****** Maps *****  -->
+	<!-- <node name="map_server" pkg="map_server" type="map_server" args="$(find teb_local_planner_tutorials)/maps/map.yaml" output="screen">
+                <param name="frame_id" value="slamware_map"/>
+	</node> -->
+
+	<!--  ************ Odom and Scan and Map***************  -->
+  	<!-- <include file="$(find slamware_ros_sdk)/launch/slamware_ros_sdk_server_node.launch" >
+    	<arg name="ip_address" value="$(arg ip_address)" />
+  	</include> -->
+
+	<!--  **************** Visualisation ****************  -->
+	<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find teb_local_planner_tutorials)/cfg/rviz_navigation.rviz"/> -->
+	
+</launch>

@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="x920_grinder">
+  <!-- Stable simplified chassis by default; enable visual_mesh explicitly for CAD review. -->
+  <xacro:arg name="visual_mesh" default="false" />
+  <xacro:arg name="sim_command_topic" default="/grinder/sim/cmd_vel" />
+  <xacro:arg name="sim_odom_topic" default="/odom" />
+
+  <!-- Values shared with grinder_chassis_driver/config/chassis_driver.yaml. -->
+  <xacro:property name="wheel_track" value="0.70" />
+  <xacro:property name="wheel_radius" value="0.1475" />
+  <xacro:property name="wheel_width" value="0.10" />
+  <!-- Rear edge is x=-0.30; axle/radar center is 0.30 m forward at x=0.00. -->
+  <xacro:property name="drive_axle_x" value="0.00" />
+
+  <!-- Exact diff-drive footprint: x=[-0.30, 1.00], y=[-0.47, 0.47]. -->
+  <xacro:property name="body_length" value="1.30" />
+  <xacro:property name="body_width" value="0.94" />
+  <xacro:property name="body_center_x" value="0.35" />
+  <xacro:property name="body_height" value="0.30" />
+  <!-- Physical mass budget: 800 kg for the complete vehicle. The aggregate
+       center of gravity is at the grinding-disc center x=0.55 m. -->
+  <xacro:property name="vehicle_mass" value="800.0" />
+  <xacro:property name="disc_mass" value="28.0" />
+  <xacro:property name="drive_wheel_mass" value="12.0" />
+  <xacro:property name="caster_mass" value="1.0" />
+  <xacro:property name="laser_mass" value="0.5" />
+  <xacro:property name="camera_mass" value="0.1" />
+  <!-- Front caster contact offset inside the grinding-disc footprint. -->
+  <xacro:property name="caster_support_offset_x" value="0.15" />
+  <xacro:property name="body_mass" value="${vehicle_mass - disc_mass - caster_mass - 2*drive_wheel_mass - laser_mass - 2*camera_mass}" />
+  <!-- This body-link COM makes the complete mass-weighted x COM equal 0.55 m. -->
+  <xacro:property name="body_com_x" value="${(vehicle_mass*0.55 - disc_mass*0.55 - caster_mass*(0.55 + caster_support_offset_x) - 2*camera_mass*0.72) / body_mass}" />
+  <!-- Put the aggregate COM at the disc centre height as well as its x
+       position.  All link origins use base_link at the wheel axle height. -->
+  <xacro:property name="body_com_z" value="${(vehicle_mass*0.04 - disc_mass*0.04 - caster_mass*0.04 - 2*drive_wheel_mass*wheel_radius - laser_mass*(wheel_radius + 0.55) - 2*camera_mass*(wheel_radius + 0.45)) / body_mass - wheel_radius}" />
+  <!-- Place the hidden frictionless caster contact 150 mm ahead of the disc
+       centre, still inside its 0.90 m swept footprint.  This gives the rear
+       drive axle a small positive normal load with the aggregate COM at the
+       disc centre. The support is parented to base_link below so the disc
+       swivel cannot orbit this contact point. -->
+  <xacro:property name="disc_diameter" value="0.90" />
+  <xacro:property name="disc_radius" value="0.45" />
+  <xacro:property name="disc_thickness" value="0.08" />
+
+  <!-- STEP native bounds (mm): center 158.888688, 487.057577, 823; min Z 373. -->
+  <xacro:property name="cad_origin_x" value="-0.158888688" />
+  <xacro:property name="cad_origin_y" value="-0.487057577" />
+  <xacro:property name="cad_origin_z" value="-0.5205" />
+
+  <xacro:macro name="box_inertia" params="mass x y z origin_x:=0 origin_y:=0 origin_z:=0">
+    <inertial>
+      <origin xyz="${origin_x} ${origin_y} ${origin_z}" rpy="0 0 0" />
+      <mass value="${mass}" />
+      <inertia
+        ixx="${mass * (y*y + z*z) / 12.0}" ixy="0" ixz="0"
+        iyy="${mass * (x*x + z*z) / 12.0}" iyz="0"
+        izz="${mass * (x*x + y*y) / 12.0}" />
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertia" params="mass radius length">
+    <inertial>
+      <mass value="${mass}" />
+      <!-- Cylinder axis is the wheel Y axis. -->
+      <inertia
+        ixx="${mass * (3*radius*radius + length*length) / 12.0}" ixy="0" ixz="0"
+        iyy="${mass * radius*radius / 2.0}" iyz="0"
+        izz="${mass * (3*radius*radius + length*length) / 12.0}" />
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="disc_inertia" params="mass radius length">
+    <inertial>
+      <mass value="${mass}" />
+      <!-- Grinding disc axis is Z. -->
+      <inertia
+        ixx="${mass * (3*radius*radius + length*length) / 12.0}" ixy="0" ixz="0"
+        iyy="${mass * (3*radius*radius + length*length) / 12.0}" iyz="0"
+        izz="${mass * radius*radius / 2.0}" />
+    </inertial>
+  </xacro:macro>
+
+  <material name="x920_orange">
+    <color rgba="0.94 0.36 0.05 1.0" />
+  </material>
+  <material name="wheel_dark">
+    <color rgba="0.08 0.08 0.08 1.0" />
+  </material>
+  <material name="sensor_black">
+    <color rgba="0.03 0.03 0.03 1.0" />
+  </material>
+  <material name="grinding_disc">
+    <color rgba="0.42 0.45 0.50 1.0" />
+  </material>
+
+  <link name="base_footprint" />
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0" />
+  </joint>
+
+  <link name="base_link">
+    <xacro:box_inertia mass="${body_mass}" x="${body_length}" y="${body_width}" z="${body_height}"
+                       origin_x="${body_com_x}" origin_z="${body_com_z}" />
+    <xacro:if value="$(arg visual_mesh)">
+      <visual name="cad_assembly">
+        <origin xyz="${cad_origin_x} ${cad_origin_y} ${cad_origin_z}" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://grinder_gazebo/meshes/x920_frame.stl" scale="0.001 0.001 0.001" />
+        </geometry>
+        <material name="x920_orange" />
+      </visual>
+    </xacro:if>
+    <xacro:unless value="$(arg visual_mesh)">
+      <visual name="fallback_body">
+        <origin xyz="${body_center_x} 0 0.0325" rpy="0 0 0" />
+        <geometry><box size="${body_length} ${body_width} ${body_height}" /></geometry>
+        <material name="x920_orange" />
+      </visual>
+    </xacro:unless>
+    <collision name="body_collision">
+      <!-- Keep the chassis 3 cm above ground so the drive wheels and disc caster own contact. -->
+      <origin xyz="${body_center_x} 0 0.0325" rpy="0 0 0" />
+      <geometry><box size="${body_length} ${body_width} ${body_height}" /></geometry>
+    </collision>
+  </link>
+
+  <!-- 0.90 m diameter grinding disc. Its front edge matches footprint x=1.00 m. -->
+  <link name="grinding_disc_link">
+    <xacro:disc_inertia mass="${disc_mass}" radius="${disc_radius}" length="${disc_thickness}" />
+    <visual name="grinding_disc_visual">
+      <geometry><cylinder radius="${disc_radius}" length="${disc_thickness}" /></geometry>
+      <material name="grinding_disc" />
+    </visual>
+    <!-- The support contact is a child caster sphere, so the visible disc stays clear. -->
+  </link>
+  <joint name="grinding_disc_joint" type="continuous">
+    <parent link="base_link" />
+    <child link="grinding_disc_link" />
+    <origin xyz="0.55 0 -0.1075" rpy="0 0 0" />
+    <!-- Positive grinding-disc direction is the +Z right-hand axis; vehicle forward is +X. -->
+    <axis xyz="0 0 1" />
+    <dynamics damping="0.2" friction="0.0" />
+  </joint>
+
+  <!-- Hidden rolling contact belonging to the front grinding-disc caster. -->
+  <link name="grinding_disc_caster_wheel_link">
+    <inertial>
+      <mass value="${caster_mass}" />
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+    </inertial>
+    <collision name="grinding_disc_caster_collision">
+      <!-- The frictionless front caster carries the remaining front load;
+           its center is set for nominal zero-floor clearance. -->
+      <origin xyz="0 0 0.015" rpy="0 0 0" />
+      <geometry><sphere radius="0.055" /></geometry>
+    </collision>
+  </link>
+  <joint name="grinding_disc_caster_wheel_joint" type="continuous">
+    <!-- The swivel support is mounted to the chassis reference frame.  If it
+         were parented to the spinning disc, its caster offset would orbit
+         with the disc and could move behind the COM while idling. -->
+    <parent link="base_link" />
+    <child link="grinding_disc_caster_wheel_link" />
+    <origin xyz="${0.55 + caster_support_offset_x} 0 -0.1075" rpy="0 0 0" />
+    <!-- Free rolling axis for the universal support. -->
+    <axis xyz="0 1 0" />
+    <dynamics damping="0.1" friction="0.0" />
+  </joint>
+
+  <xacro:macro name="drive_wheel" params="side x y sign">
+    <link name="${side}_wheel_link">
+      <xacro:cylinder_inertia mass="${drive_wheel_mass}" radius="${wheel_radius}" length="${wheel_width}" />
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}" /></geometry>
+        <material name="wheel_dark" />
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}" /></geometry>
+      </collision>
+    </link>
+    <joint name="${side}_wheel_joint" type="continuous">
+      <parent link="base_link" />
+      <child link="${side}_wheel_link" />
+      <origin xyz="${x} ${y} 0" rpy="0 0 0" />
+      <axis xyz="0 ${sign} 0" />
+      <limit effort="300" velocity="120" />
+      <dynamics damping="0.1" friction="0.0" />
+    </joint>
+  </xacro:macro>
+
+  <!-- Gazebo joint axes stay in the vehicle frame. The simulator bridge applies
+       the real controller-facing -1/-1 signs to APP wheel commands. -->
+  <xacro:drive_wheel side="left" x="${drive_axle_x}" y="${wheel_track/2}" sign="1" />
+  <xacro:drive_wheel side="right" x="${drive_axle_x}" y="${-wheel_track/2}" sign="1" />
+
+  <link name="laser_link">
+    <xacro:box_inertia mass="${laser_mass}" x="0.08" y="0.08" z="0.06" />
+    <visual>
+      <geometry><cylinder radius="0.04" length="0.06" /></geometry>
+      <material name="sensor_black" />
+    </visual>
+    <collision><geometry><cylinder radius="0.04" length="0.06" /></geometry></collision>
+  </link>
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="laser_link" />
+    <!-- Radar is aligned with the two rear drive wheels. -->
+    <origin xyz="${drive_axle_x} 0 0.55" rpy="0 0 0" />
+  </joint>
+
+  <xacro:macro name="camera_link" params="name y">
+    <link name="${name}_camera_link">
+      <xacro:box_inertia mass="${camera_mass}" x="0.05" y="0.05" z="0.04" />
+      <visual>
+        <geometry><box size="0.05 0.05 0.04" /></geometry>
+        <material name="sensor_black" />
+      </visual>
+    </link>
+    <joint name="${name}_camera_joint" type="fixed">
+      <parent link="base_link" />
+      <child link="${name}_camera_link" />
+      <!-- Camera optical axis is +X after the standard Gazebo camera rotation. -->
+      <origin xyz="0.72 ${y} 0.45" rpy="0 0 0" />
+    </joint>
+  </xacro:macro>
+
+  <xacro:camera_link name="left" y="0.14" />
+  <xacro:camera_link name="right" y="-0.14" />
+
+  <xacro:include filename="$(find grinder_gazebo)/urdf/x920_grinder.gazebo.xacro" />
+</robot>

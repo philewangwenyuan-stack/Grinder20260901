@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <gazebo reference="base_link">
+    <material>Gazebo/Orange</material>
+    <selfCollide>false</selfCollide>
+    <!-- Fixed/lumped grinding-disc collision inherits the base contact surface. -->
+    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10</kd>
+  </gazebo>
+
+  <gazebo reference="grinding_disc_link">
+    <material>Gazebo/Grey</material>
+    <!-- The disc and its spherical universal-support contact are frictionless. -->
+    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10</kd>
+  </gazebo>
+  <gazebo reference="grinding_disc_caster_wheel_link">
+    <material>Gazebo/Black</material>
+    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10</kd>
+  </gazebo>
+
+  <gazebo reference="left_wheel_link">
+    <material>Gazebo/Black</material>
+    <!-- Drive wheels retain traction; zero friction here makes diff-drive immobile. -->
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000</kp><kd>10</kd>
+  </gazebo>
+  <gazebo reference="right_wheel_link">
+    <material>Gazebo/Black</material>
+    <!-- Drive wheels retain traction; zero friction here makes diff-drive immobile. -->
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000</kp><kd>10</kd>
+  </gazebo>
+  <gazebo>
+    <plugin name="x920_diff_drive" filename="libgazebo_ros_diff_drive.so">
+      <robotNamespace>/</robotNamespace>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>50.0</updateRate>
+      <legacyMode>false</legacyMode>
+      <leftJoint>left_wheel_joint</leftJoint>
+      <rightJoint>right_wheel_joint</rightJoint>
+      <wheelSeparation>${wheel_track}</wheelSeparation>
+      <wheelDiameter>${2*wheel_radius}</wheelDiameter>
+      <wheelAcceleration>1.5</wheelAcceleration>
+      <wheelTorque>300</wheelTorque>
+      <commandTopic>$(arg sim_command_topic)</commandTopic>
+      <odometryTopic>$(arg sim_odom_topic)</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+      <publishWheelTF>false</publishWheelTF>
+      <publishOdomTF>true</publishOdomTF>
+      <publishWheelJointState>true</publishWheelJointState>
+      <odometrySource>world</odometrySource>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="laser_link">
+    <sensor type="ray" name="x920_laser">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>15</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples><resolution>1</resolution>
+            <min_angle>-${pi}</min_angle><max_angle>${pi}</max_angle>
+          </horizontal>
+        </scan>
+        <range><min>0.08</min><max>20.0</max><resolution>0.01</resolution></range>
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>0.005</stddev></noise>
+      </ray>
+      <plugin name="x920_laser_ros" filename="libgazebo_ros_laser.so">
+        <topicName>/scan</topicName>
+        <frameName>laser_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <xacro:macro name="gazebo_camera" params="name topic">
+    <gazebo reference="${name}_camera_link">
+      <sensor type="camera" name="${name}_camera">
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <update_rate>10</update_rate>
+        <camera name="${name}">
+          <horizontal_fov>1.0472</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.05</near><far>30.0</far></clip>
+        </camera>
+        <!-- Gazebo camera looks along +X after this sensor pose rotation. -->
+        <pose>0 0 0 0 ${pi/2} 0</pose>
+        <plugin name="${name}_camera_ros" filename="libgazebo_ros_camera.so">
+          <cameraName>${name}</cameraName>
+          <imageTopicName>${topic}</imageTopicName>
+          <cameraInfoTopicName>/grinder/sim/${name}/camera_info</cameraInfoTopicName>
+          <frameName>${name}_camera_link</frameName>
+          <hackBaseline>0.0</hackBaseline>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:gazebo_camera name="left" topic="/grinder/sim/left/image_raw" />
+  <xacro:gazebo_camera name="right" topic="/grinder/sim/right/image_raw" />
+</robot>

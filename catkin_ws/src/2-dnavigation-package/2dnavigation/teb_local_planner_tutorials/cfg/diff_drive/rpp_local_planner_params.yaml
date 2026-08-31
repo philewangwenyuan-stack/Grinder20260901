@@ -1,0 +1,90 @@
+RegulatedPurePursuitController:
+  # 坐标系与里程计
+  odom_topic: /odom_wheel    # 里程计话题，用于获取机器人当前线速度和角速度
+  transform_tolerance: 0.3          # 等待 TF 坐标变换的最长时间，单位：秒
+
+  # 研磨机器人速度与加速度限制
+  desired_linear_vel: 0.06        # 正常跟踪路径时的目标线速度，单位：m/s
+  max_linear_vel: 0.15            # 最终输出的最大线速度，单位：m/s
+  max_angular_vel: 0.25            # 最终输出的最大角速度，单位：rad/s
+  max_linear_accel: 0.4             # 最大线加速度，单位：m/s^2
+  use_command_velocity_for_accel_limit: false  # true：用上一帧 RPP 指令；false：用 /odom 速度
+  use_command_angular_velocity_for_accel_limit: false  # true：用上一帧 RPP 角速度平滑旋转，避免里程计抖动
+  command_velocity_memory_timeout: 1.0        # setPlan 刷新后可继承上一帧指令的最长时间，单位：秒
+  max_angular_accel: 0.4           # 研磨机原地旋转采用较缓角加速度，减少越过目标后的摇头
+
+  # 前视点参数
+  # 低速机器人建议先使用固定前视距离，便于观察路径跟踪效果。
+  lookahead_dist: 0.8            # 固定前视距离；兼顾贴线与抑制S摆，单位：m
+  min_lookahead_dist: 0.3           # 速度自适应前视允许的最小距离，单位：m
+  max_lookahead_dist: 1.2           # 速度自适应前视允许的最大距离，单位：m
+  lookahead_time: 1.5               # 速度自适应前视时间，单位：秒
+  use_velocity_scaled_lookahead_dist: false  # false：固定前视；true：按速度调整前视
+  use_fixed_curvature_lookahead: true       # 是否使用独立的曲率前视点
+  curvature_lookahead_dist: 0.30    # 缩短曲率前视，减少进入转弯时提前切角，单位：m
+  max_robot_pose_search_dist: 2.5   # 搜索机器人最近路径点允许检查的最大累计路径长度，单位：m
+  # 长路径仿真必须配合 rolling_start:=true，否则仍会复现固定路径起点问题。
+  preserve_plan_progress_on_update: true  # 同一条路径反复刷新时，保持已经裁掉的机器人身后路径点
+  plan_update_equivalence_tolerance_m: 0.02 # 判断两次路径几何相同时允许的点位误差，单位：m
+  use_global_plan_search_fallback: true    # 有界搜索已够不到机器人时，才对剩余完整路径做一次回退搜索
+  interpolate_curvature_after_goal: false   # 路径末端过短时是否外插曲率前视点
+
+  # 根据转弯曲率、障碍物代价和目标距离自动降低线速度
+  use_regulated_linear_velocity_scaling: true  # 是否根据曲率降低线速度
+  regulated_linear_scaling_min_radius: 1.2     # 转弯半径小于该值时开始减速，单位：m
+  regulated_linear_scaling_min_speed: 0.00      # 曲率减速后的最低线速度，单位：m/s
+  use_cost_regulated_linear_velocity_scaling: false  # 是否根据障碍物膨胀代价减速
+  cost_scaling_dist: 0.5           # 估算障碍距离小于该值时开始减速，单位：m
+  cost_scaling_gain: 1.0            # 障碍距离减速增益，越大减速越明显
+  inflation_cost_scaling_factor: 5.0  # 必须与 costmap inflation_layer 的 cost_scaling_factor 一致
+  min_approach_linear_velocity: 0.01     # 接近最终目标时允许的最低线速度，单位：m/s
+  # 调度器下发的是连续路径的中间分段；关闭后不会在每个分段终点前误减速。
+  # 普通“单目标导航”应设为 true，使机器人在真正终点前平滑减速。
+  use_approach_velocity_scaling: true
+  approach_velocity_scaling_dist: 0.2    # 距离最终目标多远开始逐渐减速，单位：m
+
+  # 碰撞预测
+  # RPP 沿当前速度指令向前投影车体轮廓，碰到局部代价地图障碍物时停车。
+  # RPP 不会自己生成绕障路径，需要全局规划器或调度器重新规划。
+  use_collision_detection: false     # 是否启用前向碰撞预测
+  # 当前 RegulatedPurePursuit.cfg 的动态范围最大为 5.0 秒；要使用 10 秒需先扩大该范围并重新编译 RPP。
+  max_allowed_time_to_collision_up_to_carrot: 5.0  # 最长碰撞预测时间，单位：秒
+
+  # 固定距离激光停车，与速度无关
+  use_fixed_distance_collision_detection: true  # 是否启用前方激光固定距离停车
+  use_footprint_expansion_collision_detection: true   # true：读取 costmap footprint，并分别向车头、车身侧面和车尾膨胀；false：使用旧扇区。
+  collision_front_clearance_m: 0.25  # 从车体前边缘向前膨胀的停车净距，单位：m
+  collision_side_clearance_m: 0.10     # 从左右侧边及后边缘向外膨胀的停车净距，单位：m
+  collision_side_only_when_turning: true # true：侧向外框只在转弯或锁存停车时检测
+  collision_side_turning_min_angular_vel: 0.015 # 启用侧向检测的最小绝对角速度，单位：rad/s
+  # 雷达位于后轮中点，车头相对雷达向前 1.25 m；当前 1.80 m 阈值对应
+  # 机器人车头与正前方障碍物保留约 0.55 m 距离。
+  collision_stop_distance_m: 1.8       # 仅旧扇区模式生效：以雷达原点为参考的距离
+  collision_scan_topic: /scan           # LaserScan 话题
+  collision_scan_half_angle_rad: 0.35    # 仅旧扇区模式生效：前方扇区半角，约20度
+  collision_scan_timeout_s: 1.5         # 雷达超过该时间未更新则停车，单位：秒
+  collision_confirm_scans: 15            # 连续多少帧命中才触发停车
+  collision_clear_confirm_scans: 3      # 连续多少帧无命中才解除停车锁存
+  collision_min_valid_points: 10         # 阈值内至少多少个雷达点才算障碍
+  prediction_collision_confirm_cycles: 1 # 预测碰撞连续多少个控制周期才触发
+
+  # 差速底盘朝向控制
+  use_rotate_to_heading: false    # 路径方向偏差较大时先原地旋转
+  rotate_to_heading_angular_vel: 0.2     # 原地对准路径时的角速度，重型研磨机不宜过快
+  rotate_to_heading_min_angle: 0.45      # 进入原地旋转的角度阈值，单位：rad（约 20°）
+  rotate_to_heading_exit_angle: 0.08    # 误差小于约2.9度后进入只刹停、不反向追赶的稳定阶段
+  rotate_to_heading_stable_cycles: 3   # 对正并停稳连续5个控制周期后才恢复前进
+  use_corner_aware_rotate_to_heading: true  # true：尖角处先走到拐点附近，再对正下一条边
+  rotate_to_heading_corner_distance: 0.03  # 后轮中心距尖角8cm内开始原地对准，容纳定位和点间距误差
+  allow_reversing: false                 # false：禁止倒车跟踪，前视点在后方时先旋转
+
+  # 目标到达与静止判定
+  goal_dist_tol: 0.12                   # 机器人与目标点的距离容差，单位：m
+  angle_tol: 0.05                       # 机器人与目标朝向的角度容差，单位：rad
+  trans_stopped_vel: 0.01              # 低于该线速度认为已停止平移，单位：m/s
+  theta_stopped_vel: 0.01               # 低于该角速度认为已停止旋转，单位：rad/s
+
+  # Vector Pure Pursuit 扩展；当前使用标准 RPP，下面参数暂不参与控制
+  use_vector_pure_pursuit: false        # 是否切换到 Vector Pure Pursuit
+  k: 6.0                                # Vector Pure Pursuit 方向收敛增益
+  min_turning_radius: 0.0               # 最小转弯半径，差速底盘可原地转向，单位：m

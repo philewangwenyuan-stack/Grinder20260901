@@ -1,0 +1,140 @@
+# 串口设备路径（底盘驱动与电机控制器通信口）
+port: /dev/ttyS0
+# 串口波特率
+baudrate: 19200
+# Modbus 从站 ID
+slave_id: 1
+# 每次 Modbus 读写超时时间（秒）
+timeout: 0.1
+# 状态轮询频率（Hz）
+poll_rate_hz: 5
+# 指令超时保护时间（秒），超过后底盘直接触发零速保护
+command_timeout: 5.0
+# 写入后是否进行回读校验
+write_verify: false
+# 通信失败最大重试次数
+max_retries: 3
+# 通讯异常达到重试阈值后是否触发安全停机（回零并全量写寄存器）
+enable_safe_stop_on_comm_error: false
+# 指令超时后是否立即停机
+stop_on_timeout: true
+# 节点启动时是否先下发零速，防止误动作
+startup_zero_output: true
+
+# 左轮速度寄存器最小值（驱动原始单位）
+left_speed_min: -32768
+# 左轮速度寄存器最大值（驱动原始单位）
+left_speed_max: 32767
+# 右轮速度寄存器最小值（驱动原始单位）
+right_speed_min: -32768
+# 右轮速度寄存器最大值（驱动原始单位）
+right_speed_max: 32767
+# 磨盘速度寄存器最小值（驱动原始单位）
+disc_speed_min: -32768
+# 磨盘速度寄存器最大值（驱动原始单位）
+disc_speed_max: 32767
+# 当前机型是否支持磨盘升降。false 时忽略升降命令且不写升降寄存器。
+disc_lift_supported: true
+
+# 相邻两次下发速度的最大变化量（rpm），用于抑制突变抖动
+max_cmd_step_rpm: 50
+# 是否启用速度斜坡限幅（false 时直接下发目标轮速）
+enable_cmd_ramp_limit: false
+# 手动遥控最大车速（m/s），与 SettingsWriteRequest.chassis.run_speed 单位一致。
+manual_drive_max_wheel_speed: 0.2
+# 手动轮速输入零点死区（rpm），小于等于该值按 0 处理
+manual_wheel_deadband_rpm: 30
+# 手动轮速输入迟滞-进入阈值（rpm），从静止到运动需达到该值
+manual_wheel_hyst_enter_rpm: 60
+# 手动轮速输入迟滞-退出阈值（rpm），从运动到静止降到该值以下
+manual_wheel_hyst_exit_rpm: 30
+# 回读速度允许偏差（驱动原始单位）
+#max_echo_deviation: 200
+max_echo_deviation: 2000
+# 连续回读异常达到该次数后触发容错
+#max_echo_failures: 2
+max_echo_failures: 20
+# 连续错误时的安全停机触发间隔（秒）
+#safe_stop_on_error_interval: 1.0
+safe_stop_on_error_interval: 2.0
+# 是否开启 485 原始收发日志（单独文件）
+rs485_raw_log_enabled: true
+# 485 原始收发日志文件路径（开启后按行追加）
+rs485_raw_log_file: temp/chassis_rs485_raw.log
+
+# 是否启用 /cmd_vel 转轮速功能
+cmd_vel_enabled: true
+# 订阅的速度话题名
+cmd_vel_topic: /cmd_vel
+# 任务导航使能默认值（false: 忽略 /cmd_vel；true: 处理 /cmd_vel）
+task_enable_default: false
+# 轮距（米），用于角速度换算
+cmd_vel_wheel_track_m: 0.70
+# 轮半径（米），用于线速度换算
+cmd_vel_wheel_radius_m: 0.1475
+# 减速比（电机转速 -> 车轮转速）
+cmd_vel_gear_ratio: 60.0
+# 真实电机转速反馈发布的 Odometry 话题
+wheel_odom_topic: /odom_wheel
+ 
+# 0x4017/0x4018 的实际电机转速缩放系数，默认按 rpm 原值读取
+actual_motor_speed_scale: 1.0
+# 实际速度反馈方向修正：-1 表示该电机反馈取反，1 表示不取反
+actual_speed_left_sign: 1
+actual_speed_right_sign: 1
+# true 时交换 0x4017/0x4018 的左右含义
+actual_speed_swap_lr: false
+# 速度缩放系数（整体增益）
+cmd_vel_scale: 1.0
+# 线速度上限（m/s）
+cmd_vel_max_linear: 0.2
+# 角速度上限（rad/s）
+cmd_vel_max_angular: 0.15
+# 输入线速度限幅（m/s）
+cmd_vel_max_input_v: 0.2
+# 输入角速度限幅（rad/s）
+cmd_vel_max_input_w: 0.15
+# 换算后的轮速绝对值上限（rpm）
+cmd_vel_max_abs_wheel_rpm: 3000.0
+# 线速度死区（小于该值按 0 处理）
+cmd_vel_deadband_linear: 0.0
+# 角速度死区（小于该值按 0 处理）
+cmd_vel_deadband_angular: 0.0
+# 指令源保持时间（秒），超过后可回落到默认源
+cmd_source_hold_sec: 0.2
+
+# 轮系方向修正：
+# -1 表示该轮方向取反，1 表示不取反
+drive_left_sign: -1
+# 右轮方向修正
+drive_right_sign: -1
+# true 时先交换左右轮，再应用方向修正
+drive_swap_lr: false
+cmd_vel_drive_left_sign: 1
+cmd_vel_drive_right_sign: 1
+cmd_vel_drive_swap_lr: false
+
+
+# 是否启用 /cmd_vel 平滑滤波：
+# true 表示底盘驱动在把 /cmd_vel 转成左右轮速前，会先做死区、加速度限制和转向反向确认。
+cmd_vel_filter_enabled: true
+
+# 线速度变化率限制，单位 m/s^2：
+# 0.20 表示线速度每秒最多变化 0.20 m/s。
+# 例如控制周期 0.1s 时，linear.x 每次最多变化约 0.02 m/s。
+cmd_vel_filter_linear_accel: 2.0
+
+# 角速度变化率限制，单位 rad/s^2：
+# 0.20 表示角速度每秒最多变化 0.20 rad/s。
+# 例如控制周期 0.1s 时，angular.z 每次最多变化约 0.02 rad/s。
+cmd_vel_filter_angular_accel: 2.0
+
+# 角速度死区，单位 rad/s：
+# |angular.z| 小于 0.02 时直接当作 0，避免很小的纠偏指令让底盘左右抖。
+cmd_vel_filter_angular_deadband: 0.045
+
+# 角速度换向确认次数：
+# 当 angular.z 想从正转直接切到反转，或从反转切到正转时，
+# 需要连续 2 次收到同方向的新指令才允许真正换向。
+# 这样可以过滤一帧左、一帧右的抖动。
+cmd_vel_filter_sign_confirm_count: 2

@@ -1,0 +1,78 @@
+# Progress: X920 Gazebo 全链路仿真
+
+## 2026-08-24
+
+- 用户提供 `7.2  X920机架总装(1).STEP`，要求按底盘驱动中的轮距、轮径完成 Gazebo 全链路仿真。
+- 已确认 WSL2、Ubuntu 20.04、ROS Noetic、Gazebo 11、gazebo_ros、stage_ros、WSLg 均已安装。
+- 已确认仓库已有 Stage 示例但没有 Gazebo/URDF 模型。
+- 已建立持久化任务计划；当前执行 Phase 1。
+- 已读取 STEP 头、文件规模、底盘几何参数及 slamware/chassis 接口定义。
+- 已确认轮距 0.70 m、轮半径 0.1475 m、减速比 60，调度 footprint 初值为 1.0 x 1.5 m。
+- CAD 工具尚未安装；一次 Python 模块探测命令因引号错误失败，已记录并切换探测方式。
+- 已成功重试 CAD 模块探测；确认可非交互安装 FreeCAD Python3，磁盘空间充足。
+- 已审阅自研包构建模式、调度器硬件初始化和导航 launch，决定新增独立仿真 launch。
+- 已安装 FreeCAD Python3/OpenCascade STEP 转换组件。`apt-get update` 起初短暂 DNS 失败，但随后使用缓存索引成功下载并完成安装。
+- 已验证 `freecadcmd` headless 入口和 STEP/mesh 所需模块可用，准备导入总装并读取边界。
+- 已创建 `grinder_gazebo` Catkin 包骨架与可复用 STEP 检查/mesh 导出工具。
+- 首次调用发现 FreeCAD 0.18 会吞掉脚本的 `--report` 参数；已记录，正在改为兼容的环境变量入口。
+- 第二次调用发现 `MeshPart` 的可选 Netgen 库缺失；已移除该依赖，改用 OpenCascade 内建 tessellation。
+- STEP 已能读入，但 FreeCAD 0.18 顶层复合 Shape 缺少质心属性；已改为按实体体积加权计算。
+- STEP 审计成功：得到 1.962 x 1.933 x 0.900 m 精确边界、306 solids 和中心/最低点；报告已保存到 `grinder_gazebo/meshes/x920_frame_report.json`。
+- Phase 1 完成；开始 Phase 2，导出视觉 mesh 并建立 Xacro/Gazebo 模型。
+- 已成功生成 X920 总装 STL 和可复现转换报告；下一步读取 mesh 规模并进行模型视觉定向。
+- 已确认 STL 约 42 MB/83.8 万三角面，并检查 STEP 产品树；采用高精度 visual + 简化物理体方案。
+- 已新增 X920 Xacro、Gazebo 差速/激光/双相机插件、简化碰撞/惯量、工厂 world 和 spawn launch。
+- 三个所需 gazebo_ros 插件库均存在；首次 xacro 构建前验证因新包尚未进入 `ROS_PACKAGE_PATH` 失败，准备带显式路径重试。
+- Xacro 已成功展开；`check_urdf` 工具未安装，但不阻塞后续 Catkin/Gazebo 验证。
+- 已实现 `grinder_chassis_sim`：自动/手动源仲裁、任务门控、急停、超时停车、底盘服务、轮速/状态/里程计反馈。
+- 已实现 `slamware_sim_bridge`：静态工厂地图、map→odom、里程计与双相机转发、雷达状态、重定位、地图控制、STCM 与 change_map 兼容服务。
+- 已确认平台文件同步、MQTT、云视频三个独立开关；仿真覆盖配置会全部关闭真实外联，仅保留本地 APP/RTSP。
+- 已确认双相机订阅开关和 x86-64 mediamtx 二进制可用；仿真将启用左右相机与本地 RTSP。
+- 已新增仿真覆盖配置和 `grinder_sim.launch`，真实平台上传/MQTT/云视频默认关闭，APP 8002 与本地 RTSP 8554 保留。
+- 已把现有导航 launch 的 `use_sim_time` 改为可选参数（默认仍为 false），仿真显式传 true。
+- 已新增一键启动脚本、底盘数学单测、WSL 手机端口转发脚本及包级使用说明。
+- Phase 5 已重新读取计划/发现记录；已设置 Linux 脚本执行权限，准备使用隔离构建目录验证，避免触碰工作区内可能来自其它机器的旧 build/devel 缓存。
+- `grinder_gazebo` 及依赖已在 `/tmp/grinder_sim_build` 隔离 Catkin 构建成功；3 项底盘运动学/安全门控单测全部通过，launch 节点展开通过。
+- 首次运行态冒烟时，临时 `PYTHONPATH` 同时添加了底盘源码包，遮蔽了 Catkin 生成的 `grinder_chassis_driver.msg`；Gazebo 本体、传感器和模型已成功启动，正用修正后的隔离环境重试两个 Python 节点。
+- 全仿真节点已同时存活；`/map` 240x200@0.05m、`/scan` 14.7Hz、`/odom` 50Hz、左相机 10Hz，APP TCP 8002 已实际建立连接。
+- 已验证手动轮速与自动 `/cmd_vel` 闭环：3 秒位移分别约 0.43m/0.32m；急停后状态变为 `enabled=false` 且服务可清故障。STCM 仿真导出服务成功并写入明确占位标识。
+- 默认 RPP/move_base 启动发现真机配置依赖未构建的 STVL 插件；已添加仿真专用覆盖，改用 ROS 标准 `ObstacleLayer` ，不修改真机参数。
+- 仿真专用 `ObstacleLayer` 覆盖已通过运行验证；move_base、RPP、CarrotPlanner 均已加载，局部 costmap 稳定更新并订阅 map/scan/odom_wheel。
+- 真实 42 MB STEP 视觉网格已在 Gazebo 中成功 spawn，无 mesh/URI 错误。
+- 已补齐 WSL 的 FFmpeg 与 SciPy；左右 RTSP 均实测为 H.264 640x480@10FPS，完整 MST27 规划不再因缺 SciPy 回退。
+- 最终复查通过：Shell/Python 语法、3 项单测、Xacro→SDF、launch 参数覆盖与真机外联禁用项；MST27 Python 后端已就绪（C++ 加速扩展未在本隔离构建中加载）。
+- 已停止所有测试 ROS/Gazebo/MediaMTX/FFmpeg 进程，并清理本次语法检查生成的 `__pycache__`。Phase 5 完成。
+- 用户在 WSL 中直接执行 `catkin_make` 失败；已确认不是源码编译错误，而是仓库携带了在 `/home/neardi/work/Grinder` 下生成的旧 `build/devel` 缓存。当前无 ROS/Gazebo 残留进程且 8002/8554/11311 未占用。
+- 已修改 `build_grinder_platform.sh`：跨路径旧缓存可恢复改名备份，新增 `PROFILE=sim` 一次构建仿真及默认 RPP 链路；`start_grinder_sim.sh` 新增 devel 路径和包归属校验。README 与平台构建文档已同步。
+- 两个 Shell 脚本语法检查通过；在 `CLEAN_ON_PATH_CHANGE=0` 下的预期负测试准确报出旧路径且未修改缓存。
+- 默认安全模式已将旧 `build/devel` 改名备份为 `*.bak.path-mismatch.20260824_173307`；首次新构建因 `set -u` 与 ROS setup 脚本不兼容而停止，已对所有 ROS/devel setup 加载点实施局部 nounset 兼容修复。
+- 修复后 `PROFILE=sim ./build_grinder_platform.sh` 已在正式 `catkin_ws/build`/`devel` 中完整成功；18 个相关包以当前 `/mnt/e/CODE/C++/Grinder/catkin_ws` 路径配置，RPP、TEB、move_base、scheduler、slamware 和 `grinder_gazebo` 均已构建。
+- 已从正式 `devel` 运行 `start_grinder_sim.sh gui:=false visual_mesh:=false local_rtsp_enabled:=false`：X920 成功生成，Gazebo、scheduler、move_base、RPP、底盘模拟与 slamware 桥全部存活；地图为 240x200@0.05m，`/odom` 稳定 50Hz，APP TCP 8002 正常监听。
+- 冒烟测试已通过 Ctrl-C 正常退出；复查无 ROS/Gazebo 残留进程，8002/8554/11311 均已释放。Phase 6 完成。
+- 用户反馈 STEP 外观在 Gazebo 中姿态不直观，决定默认改用简化方盒车体；详细 STEP 仍可通过 `visual_mesh:=true` 选择性加载。
+- 已按 `teb_local_planner_tutorials/cfg/diff_drive/costmap_common_params.yaml` 的 footprint 对齐车体：x=`[-0.60,1.00]`、y=`[-0.47,0.47]`，盒体 `1.60x0.94x0.30m`，运动中心前移 `0.20m`。
+- 已在仿真专用 scheduler 覆盖同步 `vehicle_length=1.60`、`vehicle_width=0.94`，避免调度器旧的 1.5x1.0 参数与 costmap/方盒车体不一致；真实机配置未改。
+- 已新增直径 `0.90m`、厚度 `0.08m` 的研磨盘 link，中心 x=`0.55m`，前缘对齐 footprint 前缘 x=`1.00m`。
+- 已把 Gazebo 世界改为 50m×50m 单层平面、3m 高边界墙、64 根 0.9m×0.9m 柱子（8×8，柱心间距 6m）；slamware 模拟地图同步改为 1000×1000 @ 0.05m。
+- Xacro、世界 SDF 已通过 XML 解析；`gz sdf -k` 通过；简化车展开包含 10 个 link 和研磨盘。待停止当前旧仿真后进行新世界/新车体运行冒烟验证。
+- 已用独立 ROS master `11312`、Gazebo transport `11346` 和 APP 端口 `8012` 启动新版本：桥接地图为 `1000x1000@0.05m`（50m×50m），Gazebo model_states 包含 `floor_50m`、四面边界墙、64 根柱子和 `x920_grinder`；方盒车成功 spawn，姿态 roll/pitch 接近 0，隔离进程已正常退出。Phase 7 完成。
+- 追加导航验证通过：独立 ROS master `11313` 上 `/move_base`、RPP、调度器、底盘模拟和 slamware 桥全部存活；全局 costmap 成功 resize 到 `1000x1000`，`/odom` 保持 50Hz，测试端口已释放。
+- 按用户布局调整：两个后驱动轮统一位于 `x=-0.45m`、`y=±0.35m`，雷达固定在同一纵向站位；研磨盘留在前方 `x=0.55m`；删除前万向轮，仅保留后支撑轮。
+- 接触参数按运动学约束处理：研磨盘与后支撑轮 `mu1=mu2=0`；实测左右驱动轮也为零摩擦时，4 秒 `/cmd_vel` 位移仅约 `0.0002m`，确认差速车失去牵引，因此恢复驱动轮 `mu1=mu2=1.0`，保证 APP 控制和导航仍可移动。
+- 发现固定在底盘上的水平研磨盘即使声明零摩擦，Gazebo 固定关节合并后的接触仍会把车体卡住；因此将研磨盘改为仅视觉体，保留直径/位置/厚度与 APP 磨盘状态接口，不参与物理碰撞。
+- 移除研磨盘碰撞后，独立运动回归通过：持续 `0.15m/s` 约 6 秒，`/odom` 前进约 `0.72m`，驱动轮正常牵引；前万向轮不存在，雷达与后驱轴同站。
+- Phase 8 完成；最后需停止测试实例并复查 Xacro/XML、世界 SDF、无残留端口/进程。
+- 最终全链路启动验证通过（独立 ROS master `11315`、Gazebo `11349`、APP `8015`）：`/move_base`、RPP、调度器、底盘模拟和 slamware 桥全部存活，地图 `1000x1000@0.05m`，Gazebo 场景含 64 根柱子。
+- 最终静态验证通过：Xacro XML 布局断言、前万向轮删除、研磨盘无 collision、`slamware_sim_bridge.py` 语法、50m world `gz sdf -k`；测试端口和 ROS/Gazebo 进程已清理。
+- 用户进一步明确：删除所有独立万向轮，磨盘本体承担前方万向支撑，磨盘正方向按车体前向 `+X`、旋转右手轴 `+Z` 定义。
+- 已将磨盘改为连续 `+Z` 轴关节，并增加隐藏球形支撑滚轮连续 `+Y` 轴关节；删除 `rear_caster_link` 及对应 Gazebo 摩擦配置，支撑接触 `mu1=mu2=0`。
+- 固定球形接触初测仍会卡住车体（约 `0.03m/6s`）；改为磨盘转向+滚动二自由度后运动回归通过，约 `0.84m/6s`，姿态保持可用。
+- 最终全链路回归通过（独立 ROS master `11317`、Gazebo `11351`、APP `8017`）：`move_base`、RPP、scheduler、底盘模拟、slamware 桥存活，地图 `1000x1000@0.05m`；场景仅含磨盘支撑滚轮，不含独立前/后万向轮。测试端口已释放。
+- 用户反馈仿真运动方向与实车控制相反，且要求轮子/雷达中心距车体后缘 0.60m；已将后缘 `x=-0.60m` 对应的驱动轴/雷达站位改为 `x=0.00m`，并让仿真桥复用实车手动轮速符号 `-1/-1`。根据协议摇杆上推 `remote_y=-1` 的约定，轮关节恢复车体坐标 `+Y`，自动 `/cmd_vel` 取消额外取反，避免前后重复翻转。
+- 方向/姿态回归完成：轮轴为车体坐标 `+Y`；APP 摇杆上推对应负轮速，经实车 `-1/-1` 映射后车体 `x` 从约 `-0.165m` 前进到 `+0.070m`，朝磨盘方向；自动 `/cmd_vel +0.15` 也沿 `+X` 移动。停止后 `base_footprint` pitch 回到约 `-0.003rad`。
+- 最新独立完整导航回归（ROS master `11324`、Gazebo `11358`、APP `8024`）通过：`move_base`、RPP、调度器、仿真底盘和 slamware 桥存活，地图 `1000x1000@0.05m`、原点 `(-25,-25)`；测试实例随后已停止。
+- 用户补充实车参数“整车 800kg、重心在磨盘”；已将 Xacro 质量预算改为完整车辆 `800kg`，综合 x 方向重心计算到磨盘中心 `x=0.55m`，主车体惯性中心约 `x=0.568m`，并完成三维质量矩断言与运动 pitch 回归。
+- 已完成质量/质心和翘头回归：主车体 `body_com_z` 进一步配平到使整车质心位于磨盘盘面高度 `z=0.04m`；隐藏球形支撑改由 `base_link` 承载并前置 `0.15m`，不再随磨盘 `+Z` 旋转绕到车体后方。独立 Gazebo 测试中静止 pitch `0.00027rad`，自动 `/cmd_vel=+0.15m/s` 约 4 秒前进 `0.497m`、pitch `-0.00037rad`；APP 上推等效 `-500/-500rpm` 再前进约 `1.21m`，pitch `-0.00020rad`，未出现翘头。测试端口 `11336/11370/8036` 已释放。
+- 质量矩修正后再次通过完整启动回归（ROS master `11338`、Gazebo `11372`、APP `8038`）：`gazebo`、`move_base`、调度器、仿真底盘和 slamware 桥均存活；`/map/info` 为 `1000x1000@0.05m`、原点 `(-25,-25)`，静止 pitch `0.00026rad`，测试实例已停止且端口释放。
+- 按用户要求再次缩短车体后部 `0.30m`：后缘由 `x=-0.60m` 收到 `x=-0.30m`，前缘仍为 `x=1.00m`，盒体改为 `1.30x0.94x0.30m`、中心 `x=0.35m`；驱动轮/雷达仍在 `x=0.00m`，仿真 costmap footprint 已同步为 `[-0.3,1.0]x[-0.47,0.47]`。
+- 缩短后回归通过：Xacro 展开总质量 `800.000kg`、COM=`(0.550,0.040)m`；隔离 Gazebo 自动 `/cmd_vel=+0.15m/s` 约 4 秒沿 `+X` 前进约 `0.46m`，pitch 约 `-0.00005rad`，APP 等效 `-500/-500rpm` 继续沿 `+X` 前进约 `1.17m`；完整导航实例（ROS `11340`、Gazebo `11374`、APP `8040`）中 `/move_base`、RPP、调度器、底盘和 slamware 桥存活，地图 `1000x1000@0.05m`，两级 costmap footprint 均为 `[-0.3,1.0]x[-0.47,0.47]`，测试端口已释放。

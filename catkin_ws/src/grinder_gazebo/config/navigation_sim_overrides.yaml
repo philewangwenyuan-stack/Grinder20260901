@@ -1,0 +1,10 @@
+# Gazebo uses a planar LaserScan, so the standard obstacle layer is sufficient.
+# Keep this override simulation-only: the real robot may still choose STVL.
+move_base:
+  global_costmap:
+    footprint: [[-0.30, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.30, -0.47]]
+  local_costmap:
+    footprint: [[-0.30, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.30, -0.47]]
+    plugins:
+      - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+      - {name: inflation_layer, type: "costmap_2d::InflationLayer"}

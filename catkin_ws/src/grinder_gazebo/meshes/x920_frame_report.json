@@ -1,0 +1,51 @@
+{
+  "bounding_box_mm": {
+    "center": [
+      158.8886880142927,
+      487.0575774894394,
+      822.9999999999991
+    ],
+    "max": [
+      1140.0512382585907,
+      1453.4308136717182,
+      1272.999999999999
+    ],
+    "min": [
+      -822.2738622300053,
+      -479.3156586928394,
+      372.9999999999992
+    ],
+    "size": [
+      1962.325100488596,
+      1932.7464723645576,
+      899.9999999999999
+    ]
+  },
+  "center_of_mass_mm": [
+    -205.066348925032,
+    -99.48054714783274,
+    822.9934985878285
+  ],
+  "load_seconds": 99.381,
+  "mesh": {
+    "angular_deflection_rad": 0.35,
+    "export_seconds": 5.434,
+    "facets": 838198,
+    "linear_deflection_mm": 2.0,
+    "note": "FreeCAD 0.18 Part.tessellate uses linear deflection; angular value is recorded for reproducibility but is not consumed by this fallback exporter.",
+    "path": "/mnt/e/CODE/C++/Grinder/catkin_ws/src/grinder_gazebo/meshes/x920_frame.stl",
+    "points": 416287,
+    "size_bytes": 41909984
+  },
+  "native_unit": "millimeter",
+  "source": "/mnt/d/WeChat File/WeChat Files/xwechat_files/wxid_pgzbu92cwine22_0d55/msg/file/2026-07/7.2  X920机架总装(1).STEP",
+  "source_size_bytes": 70719045,
+  "topology": {
+    "edges": 48077,
+    "faces": 14549,
+    "shells": 306,
+    "solids": 306,
+    "vertices": 31465
+  },
+  "volume_mm3": 92997608.191872
+}

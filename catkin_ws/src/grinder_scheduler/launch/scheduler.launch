@@ -1,0 +1,27 @@
+<launch>
+  <arg name="aurora_ip_address" default="192.168.0.114" />
+  <arg name="aurora_raw_image_on" default="true" />
+  <arg name="aurora_no_preview_image" default="false" />
+  <arg name="navigation_map_yaml_path" default="$(find teb_local_planner_tutorials)/maps/map.yaml" />
+  <arg name="local_rtsp_mediamtx_path" default="tools/mediamtx/mediamtx" />
+  <arg name="map_topic" default="/map" />
+  <arg name="odom_topic" default="/slamware_ros_sdk_server_node/odom" />
+  <arg name="left_image_topic" default="/slamware_ros_sdk_server_node/left_image_raw" />
+  <arg name="right_image_topic" default="/slamware_ros_sdk_server_node/right_image_raw" />
+
+  <node pkg="grinder_scheduler"
+        type="scheduler_node.py"
+        name="grinder_scheduler"
+        output="screen">
+    <rosparam command="load" file="$(find grinder_scheduler)/config/scheduler.yaml" />
+    <param name="aurora_ip_address" value="$(arg aurora_ip_address)" />
+    <param name="aurora_raw_image_on" value="$(arg aurora_raw_image_on)" />
+    <param name="aurora_no_preview_image" value="$(arg aurora_no_preview_image)" />
+    <param name="navigation_map_yaml_path" value="$(arg navigation_map_yaml_path)" />
+    <param name="local_rtsp_mediamtx_path" value="$(arg local_rtsp_mediamtx_path)" />
+    <param name="map_topic" value="$(arg map_topic)" />
+    <param name="odom_topic" value="$(arg odom_topic)" />
+    <param name="left_image_topic" value="$(arg left_image_topic)" />
+    <param name="right_image_topic" value="$(arg right_image_topic)" />
+  </node>
+</launch>

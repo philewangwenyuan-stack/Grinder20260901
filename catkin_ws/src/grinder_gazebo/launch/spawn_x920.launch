@@ -1,0 +1,26 @@
+<launch>
+  <arg name="gui" default="true" />
+  <arg name="paused" default="false" />
+  <arg name="visual_mesh" default="false" />
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
+  <arg name="yaw" default="0.0" />
+
+  <param name="use_sim_time" value="true" />
+  <param name="robot_description"
+         command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh)" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find grinder_gazebo)/worlds/factory_floor.world" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="use_sim_time" value="true" />
+  </include>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="publish_frequency" value="30.0" />
+  </node>
+
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_x920" output="screen"
+        args="-urdf -param robot_description -model x920_grinder -x $(arg x) -y $(arg y) -z 0.02 -Y $(arg yaw)" />
+</launch>

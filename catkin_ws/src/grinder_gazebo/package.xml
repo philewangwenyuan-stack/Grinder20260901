@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>grinder_gazebo</name>
+  <version>0.1.0</version>
+  <description>Gazebo simulation model and hardware-compatible bridges for the X920 grinder.</description>
+
+  <maintainer email="devnull@example.com">Grinder Developers</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>gazebo_plugins</depend>
+  <depend>gazebo_ros</depend>
+  <depend>geometry_msgs</depend>
+  <depend>grinder_chassis_driver</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>map_server</depend>
+  <depend>nav_msgs</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>slamware_ros_sdk</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>tf2_ros</depend>
+  <depend>xacro</depend>
+
+  <exec_depend>carrot_planner</exec_depend>
+  <exec_depend>ffmpeg</exec_depend>
+  <exec_depend>grinder_scheduler</exec_depend>
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>regulated_pure_pursuit_controller</exec_depend>
+  <exec_depend>teb_local_planner_tutorials</exec_depend>
+
+  <export />
+</package>

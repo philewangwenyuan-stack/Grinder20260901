@@ -1,0 +1,32 @@
+# Keep source files portable between the Windows editing workstation and the
+# Linux/ROS target.  This avoids CRLF churn and shell/Python execution issues.
+* text=auto
+*.c text eol=lf
+*.cc text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.xml text eol=lf
+*.launch text eol=lf
+*.msg text eol=lf
+*.srv text eol=lf
+*.proto text eol=lf
+*.md text eol=lf
+*.rst text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.stl binary
+*.zip binary
+*.rar binary
+*.tar.gz binary
+*.dll binary
+*.dylib binary
+*.so binary

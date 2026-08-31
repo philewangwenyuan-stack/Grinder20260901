@@ -1,0 +1,63 @@
+<launch>
+  <!-- global args -->
+  <arg name="aurora_ip_address" default="192.168.11.1" />
+  <arg name="aurora_raw_image_on" default="true" />
+  <arg name="aurora_no_preview_image" default="false" />
+  <arg name="start_navigation" default="true" />
+  <arg name="navigation_local_planner" default="rpp" doc="Navigation controller profile: teb or rpp" />
+  <arg name="start_chassis_driver" default="false" />
+  <arg name="navigation_map_yaml_path" default="$(find teb_local_planner_tutorials)/maps/map.yaml" />
+  <arg name="local_rtsp_mediamtx_path" default="tools/mediamtx/mediamtx" />
+  <arg name="map_topic" default="/map" />
+  <arg name="odom_topic" default="/odom" />
+  <arg name="left_image_topic" default="/slamware_ros_sdk_server_node/left_image_raw" />
+  <arg name="right_image_topic" default="/slamware_ros_sdk_server_node/right_image_raw" />
+  <arg name="base_to_laser_x" default="0.0" />
+  <arg name="base_to_laser_y" default="0.0" />
+  <arg name="base_to_laser_z" default="0.0" />
+  <arg name="base_to_laser_roll" default="0.0" />
+  <arg name="base_to_laser_pitch" default="0.0" />
+  <arg name="base_to_laser_yaw" default="0.0" />
+  <arg name="slam_pose_is_laser_frame" default="true" />
+  <arg name="publish_laser_pose_tf" default="false" />
+  <arg name="align_map_to_initial_yaw" default="true" />
+  <arg name="aligned_map_frame" default="map_aligned" />
+  
+
+  <!-- 1) Aurora driver: start independently in the system launch -->
+  <include file="$(find slamware_ros_sdk)/launch/slamware_ros_sdk_server_node.launch">
+    <arg name="ip_address" value="$(arg aurora_ip_address)" />
+    <arg name="base_to_laser_x" value="$(arg base_to_laser_x)" />
+    <arg name="base_to_laser_y" value="$(arg base_to_laser_y)" />
+    <arg name="base_to_laser_z" value="$(arg base_to_laser_z)" />
+    <arg name="base_to_laser_roll" value="$(arg base_to_laser_roll)" />
+    <arg name="base_to_laser_pitch" value="$(arg base_to_laser_pitch)" />
+    <arg name="base_to_laser_yaw" value="$(arg base_to_laser_yaw)" />
+    <arg name="slam_pose_is_laser_frame" value="$(arg slam_pose_is_laser_frame)" />
+    <arg name="publish_laser_pose_tf" value="$(arg publish_laser_pose_tf)" />
+    <arg name="align_map_to_initial_yaw" value="$(arg align_map_to_initial_yaw)" />
+    <arg name="aligned_map_frame" value="$(arg aligned_map_frame)" />
+  </include>
+
+  <!-- 2) chassis driver -->
+  <include if="$(arg start_chassis_driver)" file="$(find grinder_chassis_driver)/launch/chassis_driver.launch" />
+
+  <!-- 3) scheduler (aurora already launched above, avoid duplicate startup) -->
+  <include file="$(find grinder_scheduler)/launch/scheduler.launch">
+    <arg name="aurora_ip_address" value="$(arg aurora_ip_address)" />
+    <arg name="aurora_raw_image_on" value="$(arg aurora_raw_image_on)" />
+    <arg name="aurora_no_preview_image" value="$(arg aurora_no_preview_image)" />
+    <arg name="navigation_map_yaml_path" value="$(arg navigation_map_yaml_path)" />
+    <arg name="local_rtsp_mediamtx_path" value="$(arg local_rtsp_mediamtx_path)" />
+    <arg name="map_topic" value="$(arg map_topic)" />
+    <arg name="odom_topic" value="$(arg odom_topic)" />
+    <arg name="left_image_topic" value="$(arg left_image_topic)" />
+    <arg name="right_image_topic" value="$(arg right_image_topic)" />
+  </include>
+
+  <!-- 4) navigation stack -->
+  <include if="$(arg start_navigation)"
+           file="$(find teb_local_planner_tutorials)/launch/robot_diff_drive.launch">
+    <arg name="local_planner" value="$(arg navigation_local_planner)" />
+  </include>
+</launch>

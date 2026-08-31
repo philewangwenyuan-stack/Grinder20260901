@@ -1,0 +1,11 @@
+std_msgs/Header header
+string task_id
+string state
+float32 progress
+uint32 map_version
+bool map_available
+bool stream_online
+bool replan_requested
+string last_error
+geometry_msgs/Pose2D pose
+uint32 path_point_count

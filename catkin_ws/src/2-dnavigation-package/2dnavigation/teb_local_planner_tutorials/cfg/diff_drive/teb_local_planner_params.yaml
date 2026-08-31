@@ -1,0 +1,119 @@
+TebLocalPlannerROS:
+
+ odom_topic: /odom
+    
+ # Trajectory
+  
+ teb_autosize: True #自动调整轨迹上的样本点（Pose）数，保持轨迹平滑且计算量稳定
+ dt_ref: 0.4 #轨迹上相邻两个位姿点之间的期望时间差。值越小，轨迹越精细，计算量越大
+ dt_hysteresis: 0.1 #用于防止轨迹点数频繁增减的阈值
+ max_samples: 200 #防止轨迹过长导致内存溢出或计算超时
+ global_plan_overwrite_orientation: True #是否根据自身的运动学模型重新计算路径点的朝向，而不是完全照搬全局规划器的朝向
+ allow_init_with_backwards_motion: False #如果目标点在机器人后方，TEB 允许生成倒车的轨迹。这对差分驱动机器人很重要
+ max_global_plan_lookahead_dist: 2.5 #TEB 只会处理全局路径中离机器人 1.5 米以内的部分，避免处理过远的无用路径
+ global_plan_viapoint_sep: 0.3 #-1表示禁用此功能。如果设为正数，TEB 会强制轨迹经过全局路径上的这些点。
+ global_plan_prune_distance: 1 #在机器人后方 1 米处的全局路径点会被剪掉，不再参与规划。
+ exact_arc_length: False #False时使用直线距离近似，计算更快；True时更精确但更慢。
+ feasibility_check_no_poses: 5 #在生成轨迹后，检查前 5 个点是否与障碍物碰撞。
+ publish_feedback: False #反馈信息可用于 RViz 显示规划器的内部状态
+    
+ # Robot
+         
+ max_vel_x: 0.06 #机器人最大的线速度（前进方向，单位：m/s
+ max_vel_x_backwards: 0.04 #机器人最大的倒车线速度（单位：m/s）。
+ max_vel_y: 0.0
+ max_vel_theta: 0.15 #机器人最大的角速度（单位：rad/s）
+ use_proportional_saturation: True #速度限幅时按比例同时缩放线速度和角速度，拐角处更容易自动降线速度
+ acc_lim_x: 0.1 #机器人 X 方向的加速度限制（单位：m/s²）
+ acc_lim_theta: 0.1 #机器人角加速度限制（单位：rad/s²）
+ min_turning_radius: 0.0 # diff-drive robot (can turn on place!)
+
+#  footprint_model:
+#    type: "point"
+
+
+ footprint_model:
+   type: "polygon"
+   vertices: [[-0.6, 0.6], [1.25, 0.6], [1.25, -0.6], [-0.6, -0.6]]
+ # GoalTolerance
+    
+ xy_goal_tolerance: 0.12 #机器人进入目标点周围 0.3 米范围内即认为到达
+ yaw_goal_tolerance: 0.05 #目标朝向的容差（单位：弧度）
+ free_goal_vel: True #是否允许机器人在到达目标时带有非零速度，中间目标点可不停下直接通过
+ complete_global_plan: True #是否必须走完全局路径上的所有点
+    
+ # Obstacles
+    
+ min_obstacle_dist: 0.3 # 机器人（轮廓点）与障碍物之间的最小期望距离（单位：米）
+ inflation_dist: 0.6 # 障碍物的膨胀距离（单位：米）,在代价地图中，障碍物周围 0.6 米内的区域会有代价梯度
+ include_costmap_obstacles: True #这是必须的，否则 TEB 将无法感知周围环境
+ costmap_obstacles_behind_robot_dist: 0.3 #考虑机器人后方多远范围内的障碍物
+ obstacle_poses_affected: 25 #受单个障碍物影响的轨迹样本点数量
+
+ dynamic_obstacle_inflation_dist: 0.3 #动态障碍物的膨胀距离
+ #include_dynamic_obstacles: True #是否处理动态障碍物
+ include_dynamic_obstacles: False
+
+ #costmap_converter_plugin: "costmap_converter::CostmapToLinesDBSRANSAC"
+ costmap_converter_plugin: ""
+ #costmap_converter_spin_thread: True
+ costmap_converter_spin_thread: False
+ costmap_converter_rate: 5
+
+ # Optimization
+    
+ no_inner_iterations: 4 #每次外循环中的内循环迭代次数。#5
+ no_outer_iterations: 4 #外循环迭代次数,总迭代次数 = no_inner_iterations* no_outer_iterations#4
+ optimization_activate: True #激活优化过程
+ optimization_verbose: False #打印优化过程的详细信息（调试用）
+ penalty_epsilon: 0.03 #软约束的惩罚阈值
+ obstacle_cost_exponent: 3 #值越大，靠近障碍物时的代价增长越快，避障越激进。
+ weight_max_vel_x: 2 #限制最大速度的权重
+ weight_max_vel_theta: 1 #限制最大角速度的权重
+ weight_acc_lim_x: 1.0 #限制加速度的权重
+ weight_acc_lim_theta: 1.0 #限制角加速度的权重
+ weight_kinematics_nh: 1000 #非全向（Non-Holonomic）运动学约束的权重（非常重要，确保差分车不横向漂移）
+ weight_kinematics_forward_drive: 1500 #“尽量向前开，不要倒车/反复前后切换”的权重
+ weight_kinematics_turning_radius: 1
+ weight_optimaltime: 1 # must be > 0
+ weight_shortest_path: 1
+ weight_obstacle: 100
+ weight_inflation: 3
+ weight_dynamic_obstacle: 10
+ weight_dynamic_obstacle_inflation: 0.2
+ weight_viapoint: 25 #“贴着全局路径/经过路径参考点”的权重
+ weight_adapt_factor: 2
+
+ # Homotopy Class Planner
+
+ #enable_homotopy_class_planning: True
+ enable_homotopy_class_planning: False
+ enable_multithreading: True
+ max_number_classes: 4
+ selection_cost_hysteresis: 1.0
+ selection_prefer_initial_plan: 0.9
+ selection_obst_cost_scale: 100.0
+ selection_alternative_time_cost: False
+ 
+ roadmap_graph_no_samples: 15
+ roadmap_graph_area_width: 5
+ roadmap_graph_area_length_scale: 1.0
+ h_signature_prescaler: 0.5
+ h_signature_threshold: 0.1
+ obstacle_heading_threshold: 0.45
+ switching_blocking_period: 0.0
+ viapoints_all_candidates: True
+ delete_detours_backwards: True
+ max_ratio_detours_duration_best_duration: 3.0
+ visualize_hc_graph: False
+ visualize_with_time_as_z_axis_scale: False
+
+# Recovery
+ 
+ shrink_horizon_backup: True
+ shrink_horizon_min_duration: 10
+ oscillation_recovery: True
+ oscillation_v_eps: 0.03
+ oscillation_omega_eps: 0.03
+ oscillation_recovery_min_duration: 10
+ oscillation_filter_duration: 10

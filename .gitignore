@@ -1,0 +1,48 @@
+# ROS / Catkin generated trees
+catkin_ws/build/
+catkin_ws/build.bak*/
+catkin_ws/devel/
+catkin_ws/logs/
+**/build/
+**/build.bak*/
+**/devel/
+**/devel.bak*/
+**/logs/
+
+# Python and local tooling caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Runtime state, previews and local diagnostics
+temp/
+**/temp/
+*.log
+
+# Generated native extensions and object files
+*.so
+*.so.*
+*.o
+*.a
+
+# Runtime map exports and large device captures
+maps/raw/
+maps/sim_raw/
+*.stcm
+*.pgm
+*.npy
+
+# Bundled executable archives (keep configs and licenses tracked)
+tools/mediamtx/mediamtx
+tools/mediamtx/mediamtx_aarch64
+tools/mediamtx/mediamtx_x86_64
+tools/mediamtx/mediamtx.tar.gz
+
+# Local editor / OS files
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
