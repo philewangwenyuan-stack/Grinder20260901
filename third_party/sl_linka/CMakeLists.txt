@@ -1,0 +1,15 @@
+idf_component_register(
+    SRCS
+        "sdk/embedded/src/sl_crc16.c"
+        "sdk/embedded/src/sl_link_monitor.c"
+        "sdk/embedded/src/sl_packet.c"
+        "sdk/embedded/src/sl_nanopb.c"
+        "sdk/embedded/message_gen/sl_link.pb.c"
+        "nanopb/pb_common.c"
+        "nanopb/pb_decode.c"
+        "nanopb/pb_encode.c"
+    INCLUDE_DIRS
+        "sdk/embedded/include"
+        "sdk/embedded/message_gen"
+        "nanopb"
+)

@@ -8,7 +8,7 @@
 2. `catkin_ws/PLATFORM_BUILD_RUN.md`：x86_64 / RK3588 的构建和启动参数。
 3. 只读取本次任务对应的包、配置和 launch 文件；不要先递归读取整个 `catkin_ws/src`。
 
-注意：仓库根目录本身不是 Git 仓库。当前可见的嵌套仓库包括 `catkin_ws/src/rf2o_laser_odometry`、`third_party/sl_linka/sl_linka` 和其 `nanopb` 目录，执行 Git 操作前先确认所在仓库。
+注意：仓库根目录是唯一 Git 仓库。原有子仓库的源码已经吸收到根仓库；`.git.nested-backup-*` 仅作为本地迁移备份并被忽略。Git 操作统一从仓库根目录执行，不要在源码子目录重新初始化仓库。
 
 ## 系统主链路
 
@@ -68,7 +68,7 @@ rg -n "参数名|话题名|消息名" catkin_ws/src/grinder_scheduler catkin_ws/
 
 - 自研主代码：`catkin_ws/src/grinder_scheduler/`、`catkin_ws/src/grinder_chassis_driver/`。
 - 项目集成代码：`third_party/path_planner/`、导航参数与启动文件；修改前确认任务确实涉及算法或导航配置。
-- 外部/嵌套代码：`2-dnavigation-package` 的通用 ROS navigation 源码、`slamware_ros_sdk`、`rf2o_laser_odometry`、`third_party/sl_linka/sl_linka/nanopb`。优先通过项目配置或适配层解决问题。
+- 外部代码：`2-dnavigation-package` 的通用 ROS navigation 源码、`slamware_ros_sdk`、`rf2o_laser_odometry`、`third_party/sl_linka/sl_linka/nanopb`。优先通过项目配置或适配层解决问题。
 - 不要索引或手改生成/运行目录：`catkin_ws/build/`、`catkin_ws/devel/`、`catkin_ws/logs/`、各处 `build/`、`__pycache__/`、`*.pyc`、`temp/`。
 - `maps/raw/*.stcm`、`*.pgm`、预览图、路径 JSON、编译出的 `*.so` 都是数据或产物，除非任务明确要求，否则不要修改。
 - 协议 Python/Android/Embedded 生成代码位于 `third_party/sl_linka/sl_linka/sdk/`；应修改 `.proto` 后运行生成脚本，而非只改生成文件。

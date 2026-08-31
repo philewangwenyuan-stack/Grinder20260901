@@ -1,0 +1,844 @@
+syntax = "proto3";
+
+package sl_link;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+  string unit = 50001;
+  double scale = 50002;
+}
+
+enum MessageId {
+  MSG_ID_UNKNOWN = 0x0000;
+
+  MSG_ID_WIFI_CONFIG = 0x0201;
+  MSG_ID_WIFI_STATUS_REPORT = 0x0202;
+  MSG_ID_SETTINGS_READ_REQUEST = 0x0203;
+  MSG_ID_SETTINGS_READ_RESPONSE = 0x0204;
+  MSG_ID_SETTINGS_WRITE_REQUEST = 0x0205;
+  MSG_ID_SETTINGS_WRITE_RESPONSE = 0x0206;
+
+  MSG_ID_DEVICE_STATUS_REPORT = 0x0301;
+  MSG_ID_CAMERA_FRAME_REQUEST = 0x0302;
+  MSG_ID_CAMERA_FRAME_CHUNK = 0x0303;
+  MSG_ID_MAP_REQUEST = 0x0304;
+  MSG_ID_MAP_CHUNK = 0x0305;
+
+  MSG_ID_CONTROL_COMMAND = 0x0401;
+  MSG_ID_CONTROL_COMMAND_RESPONSE = 0x0402;
+
+  MSG_ID_TASK_CONFIG = 0x0500;
+  MSG_ID_TASK_CONFIG_RESPONSE = 0x0501;
+  MSG_ID_TASK_COMMAND = 0x0502;
+  MSG_ID_TASK_COMMAND_RESPONSE = 0x0503;
+  MSG_ID_TASK_STATUS_REPORT = 0x0504;
+  MSG_ID_TASK_PATH_REQUEST = 0x0505;
+  MSG_ID_TASK_PATH_CHUNK = 0x0506;
+  MSG_ID_MAP_PREVIEW_REQUEST = 0x0507;
+  MSG_ID_MAP_PREVIEW_RESPONSE = 0x0508;
+  MSG_ID_MAP_EDIT_COMMAND = 0x0509;
+  MSG_ID_MAP_EDIT_RESPONSE = 0x050A;
+  MSG_ID_MAP_EDIT_STATUS_REPORT = 0x050B;
+  MSG_ID_VIDEO_STREAM_INFO_REQUEST = 0x050C;
+  MSG_ID_VIDEO_STREAM_INFO_RESPONSE = 0x050D;
+  MSG_ID_PATH_PLAN_REQUEST = 0x050E;
+  MSG_ID_PATH_PLAN_RESPONSE = 0x050F;
+  MSG_ID_MAP_SYNC_REQUEST = 0x0510;
+  MSG_ID_MAP_SYNC_RESPONSE = 0x0511;
+  MSG_ID_MAP_MODE_REQUEST = 0x0512;
+  MSG_ID_MAP_MODE_RESPONSE = 0x0513;
+  MSG_ID_MAP_CATALOG_REQUEST = 0x0514;
+  MSG_ID_MAP_CATALOG_RESPONSE = 0x0515;
+  MSG_ID_MAP_DELETE_REQUEST = 0x0516;
+  MSG_ID_MAP_DELETE_RESPONSE = 0x0517;
+  MSG_ID_MAP_SAVE_REQUEST = 0x0518;
+  MSG_ID_MAP_SAVE_RESPONSE = 0x0519;
+  MSG_ID_MAP_METRICS_REQUEST = 0x051A;
+  MSG_ID_MAP_METRICS_RESPONSE = 0x051B;
+  MSG_ID_TASK_RESULT_REQUEST = 0x051C;
+  MSG_ID_TASK_RESULT_RESPONSE = 0x051D;
+  MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST = 0x051E;
+  MSG_ID_LIVE_MAP_CACHE_CLEAR_RESPONSE = 0x051F;
+  MSG_ID_RADAR_MAP_CACHE_CLEAR_REQUEST = 0x0520;
+  MSG_ID_RADAR_MAP_CACHE_CLEAR_RESPONSE = 0x0521;
+  MSG_ID_MAP_IMPORT_TO_RADAR_REQUEST = 0x0522;
+  MSG_ID_MAP_IMPORT_TO_RADAR_RESPONSE = 0x0523;
+  MSG_ID_MAP_ALIGNMENT_REQUEST = 0x0524;
+  MSG_ID_MAP_ALIGNMENT_RESPONSE = 0x0525;
+  MSG_ID_RADAR_SYSTEM_STATUS_REQUEST = 0x0526;
+  MSG_ID_RADAR_SYSTEM_STATUS_RESPONSE = 0x0527;
+  MSG_ID_RADAR_MAP_SYNC_REQUEST = 0x0528;
+  MSG_ID_RADAR_MAP_SYNC_RESPONSE = 0x0529;
+  MSG_ID_RADAR_RELOCALIZATION_REQUEST = 0x052A;
+  MSG_ID_RADAR_RELOCALIZATION_RESPONSE = 0x052B;
+  MSG_ID_RADAR_RELOCALIZATION_STATUS_REQUEST = 0x052C;
+  MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE = 0x052D;
+}
+
+enum DeviceId {
+  DEVICE_RESERVED = 0x00;
+  DEVICE_APP = 0x01;
+  DEVICE_LOWER = 0x10;
+  DEVICE_BROADCAST = 0xFF;
+}
+
+enum ComponentId {
+  COMP_SYSTEM = 0x00;
+  COMP_WIFI = 0x04;
+  COMP_SETTINGS = 0x05;
+  COMP_MEDIA = 0x06;
+  COMP_CONTROL = 0x07;
+  COMP_SCHEDULER = 0x08;
+}
+
+enum ResultCode {
+  RESULT_SUCCESS = 0x00;
+  RESULT_INVALID_PARAM = 0x01;
+  RESULT_UNSUPPORTED = 0x02;
+  RESULT_BUSY = 0x03;
+  RESULT_FAILED = 0x04;
+}
+
+enum SystemStatus {
+  SYS_STATUS_NORMAL = 0x00;
+  SYS_STATUS_ERROR = 0x01;
+}
+
+enum WifiResult {
+  WIFI_PENDING = 0x00;
+  WIFI_SUCCESS = 0x01;
+  WIFI_FAIL = 0x02;
+  WIFI_TIMEOUT = 0x03;
+}
+
+enum WorkMode {
+  WORK_MODE_UNKNOWN = 0x00;
+  WORK_MODE_MANUAL = 0x01;
+  WORK_MODE_AUTO = 0x02;
+  WORK_MODE_EDGE = 0x03;
+  WORK_MODE_DOCK = 0x04;
+}
+
+enum DiscLiftState {
+  DISC_LIFT_STATE_UNKNOWN = 0x00;
+  DISC_LIFT_STATE_UP = 0x01;
+  DISC_LIFT_STATE_DOWN = 0x02;
+  DISC_LIFT_STATE_MOVING = 0x03;
+}
+
+enum DiscLiftCommand {
+  DISC_LIFT_CMD_STOP = 0x00;
+  DISC_LIFT_CMD_UP = 0x01;
+  DISC_LIFT_CMD_DOWN = 0x02;
+}
+
+enum ManualMotionCommand {
+  MANUAL_MOTION_STOP = 0x00;
+  MANUAL_MOTION_FORWARD = 0x01;
+  MANUAL_MOTION_BACKWARD = 0x02;
+  MANUAL_MOTION_FORWARD_LEFT = 0x03;
+  MANUAL_MOTION_FORWARD_RIGHT = 0x04;
+  MANUAL_MOTION_BACKWARD_LEFT = 0x05;
+  MANUAL_MOTION_BACKWARD_RIGHT = 0x06;
+}
+
+enum CameraCodec {
+  CAMERA_CODEC_JPEG = 0x00;
+  CAMERA_CODEC_H264 = 0x01;
+}
+
+enum MapEncoding {
+  MAP_ENCODING_OCCUPANCY_GRID = 0x00;
+  MAP_ENCODING_PNG = 0x01;
+  MAP_ENCODING_JSON = 0x02;
+}
+
+enum RegionType {
+  REGION_TYPE_UNKNOWN = 0x00;
+  REGION_TYPE_WORK = 0x01;
+  REGION_TYPE_OBSTACLE = 0x02;
+  REGION_TYPE_ERASE = 0x03;
+  REGION_TYPE_CROP = 0x04;
+}
+
+enum TaskState {
+  TASK_STATE_IDLE = 0x00;
+  TASK_STATE_READY = 0x01;
+  TASK_STATE_PLANNING = 0x02;
+  TASK_STATE_RUNNING = 0x03;
+  TASK_STATE_PAUSED = 0x04;
+  TASK_STATE_COMPLETED = 0x05;
+  TASK_STATE_STOPPED = 0x06;
+  TASK_STATE_ERROR = 0x07;
+}
+
+enum TaskCommandType {
+  TASK_CMD_START = 0x00;
+  TASK_CMD_PAUSE = 0x01;
+  TASK_CMD_RESUME = 0x02;
+  TASK_CMD_STOP = 0x03;
+}
+
+enum MapEditOperation {
+  MAP_EDIT_OP_UNKNOWN = 0x00;
+  MAP_EDIT_OP_UPSERT_WORK_REGION = 0x01;
+  // Keep legacy obstacle upsert for backward compatibility.
+  MAP_EDIT_OP_UPSERT_OBSTACLE_REGION = 0x02;
+  MAP_EDIT_OP_DELETE_REGION = 0x03;
+  MAP_EDIT_OP_PAINT_FREE = 0x04;
+  MAP_EDIT_OP_PAINT_OCCUPIED = 0x05;
+  MAP_EDIT_OP_PAINT_UNKNOWN = 0x06;
+  MAP_EDIT_OP_CLEAR_OVERLAY_PATCH = 0x07;
+  // New explicit operations to avoid overloading UPSERT_OBSTACLE_REGION.
+  MAP_EDIT_OP_UPSERT_ERASE_REGION = 0x08;
+  MAP_EDIT_OP_UPSERT_CROP_REGION = 0x09;
+}
+
+enum MapSyncOperation {
+  MAP_SYNC_OP_UNKNOWN = 0x00;
+  MAP_SYNC_OP_DOWNLOAD_FROM_AURORA = 0x01;
+  MAP_SYNC_OP_UPLOAD_TO_AURORA = 0x02;
+}
+
+enum MapModeType {
+  MAP_MODE_UNKNOWN = 0x00;
+  MAP_MODE_MAPPING = 0x01;
+  MAP_MODE_LOCALIZATION = 0x02;
+}
+
+message WifiConfig {
+  string ssid = 1;
+  string password = 2;
+}
+
+message WifiStatusReport {
+  WifiResult result = 1;
+  string message = 2;
+}
+
+message PolygonPoint {
+  float x = 1;
+  float y = 2;
+}
+
+message PolygonRegion {
+  string name = 1;
+  repeated PolygonPoint points = 2;
+  string region_id = 3;
+  uint32 priority = 4;
+  bool enabled = 5;
+  uint32 color_argb = 6;
+  bool closed = 7;
+  RegionType region_type = 8;
+  // Region-specific planning direction: "x" or "y".
+  // Empty means LOWER-side default policy.
+  string global_direction = 9;
+}
+
+message ChassisSettings {
+  // Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+  float run_speed = 1 [(unit) = "m/s", (scale) = 1];
+  uint32 disc_speed_rpm = 2;
+  bool disc_enabled = 3;
+  WorkMode work_mode = 4;
+  // Default steering/differential speed ratio for manual drive, in (0, 1].
+  // Zero means keep the current LOWER-side default.
+  float max_turn_speed_ratio = 5;
+}
+
+message MapSettings {
+  float vehicle_width = 1 [(unit) = "m", (scale) = 1];
+  float vehicle_length = 2 [(unit) = "m", (scale) = 1];
+  float default_path_spacing = 3 [(unit) = "m", (scale) = 1];
+  float turn_radius = 4 [(unit) = "m", (scale) = 1];
+  float overlap_ratio = 5 [(unit) = "ratio", (scale) = 1];
+  float inflation_radius = 6 [(unit) = "m", (scale) = 1];
+  repeated PolygonRegion obstacle_regions = 7;
+  repeated PolygonRegion work_regions = 8;
+}
+
+message SettingsReadRequest {
+  bool read_chassis = 1;
+  bool read_map = 2;
+}
+
+message SettingsReadResponse {
+  ResultCode result = 1;
+  ChassisSettings chassis = 2;
+  MapSettings map = 3;
+  string message = 4;
+}
+
+message SettingsWriteRequest {
+  ChassisSettings chassis = 1;
+  MapSettings map = 2;
+}
+
+message SettingsWriteResponse {
+  ResultCode result = 1;
+  string message = 2;
+  ChassisSettings chassis = 3;
+  MapSettings map = 4;
+}
+
+message Pose2D {
+  float x = 1;
+  float y = 2;
+  float heading_deg = 3;
+}
+
+message LocalizationCovariance {
+  // True when covariance values come from the latest odometry pose covariance.
+  bool valid = 1;
+  // 2D pose covariance components in the same coordinate frame as the reported pose/map.
+  float x_variance = 2;
+  float y_variance = 3;
+  float yaw_variance = 4;
+  float xy_covariance = 5;
+  float x_yaw_covariance = 6;
+  float y_yaw_covariance = 7;
+}
+
+message DeviceStatusReport {
+  uint32 utc_time = 1;
+  SystemStatus system_status = 2;
+  WifiResult wifi_status = 3;
+  WorkMode work_mode = 4;
+  float left_wheel_speed = 5 [(unit) = "m/s", (scale) = 1];
+  float right_wheel_speed = 6 [(unit) = "m/s", (scale) = 1];
+  uint32 disc_speed_rpm = 7;
+  bool disc_enabled = 8;
+  DiscLiftState disc_lift_state = 9;
+  bool light_enabled = 10;
+  Pose2D position = 11;
+  bool chassis_enabled = 12;
+  float alignment_yaw_deg = 13;
+  LocalizationCovariance localization_covariance = 14;
+  bool localization_quality_available = 15;
+  uint32 localization_quality = 16;
+}
+
+message CameraFrameRequest {
+  bool snapshot = 1;
+  uint32 max_chunk_size = 2;
+}
+
+message CameraFrameChunk {
+  uint32 frame_id = 1;
+  uint32 utc_time = 2;
+  uint32 width = 3;
+  uint32 height = 4;
+  CameraCodec codec = 5;
+  uint32 chunk_index = 6;
+  uint32 total_chunks = 7;
+  bytes data = 8;
+}
+
+message MapRequest {
+  bool snapshot = 1;
+  uint32 max_chunk_size = 2;
+  // Empty or LIVE_MAP selects the live radar map; otherwise load the saved
+  // offline raw grid associated with this map ID.
+  string map_id = 3;
+}
+
+message MapChunk {
+  uint32 map_id = 1;
+  uint32 utc_time = 2;
+  MapEncoding encoding = 3;
+  uint32 width = 4;
+  uint32 height = 5;
+  float resolution = 6;
+  uint32 chunk_index = 7;
+  uint32 total_chunks = 8;
+  bytes data = 9;
+  Pose2D origin = 10;
+  string frame_id = 11;
+  float preview_scale_x = 12;
+  float preview_scale_y = 13;
+  LocalizationCovariance localization_covariance = 14;
+  // Rotation from source map frame to the returned map image frame, in degrees.
+  float alignment_yaw_deg = 15;
+  float app_rotation_deg = 16;
+  float rotation_alignment_delta_deg = 17;
+}
+
+message PathPoint2D {
+  float x = 1;
+  float y = 2;
+  string path_type = 3;
+}
+
+message RegionRepeatItem {
+  string region_id = 1;
+  uint32 repeat = 2;
+}
+
+message TaskConfig {
+  string task_id = 1;
+  repeated PolygonRegion work_regions = 2;
+  repeated PolygonRegion obstacle_regions = 3;
+  float default_path_spacing = 4 [(unit) = "m", (scale) = 1];
+  float turn_radius = 5 [(unit) = "m", (scale) = 1];
+  float overlap_ratio = 6 [(unit) = "ratio", (scale) = 1];
+  float inflation_radius = 7 [(unit) = "m", (scale) = 1];
+  string map_id = 8;
+  repeated string selected_work_region_ids = 9;
+  repeated RegionRepeatItem region_repeats = 10;
+}
+
+message TaskConfigResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string task_id = 3;
+}
+
+message TaskCommand {
+  string task_id = 1;
+  TaskCommandType command = 2;
+}
+
+message TaskCommandResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string task_id = 3;
+}
+
+message TaskStatusReport {
+  string task_id = 1;
+  TaskState state = 2;
+  float progress = 3;
+  uint32 map_version = 4;
+  string message = 5;
+  Pose2D position = 6;
+  bool replan_requested = 7;
+  uint32 path_point_count = 8;
+  uint32 path_version = 9;
+  float total_work_area_m2 = 10 [(unit) = "m2", (scale) = 1];
+  float remaining_work_area_m2 = 11 [(unit) = "m2", (scale) = 1];
+  float remaining_time_s = 12 [(unit) = "s", (scale) = 1];
+  string current_region_id = 13;
+  uint32 current_region_repeat_index = 14;
+  uint32 current_region_repeat_total = 15;
+  float alignment_yaw_deg = 16;
+  LocalizationCovariance localization_covariance = 17;
+}
+
+message TaskPathRequest {
+  string task_id = 1;
+  uint32 max_chunk_size = 2;
+}
+
+message TaskPathChunk {
+  string task_id = 1;
+  uint32 chunk_index = 2;
+  uint32 total_chunks = 3;
+  uint32 path_version = 4;
+  bytes data = 5;
+}
+
+message MapPreviewRequest {
+  uint32 max_edge = 1;
+  string image_format = 2;
+  bool include_overlay = 3;
+  string map_id = 4;
+}
+
+message MapPreviewResponse {
+  ResultCode result = 1;
+  string message = 2;
+  uint32 map_version = 3;
+  uint32 width = 4;
+  uint32 height = 5;
+  float resolution = 6;
+  Pose2D origin = 7;
+  string frame_id = 8;
+  bytes image_data = 9;
+  string overlay_json = 10;
+  float preview_scale_x = 11;
+  float preview_scale_y = 12;
+  LocalizationCovariance localization_covariance = 13;
+  // Saved rotation angle for this map, in degrees.
+  float alignment_yaw_deg = 14;
+  float app_rotation_deg = 15;
+  float rotation_alignment_delta_deg = 16;
+}
+
+message MapEditCommand {
+  string edit_id = 1;
+  MapEditOperation operation = 2;
+  string region_name = 3;
+  PolygonRegion region = 4;
+  repeated PolygonPoint polygon = 5;
+  float brush_radius = 6;
+  int32 paint_value = 7;
+  string target_region_id = 8;
+  RegionType target_region_type = 9;
+  uint32 expected_map_version = 10;
+  bool dry_run = 11;
+  Pose2D start_pose = 12;
+  Pose2D end_pose = 13;
+  string map_id = 14;
+}
+
+message MapEditResponse {
+  ResultCode result = 1;
+  string message = 2;
+  uint32 map_version = 3;
+}
+
+message MapEditStatusReport {
+  uint32 map_version = 1;
+  bool applied_to_planner = 2;
+  string message = 3;
+}
+
+message VideoStreamInfoRequest {
+  bool include_debug = 1;
+}
+
+message VideoStreamInfoResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string stream_url = 3;
+  string codec = 4;
+  uint32 width = 5;
+  uint32 height = 6;
+  bool online = 7;
+  uint32 utc_time = 8;
+}
+
+message PathPlanRequest {
+  string request_id = 1;
+  string task_id = 2;
+  bool force_replan = 3;
+  bool return_path_chunks = 4;
+  uint32 max_chunk_size = 5;
+  Pose2D start_pose = 6;
+  Pose2D end_pose = 7;
+  string global_direction = 8;
+  // Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+  string map_id = 9;
+}
+
+message PathPlanResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string request_id = 3;
+  string task_id = 4;
+  uint32 map_version = 5;
+  uint32 path_version = 6;
+  uint32 path_point_count = 7;
+  float path_length_m = 8;
+  bool planned = 9;
+  bool path_chunked = 10;
+  bytes preview_image = 11;
+  string preview_format = 12;
+  uint32 width = 13;
+  uint32 height = 14;
+  float resolution = 15;
+  Pose2D origin = 16;
+  string frame_id = 17;
+  float preview_scale_x = 18;
+  float preview_scale_y = 19;
+  float total_work_area_m2 = 20 [(unit) = "m2", (scale) = 1];
+  float estimated_time_s = 21 [(unit) = "s", (scale) = 1];
+  LocalizationCovariance localization_covariance = 22;
+  // Saved rotation angle used by the returned path preview, in degrees.
+  float alignment_yaw_deg = 23;
+  float app_rotation_deg = 24;
+  float rotation_alignment_delta_deg = 25;
+}
+
+message MapSyncRequest {
+  MapSyncOperation operation = 1;
+  // Map-id-only mode:
+  // - DOWNLOAD_FROM_AURORA: map_id 可为空（自动生成新地图ID）
+  // - UPLOAD_TO_AURORA: map_id 必填（从本地已记录地图中查找并上传）
+  string map_id = 2;
+  bool update_navigation_map = 3;
+}
+
+message MapSyncResponse {
+  ResultCode result = 1;
+  string message = 2;
+  MapSyncOperation operation = 3;
+  string map_id = 4;
+  string map_name = 8;
+  string map_yaml_path = 5;
+  string map_image_path = 6;
+  bool navigation_map_reloaded = 7;
+}
+
+message MapImportToRadarRequest {
+  string map_id = 1;
+}
+
+message MapImportToRadarResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  string map_name = 4;
+  bool imported = 5;
+}
+
+message MapModeRequest {
+  MapModeType mode = 1;
+  bool enabled = 2;
+  int32 map_kind = 3;
+}
+
+message MapModeResponse {
+  ResultCode result = 1;
+  string message = 2;
+  MapModeType mode = 3;
+  bool enabled = 4;
+  int32 map_kind = 5;
+}
+
+message MapAlignmentRequest {
+  string map_id = 1;
+  // APP planning/display rotation relative to the map X axis, in degrees.
+  // It is stored independently; planning uses alignment_yaw plus the saved
+  // rotation difference, but alignment_yaw itself is never overwritten.
+  float rotation_deg = 2;
+}
+
+message MapAlignmentResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  float rotation_deg = 4;
+  float rotation_rad = 5;
+  float alignment_yaw_deg = 6;
+  float rotation_alignment_delta_deg = 7;
+}
+
+message MapCatalogRequest {
+}
+
+message MapCatalogItem {
+  string map_id = 1;
+  string name = 2;
+  uint64 size_bytes = 3;
+  uint64 saved_at = 4;
+  float total_work_area_m2 = 5 [(unit) = "m2", (scale) = 1];
+  float estimated_time_s = 6 [(unit) = "s", (scale) = 1];
+  string thumbnail_format = 7;
+  uint32 thumbnail_width = 8;
+  uint32 thumbnail_height = 9;
+  string thumbnail_image_b64 = 10;
+  string created_at = 11;
+}
+
+message MapCatalogResponse {
+  ResultCode result = 1;
+  string message = 2;
+  uint32 total_count = 3;
+  repeated MapCatalogItem items = 4;
+}
+
+message MapDeleteRequest {
+  string map_id = 1;
+}
+
+message MapDeleteResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  string map_name = 4;
+  bool deleted = 5;
+}
+
+message MapSaveRequest {
+  string map_name = 1;
+  string map_id = 2;
+  // Optional map rotation angle relative to the positive X axis, in degrees;
+  // positive values rotate clockwise in APP image coordinates.
+  // Set has_rotation_deg=true when rotation_deg should override the saved value.
+  bool has_rotation_deg = 3;
+  float rotation_deg = 4;
+}
+
+message MapSaveResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  string map_name = 4;
+  string map_yaml_path = 5;
+  string map_image_path = 6;
+  bool navigation_map_reloaded = 7;
+  float total_work_area_m2 = 8 [(unit) = "m2", (scale) = 1];
+  float estimated_time_s = 9 [(unit) = "s", (scale) = 1];
+  string created_at = 10;
+}
+
+message MapMetricsRequest {
+  string map_id = 1;
+}
+
+message RegionMetricsItem {
+  string region_id = 1;
+  string region_name = 2;
+  uint32 repeat = 3;
+  float area_m2 = 4 [(unit) = "m2", (scale) = 1];
+  float estimated_time_h = 5 [(unit) = "h", (scale) = 1];
+}
+
+message MapMetricsResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  string map_name = 4;
+  repeated RegionMetricsItem region_metrics = 5;
+}
+
+message TaskResultRequest {
+  string map_id = 1;
+  string task_id = 2;
+}
+
+message TaskResultRegionItem {
+  string region_id = 1;
+  string region_name = 2;
+  uint32 target_repeat = 3;
+  uint32 executed_repeat = 4;
+  bool completed = 5;
+  string unfinished_reason = 6;
+}
+
+message TaskResultResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  string task_id = 4;
+  TaskState final_state = 5;
+  bool all_completed = 6;
+  string stop_reason = 7;
+  uint32 path_version = 8;
+  string image_format = 9;
+  bytes image_data = 10;
+  uint32 image_width = 11;
+  uint32 image_height = 12;
+  uint64 finished_at = 13;
+  repeated string selected_work_region_ids = 14;
+  repeated TaskResultRegionItem region_results = 15;
+  LocalizationCovariance localization_covariance = 16;
+  // Saved rotation angle used by the returned result image, in degrees.
+  float alignment_yaw_deg = 17;
+  float app_rotation_deg = 18;
+  float rotation_alignment_delta_deg = 19;
+}
+
+message LiveMapCacheClearRequest {
+}
+
+message LiveMapCacheClearResponse {
+  ResultCode result = 1;
+  string message = 2;
+}
+
+message RadarMapCacheClearRequest {
+}
+
+message RadarMapCacheClearResponse {
+  ResultCode result = 1;
+  string message = 2;
+}
+
+message RadarSystemStatusRequest {
+}
+
+message RadarSystemStatusResponse {
+  ResultCode result = 1;
+  string message = 2;
+  bool available = 3;
+  string status = 4;
+  uint64 timestamp_ns = 5;
+}
+
+message RadarMapSyncRequest {
+}
+
+message RadarMapSyncResponse {
+  ResultCode result = 1;
+  string message = 2;
+  bool sent = 3;
+}
+
+message RadarRelocalizationRequest {
+}
+
+message RadarRelocalizationResponse {
+  ResultCode result = 1;
+  string message = 2;
+  // True means the radar accepted the asynchronous relocalization request.
+  bool accepted = 3;
+  string status = 4;
+}
+
+message RadarRelocalizationStatusRequest {
+}
+
+message RadarRelocalizationStatusResponse {
+  ResultCode result = 1;
+  string message = 2;
+  bool available = 3;
+  // idle, running, succeeded, failed or canceled.
+  string status = 4;
+  string raw_status = 5;
+  string system_status = 6;
+  reserved 7, 8, 9;
+  reserved "odom_available", "odom_linear_speed_mps", "odom_angular_speed_radps";
+  uint64 timestamp_ns = 10;
+}
+
+message DiscLiftControl {
+  DiscLiftCommand command = 1;
+}
+
+message LightingControl {
+  bool enabled = 1;
+}
+
+message ChassisPowerControl {
+  bool enabled = 1;
+}
+
+message DiscControl {
+  bool enabled = 1;
+  uint32 speed_rpm = 2;
+}
+
+message EmergencyStopControl {
+  bool enabled = 1;
+}
+
+message ManualDriveControl {
+  ManualMotionCommand motion = 1;
+  float speed_ratio = 2;
+  float remote_x = 3;
+  float remote_y = 4;
+  // Optional maximum straight-line speed for this command, in m/s.
+  float max_speed_mps = 5;
+  // Optional steering/differential speed ratio in (0, 1]. Zero keeps legacy behavior.
+  float max_turn_speed_ratio = 6;
+}
+
+message ControlCommand {
+  oneof command {
+    DiscLiftControl disc_lift = 1;
+    LightingControl lighting = 2;
+    ManualDriveControl manual_drive = 3;
+    ChassisPowerControl chassis_power = 4;
+    DiscControl disc_control = 5;
+    EmergencyStopControl emergency_stop = 6;
+  }
+}
+
+message ControlCommandResponse {
+  ResultCode result = 1;
+  string message = 2;
+  ControlCommand applied_command = 3;
+}

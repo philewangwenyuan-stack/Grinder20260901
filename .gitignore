@@ -48,5 +48,6 @@ tools/mediamtx/mediamtx.tar.gz
 .idea/
 *.swp
 catkin_ws/t-inspect-*
+**/.git.nested-backup*/
 Thumbs.db
 .DS_Store

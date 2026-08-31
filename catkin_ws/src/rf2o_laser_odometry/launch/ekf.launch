@@ -1,0 +1,11 @@
+<launch>
+  <node pkg="robot_localization"
+        type="ekf_localization_node"
+        name="ekf_test"
+        output="screen"
+        clear_params="true">
+    <rosparam command="load"
+              file="$(find rf2o_laser_odometry)/config/ekf.yaml"/>
+    <remap from="odometry/filtered" to="/odometry/filtered_test"/>
+  </node>
+</launch>

@@ -1,0 +1,53 @@
+# Build directories
+build/
+bin/
+obj/
+*.a
+*.o
+*.so
+*.out
+
+# Android
+.gradle/
+sdk/android/build/
+local.properties
+*.apk
+*.aar
+sdk/android/.cxx/
+sdk/android/.externalNativeBuild/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Windows Zone.Identifier (Mark of the Web - created when files are downloaded/copied)
+*:Zone.Identifier
+
+# Virtual Environments
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Downloaded tools (protoc binary)
+tools/protoc/
+
+# Proto generated files (optional - regenerate with ./scripts/generate_proto.sh)
+# generated/
+
+# Archives
+*.rar
+*.zip
+*.tar.gz
+
+# Documentation and internal logs
+brain/
+implementation_plan.md
+walkthrough.md
+task.md
+.gemini/
+.agent/
+*.log
