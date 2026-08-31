@@ -21,6 +21,9 @@ temp/
 **/temp/
 *.log
 
+# Device-local credentials (use a sanitized template for version control)
+catkin_ws/src/grinder_scheduler/config/scheduler.yaml
+
 # Generated native extensions and object files
 *.so
 *.so.*
