@@ -29,7 +29,7 @@ radar_relocalization_service_wait_sec: 1.0
 
 # Never contact production services from a simulation launch.
 file_upload_on_map_save: false
-mqtt_enabled: false
+mqtt_enabled: true
 stream_enabled: false
 
 # Preserve local APP video using the bundled x86-64 MediaMTX binary.

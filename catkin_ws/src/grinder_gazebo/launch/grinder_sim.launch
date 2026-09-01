@@ -40,11 +40,11 @@
     <param name="sim_odom_topic" value="/odom" />
     <param name="left_image_input" value="/grinder/sim/left/image_raw" />
     <param name="right_image_input" value="/grinder/sim/right/image_raw" />
-    <param name="world_width_m" value="50.0" />
-    <param name="world_height_m" value="50.0" />
+    <param name="world_width_m" value="53.0" />
+    <param name="world_height_m" value="53.0" />
     <param name="column_size_m" value="0.9" />
     <param name="column_spacing_m" value="6.0" />
-    <param name="column_edge_margin_m" value="4.0" />
+    <param name="column_edge_margin_m" value="5.5" />
     <param name="map_resolution" value="0.05" />
   </node>
 

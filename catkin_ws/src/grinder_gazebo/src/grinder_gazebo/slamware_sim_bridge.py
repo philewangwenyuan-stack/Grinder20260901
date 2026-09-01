@@ -42,13 +42,13 @@ class SlamwareSimBridge:
         self._map_frame = rospy.get_param("~map_frame", "map")
         self._odom_frame = rospy.get_param("~odom_frame", "odom")
         self._map_resolution = max(0.01, float(rospy.get_param("~map_resolution", 0.05)))
-        self._world_width = max(2.0, float(rospy.get_param("~world_width_m", 12.0)))
-        self._world_height = max(2.0, float(rospy.get_param("~world_height_m", 10.0)))
+        self._world_width = max(2.0, float(rospy.get_param("~world_width_m", 53.0)))
+        self._world_height = max(2.0, float(rospy.get_param("~world_height_m", 53.0)))
         self._column_size = max(0.1, float(rospy.get_param("~column_size_m", 0.9)))
         self._column_spacing = max(self._column_size, float(rospy.get_param("~column_spacing_m", 6.0)))
         self._column_edge_margin = max(
             self._column_size * 0.5,
-            float(rospy.get_param("~column_edge_margin_m", 4.0)),
+            float(rospy.get_param("~column_edge_margin_m", 5.5)),
         )
 
         self._mapping_enabled = False
@@ -127,7 +127,7 @@ class SlamwareSimBridge:
 
         ox = grid.info.origin.position.x
         oy = grid.info.origin.position.y
-        # Match factory_floor.world: a 50 m square, 0.2 m boundary walls,
+        # Match factory_floor.world: a 53 m square, 0.2 m boundary walls,
         # and a regular 0.9 m square column grid at 6 m center spacing.
         half_width = self._world_width * 0.5
         half_height = self._world_height * 0.5

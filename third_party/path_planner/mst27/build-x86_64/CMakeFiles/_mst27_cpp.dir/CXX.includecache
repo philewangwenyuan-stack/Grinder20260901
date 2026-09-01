@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/e/CODE/C++/Grinder/third_party/path_planner/mst27/cpp/mst27_cpp.cpp
+pybind11/numpy.h
+-
+pybind11/pybind11.h
+-
+algorithm
+-
+cctype
+-
+cmath
+-
+cstdint
+-
+deque
+-
+limits
+-
+optional
+-
+queue
+-
+stdexcept
+-
+string
+-
+unordered_map
+-
+unordered_set
+-
+vector
+-
+

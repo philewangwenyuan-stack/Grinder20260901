@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <sdf version="1.6">
-  <world name="x920_50m_single_floor">
+  <world name="x920_53m_single_floor">
     <physics name="default_physics" type="ode">
       <max_step_size>0.002</max_step_size>
       <real_time_update_rate>500</real_time_update_rate>
@@ -11,12 +11,12 @@
     <include><uri>model://sun</uri></include>
     <include><uri>model://ground_plane</uri></include>
 
-    <!-- 50 m x 50 m single-floor test area. Perimeter walls are 3 m high. -->
-    <model name="floor_50m"><static>true</static><pose>0 0 -0.05 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>50 50 0.10</size></box></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision><visual name="v"><geometry><box><size>50 50 0.10</size></box></geometry><material><ambient>0.28 0.30 0.32 1</ambient><diffuse>0.40 0.42 0.45 1</diffuse></material></visual></link></model>
-    <model name="north_wall"><static>true</static><pose>0 25 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>50 0.20 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>50 0.20 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-    <model name="south_wall"><static>true</static><pose>0 -25 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>50 0.20 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>50 0.20 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-    <model name="east_wall"><static>true</static><pose>25 0 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.20 50 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.20 50 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-    <model name="west_wall"><static>true</static><pose>-25 0 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.20 50 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.20 50 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
+    <!-- 53 m x 53 m single-floor test area. Perimeter walls are 3 m high. -->
+    <model name="floor_53m"><static>true</static><pose>0 0 -0.05 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>53 53 0.10</size></box></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision><visual name="v"><geometry><box><size>53 53 0.10</size></box></geometry><material><ambient>0.28 0.30 0.32 1</ambient><diffuse>0.40 0.42 0.45 1</diffuse></material></visual></link></model>
+    <model name="north_wall"><static>true</static><pose>0 26.5 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>53 0.20 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>53 0.20 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
+    <model name="south_wall"><static>true</static><pose>0 -26.5 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>53 0.20 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>53 0.20 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
+    <model name="east_wall"><static>true</static><pose>26.5 0 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.20 53 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.20 53 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
+    <model name="west_wall"><static>true</static><pose>-26.5 0 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.20 53 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.20 53 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
 
     <!-- 0.9 m x 0.9 m structural columns, 6 m center-to-center spacing. -->
     <model name="column_m21_m21"><static>true</static><pose>-21 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>

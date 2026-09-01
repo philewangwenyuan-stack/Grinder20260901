@@ -37,3 +37,11 @@ Implement [vector_pure_pursuit](https://github.com/blackcoffeerobotics/vector_pu
       journal = {Autonomous Robots}
 }
 ```
+# 临时修改参数
+bash
+```
+source /opt/ros/noetic/setup.bash
+rosrun dynamic_reconfigure dynparam set \
+  /move_base/RegulatedPurePursuitController \
+  desired_linear_vel 0.03
+```
