@@ -695,8 +695,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.path_start_pose_edit.setPlaceholderText("起点 x,y[,heading_deg] 例如 1.2,-0.8,90")
         self.path_end_pose_edit = QtWidgets.QLineEdit("")
         self.path_end_pose_edit.setPlaceholderText("终点 x,y[,heading_deg] 例如 3.0,-1.0,0")
-        self.path_plan_axis_y_check = QtWidgets.QCheckBox("按Y方向规划(未勾选=按X)")
-        self.path_plan_axis_y_check.setChecked(False)
+        self.path_plan_direction_combo = QtWidgets.QComboBox()
+        self.path_plan_direction_combo.addItems(["x", "-x", "y", "-y"])
+        self.path_plan_direction_combo.setToolTip("规划轴与首条作业线方向")
         self.map_id_edit = QtWidgets.QLineEdit("")
         self.map_id_edit.setPlaceholderText("地图ID，例如 20260427_102229")
         self.map_name_edit = QtWidgets.QLineEdit("地图")
@@ -745,7 +746,7 @@ class MainWindow(QtWidgets.QMainWindow):
         command_grid.addWidget(QtWidgets.QLabel("end_pose"), row, 3)
         command_grid.addWidget(self.path_end_pose_edit, row, 4)
         command_grid.addWidget(self.btn_pick_end_pose, row, 5)
-        command_grid.addWidget(self.path_plan_axis_y_check, row, 6)
+        command_grid.addWidget(self.path_plan_direction_combo, row, 6)
         command_grid.addWidget(self.btn_path_plan, row, 7)
         command_grid.addWidget(self.btn_task_result, row, 8)
         row += 1
@@ -1413,7 +1414,8 @@ class MainWindow(QtWidgets.QMainWindow):
         req_id = self.request_id.text().strip()
         task_id = self.task_id.text().strip()
         map_id = self._get_selected_or_manual_map_id()
-        default_heading = 90.0 if self.path_plan_axis_y_check.isChecked() else 0.0
+        selected_direction = self.path_plan_direction_combo.currentText().strip().lower() or "x"
+        default_heading = 90.0 if selected_direction.lstrip("+-") == "y" else 0.0
         try:
             start_pose, start_has_heading = self._parse_pose_text(self.path_start_pose_edit.text(), "start_pose")
             end_pose, end_has_heading = self._parse_pose_text(self.path_end_pose_edit.text(), "end_pose")
@@ -1429,7 +1431,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         if hasattr(req, "map_id"):
             req.map_id = str(map_id or "")
-        req.global_direction = "y" if self.path_plan_axis_y_check.isChecked() else "x"
+        req.global_direction = selected_direction
         if start_pose is not None:
             req.start_pose.x = float(start_pose[0])
             req.start_pose.y = float(start_pose[1])
@@ -1467,7 +1469,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         if end_pose is not None
                         else "end_pose: <empty>"
                     ),
-                    "axis_default: {}".format("Y(90deg)" if self.path_plan_axis_y_check.isChecked() else "X(0deg)"),
+                    "axis_default: {}".format(
+                        "Y(90deg)" if selected_direction.lstrip("+-") == "y" else "X(0deg)"
+                    ),
                 ]
             )
         )
@@ -2040,10 +2044,11 @@ class MainWindow(QtWidgets.QMainWindow):
         req.region.closed = True
         req.region.color_argb = 0
         req.region.region_type = int(region_type_enum)
-        # Bind region-level planning direction with current UI axis toggle.
-        # checked -> y, unchecked -> x
+        # Bind the region to the selected axis and first-line travel direction.
         if hasattr(req.region, "global_direction"):
-            req.region.global_direction = "y" if self.path_plan_axis_y_check.isChecked() else "x"
+            req.region.global_direction = (
+                self.path_plan_direction_combo.currentText().strip().lower() or "x"
+            )
         points = self._parse_edit_points()
         for x, y in points:
             p = req.region.points.add()

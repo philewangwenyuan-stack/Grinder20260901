@@ -3,6 +3,25 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 
+PLANNING_DIRECTIONS = ("x", "-x", "y", "-y")
+
+
+def is_planning_direction(value):
+    return str(value or "").strip().lower() in PLANNING_DIRECTIONS
+
+
+def normalize_planning_direction(value, default="x"):
+    candidate = str(value or "").strip().lower()
+    if candidate in PLANNING_DIRECTIONS:
+        return candidate
+    fallback = str(default or "x").strip().lower()
+    return fallback if fallback in PLANNING_DIRECTIONS else "x"
+
+
+def planning_direction_axis(value):
+    return normalize_planning_direction(value).lstrip("+-")
+
+
 class SchedulerState(enum.Enum):
     IDLE = "IDLE"
     READY = "READY"

@@ -3,6 +3,8 @@ import json
 import mimetypes
 import os
 import queue
+import re
+import subprocess
 import threading
 import time
 import urllib.error
@@ -392,6 +394,9 @@ class MqttDeviceReporter:
         keepalive_sec=60,
         qos=1,
         status_period_sec=3.0,
+        network_latency_enabled=True,
+        network_latency_period_sec=5.0,
+        network_latency_timeout_ms=1000,
     ):
         self.enabled = bool(enabled)
         self.broker_host = str(broker_host or "")
@@ -403,10 +408,17 @@ class MqttDeviceReporter:
         self.keepalive_sec = max(10, int(keepalive_sec))
         self.qos = max(0, min(2, int(qos)))
         self.status_period_sec = max(0.5, float(status_period_sec))
+        self.network_latency_enabled = bool(network_latency_enabled)
+        self.network_latency_period_sec = max(1.0, float(network_latency_period_sec))
+        self.network_latency_timeout_ms = max(100, int(network_latency_timeout_ms))
         self._client = None
         self._connected = threading.Event()
         self._stop_event = threading.Event()
         self._status_thread = None
+        self._latency_thread = None
+        self._latency_lock = threading.Lock()
+        self._latency_available = False
+        self._latency_ms = 0.0
         self.data_topic = "rg/cloud/deviceData/002/{}".format(self.dev_code)
         self.online_topic = "rg/cloud/deviceState/002/{}/online".format(self.dev_code)
         self.offline_topic = "rg/cloud/deviceState/002/{}/offline".format(self.dev_code)
@@ -444,9 +456,18 @@ class MqttDeviceReporter:
         self._client.loop_start()
         self._status_thread = threading.Thread(target=self._status_loop, name="grinder-mqtt-status", daemon=True)
         self._status_thread.start()
+        if self.network_latency_enabled:
+            self._latency_thread = threading.Thread(
+                target=self._latency_loop,
+                name="grinder-mqtt-latency",
+                daemon=True,
+            )
+            self._latency_thread.start()
 
     def stop(self):
         self._stop_event.set()
+        if self._latency_thread is not None:
+            self._latency_thread.join(timeout=2.0)
         if self._client is None:
             return
         if self._connected.is_set():
@@ -467,6 +488,39 @@ class MqttDeviceReporter:
             pass
         if self._status_thread is not None:
             self._status_thread.join(timeout=2.0)
+
+    def _measure_network_latency(self):
+        timeout_sec = max(1, int((self.network_latency_timeout_ms + 999) / 1000))
+        try:
+            result = subprocess.run(
+                ["ping", "-n", "-c", "1", "-W", str(timeout_sec), self.broker_host],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=(self.network_latency_timeout_ms / 1000.0) + 1.0,
+                check=False,
+            )
+            if result.returncode != 0:
+                return False, 0.0
+            match = re.search(r"time[=<]([0-9]+(?:\.[0-9]+)?)\s*ms", result.stdout or "")
+            if match is None:
+                return False, 0.0
+            return True, float(match.group(1))
+        except (OSError, subprocess.SubprocessError, ValueError):
+            return False, 0.0
+
+    def _latency_loop(self):
+        while not self._stop_event.is_set():
+            available, latency_ms = self._measure_network_latency()
+            with self._latency_lock:
+                self._latency_available = bool(available)
+                self._latency_ms = float(latency_ms) if available else 0.0
+            if self._stop_event.wait(self.network_latency_period_sec):
+                break
+
+    def _latency_snapshot(self):
+        with self._latency_lock:
+            return self._latency_available, self._latency_ms
 
     def _on_connect(self, client, userdata, flags, reason_code, properties=None):
         try:
@@ -496,6 +550,9 @@ class MqttDeviceReporter:
                 continue
             try:
                 reported = self.status_provider() or {}
+                latency_available, latency_ms = self._latency_snapshot()
+                reported["mqttBrokerLatencyAvailable"] = bool(latency_available)
+                reported["mqttBrokerLatencyMs"] = round(float(latency_ms), 3)
                 payload = {"reported": reported, "timestamp": _timestamp_ms()}
                 self._client.publish(
                     self.data_topic,
@@ -505,3 +562,32 @@ class MqttDeviceReporter:
                 )
             except Exception as exc:
                 rospy.logwarn_throttle(5.0, "MQTT status publish failed: %s", exc)
+
+    def publish_report(self, topic_suffix, reported):
+        """Publish one non-periodic business report without blocking control flow."""
+        suffix = str(topic_suffix or "").strip().strip("/")
+        if not suffix:
+            return False, "topic suffix is empty"
+        if not self.enabled or self._client is None:
+            return False, "MQTT reporter is disabled"
+        if not self._connected.is_set():
+            return False, "MQTT is not connected"
+        try:
+            topic = "{}/{}".format(self.data_topic, suffix)
+            payload = json.dumps(
+                {"reported": reported or {}, "timestamp": _timestamp_ms()},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            info = self._client.publish(topic, payload, qos=self.qos, retain=False)
+            success_code = getattr(mqtt, "MQTT_ERR_SUCCESS", 0)
+            if int(getattr(info, "rc", success_code)) != int(success_code):
+                return False, "MQTT publish rejected: rc={}".format(getattr(info, "rc", -1))
+            rospy.loginfo(
+                "MQTT business report queued: topic=%s payload_bytes=%d",
+                topic,
+                len(payload.encode("utf-8")),
+            )
+            return True, "queued"
+        except Exception as exc:
+            return False, str(exc)

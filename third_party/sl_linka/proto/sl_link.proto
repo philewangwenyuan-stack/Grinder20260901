@@ -33,8 +33,8 @@ enum MessageId {
   MSG_ID_TASK_COMMAND = 0x0502;
   MSG_ID_TASK_COMMAND_RESPONSE = 0x0503;
   MSG_ID_TASK_STATUS_REPORT = 0x0504;
-  MSG_ID_TASK_PATH_REQUEST = 0x0505;
-  MSG_ID_TASK_PATH_CHUNK = 0x0506;
+  MSG_ID_PATH_POINT_PLAN_REQUEST = 0x0505;
+  MSG_ID_PATH_POINT_PLAN_RESPONSE = 0x0506;
   MSG_ID_MAP_PREVIEW_REQUEST = 0x0507;
   MSG_ID_MAP_PREVIEW_RESPONSE = 0x0508;
   MSG_ID_MAP_EDIT_COMMAND = 0x0509;
@@ -74,6 +74,12 @@ enum MessageId {
   MSG_ID_RADAR_RELOCALIZATION_RESPONSE = 0x052B;
   MSG_ID_RADAR_RELOCALIZATION_STATUS_REQUEST = 0x052C;
   MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE = 0x052D;
+  MSG_ID_MAP_REGION_POINT_REQUEST = 0x052E;
+  MSG_ID_MAP_REGION_POINT_RESPONSE = 0x052F;
+  MSG_ID_TASK_EXECUTION_HISTORY_REQUEST = 0x0530;
+  MSG_ID_TASK_EXECUTION_HISTORY_CHUNK = 0x0531;
+  MSG_ID_TASK_TRAJECTORY_REQUEST = 0x0532;
+  MSG_ID_TASK_TRAJECTORY_CHUNK = 0x0533;
 }
 
 enum DeviceId {
@@ -231,13 +237,14 @@ message PolygonRegion {
   uint32 color_argb = 6;
   bool closed = 7;
   RegionType region_type = 8;
-  // Region-specific planning direction: "x" or "y".
+  // Region-specific planning direction: "x", "-x", "y", or "-y".
   // Empty means LOWER-side default policy.
   string global_direction = 9;
 }
 
 message ChassisSettings {
-  // Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+  // Requested speed in m/s for task/navigation and manual command generation.
+  // Manual output is additionally capped by the chassis manual speed limit.
   float run_speed = 1 [(unit) = "m/s", (scale) = 1];
   uint32 disc_speed_rpm = 2;
   bool disc_enabled = 3;
@@ -369,6 +376,8 @@ message MapChunk {
   float alignment_yaw_deg = 15;
   float app_rotation_deg = 16;
   float rotation_alignment_delta_deg = 17;
+  // Same region/edit version semantics as MapPreviewResponse.map_version.
+  uint32 map_version = 18;
 }
 
 message PathPoint2D {
@@ -432,17 +441,39 @@ message TaskStatusReport {
   LocalizationCovariance localization_covariance = 17;
 }
 
-message TaskPathRequest {
+message PathPointPlanRequest {
+  // Non-empty: plan with the matching task configuration and its temporary
+  // obstacles. Empty: plan only with current-map work/public obstacle regions.
   string task_id = 1;
   uint32 max_chunk_size = 2;
+  string request_id = 3;
+  bool force_replan = 4;
+  // Optional planning endpoints. Omitted endpoints use planner defaults.
+  Pose2D start_pose = 5;
+  Pose2D end_pose = 6;
+  // Optional planning direction: x, -x, y, or -y.
+  string global_direction = 7;
+  // Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+  string map_id = 8;
 }
 
-message TaskPathChunk {
+message PathPointPlanResponse {
   string task_id = 1;
   uint32 chunk_index = 2;
   uint32 total_chunks = 3;
   uint32 path_version = 4;
   bytes data = 5;
+  string request_id = 6;
+  string map_id = 7;
+  ResultCode result = 8;
+  string message = 9;
+  bool planned = 10;
+  uint32 map_version = 11;
+  uint32 path_point_count = 12;
+  float path_length_m = 13;
+  float total_work_area_m2 = 14 [(unit) = "m2", (scale) = 1];
+  float estimated_time_s = 15 [(unit) = "s", (scale) = 1];
+  string frame_id = 16;
 }
 
 message MapPreviewRequest {
@@ -470,6 +501,32 @@ message MapPreviewResponse {
   float alignment_yaw_deg = 14;
   float app_rotation_deg = 15;
   float rotation_alignment_delta_deg = 16;
+}
+
+// Lightweight map annotation query. It does not render or return an image.
+message MapRegionPointRequest {
+  // Empty means the currently active map; LIVE_MAP means the realtime map.
+  string map_id = 1;
+}
+
+message WorkRegionPointInfo {
+  PolygonRegion region = 1;
+  bool start_pose_available = 2;
+  Pose2D start_pose = 3;
+  bool end_pose_available = 4;
+  Pose2D end_pose = 5;
+}
+
+message MapRegionPointResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string map_id = 3;
+  uint32 map_version = 4;
+  repeated WorkRegionPointInfo work_regions = 5;
+  repeated PolygonRegion obstacle_regions = 6;
+  repeated PolygonRegion erase_regions = 7;
+  bool crop_region_available = 8;
+  PolygonRegion crop_region = 9;
 }
 
 message MapEditCommand {
@@ -524,6 +581,7 @@ message PathPlanRequest {
   uint32 max_chunk_size = 5;
   Pose2D start_pose = 6;
   Pose2D end_pose = 7;
+  // Optional planning direction: x, -x, y, or -y.
   string global_direction = 8;
   // Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
   string map_id = 9;
@@ -704,6 +762,7 @@ message MapMetricsResponse {
 message TaskResultRequest {
   string map_id = 1;
   string task_id = 2;
+  uint32 max_execution_records = 3;
 }
 
 message TaskResultRegionItem {
@@ -713,6 +772,21 @@ message TaskResultRegionItem {
   uint32 executed_repeat = 4;
   bool completed = 5;
   string unfinished_reason = 6;
+}
+
+message TaskExecutionRecord {
+  string execution_id = 1;
+  string map_id = 2;
+  string task_id = 3;
+  TaskState final_state = 4;
+  string stop_reason = 5;
+  uint64 started_at = 6;
+  uint64 finished_at = 7;
+  float planned_area_m2 = 8 [(unit) = "m2", (scale) = 1];
+  float executed_area_m2 = 9 [(unit) = "m2", (scale) = 1];
+  float progress = 10 [(unit) = "ratio", (scale) = 1];
+  uint32 path_version = 11;
+  bool all_completed = 12;
 }
 
 message TaskResultResponse {
@@ -736,6 +810,101 @@ message TaskResultResponse {
   float alignment_yaw_deg = 17;
   float app_rotation_deg = 18;
   float rotation_alignment_delta_deg = 19;
+  string execution_id = 20;
+  uint64 started_at = 21;
+  float planned_area_m2 = 22 [(unit) = "m2", (scale) = 1];
+  float executed_area_m2 = 23 [(unit) = "m2", (scale) = 1];
+  float execution_progress = 24 [(unit) = "ratio", (scale) = 1];
+  repeated TaskExecutionRecord execution_records = 25;
+}
+
+message TaskExecutionHistoryRequest {
+  string map_id = 1;
+  string task_id = 2;
+  // Inclusive execution start-time range, epoch seconds. Zero means unbounded.
+  uint64 start_time = 3;
+  uint64 end_time = 4;
+  uint32 max_chunk_size = 5;
+}
+
+message TaskExecutionHistoryChunk {
+  ResultCode result = 1;
+  string message = 2;
+  uint32 chunk_index = 3;
+  uint32 total_chunks = 4;
+  uint32 total_record_count = 5;
+  bytes data = 6;
+  uint64 start_time = 7;
+  uint64 end_time = 8;
+}
+
+message TaskTrajectoryRequest {
+  // Prefer execution_id. If empty, task_id selects its latest execution.
+  string execution_id = 1;
+  string task_id = 2;
+  // Inclusive point timestamp range, epoch seconds. Zero means unbounded.
+  uint64 start_time = 3;
+  uint64 end_time = 4;
+  uint32 start_index = 5;
+  uint32 max_points = 6;
+  uint32 sample_step = 7;
+  uint32 max_chunk_size = 8;
+}
+
+message TaskTrajectoryPoint {
+  uint32 index = 1;
+  // Milliseconds relative to TaskTrajectoryChunk.started_at_ms.
+  uint32 offset_ms = 2;
+  sint32 x_mm = 3;
+  sint32 y_mm = 4;
+  sint32 heading_mdeg = 5;
+  sint32 linear_speed_mmps = 6;
+  sint32 angular_speed_mradps = 7;
+  uint32 disc_speed_rpm = 8;
+  bool speed_available = 9;
+  bool disc_enabled = 10;
+  TaskState task_state = 11;
+}
+
+message TaskTrajectoryChunk {
+  ResultCode result = 1;
+  string message = 2;
+  string execution_id = 3;
+  uint32 chunk_index = 4;
+  uint32 total_chunks = 5;
+  uint32 total_point_count = 6;
+  uint32 returned_point_count = 7;
+  uint32 start_index = 8;
+  uint32 next_index = 9;
+  bool has_more = 10;
+  uint64 started_at_ms = 11;
+  repeated TaskTrajectoryPoint points = 12;
+  string task_id = 13;
+  string map_id = 14;
+  uint64 start_time = 15;
+  uint64 end_time = 16;
+  uint32 sample_step = 17;
+  bool map_available = 18;
+  string map_message = 19;
+  uint32 map_version = 20;
+  // Source occupancy-grid dimensions before preview scaling.
+  uint32 map_source_width = 21;
+  uint32 map_source_height = 22;
+  float map_resolution = 23;
+  Pose2D map_origin = 24;
+  string map_frame_id = 25;
+  string map_image_format = 26;
+  uint32 map_image_width = 27;
+  uint32 map_image_height = 28;
+  float map_preview_scale_x = 29;
+  float map_preview_scale_y = 30;
+  // Raw map preview without region/point/path overlays.
+  bytes map_image_data = 31;
+  uint32 map_image_chunk_index = 32;
+  uint32 map_image_total_chunks = 33;
+  float alignment_yaw_deg = 34;
+  float app_rotation_deg = 35;
+  float rotation_alignment_delta_deg = 36;
 }
 
 message LiveMapCacheClearRequest {

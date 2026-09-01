@@ -12,7 +12,11 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path as NavPath
 
-from grinder_scheduler.models import PlannerPath
+from grinder_scheduler.models import (
+    PlannerPath,
+    normalize_planning_direction,
+    planning_direction_axis,
+)
 
 
 class PlannerAdapter:
@@ -168,9 +172,9 @@ class PlannerAdapter:
         end_y = float(request_end_pose.get("y", 0.0)) if isinstance(request_end_pose, dict) else 0.0
         has_request_start = bool(request_start_pose)
         has_request_end = bool(request_end_pose)
-        direction_cfg = str(getattr(task_config, "global_direction", "x") or "x").strip().lower()
-        if direction_cfg not in ("x", "-x", "y", "-y"):
-            direction_cfg = "x"
+        direction_cfg = normalize_planning_direction(
+            getattr(task_config, "global_direction", "x")
+        )
         planning_angle_deg = getattr(task_config, "planning_angle_deg", None)
         try:
             planning_angle_deg = float(planning_angle_deg)
@@ -265,11 +269,12 @@ class PlannerAdapter:
                     int(end_point.row),
                     int(end_point.col),
                 )
-            region_direction = str(region.get("global_direction", "") or "").strip().lower() if isinstance(region, dict) else ""
-            if region_direction not in ("x", "-x", "y", "-y"):
-                region_direction = direction_cfg
+            region_direction = normalize_planning_direction(
+                region.get("global_direction", "") if isinstance(region, dict) else "",
+                direction_cfg,
+            )
             region_angle_deg = planning_angle_deg
-            if region_angle_deg is not None and region_direction.lstrip("+-") == "y":
+            if region_angle_deg is not None and planning_direction_axis(region_direction) == "y":
                 region_angle_deg += 90.0
             single_stage = module.StageConfig(
                 stage_id=1,
@@ -334,12 +339,42 @@ class PlannerAdapter:
                     "[C++后端] 调用失败",
                 )
                 rospy.logwarn("MST27 C++ backend fallback reason: %s", failure_line)
-            # Keep each region's internal coverage constrained inside its own boundary.
-            region_points = [
-                p for p in region_points
-                if self._grid_point_in_region(p.row, p.col, region, map_info, ratio)
-            ]
+            # Keep each region's coverage inside its boundary. Build the contour
+            # once: rebuilding the numpy contour for every path point can stall a
+            # large 0x0505 request long enough that no 0x0506 chunks are returned.
+            raw_region_point_count = len(region_points)
+            region_polygon = np.array(
+                [
+                    [
+                        float((p["x"] - map_info["origin_x"]) * ratio),
+                        float((p["y"] - map_info["origin_y"]) * ratio),
+                    ]
+                    for p in list(region.get("points", []) or [])
+                ],
+                dtype=np.float32,
+            )
+            if len(region_polygon) >= 3:
+                region_points = [
+                    point
+                    for point in region_points
+                    if cv2.pointPolygonTest(
+                        region_polygon,
+                        (float(point.col), float(point.row)),
+                        False,
+                    )
+                    >= 0
+                ]
+            else:
+                region_points = []
             t_region_filter = time.perf_counter()
+            rospy.loginfo(
+                "Single-region path filtered: region_idx=%d region_id=%s raw_points=%d kept_points=%d filter_ms=%.1f",
+                index,
+                region_id or "<empty>",
+                raw_region_point_count,
+                len(region_points),
+                (t_region_filter - t_region_plan_end) * 1000.0,
+            )
             if not region_points:
                 continue
             normalized_region_points = []
@@ -540,6 +575,140 @@ class PlannerAdapter:
                                 int(conn_goal.col),
                                 len(connector),
                             )
+                        # Snapping on the inflated grid can move both connector ends
+                        # away from the actual region path endpoints. Close the head
+                        # gap from the previous region before handling the tail gap.
+                        if connector:
+                            connector_begin = module.Point(
+                                row=int(round(float(connector[0].row))),
+                                col=int(round(float(connector[0].col))),
+                            )
+                            raw_start = self._snap_point_to_free_cell(module, grid_map, raw_conn_start)
+                            head_row_gap = abs(int(raw_start.row) - int(connector_begin.row))
+                            head_col_gap = abs(int(raw_start.col) - int(connector_begin.col))
+                            if head_row_gap > 1 or head_col_gap > 1:
+                                connector_head = []
+                                try:
+                                    raw_head_goal = self._snap_point_to_free_cell(
+                                        module,
+                                        grid_map,
+                                        connector_begin,
+                                    )
+                                    connector_head = planner.planner_core.plan_connection_path(
+                                        grid_map,
+                                        raw_start,
+                                        raw_head_goal,
+                                    )
+                                except Exception as exc:
+                                    rospy.logwarn(
+                                        "Region connector head planning failed: region_id=%s lap=%d from=(%d,%d) to=(%d,%d), err=%s",
+                                        region_id,
+                                        lap,
+                                        int(raw_start.row),
+                                        int(raw_start.col),
+                                        int(connector_begin.row),
+                                        int(connector_begin.col),
+                                        exc,
+                                    )
+                                if not connector_head:
+                                    connector_head = self._build_straight_connector(
+                                        module,
+                                        raw_start,
+                                        connector_begin,
+                                    )
+                                    rospy.logwarn(
+                                        "Region connector head straight fallback used: region_id=%s lap=%d from=(%d,%d) to=(%d,%d) points=%d",
+                                        region_id,
+                                        lap,
+                                        int(raw_start.row),
+                                        int(raw_start.col),
+                                        int(connector_begin.row),
+                                        int(connector_begin.col),
+                                        len(connector_head),
+                                    )
+                                merged_connector = []
+                                for point in list(connector_head) + list(connector):
+                                    if (
+                                        merged_connector
+                                        and int(round(float(merged_connector[-1].row))) == int(round(float(point.row)))
+                                        and int(round(float(merged_connector[-1].col))) == int(round(float(point.col)))
+                                    ):
+                                        continue
+                                    merged_connector.append(point)
+                                connector = merged_connector
+                                rospy.loginfo(
+                                    "Region connector head completed: region_id=%s lap=%d gap_cells=(%d,%d) head_points=%d",
+                                    region_id,
+                                    lap,
+                                    head_row_gap,
+                                    head_col_gap,
+                                    len(connector_head),
+                                )
+
+                        # Close the final short gap from the inflated-grid connector
+                        # goal to the next region's actual first point on the raw map.
+                        if connector:
+                            connector_end = module.Point(
+                                row=int(round(float(connector[-1].row))),
+                                col=int(round(float(connector[-1].col))),
+                            )
+                            raw_goal = self._snap_point_to_free_cell(module, grid_map, raw_conn_goal)
+                            row_gap = abs(int(connector_end.row) - int(raw_goal.row))
+                            col_gap = abs(int(connector_end.col) - int(raw_goal.col))
+                            if row_gap > 1 or col_gap > 1:
+                                connector_tail = []
+                                try:
+                                    raw_start = self._snap_point_to_free_cell(module, grid_map, connector_end)
+                                    connector_tail = planner.planner_core.plan_connection_path(
+                                        grid_map,
+                                        raw_start,
+                                        raw_goal,
+                                    )
+                                except Exception as exc:
+                                    rospy.logwarn(
+                                        "Region connector tail planning failed: region_id=%s lap=%d from=(%d,%d) to=(%d,%d), err=%s",
+                                        region_id,
+                                        lap,
+                                        int(connector_end.row),
+                                        int(connector_end.col),
+                                        int(raw_goal.row),
+                                        int(raw_goal.col),
+                                        exc,
+                                    )
+                                if not connector_tail:
+                                    connector_tail = self._build_straight_connector(
+                                        module,
+                                        connector_end,
+                                        raw_goal,
+                                    )
+                                    rospy.logwarn(
+                                        "Region connector tail straight fallback used: region_id=%s lap=%d from=(%d,%d) to=(%d,%d) points=%d",
+                                        region_id,
+                                        lap,
+                                        int(connector_end.row),
+                                        int(connector_end.col),
+                                        int(raw_goal.row),
+                                        int(raw_goal.col),
+                                        len(connector_tail),
+                                    )
+                                tail_added = 0
+                                for point in connector_tail:
+                                    if (
+                                        connector
+                                        and int(round(float(connector[-1].row))) == int(round(float(point.row)))
+                                        and int(round(float(connector[-1].col))) == int(round(float(point.col)))
+                                    ):
+                                        continue
+                                    connector.append(point)
+                                    tail_added += 1
+                                rospy.loginfo(
+                                    "Region connector tail completed: region_id=%s lap=%d gap_cells=(%d,%d) added_points=%d",
+                                    region_id,
+                                    lap,
+                                    row_gap,
+                                    col_gap,
+                                    tail_added,
+                                )
                         if connector and len(connector) >= 2:
                             for point in connector:
                                 path_points.append(

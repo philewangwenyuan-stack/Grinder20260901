@@ -41,8 +41,8 @@ class SlLinkExample {
     fun sendTaskCommand(serializedTaskCommand: ByteArray): ByteArray =
         SlMessageBuilder.buildTaskCommandRaw(serializedTaskCommand, 0x10u)
 
-    fun requestTaskPath(serializedTaskPathRequest: ByteArray): ByteArray =
-        SlMessageBuilder.buildTaskPathRequestRaw(serializedTaskPathRequest, 0x10u)
+    fun requestPathPointPlan(serializedRequest: ByteArray): ByteArray =
+        SlMessageBuilder.buildPathPointPlanRequestRaw(serializedRequest, 0x10u)
 
     fun requestMapPreview(serializedMapPreviewRequest: ByteArray): ByteArray =
         SlMessageBuilder.buildMapPreviewRequestRaw(serializedMapPreviewRequest, 0x10u)
@@ -82,7 +82,7 @@ class SlLinkExample {
             0x0402 -> handleControlCommandResponse(frame)
             0x0503 -> println("  TaskCommandResponse payload=${frame.payload.size} bytes")
             0x0504 -> println("  TaskStatusReport payload=${frame.payload.size} bytes")
-            0x0506 -> println("  TaskPathChunk payload=${frame.payload.size} bytes")
+            0x0506 -> println("  PathPointPlanResponse payload=${frame.payload.size} bytes")
             0x0508 -> println("  MapPreviewResponse payload=${frame.payload.size} bytes")
             0x050A -> println("  MapEditResponse payload=${frame.payload.size} bytes")
             0x050B -> println("  MapEditStatusReport payload=${frame.payload.size} bytes")

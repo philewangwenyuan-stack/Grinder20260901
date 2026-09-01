@@ -99,6 +99,20 @@ class AuroraBridge:
             )
 
     def _map_callback(self, msg):
+        width = int(getattr(msg.info, "width", 0) or 0)
+        height = int(getattr(msg.info, "height", 0) or 0)
+        expected_cells = width * height
+        actual_cells = len(getattr(msg, "data", []) or [])
+        if width <= 0 or height <= 0 or actual_cells != expected_cells:
+            rospy.logwarn_throttle(
+                1.0,
+                "Rejected incomplete /map frame: size=%dx%d expected_cells=%d actual_cells=%d",
+                width,
+                height,
+                expected_cells,
+                actual_cells,
+            )
+            return
         with self._lock:
             self._map_msg = msg
 

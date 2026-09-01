@@ -5,6 +5,7 @@ import math
 import os
 import re
 import shutil
+import struct
 import threading
 import time
 import zlib
@@ -26,7 +27,7 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import Pose, PoseStamped, Twist
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
 from grinder_chassis_driver.srv import EnableChassis
-from nav_msgs.msg import OccupancyGrid, Path
+from nav_msgs.msg import OccupancyGrid, Odometry, Path
 from nav_msgs.srv import LoadMap
 from std_msgs.msg import Bool, Int16, UInt16
 from std_srvs.srv import Trigger, TriggerResponse
@@ -43,7 +44,14 @@ from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
 from grinder_scheduler.map_catalog_response import fill_map_catalog_response
-from grinder_scheduler.models import PlannerPath, SchedulerState, TaskConfigModel, VideoStreamState
+from grinder_scheduler.models import (
+    PlannerPath,
+    SchedulerState,
+    TaskConfigModel,
+    VideoStreamState,
+    is_planning_direction,
+    normalize_planning_direction,
+)
 from grinder_scheduler.msg import MapPreviewMetadata, SchedulerStatus
 from grinder_scheduler.planner_adapter import PlannerAdapter
 from grinder_scheduler.platform_integration import MqttDeviceReporter, PlatformFileSync
@@ -163,6 +171,16 @@ class SchedulerNode:
         self.last_chassis_status = None
         self.last_wheel_speed_state = None
         self._wheel_speed_state_lock = threading.Lock()
+        self._wheel_odom_lock = threading.Lock()
+        self._wheel_odom_topic = str(
+            rospy.get_param("~wheel_odom_topic", "/odom_wheel")
+        ).strip() or "/odom_wheel"
+        self._wheel_odom_timeout_sec = max(
+            0.1, float(rospy.get_param("~wheel_odom_timeout_sec", 1.0))
+        )
+        self._wheel_odom_linear_speed_mps = 0.0
+        self._wheel_odom_angular_speed_radps = 0.0
+        self._wheel_odom_received_monotonic = 0.0
         self._wheel_speed_feedback_radius_m = max(
             1.0e-6, float(rospy.get_param("~wheel_speed_feedback_radius_m", 0.1475))
         )
@@ -276,6 +294,38 @@ class SchedulerNode:
         ]
         self._current_plan_scope = "single"
         self._task_bindings = {}
+        self._task_execution_records = []
+        self._active_task_execution_id = ""
+        self._task_trajectory_lock = threading.RLock()
+        self._task_trajectory_sample_interval_sec = max(
+            0.1,
+            float(rospy.get_param("~task_trajectory_sample_interval_sec", 1.0)),
+        )
+        self._task_trajectory_default_max_points = max(
+            1,
+            int(rospy.get_param("~task_trajectory_default_max_points", 3600)),
+        )
+        self._task_trajectory_max_duration_sec = max(
+            self._task_trajectory_sample_interval_sec,
+            float(rospy.get_param("~task_trajectory_max_duration_sec", 14400.0)),
+        )
+        self._task_trajectory_max_samples = max(
+            1,
+            int(
+                math.ceil(
+                    self._task_trajectory_max_duration_sec
+                    / self._task_trajectory_sample_interval_sec
+                )
+            ),
+        )
+        self._task_trajectory_max_points = max(
+            self._task_trajectory_default_max_points,
+            min(
+                self._task_trajectory_max_samples,
+                int(rospy.get_param("~task_trajectory_max_points", 14400)),
+            ),
+        )
+        self._task_trajectory_next_sample_monotonic = 0.0
         self._task_obstacle_regions = {}
         self._task_obstacle_regions_lock = threading.RLock()
         self._map_registry = {}
@@ -706,6 +756,13 @@ class SchedulerNode:
 
         rospy.Subscriber("/chassis/status", ChassisStatus, self._chassis_status_callback, queue_size=10)
         rospy.Subscriber("/chassis/wheel_speed_state", WheelSpeedState, self._wheel_speed_state_callback, queue_size=10)
+        rospy.Subscriber(
+            self._wheel_odom_topic,
+            Odometry,
+            self._wheel_odom_callback,
+            queue_size=10,
+            tcp_nodelay=True,
+        )
         rospy.Subscriber("/cmd_vel", Twist, self._cmd_vel_callback, queue_size=10)
         rospy.Subscriber(
             self._collision_imminent_topic,
@@ -781,6 +838,9 @@ class SchedulerNode:
             keepalive_sec=rospy.get_param("~mqtt_keepalive_sec", 60),
             qos=rospy.get_param("~mqtt_qos", 1),
             status_period_sec=rospy.get_param("~mqtt_status_period_sec", 3.0),
+            network_latency_enabled=rospy.get_param("~mqtt_network_latency_enabled", True),
+            network_latency_period_sec=rospy.get_param("~mqtt_network_latency_period_sec", 5.0),
+            network_latency_timeout_ms=rospy.get_param("~mqtt_network_latency_timeout_ms", 1000),
         )
         self.mqtt_reporter.start()
 
@@ -788,8 +848,6 @@ class SchedulerNode:
         stream_push_hz = max(5.0, float(rospy.get_param("~stream_push_hz", 20.0)))
         self.timer = rospy.Timer(rospy.Duration(1.0 / tick_hz), self._tick)
         self.stream_timer = rospy.Timer(rospy.Duration(1.0 / stream_push_hz), self._stream_tick)
-        plan_pub_hz = max(0.2, float(rospy.get_param("~global_plan_publish_hz", 1.0)))
-        self.global_plan_timer = rospy.Timer(rospy.Duration(1.0 / plan_pub_hz), self._publish_global_plan_tick)
         self.active_segment_timer = rospy.Timer(
             rospy.Duration(1.0 / self._active_segment_publish_hz),
             self._publish_active_segment_tick,
@@ -852,14 +910,6 @@ class SchedulerNode:
             self.media_streamer.push_frames(left, None)
         if right is not None:
             self.local_stream_server.push_frame("right", right)
-
-    def _publish_global_plan_tick(self, _event):
-        try:
-            if self.current_path is None or self.current_path.nav_path is None or not self.current_path.nav_path.poses:
-                return
-            self.global_plan_pub.publish(self._build_navigation_path_for_move_base())
-        except Exception as exc:
-            rospy.logwarn_throttle(2.0, "Failed to publish global plan periodically: %s", exc)
 
     def _publish_path_to_navigation(self, publish_goal=False, reason=""):
         try:
@@ -1678,6 +1728,7 @@ class SchedulerNode:
         self._tick_path_execution()
         self._tick_disc_motion_guard()
         self._update_progress()
+        self._record_task_trajectory_sample()
         self._publish_status()
         self._publish_diagnostics()
 
@@ -2543,9 +2594,9 @@ class SchedulerNode:
         return aligned_grid, aligned_map_info
 
     def _task_config_for_aligned_planning(self, task_config, alignment_yaw):
-        direction = str(getattr(task_config, "global_direction", "x") or "x").strip().lower()
-        if direction not in ("x", "-x", "y", "-y"):
-            direction = "x"
+        direction = normalize_planning_direction(
+            getattr(task_config, "global_direction", "x")
+        )
         return TaskConfigModel(
             task_id=task_config.task_id,
             map_id=task_config.map_id,
@@ -3153,7 +3204,9 @@ class SchedulerNode:
                     vehicle_width=self.task_config.vehicle_width,
                     vehicle_length=self.task_config.vehicle_length,
                     default_path_spacing=self.task_config.default_path_spacing,
-                    global_direction=str(task_cfg.get("global_direction", "x") or "x"),
+                    global_direction=normalize_planning_direction(
+                        task_cfg.get("global_direction", "x")
+                    ),
                     turn_radius=self.task_config.turn_radius,
                     overlap_ratio=self.task_config.overlap_ratio,
                     inflation_radius=self.task_config.inflation_radius,
@@ -3229,6 +3282,7 @@ class SchedulerNode:
                     by_map[map_id] = item
             payload = {
                 "map_tasks": by_map,
+                "task_executions": list(self._task_execution_records or []),
                 "saved_at": now_ts,
             }
             tmp_path = self._task_registry_state_file + ".tmp"
@@ -3249,6 +3303,12 @@ class SchedulerNode:
             map_tasks = payload.get("map_tasks", {}) if isinstance(payload, dict) else {}
             if not isinstance(map_tasks, dict):
                 return
+            raw_executions = payload.get("task_executions", []) if isinstance(payload, dict) else []
+            self._task_execution_records = [
+                dict(item)
+                for item in list(raw_executions or [])
+                if isinstance(item, dict) and str(item.get("execution_id", "") or "").strip()
+            ]
             restored = 0
             for map_id, item in map_tasks.items():
                 if not isinstance(item, dict):
@@ -3270,6 +3330,11 @@ class SchedulerNode:
                 restored += 1
             if restored > 0:
                 rospy.loginfo("Loaded task registry state: %d map-bound tasks", restored)
+            if self._task_execution_records:
+                rospy.loginfo(
+                    "Loaded task execution history: records=%d",
+                    len(self._task_execution_records),
+                )
         except Exception as exc:
             rospy.logwarn("Failed to load task registry state: %s", exc)
 
@@ -3386,6 +3451,27 @@ class SchedulerNode:
     def _wheel_speed_state_callback(self, msg):
         with self._wheel_speed_state_lock:
             self.last_wheel_speed_state = msg
+
+    def _wheel_odom_callback(self, msg):
+        with self._wheel_odom_lock:
+            self._wheel_odom_linear_speed_mps = float(msg.twist.twist.linear.x)
+            self._wheel_odom_angular_speed_radps = float(msg.twist.twist.angular.z)
+            self._wheel_odom_received_monotonic = time.monotonic()
+
+    def _wheel_odom_snapshot(self):
+        with self._wheel_odom_lock:
+            linear_speed = self._wheel_odom_linear_speed_mps
+            angular_speed = self._wheel_odom_angular_speed_radps
+            received_at = self._wheel_odom_received_monotonic
+        available = (
+            received_at > 0.0
+            and (time.monotonic() - received_at) <= self._wheel_odom_timeout_sec
+        )
+        return {
+            "available": bool(available),
+            "linear_mps": float(linear_speed) if available else 0.0,
+            "angular_radps": float(angular_speed) if available else 0.0,
+        }
 
     def _motor_rpm_to_wheel_mps(self, motor_rpm):
         wheel_rpm = float(motor_rpm) / self._wheel_speed_feedback_gear_ratio
@@ -3586,7 +3672,7 @@ class SchedulerNode:
             self._disc_last_switch_time = now
             rospy.loginfo("Disc stopped by cmd_vel idle: stale=%s linear=%.3f angular=%.3f", stale, linear, angular)
 
-    def _sync_task_regions_from_overlay(self):
+    def _sync_task_regions_from_overlay(self, update_task_binding=True):
         overlay_regions = self.map_service.get_overlay_regions() or {}
         crop_region = overlay_regions.get("crop_region")
         if isinstance(crop_region, dict) and bool(crop_region.get("enabled", True)):
@@ -3617,7 +3703,9 @@ class SchedulerNode:
                     "region_id": item.get("region_id", ""),
                     "name": item.get("name", ""),
                     "points": points,
-                    "global_direction": str(item.get("global_direction", "x") or "x").strip().lower(),
+                    "global_direction": normalize_planning_direction(
+                        item.get("global_direction", "x")
+                    ),
                     "start_pose": dict(item.get("start_pose", {}) or {}),
                     "end_pose": dict(item.get("end_pose", {}) or {}),
                     "order_index": int(item.get("order_index", 0)),
@@ -3684,7 +3772,8 @@ class SchedulerNode:
         if self._plan_use_all_work_regions:
             self._plan_use_all_work_regions = False
             rospy.logwarn("Forced single-region planning mode: plan_use_all_work_regions=false")
-        self._sync_task_map_binding(update_binding=True)
+        if update_task_binding:
+            self._sync_task_map_binding(update_binding=True)
 
     @staticmethod
     def _task_obstacle_binding_key(map_id, task_id):
@@ -4160,12 +4249,11 @@ class SchedulerNode:
             rospy.logwarn("Planning aborted: no valid work region in overlay")
             return False
         requested_direction = str(request_global_direction or "").strip().lower()
-        has_requested_direction = requested_direction in ("x", "-x", "y", "-y")
+        has_requested_direction = is_planning_direction(requested_direction)
         effective_global_direction = requested_direction if has_requested_direction else str(
             self.task_config.global_direction or "x"
         ).strip().lower()
-        if effective_global_direction not in ("x", "-x", "y", "-y"):
-            effective_global_direction = "x"
+        effective_global_direction = normalize_planning_direction(effective_global_direction)
         # Keep each work region's own planning direction. PathPlanRequest.global_direction is
         # only a fallback for legacy/empty region direction, not a global override.
         direction_summary = []
@@ -4173,9 +4261,10 @@ class SchedulerNode:
             if not isinstance(region, dict):
                 continue
             region_id = str(region.get("region_id", "") or "").strip() or "<empty>"
-            region_direction = str(region.get("global_direction", "") or "").strip().lower()
-            if region_direction not in ("x", "-x", "y", "-y"):
-                region_direction = effective_global_direction
+            region_direction = normalize_planning_direction(
+                region.get("global_direction", ""),
+                effective_global_direction,
+            )
             direction_summary.append("{}:{}".format(region_id, region_direction))
         rospy.loginfo(
             "Planning region directions: fallback=%s regions=%s",
@@ -5478,6 +5567,7 @@ class SchedulerNode:
         self._send_active_segment_goal(force=True, reason="task_start")
         mark("send_active_goal")
         self.state = SchedulerState.RUNNING
+        self._begin_task_execution_record()
         mark("set_running")
         rospy.loginfo(
             "Task execution started: regions=%s active=%s mode=%s",
@@ -5486,6 +5576,73 @@ class SchedulerNode:
             self._exec_mode,
         )
         return True, "Task started (mode={})".format(self._exec_mode)
+
+    @staticmethod
+    def _mqtt_path_point(point):
+        return {
+            "index": int(point.get("index", 0) or 0),
+            "x": round(float(point.get("x", 0.0) or 0.0), 6),
+            "y": round(float(point.get("y", 0.0) or 0.0), 6),
+        }
+
+    def _publish_task_path_to_mqtt(self):
+        if self.current_path is None or not self.current_path.points:
+            rospy.logwarn("MQTT task path report skipped: planned path is empty")
+            return False
+
+        enriched_points, segments = self._classify_task_path_points(self.current_path.points)
+        within_region_paths = []
+        between_region_paths = []
+        for segment in segments:
+            start_index = int(segment.get("start_point_index", 0) or 0)
+            end_index = int(segment.get("end_point_index", start_index) or start_index)
+            segment_points = [
+                self._mqtt_path_point(point)
+                for point in enriched_points[start_index : end_index + 1]
+            ]
+            if segment.get("path_scope") == "between_regions":
+                between_region_paths.append(
+                    {
+                        "segmentIndex": int(segment.get("segment_index", 0) or 0),
+                        "fromRegionId": str(segment.get("from_region_id", "") or ""),
+                        "toRegionId": str(segment.get("to_region_id", "") or ""),
+                        "points": segment_points,
+                    }
+                )
+            else:
+                within_region_paths.append(
+                    {
+                        "segmentIndex": int(segment.get("segment_index", 0) or 0),
+                        "regionId": str(segment.get("region_id", "") or ""),
+                        "lapIndex": int(segment.get("lap_index", 0) or 0),
+                        "points": segment_points,
+                    }
+                )
+
+        map_info = self.map_service.get_map_info() or {}
+        report = {
+            "taskId": str(self.task_config.task_id or ""),
+            "mapId": str(self._current_map_id() or ""),
+            "frameId": str(map_info.get("frame_id", "map") or "map"),
+            "pathVersion": int(self.current_path.path_version),
+            "pathPointCount": len(enriched_points),
+            "pathLengthM": round(float(self.current_path.length_m), 6),
+            "withinRegionPaths": within_region_paths,
+            "betweenRegionPaths": between_region_paths,
+        }
+        success, message = self.mqtt_reporter.publish_report("task/path", report)
+        log = rospy.loginfo if success else rospy.logwarn
+        log(
+            "MQTT task path report: success=%s task_id=%s map_id=%s points=%d within_segments=%d between_segments=%d message=%s",
+            str(bool(success)).lower(),
+            report["taskId"] or "<empty>",
+            report["mapId"] or "<empty>",
+            report["pathPointCount"],
+            len(within_region_paths),
+            len(between_region_paths),
+            message,
+        )
+        return success
 
     def _pause_execution(self):
         self._exec_active = False
@@ -6254,8 +6411,9 @@ class SchedulerNode:
         current_map_id = self._current_map_id()
         map_record = self._find_recorded_map_by_id(current_map_id)
         map_name = str(map_record.get("name", "") or "") if isinstance(map_record, dict) else ""
-        linear_speed = float(pose.get("linear_speed_mps", 0.0) or 0.0)
-        angular_speed = float(pose.get("angular_speed_radps", 0.0) or 0.0)
+        wheel_odom = self._wheel_odom_snapshot()
+        linear_speed = float(wheel_odom["linear_mps"])
+        angular_speed = float(wheel_odom["angular_radps"])
         collision_imminent = self._collision_imminent_snapshot()
         radar_status = self._radar_system_status_snapshot()
         return {
@@ -6278,6 +6436,7 @@ class SchedulerNode:
             "collisionImminent": collision_imminent,
             "radarSystemStatusAvailable": bool(radar_status["available"]),
             "radarSystemStatus": str(radar_status["status"]),
+            "wheelOdomAvailable": bool(wheel_odom["available"]),
             "linearSpeed": linear_speed,
             "angularSpeed": angular_speed,
             "vehicleState": "moving"
@@ -6399,9 +6558,15 @@ class SchedulerNode:
     def _estimate_plan_time_s(self, path_length_m):
         try:
             length = max(0.0, float(path_length_m))
-            # Rough ETA from path length and effective cruise speed.
-            # Use ~70% of max linear speed to account for turns/slowdown.
-            effective_speed = max(0.05, float(self._exec_max_linear) * 0.7)
+            configured_speed_limit = max(
+                0.0,
+                float(self._chassis_settings.get("run_speed", 0.0)),
+            )
+            if configured_speed_limit <= 0.0:
+                return -1.0
+            # Use ~70% of the persisted SettingsWrite run-speed limit to
+            # account for turns and slowdown during coverage execution.
+            effective_speed = configured_speed_limit * 0.7
             return length / effective_speed
         except Exception:
             return -1.0
@@ -6557,7 +6722,7 @@ class SchedulerNode:
             if hasattr(report, "radar_system_status"):
                 report.radar_system_status = str(radar_status["status"])
         if hasattr(report, "vehicle_speed"):
-            report.vehicle_speed = float(wheel_feedback["vehicle_mps"])
+            report.vehicle_speed = float(self._wheel_odom_snapshot()["linear_mps"])
         return report.SerializeToString(), pb.MSG_ID_DEVICE_STATUS_REPORT, pb.COMP_SYSTEM
 
     def build_task_status_report(self):
@@ -6721,6 +6886,213 @@ class SchedulerNode:
             rospy.logwarn("Failed to build task result image: %s", exc)
             return "", b"", 0, 0
 
+    def _build_raw_map_snapshot(self, map_id, max_edge=None, image_format="jpg"):
+        target_map_id = str(map_id or "").strip()
+        if not target_map_id:
+            raise RuntimeError("task map_id is empty")
+        image_format = str(image_format or "jpg").strip().lower()
+        if image_format == "jpeg":
+            image_format = "jpg"
+        if image_format not in ("jpg", "png"):
+            image_format = "jpg"
+        max_edge = self._sanitize_preview_edge(
+            int(max_edge or self._preview_max_edge_cap),
+            cap_edge=self._preview_max_edge_cap,
+        )
+        live_map = self._is_live_map_id(target_map_id)
+        raw_map = (
+            self.aurora_bridge.get_map()
+            if live_map
+            else self._load_saved_raw_grid_map(target_map_id)
+        )
+        if raw_map is None:
+            raise RuntimeError("raw occupancy grid is unavailable")
+        source_width = int(raw_map.info.width)
+        source_height = int(raw_map.info.height)
+        if source_width <= 0 or source_height <= 0:
+            raise RuntimeError("raw occupancy grid dimensions are invalid")
+        raw_grid = np.asarray(raw_map.data, dtype=np.int16).reshape(
+            (source_height, source_width)
+        )
+        image = np.full((source_height, source_width, 3), 180, dtype=np.uint8)
+        image[raw_grid == 0] = (245, 245, 245)
+        image[raw_grid >= 100] = (45, 45, 45)
+        image = cv2.flip(image, 0)
+        image_width, image_height, _ = self._preview_meta(
+            source_width,
+            source_height,
+            max_edge,
+        )
+        if image_width != source_width or image_height != source_height:
+            image = cv2.resize(
+                image,
+                (image_width, image_height),
+                interpolation=cv2.INTER_AREA,
+            )
+        encode_ext = ".png" if image_format == "png" else ".jpg"
+        encoded_ok, encoded_map = cv2.imencode(encode_ext, image)
+        if not encoded_ok:
+            raise RuntimeError("raw map image encoding failed")
+        if live_map:
+            map_version = int(self.map_service.get_map_version())
+        else:
+            saved_map_service = MapService()
+            saved_map_service.load_local_state(self._map_state_dir(target_map_id))
+            map_version = int(saved_map_service.get_map_version())
+        return {
+            "available": True,
+            "message": "ok_live_raw_map" if live_map else "ok_saved_raw_map",
+            "map_id": target_map_id,
+            "version": map_version,
+            "source_width": source_width,
+            "source_height": source_height,
+            "resolution": float(raw_map.info.resolution),
+            "origin_x": float(raw_map.info.origin.position.x),
+            "origin_y": float(raw_map.info.origin.position.y),
+            "frame_id": str(raw_map.header.frame_id or ""),
+            "image_format": image_format,
+            "image_width": int(image_width),
+            "image_height": int(image_height),
+            "preview_scale_x": float(image_width) / float(max(1, source_width)),
+            "preview_scale_y": float(image_height) / float(max(1, source_height)),
+            "alignment_yaw_deg": float(self._alignment_yaw_deg_for_sl_link_report(target_map_id)),
+            "app_rotation_deg": float(self._app_rotation_deg_for_map_id(target_map_id)),
+            "rotation_alignment_delta_deg": float(
+                self._rotation_alignment_delta_deg_for_map_id(target_map_id)
+            ),
+            "captured_at_ms": int(time.time() * 1000.0),
+            "image_data": encoded_map.tobytes(),
+        }
+
+    def _save_task_execution_raw_map_snapshot(self, execution_id, map_id):
+        safe_execution_id = re.sub(
+            r"[^A-Za-z0-9_.-]+",
+            "_",
+            str(execution_id or "").strip(),
+        )
+        if not safe_execution_id:
+            return {"available": False, "message": "execution_id is empty"}
+        try:
+            snapshot = self._build_raw_map_snapshot(map_id)
+            extension = str(snapshot.get("image_format", "jpg") or "jpg")
+            relative_dir = os.path.join("task_executions", safe_execution_id)
+            image_relative_path = os.path.join(relative_dir, "raw_map.{}".format(extension))
+            metadata_relative_path = os.path.join(relative_dir, "raw_map_metadata.json")
+            image_path = os.path.join(self._persist_state_dir, image_relative_path)
+            metadata_path = os.path.join(self._persist_state_dir, metadata_relative_path)
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            image_data = bytes(snapshot.pop("image_data", b"") or b"")
+            image_tmp_path = image_path + ".tmp"
+            with open(image_tmp_path, "wb") as handle:
+                handle.write(image_data)
+            os.replace(image_tmp_path, image_path)
+            snapshot["image_path"] = image_relative_path
+            snapshot["metadata_path"] = metadata_relative_path
+            metadata_tmp_path = metadata_path + ".tmp"
+            with open(metadata_tmp_path, "w", encoding="utf-8") as handle:
+                json.dump(snapshot, handle, ensure_ascii=False, indent=2)
+            os.replace(metadata_tmp_path, metadata_path)
+            rospy.loginfo(
+                "Task execution raw map saved: execution_id=%s map_id=%s image=%s metadata=%s size=%dx%d bytes=%d",
+                execution_id,
+                map_id,
+                image_path,
+                metadata_path,
+                int(snapshot.get("image_width", 0) or 0),
+                int(snapshot.get("image_height", 0) or 0),
+                len(image_data),
+            )
+            return snapshot
+        except Exception as exc:
+            rospy.logwarn(
+                "Failed to save task execution raw map: execution_id=%s map_id=%s err=%s",
+                execution_id,
+                map_id or "<empty>",
+                exc,
+            )
+            return {
+                "available": False,
+                "message": "task raw map save failed: {}".format(exc),
+                "map_id": str(map_id or ""),
+            }
+
+    def _load_task_execution_raw_map_snapshot(self, record):
+        metadata = dict(record.get("raw_map_snapshot", {}) or {}) if isinstance(record, dict) else {}
+        if not metadata:
+            return {
+                "available": False,
+                "message": "task raw map snapshot was not recorded",
+                "image_data": b"",
+            }
+        image_relative_path = str(metadata.get("image_path", "") or "").strip()
+        if not image_relative_path:
+            metadata["available"] = False
+            metadata["message"] = "task raw map snapshot image path is empty"
+            metadata["image_data"] = b""
+            return metadata
+        image_path = image_relative_path
+        if not os.path.isabs(image_path):
+            image_path = os.path.join(self._persist_state_dir, image_path)
+        try:
+            with open(image_path, "rb") as handle:
+                metadata["image_data"] = handle.read()
+            metadata["available"] = bool(metadata["image_data"])
+            return metadata
+        except Exception as exc:
+            metadata["available"] = False
+            metadata["message"] = "task raw map snapshot read failed: {}".format(exc)
+            metadata["image_data"] = b""
+            return metadata
+
+    def _save_task_execution_preview(self, execution_id, image_format, image_data):
+        execution_id = str(execution_id or "").strip()
+        if not execution_id or not image_data:
+            return ""
+        safe_execution_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", execution_id)
+        extension = "png" if str(image_format or "").strip().lower() == "png" else "jpg"
+        relative_path = os.path.join(
+            "task_executions",
+            safe_execution_id,
+            "preview.{}".format(extension),
+        )
+        output_path = os.path.join(self._persist_state_dir, relative_path)
+        try:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            tmp_path = output_path + ".tmp"
+            with open(tmp_path, "wb") as handle:
+                handle.write(image_data)
+            os.replace(tmp_path, output_path)
+            return relative_path
+        except Exception as exc:
+            rospy.logwarn(
+                "Failed to save task execution preview: execution_id=%s err=%s",
+                execution_id,
+                exc,
+            )
+            return ""
+
+    def _task_execution_preview_base64(self, record):
+        if not isinstance(record, dict):
+            return ""
+        image_path = str(record.get("image_path", "") or "").strip()
+        if not image_path:
+            return ""
+        resolved_path = image_path
+        if not os.path.isabs(resolved_path):
+            resolved_path = os.path.join(self._persist_state_dir, resolved_path)
+        try:
+            with open(resolved_path, "rb") as handle:
+                return base64.b64encode(handle.read()).decode("ascii")
+        except Exception as exc:
+            rospy.logwarn_throttle(
+                2.0,
+                "Failed to load task execution preview: execution_id=%s path=%s err=%s",
+                str(record.get("execution_id", "") or ""),
+                resolved_path,
+                exc,
+            )
+            return ""
+
     def _finalize_task_result(self, stop_reason=""):
         try:
             map_id = str(self._current_map_id() or self.task_config.map_id or "").strip()
@@ -6755,6 +7127,35 @@ class SchedulerNode:
                     }
                 )
             image_format, image_data, image_width, image_height = self._build_task_result_image()
+            finished_at = int(time.time())
+            execution_progress = max(0.0, min(1.0, float(self._task_progress())))
+            planned_area_m2 = float(self._selected_task_work_area_m2())
+            if self.state == SchedulerState.COMPLETED and all_completed:
+                execution_progress = 1.0
+            executed_area_m2 = planned_area_m2 * execution_progress
+            execution_record = self._finalize_active_task_execution_record(
+                final_state=str(self.state.value),
+                stop_reason=str(stop_reason or self.last_error or ""),
+                finished_at=finished_at,
+                planned_area_m2=planned_area_m2,
+                executed_area_m2=executed_area_m2,
+                progress=execution_progress,
+                path_version=int(self.current_path.path_version if self.current_path is not None else 0),
+                all_completed=bool(all_completed),
+            )
+            if execution_record:
+                execution_record.update(
+                    {
+                        "image_format": str(image_format or ""),
+                        "image_width": int(image_width),
+                        "image_height": int(image_height),
+                        "image_path": self._save_task_execution_preview(
+                            execution_record.get("execution_id", ""),
+                            image_format,
+                            image_data,
+                        ),
+                    }
+                )
             key = "{}::{}".format(map_id, task_id)
             record = self._task_bindings.get(key, {}) if isinstance(self._task_bindings.get(key, {}), dict) else {}
             record.update(
@@ -6772,7 +7173,12 @@ class SchedulerNode:
                         "all_completed": bool(all_completed),
                         "stop_reason": str(stop_reason or self.last_error or ""),
                         "path_version": int(self.current_path.path_version if self.current_path is not None else 0),
-                        "finished_at": int(time.time()),
+                        "execution_id": str(execution_record.get("execution_id", "") or ""),
+                        "started_at": int(execution_record.get("started_at", 0) or 0),
+                        "finished_at": finished_at,
+                        "planned_area_m2": planned_area_m2,
+                        "executed_area_m2": executed_area_m2,
+                        "execution_progress": execution_progress,
                         "selected_work_region_ids": list(self.task_config.selected_work_region_ids or selected),
                         "region_results": region_results,
                         "image_format": str(image_format or ""),
@@ -6787,6 +7193,194 @@ class SchedulerNode:
             self._save_local_state()
         except Exception as exc:
             rospy.logwarn("Failed to finalize task result: %s", exc)
+
+    def _selected_task_work_area_m2(self):
+        regions = [item for item in list(self.task_config.work_regions or []) if isinstance(item, dict)]
+        selected_ids = set(self._effective_selected_work_region_ids(regions))
+        total = 0.0
+        for region in regions:
+            region_id = str(region.get("region_id", "") or "").strip()
+            if selected_ids and region_id not in selected_ids:
+                continue
+            total += float(self._polygon_area_m2(region.get("points", []) or []))
+        return max(0.0, total)
+
+    @staticmethod
+    def _task_trajectory_relative_path(execution_id):
+        safe_execution_id = re.sub(
+            r"[^A-Za-z0-9_.-]+",
+            "_",
+            str(execution_id or "").strip(),
+        )
+        return os.path.join("task_executions", safe_execution_id, "trajectory.pbstream")
+
+    def _record_task_trajectory_sample(self):
+        execution_id = str(self._active_task_execution_id or "").strip()
+        if not execution_id or self.state not in (SchedulerState.RUNNING, SchedulerState.PAUSED):
+            return
+        now_monotonic = time.monotonic()
+        if now_monotonic < self._task_trajectory_next_sample_monotonic:
+            return
+        self._task_trajectory_next_sample_monotonic = (
+            now_monotonic + self._task_trajectory_sample_interval_sec
+        )
+        try:
+            record = next(
+                (
+                    item
+                    for item in reversed(self._task_execution_records)
+                    if str(item.get("execution_id", "") or "").strip() == execution_id
+                ),
+                None,
+            )
+            if not isinstance(record, dict):
+                return
+            relative_path = str(record.get("trajectory_path", "") or "").strip()
+            if not relative_path:
+                relative_path = self._task_trajectory_relative_path(execution_id)
+                record["trajectory_path"] = relative_path
+            output_path = os.path.join(self._persist_state_dir, relative_path)
+            pose = self._pose_for_sl_link_report()
+            wheel_odom = self._wheel_odom_snapshot()
+            disc_enabled = bool(
+                self.last_chassis_status is not None
+                and bool(getattr(self.last_chassis_status, "disc_enabled", False))
+            )
+            point_index = int(record.get("trajectory_point_count", 0) or 0)
+            if point_index >= self._task_trajectory_max_samples:
+                return
+            now_ms = int(time.time() * 1000.0)
+            started_at_ms = int(record.get("started_at_ms", 0) or 0)
+            if started_at_ms <= 0:
+                started_at_ms = int(record.get("started_at", 0) or 0) * 1000
+            point = self.sl_link_server.pb.TaskTrajectoryPoint()
+            point.index = point_index
+            point.offset_ms = max(0, min(0xFFFFFFFF, now_ms - started_at_ms))
+            point.x_mm = int(round(float(pose.get("x", 0.0)) * 1000.0))
+            point.y_mm = int(round(float(pose.get("y", 0.0)) * 1000.0))
+            point.heading_mdeg = int(round(float(pose.get("heading_deg", 0.0)) * 1000.0))
+            point.linear_speed_mmps = int(
+                round(float(wheel_odom.get("linear_mps", 0.0)) * 1000.0)
+            )
+            point.angular_speed_mradps = int(
+                round(float(wheel_odom.get("angular_radps", 0.0)) * 1000.0)
+            )
+            point.disc_speed_rpm = max(0, int(self._configured_disc_speed_rpm()))
+            point.speed_available = bool(wheel_odom.get("available", False))
+            point.disc_enabled = disc_enabled
+            point.task_state = self._task_state_to_pb()
+            encoded = point.SerializeToString()
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with self._task_trajectory_lock:
+                with open(output_path, "ab") as handle:
+                    handle.write(struct.pack("<H", len(encoded)))
+                    handle.write(encoded)
+            record["trajectory_point_count"] = point_index + 1
+        except Exception as exc:
+            rospy.logwarn_throttle(
+                2.0,
+                "Failed to record task trajectory sample: execution_id=%s err=%s",
+                execution_id,
+                exc,
+            )
+
+    def _begin_task_execution_record(self):
+        task_id = str(self.task_config.task_id or "task").strip() or "task"
+        map_id = str(self._current_map_id() or self.task_config.map_id or "").strip()
+        started_at_ms = int(time.time() * 1000.0)
+        started_at = started_at_ms // 1000
+        execution_id = "{}_{}".format(task_id, started_at_ms)
+        trajectory_path = self._task_trajectory_relative_path(execution_id)
+        record = {
+            "execution_id": execution_id,
+            "project_id": "",
+            "map_id": map_id,
+            "task_id": task_id,
+            "final_state": "RUNNING",
+            "stop_reason": "",
+            "started_at": started_at,
+            "started_at_ms": started_at_ms,
+            "finished_at": 0,
+            "planned_area_m2": float(self._selected_task_work_area_m2()),
+            "executed_area_m2": 0.0,
+            "progress": 0.0,
+            "path_version": int(self.current_path.path_version if self.current_path is not None else 0),
+            "all_completed": False,
+            "trajectory_path": trajectory_path,
+            "trajectory_point_count": 0,
+        }
+        record["raw_map_snapshot"] = self._save_task_execution_raw_map_snapshot(
+            execution_id,
+            map_id,
+        )
+        try:
+            absolute_trajectory_path = os.path.join(self._persist_state_dir, trajectory_path)
+            os.makedirs(os.path.dirname(absolute_trajectory_path), exist_ok=True)
+            with open(absolute_trajectory_path, "wb"):
+                pass
+        except Exception as exc:
+            rospy.logwarn(
+                "Failed to initialize task trajectory file: execution_id=%s err=%s",
+                execution_id,
+                exc,
+            )
+        self._task_execution_records.append(record)
+        self._active_task_execution_id = execution_id
+        self._task_trajectory_next_sample_monotonic = 0.0
+        self._save_task_registry_state()
+        rospy.loginfo(
+            "Task execution record started: execution_id=%s task_id=%s map_id=%s started_at=%d planned_area_m2=%.3f",
+            execution_id,
+            task_id,
+            map_id or "<empty>",
+            started_at,
+            float(record["planned_area_m2"]),
+        )
+        return record
+
+    def _finalize_active_task_execution_record(
+        self,
+        final_state,
+        stop_reason,
+        finished_at,
+        planned_area_m2,
+        executed_area_m2,
+        progress,
+        path_version,
+        all_completed,
+    ):
+        execution_id = str(self._active_task_execution_id or "").strip()
+        record = {}
+        if execution_id:
+            for item in reversed(self._task_execution_records):
+                if str(item.get("execution_id", "") or "").strip() == execution_id:
+                    record = item
+                    break
+        if not record:
+            return record
+        record.update(
+            {
+                "final_state": str(final_state or "ERROR"),
+                "stop_reason": str(stop_reason or ""),
+                "finished_at": int(finished_at),
+                "planned_area_m2": float(max(0.0, planned_area_m2)),
+                "executed_area_m2": float(max(0.0, executed_area_m2)),
+                "progress": float(max(0.0, min(1.0, progress))),
+                "path_version": int(path_version),
+                "all_completed": bool(all_completed),
+            }
+        )
+        self._active_task_execution_id = ""
+        rospy.loginfo(
+            "Task execution record finalized: execution_id=%s task_id=%s state=%s started_at=%d finished_at=%d executed_area_m2=%.3f",
+            execution_id,
+            str(record.get("task_id", "") or ""),
+            str(record.get("final_state", "") or ""),
+            int(record.get("started_at", 0) or 0),
+            int(record.get("finished_at", 0) or 0),
+            float(record.get("executed_area_m2", 0.0) or 0.0),
+        )
+        return record
 
     def handle_settings_read_request(self, payload):
         pb = self.sl_link_server.pb
@@ -6990,6 +7584,7 @@ class SchedulerNode:
                 request.manual_drive.speed_ratio,
                 request.manual_drive.remote_x,
                 request.manual_drive.remote_y,
+                request.manual_drive.max_speed_mps,
                 request.manual_drive.max_turn_speed_ratio,
             )
             handled = True
@@ -7030,14 +7625,55 @@ class SchedulerNode:
         self._task_stop_reason = "emergency_stop"
         rospy.logwarn("Emergency stop applied: task_enable=false, chassis_safe_stop=true, wheels=0, disc=off.")
 
-    def _handle_manual_drive(self, motion, speed_ratio, remote_x=0.0, remote_y=0.0, max_turn_speed_ratio=0.0):
+    def _handle_manual_drive(
+        self,
+        motion,
+        speed_ratio,
+        remote_x=0.0,
+        remote_y=0.0,
+        max_speed_mps=0.0,
+        max_turn_speed_ratio=0.0,
+    ):
         with self._manual_drive_lock:
-            self._handle_manual_drive_locked(motion, speed_ratio, remote_x, remote_y, max_turn_speed_ratio)
+            self._handle_manual_drive_locked(
+                motion,
+                speed_ratio,
+                remote_x,
+                remote_y,
+                max_speed_mps,
+                max_turn_speed_ratio,
+            )
 
-    def _handle_manual_drive_locked(self, motion, speed_ratio, remote_x=0.0, remote_y=0.0, max_turn_speed_ratio=0.0):
-        run_speed = max(0.0, float(self._chassis_settings.get("run_speed", 0.0)))
-        base_max = self._manual_speed_mps_to_rpm(run_speed)
-        base = int(max(0.0, min(1.0, speed_ratio)) * base_max)
+    def _handle_manual_drive_locked(
+        self,
+        motion,
+        speed_ratio,
+        remote_x=0.0,
+        remote_y=0.0,
+        max_speed_mps=0.0,
+        max_turn_speed_ratio=0.0,
+    ):
+        saved_run_speed = max(0.0, float(self._chassis_settings.get("run_speed", 0.0)))
+        requested_max_speed = float(max_speed_mps)
+        manual_speed_limit = (
+            requested_max_speed
+            if requested_max_speed > 0.0
+            else saved_run_speed
+        )
+        applied_speed_ratio = max(0.0, min(1.0, float(speed_ratio)))
+        base_max = self._manual_speed_mps_to_rpm(manual_speed_limit)
+        base = int(applied_speed_ratio * base_max)
+        rospy.loginfo_throttle(
+            1.0,
+            "Manual drive speed: source=%s requested_max=%.3fm/s saved_run_speed=%.3fm/s "
+            "applied_limit=%.3fm/s speed_ratio=%.3f target_speed=%.3fm/s",
+            "command" if requested_max_speed > 0.0 else "saved_run_speed",
+            requested_max_speed,
+            saved_run_speed,
+            manual_speed_limit,
+            applied_speed_ratio,
+            manual_speed_limit * applied_speed_ratio,
+        )
         configured_turn_ratio = float(self._chassis_settings.get("max_turn_speed_ratio", 1.0))
         requested_turn_ratio = float(max_turn_speed_ratio) if float(max_turn_speed_ratio) > 0.0 else configured_turn_ratio
         turn_ratio = max(0.01, min(1.0, requested_turn_ratio))
@@ -7298,6 +7934,14 @@ class SchedulerNode:
         response.task_id = request.task_id or self.task_config.task_id
         if request.command == pb.TASK_CMD_START:
             success, message = self._start_execution()
+            if success:
+                try:
+                    self._publish_task_path_to_mqtt()
+                except Exception as exc:
+                    rospy.logwarn(
+                        "MQTT task path report failed without blocking task start response: %s",
+                        exc,
+                    )
         elif request.command == pb.TASK_CMD_PAUSE:
             success, message = self._pause_execution()
         elif request.command == pb.TASK_CMD_RESUME:
@@ -7308,35 +7952,239 @@ class SchedulerNode:
         response.message = message
         return response.SerializeToString(), pb.MSG_ID_TASK_COMMAND_RESPONSE, pb.COMP_SCHEDULER
 
-    def build_task_path_chunks(self, payload):
+    def _serialize_path_point_plan_chunks(
+        self,
+        task_id,
+        request_id,
+        map_id,
+        max_chunk_size,
+        planned,
+        result,
+        message,
+    ):
         pb = self.sl_link_server.pb
-        request = pb.TaskPathRequest()
-        request.ParseFromString(payload)
+        response_task_id = str(task_id or self.task_config.task_id or "").strip()
+        response_request_id = str(request_id or "").strip()
+        response_map_id = str(map_id or self.task_config.map_id or self._current_map_id() or "").strip()
+
         response_points, response_frame_id, response_alignment_yaw = self._path_points_for_external_map_frame(
-            self.current_path.points if self.current_path else []
+            self.current_path.points if planned and self.current_path else []
+        )
+        response_points, response_segments = self._classify_task_path_points(
+            response_points,
+            compact_points=True,
+        )
+        total_work_area_m2 = float(self._total_work_area_m2())
+        estimated_time_s = (
+            float(self._estimate_plan_time_s(self.current_path.length_m))
+            if planned and self.current_path
+            else -1.0
         )
         path_json = json.dumps(
             {
-                "task_id": self.task_config.task_id,
-                "path_version": self.current_path.path_version if self.current_path else 0,
+                "result": result,
+                "message": message,
+                "planned": bool(planned),
+                "request_id": response_request_id,
+                "map_id": response_map_id,
+                "task_id": response_task_id,
+                "path_version": self.current_path.path_version if planned and self.current_path else 0,
                 "frame_id": response_frame_id,
                 "alignment_yaw": response_alignment_yaw,
+                "path_point_count": len(response_points),
+                "path_length_m": float(self.current_path.length_m) if planned and self.current_path else 0.0,
+                "total_work_area_m2": total_work_area_m2,
+                "estimated_time_s": estimated_time_s,
+                "segments": response_segments,
                 "points": response_points,
             },
             ensure_ascii=False,
+            separators=(",", ":"),
         ).encode("utf-8")
-        chunk_size = max(256, min(4096, request.max_chunk_size or 2048))
+        chunk_size = max(256, min(4096, int(max_chunk_size or 2048)))
         total = max(1, int(math.ceil(len(path_json) / float(chunk_size))))
         chunks = []
+        map_info = self.map_service.get_map_info() or {}
+        map_version = max(0, int(map_info.get("map_version", 0) or 0))
         for index in range(total):
-            chunk = pb.TaskPathChunk()
-            chunk.task_id = self.task_config.task_id
+            chunk = pb.PathPointPlanResponse()
+            chunk.task_id = response_task_id
             chunk.chunk_index = index
             chunk.total_chunks = total
-            chunk.path_version = self.current_path.path_version if self.current_path else 0
+            chunk.path_version = self.current_path.path_version if planned and self.current_path else 0
             chunk.data = path_json[index * chunk_size : (index + 1) * chunk_size]
-            chunks.append((chunk.SerializeToString(), pb.MSG_ID_TASK_PATH_CHUNK, pb.COMP_SCHEDULER))
+            chunk.request_id = response_request_id
+            chunk.map_id = response_map_id
+            chunk.result = pb.RESULT_SUCCESS if planned else pb.RESULT_FAILED
+            chunk.message = str(message or "")
+            chunk.planned = bool(planned)
+            chunk.map_version = map_version
+            chunk.path_point_count = len(response_points)
+            chunk.path_length_m = (
+                float(self.current_path.length_m)
+                if planned and self.current_path
+                else 0.0
+            )
+            chunk.total_work_area_m2 = float(total_work_area_m2)
+            chunk.estimated_time_s = float(estimated_time_s)
+            chunk.frame_id = str(response_frame_id or "")
+            chunks.append(
+                (
+                    chunk.SerializeToString(),
+                    pb.MSG_ID_PATH_POINT_PLAN_RESPONSE,
+                    pb.COMP_SCHEDULER,
+                )
+            )
+        rospy.loginfo(
+            "PathPointPlanRequest completed: task_id=%s planned=%s path_version=%d points=%d segments=%d chunks=%d bytes=%d point_format=index_xy preview_generated=false",
+            response_task_id or "<empty>",
+            str(bool(planned)).lower(),
+            int(self.current_path.path_version) if planned and self.current_path else 0,
+            len(response_points),
+            len(response_segments),
+            len(chunks),
+            len(path_json),
+        )
         return chunks
+
+    def build_path_point_plan_chunks(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.PathPointPlanRequest()
+        request.ParseFromString(payload)
+
+        plan_request = pb.PathPlanRequest()
+        plan_request.request_id = str(request.request_id or "")
+        plan_request.task_id = str(request.task_id or "")
+        plan_request.force_replan = bool(request.force_replan)
+        plan_request.return_path_chunks = True
+        plan_request.max_chunk_size = int(request.max_chunk_size or 2048)
+        plan_request.global_direction = str(request.global_direction or "")
+        plan_request.map_id = str(request.map_id or "")
+        if request.HasField("start_pose"):
+            plan_request.start_pose.CopyFrom(request.start_pose)
+        if request.HasField("end_pose"):
+            plan_request.end_pose.CopyFrom(request.end_pose)
+
+        responses = self.handle_path_plan_request(
+            plan_request.SerializeToString(),
+            include_preview=False,
+        )
+        if isinstance(responses, tuple):
+            responses = [responses]
+        chunks = [
+            item
+            for item in responses
+            if int(item[1]) == int(pb.MSG_ID_PATH_POINT_PLAN_RESPONSE)
+        ]
+        if chunks:
+            return chunks
+
+        plan_response = pb.PathPlanResponse()
+        for response_payload, response_msg_id, _ in responses:
+            if int(response_msg_id) == int(pb.MSG_ID_PATH_PLAN_RESPONSE):
+                plan_response.ParseFromString(response_payload)
+                break
+        return self._serialize_path_point_plan_chunks(
+            task_id=str(request.task_id or ""),
+            request_id=str(request.request_id or ""),
+            map_id=str(request.map_id or ""),
+            max_chunk_size=int(request.max_chunk_size or 2048),
+            planned=False,
+            result="failed",
+            message=str(plan_response.message or "path point planning failed"),
+        )
+
+    @staticmethod
+    def _task_path_point_classification(point):
+        raw_path_type = str((point or {}).get("path_type", "") or "").strip()
+        point_type = str((point or {}).get("point_type", "") or "").strip().lower()
+        if raw_path_type == "connection" or point_type in ("start", "start_pose", "current_pose"):
+            return {
+                "path_scope": "between_regions",
+                "path_category": "connection",
+                "region_id": "",
+                "lap_index": 0,
+            }
+
+        region_id = raw_path_type
+        lap_index = 0
+        match = re.match(r"^(.*)__lap_([0-9]+)$", raw_path_type)
+        if match is not None:
+            region_id = str(match.group(1) or "").strip()
+            lap_index = int(match.group(2))
+        return {
+            "path_scope": "within_region",
+            "path_category": "coverage",
+            "region_id": region_id,
+            "lap_index": lap_index,
+        }
+
+    def _classify_task_path_points(self, points, compact_points=False):
+        enriched = []
+        segments = []
+        for index, source_point in enumerate(list(points or [])):
+            source_point = source_point if isinstance(source_point, dict) else {}
+            classification = self._task_path_point_classification(source_point)
+            if compact_points:
+                point = {
+                    "index": int(index),
+                    "x": round(float(source_point.get("x", 0.0) or 0.0), 6),
+                    "y": round(float(source_point.get("y", 0.0) or 0.0), 6),
+                }
+            else:
+                point = deepcopy(source_point)
+                point.update(classification)
+                point["index"] = int(index)
+            enriched.append(point)
+
+            segment_key = (
+                classification["path_scope"],
+                classification["region_id"],
+                int(classification["lap_index"]),
+            )
+            previous_key = None
+            if segments:
+                previous = segments[-1]
+                previous_key = (
+                    previous["path_scope"],
+                    previous["region_id"],
+                    int(previous["lap_index"]),
+                )
+            if segment_key != previous_key:
+                segments.append(
+                    {
+                        "segment_index": len(segments),
+                        "path_scope": classification["path_scope"],
+                        "path_category": classification["path_category"],
+                        "region_id": classification["region_id"],
+                        "lap_index": int(classification["lap_index"]),
+                        "from_region_id": "",
+                        "to_region_id": "",
+                        "start_point_index": int(index),
+                        "end_point_index": int(index),
+                        "point_count": 1,
+                    }
+                )
+            else:
+                segments[-1]["end_point_index"] = int(index)
+                segments[-1]["point_count"] = int(segments[-1]["point_count"]) + 1
+
+        for segment_index, segment in enumerate(segments):
+            if segment["path_scope"] != "between_regions":
+                continue
+            previous_region = ""
+            next_region = ""
+            for candidate in reversed(segments[:segment_index]):
+                if candidate["path_scope"] == "within_region" and candidate["region_id"]:
+                    previous_region = candidate["region_id"]
+                    break
+            for candidate in segments[segment_index + 1 :]:
+                if candidate["path_scope"] == "within_region" and candidate["region_id"]:
+                    next_region = candidate["region_id"]
+                    break
+            segment["from_region_id"] = previous_region
+            segment["to_region_id"] = next_region
+        return enriched, segments
 
     def build_camera_frame_chunks(self, payload):
         pb = self.sl_link_server.pb
@@ -7406,6 +8254,10 @@ class SchedulerNode:
         origin_y = float(info.origin.position.y)
         frame_id = str(raw_map.header.frame_id)
         grid = np.array(raw_map.data, dtype=np.int16).reshape((height, width))
+        preview_scale_x = 1.0
+        preview_scale_y = 1.0
+        output_width = width
+        output_height = height
         rospy.loginfo(
             "MapRequest raw map output without rotation: source=%s map_id=%s frame_id=%s map_size=%sx%s",
             raw_map_source,
@@ -7427,16 +8279,46 @@ class SchedulerNode:
             image[grid == 0] = (245, 245, 245)
             image[grid >= 100] = (45, 45, 45)
             image = cv2.flip(image, 0)
+            max_edge = max(64, int(self._preview_max_edge_cap))
+            output_width, output_height, _ = self._preview_meta(width, height, max_edge)
+            if output_width != width or output_height != height:
+                image = cv2.resize(
+                    image,
+                    (output_width, output_height),
+                    interpolation=cv2.INTER_AREA,
+                )
+                preview_scale_x = float(output_width) / float(max(1, width))
+                preview_scale_y = float(output_height) / float(max(1, height))
             ok, buffer = cv2.imencode(".png", image)
             if not ok:
                 rospy.logwarn("MapRequest PNG encode failed, fallback to OccupancyGrid bytes")
                 encoding = pb.MAP_ENCODING_OCCUPANCY_GRID
                 data = grid.astype(np.int8).tobytes()
+                output_width = width
+                output_height = height
+                preview_scale_x = 1.0
+                preview_scale_y = 1.0
             else:
                 data = buffer.tobytes()
+                rospy.loginfo(
+                    "MapRequest PNG prepared: source_size=%sx%s output_size=%sx%s "
+                    "scale_x=%.6f scale_y=%.6f max_edge=%d bytes=%d",
+                    width,
+                    height,
+                    output_width,
+                    output_height,
+                    preview_scale_x,
+                    preview_scale_y,
+                    max_edge,
+                    len(data),
+                )
         total = max(1, int(math.ceil(len(data) / float(chunk_size))))
-        map_info = self.map_service.get_map_info() or {}
-        map_version = int(map_info.get("map_version", 0))
+        if raw_map_source == "live":
+            map_version = self.map_service.get_map_version()
+        else:
+            saved_map_service = MapService()
+            saved_map_service.load_local_state(self._map_state_dir(requested_map_id))
+            map_version = saved_map_service.get_map_version()
         if map_version > 0:
             base_map_id = map_version
         else:
@@ -7474,8 +8356,9 @@ class SchedulerNode:
             chunk.origin.y = float(origin_y)
             chunk.origin.heading_deg = 0.0
             chunk.frame_id = frame_id
-            chunk.preview_scale_x = 1.0
-            chunk.preview_scale_y = 1.0
+            chunk.preview_scale_x = float(preview_scale_x)
+            chunk.preview_scale_y = float(preview_scale_y)
+            chunk.map_version = max(0, int(map_version))
             self._apply_localization_covariance(chunk)
             self._apply_alignment_yaw_to_response(
                 chunk,
@@ -7523,7 +8406,11 @@ class SchedulerNode:
                 stcm_path = import_result["stcm_path"]
                 saved_name = import_result["map_name"]
                 saved_map_id = import_result["map_id"]
-                response.message = "stcm_uploaded"
+                response.message = (
+                    "map_already_active_import_skipped"
+                    if bool(import_result.get("import_skipped", False))
+                    else "stcm_uploaded"
+                )
             else:
                 raise RuntimeError("unsupported map sync operation")
 
@@ -7548,20 +8435,36 @@ class SchedulerNode:
         requested_map_id = str(map_id or "").strip()
         if not requested_map_id:
             raise RuntimeError("map_id is required")
-        self._ensure_sync_proxies()
         record = self._find_recorded_map_by_id(requested_map_id)
         if record is None:
             raise RuntimeError("map_id not found: {}".format(requested_map_id))
-        stcm_path = os.path.abspath(str(record.get("path", "")).strip())
+        map_name = str(record.get("name", "")).strip()
+        stcm_path_value = str(record.get("path", "")).strip()
+        stcm_path = os.path.abspath(stcm_path_value) if stcm_path_value else ""
+        current_map_id = str(self._current_map_id() or "").strip()
+        if current_map_id == requested_map_id:
+            rospy.loginfo(
+                "Map import skipped because requested map is already active: map_id=%s map_name=%s",
+                requested_map_id,
+                map_name or "<empty>",
+            )
+            return {
+                "map_id": requested_map_id,
+                "map_name": map_name,
+                "stcm_path": stcm_path,
+                "relocalization_accepted": False,
+                "import_skipped": True,
+            }
+
         if not stcm_path:
             raise RuntimeError("map_id found but path is empty: {}".format(requested_map_id))
         if not os.path.exists(stcm_path):
             raise RuntimeError("stcm file not found: {}".format(stcm_path))
+        self._ensure_sync_proxies()
         self._send_radar_map_cache_clear(wait_after_sec=self._radar_clear_before_import_delay_sec)
         result = self._sync_set_proxy(mapfile=stcm_path)
         if not result.success:
             raise RuntimeError(result.message or "sync_set_stcm failed")
-        map_name = str(record.get("name", "")).strip()
         self._set_active_map_id(requested_map_id, reason=reason, migrate_bindings=False)
         self._switch_to_localization_mode_after_map_save()
         if self._radar_relocalization_after_import_delay_sec > 0.0:
@@ -7583,6 +8486,7 @@ class SchedulerNode:
             "map_name": map_name,
             "stcm_path": stcm_path,
             "relocalization_accepted": bool(relocalization_accepted),
+            "import_skipped": False,
         }
 
     def handle_map_import_to_radar_request(self, payload):
@@ -7596,10 +8500,15 @@ class SchedulerNode:
         try:
             import_result = self._import_saved_map_to_radar(requested_map_id, reason="map_import_to_radar")
             response.result = pb.RESULT_SUCCESS
-            response.message = "map_imported_to_radar_and_localization_on"
+            import_skipped = bool(import_result.get("import_skipped", False))
+            response.message = (
+                "map_already_active_import_skipped"
+                if import_skipped
+                else "map_imported_to_radar_and_localization_on"
+            )
             response.map_id = str(import_result.get("map_id", requested_map_id))
             response.map_name = str(import_result.get("map_name", ""))
-            response.imported = True
+            response.imported = not import_skipped
             self._save_local_state()
         except Exception as exc:
             response.result = pb.RESULT_FAILED
@@ -8087,6 +8996,16 @@ class SchedulerNode:
             response.stop_reason = str(task_result.get("stop_reason", "") or "")
             response.path_version = int(task_result.get("path_version", 0) or 0)
             response.finished_at = int(task_result.get("finished_at", 0) or 0)
+            if hasattr(response, "execution_id"):
+                response.execution_id = str(task_result.get("execution_id", "") or "")
+            if hasattr(response, "started_at"):
+                response.started_at = int(task_result.get("started_at", 0) or 0)
+            if hasattr(response, "planned_area_m2"):
+                response.planned_area_m2 = float(task_result.get("planned_area_m2", 0.0) or 0.0)
+            if hasattr(response, "executed_area_m2"):
+                response.executed_area_m2 = float(task_result.get("executed_area_m2", 0.0) or 0.0)
+            if hasattr(response, "execution_progress"):
+                response.execution_progress = float(task_result.get("execution_progress", 0.0) or 0.0)
             response.selected_work_region_ids.extend(list(task_result.get("selected_work_region_ids", []) or []))
             response.image_format = str(task_result.get("image_format", "") or "")
             response.image_width = int(task_result.get("image_width", 0) or 0)
@@ -8107,13 +9026,423 @@ class SchedulerNode:
                 row.executed_repeat = int(max(0, int(item.get("executed_repeat", 0) or 0)))
                 row.completed = bool(item.get("completed", False))
                 row.unfinished_reason = str(item.get("unfinished_reason", "") or "")
+            if hasattr(response, "execution_records"):
+                max_records = int(getattr(request, "max_execution_records", 0) or 100)
+                max_records = max(1, min(500, max_records))
+                history = []
+                for item in list(self._task_execution_records or []):
+                    if not isinstance(item, dict):
+                        continue
+                    if requested_map_id and str(item.get("map_id", "") or "").strip() != requested_map_id:
+                        continue
+                    if requested_task_id and str(item.get("task_id", "") or "").strip() != requested_task_id:
+                        continue
+                    history.append(item)
+                history.sort(
+                    key=lambda item: (
+                        int(item.get("started_at", 0) or 0),
+                        str(item.get("execution_id", "") or ""),
+                    ),
+                    reverse=True,
+                )
+                for item in history[:max_records]:
+                    execution = response.execution_records.add()
+                    execution.execution_id = str(item.get("execution_id", "") or "")
+                    execution.map_id = str(item.get("map_id", "") or "")
+                    execution.task_id = str(item.get("task_id", "") or "")
+                    execution.final_state = state_map.get(
+                        str(item.get("final_state", "") or "").strip().upper(),
+                        pb.TASK_STATE_UNKNOWN if hasattr(pb, "TASK_STATE_UNKNOWN") else pb.TASK_STATE_IDLE,
+                    )
+                    execution.stop_reason = str(item.get("stop_reason", "") or "")
+                    execution.started_at = int(item.get("started_at", 0) or 0)
+                    execution.finished_at = int(item.get("finished_at", 0) or 0)
+                    execution.planned_area_m2 = float(item.get("planned_area_m2", 0.0) or 0.0)
+                    execution.executed_area_m2 = float(item.get("executed_area_m2", 0.0) or 0.0)
+                    execution.progress = float(item.get("progress", 0.0) or 0.0)
+                    execution.path_version = int(item.get("path_version", 0) or 0)
+                    execution.all_completed = bool(item.get("all_completed", False))
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
             response.map_id = requested_map_id
             response.task_id = requested_task_id
 
-        return response.SerializeToString(), pb.MSG_ID_TASK_RESULT_RESPONSE, pb.COMP_SCHEDULER
+        max_payload_safe = 65000
+        response_payload = response.SerializeToString()
+        removed_execution_records = 0
+        if hasattr(response, "execution_records"):
+            while len(response_payload) > max_payload_safe and response.execution_records:
+                del response.execution_records[-1]
+                removed_execution_records += 1
+                response_payload = response.SerializeToString()
+        if removed_execution_records > 0:
+            suffix = "execution_records_truncated_oversize"
+            response.message = "{};{}".format(response.message, suffix) if response.message else suffix
+            response_payload = response.SerializeToString()
+            rospy.logwarn(
+                "TaskResultResponse execution history truncated for SL-Link frame: removed=%d returned=%d payload_bytes=%d",
+                removed_execution_records,
+                len(response.execution_records),
+                len(response_payload),
+            )
+        if len(response_payload) > max_payload_safe and response.image_data:
+            response.image_data = b""
+            response.image_format = ""
+            response.image_width = 0
+            response.image_height = 0
+            suffix = "result_image_omitted_oversize"
+            response.message = "{};{}".format(response.message, suffix) if response.message else suffix
+            response_payload = response.SerializeToString()
+            rospy.logwarn(
+                "TaskResultResponse image omitted for SL-Link frame safety: payload_bytes=%d",
+                len(response_payload),
+            )
+        if len(response_payload) > max_payload_safe:
+            rospy.logerr(
+                "TaskResultResponse still exceeds SL-Link safe payload: payload_bytes=%d limit=%d",
+                len(response_payload),
+                max_payload_safe,
+            )
+        return response_payload, pb.MSG_ID_TASK_RESULT_RESPONSE, pb.COMP_SCHEDULER
+
+    def build_task_execution_history_chunks(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.TaskExecutionHistoryRequest()
+        request.ParseFromString(payload)
+        requested_map_id = str(request.map_id or "").strip()
+        requested_task_id = str(request.task_id or "").strip()
+        start_time = int(request.start_time or 0)
+        end_time = int(request.end_time or 0)
+        chunk_size = max(256, min(4096, int(request.max_chunk_size or 2048)))
+
+        valid_range = not (start_time > 0 and end_time > 0 and start_time > end_time)
+        records = []
+        if valid_range:
+            for source in list(self._task_execution_records or []):
+                if not isinstance(source, dict):
+                    continue
+                map_id = str(source.get("map_id", "") or "").strip()
+                task_id = str(source.get("task_id", "") or "").strip()
+                started_at = int(source.get("started_at", 0) or 0)
+                if requested_map_id and map_id != requested_map_id:
+                    continue
+                if requested_task_id and task_id != requested_task_id:
+                    continue
+                if start_time > 0 and started_at < start_time:
+                    continue
+                if end_time > 0 and started_at > end_time:
+                    continue
+                records.append(
+                    {
+                        "execution_id": str(source.get("execution_id", "") or ""),
+                        "map_id": map_id,
+                        "task_id": task_id,
+                        "final_state": str(source.get("final_state", "") or ""),
+                        "stop_reason": str(source.get("stop_reason", "") or ""),
+                        "started_at": started_at,
+                        "finished_at": int(source.get("finished_at", 0) or 0),
+                        "planned_area_m2": float(source.get("planned_area_m2", 0.0) or 0.0),
+                        "executed_area_m2": float(source.get("executed_area_m2", 0.0) or 0.0),
+                        "progress": float(source.get("progress", 0.0) or 0.0),
+                        "path_version": int(source.get("path_version", 0) or 0),
+                        "all_completed": bool(source.get("all_completed", False)),
+                        "image_format": str(source.get("image_format", "") or ""),
+                        "image_width": int(source.get("image_width", 0) or 0),
+                        "image_height": int(source.get("image_height", 0) or 0),
+                        "image_base64": self._task_execution_preview_base64(source),
+                        "trajectory_point_count": int(
+                            source.get("trajectory_point_count", 0) or 0
+                        ),
+                    }
+                )
+        records.sort(
+            key=lambda item: (int(item["started_at"]), str(item["execution_id"])),
+            reverse=True,
+        )
+        result_text = "success" if valid_range else "failed"
+        message = (
+            "task_execution_history_ready"
+            if valid_range
+            else "start_time must be less than or equal to end_time"
+        )
+        history_json = json.dumps(
+            {
+                "result": result_text,
+                "message": message,
+                "map_id": requested_map_id,
+                "task_id": requested_task_id,
+                "start_time": start_time,
+                "end_time": end_time,
+                "total_record_count": len(records),
+                "records": records,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        total_chunks = max(1, int(math.ceil(len(history_json) / float(chunk_size))))
+        outputs = []
+        for index in range(total_chunks):
+            chunk = pb.TaskExecutionHistoryChunk()
+            chunk.result = pb.RESULT_SUCCESS if valid_range else pb.RESULT_INVALID_PARAM
+            chunk.message = message
+            chunk.chunk_index = int(index)
+            chunk.total_chunks = int(total_chunks)
+            chunk.total_record_count = int(len(records))
+            chunk.data = history_json[index * chunk_size : (index + 1) * chunk_size]
+            chunk.start_time = int(start_time)
+            chunk.end_time = int(end_time)
+            outputs.append(
+                (
+                    chunk.SerializeToString(),
+                    pb.MSG_ID_TASK_EXECUTION_HISTORY_CHUNK,
+                    pb.COMP_SCHEDULER,
+                )
+            )
+        rospy.loginfo(
+            "Task execution history query: map_id=%s task_id=%s start_time=%d end_time=%d records=%d chunks=%d bytes=%d",
+            requested_map_id or "<all>",
+            requested_task_id or "<all>",
+            start_time,
+            end_time,
+            len(records),
+            total_chunks,
+            len(history_json),
+        )
+        return outputs
+
+    def build_task_trajectory_chunks(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.TaskTrajectoryRequest()
+        request.ParseFromString(payload)
+        requested_execution_id = str(request.execution_id or "").strip()
+        requested_task_id = str(request.task_id or "").strip()
+        start_time = int(request.start_time or 0)
+        end_time = int(request.end_time or 0)
+        start_index = max(0, int(request.start_index or 0))
+        max_points = int(request.max_points or self._task_trajectory_default_max_points)
+        max_points = max(1, min(self._task_trajectory_max_points, max_points))
+        sample_step = max(1, int(request.sample_step or 1))
+        chunk_size = max(256, min(4096, int(request.max_chunk_size or 2048)))
+
+        valid_range = not (start_time > 0 and end_time > 0 and start_time > end_time)
+        candidates = [
+            item
+            for item in list(self._task_execution_records or [])
+            if isinstance(item, dict)
+        ]
+        candidates.sort(
+            key=lambda item: (
+                int(item.get("started_at", 0) or 0),
+                str(item.get("execution_id", "") or ""),
+            ),
+            reverse=True,
+        )
+        execution_record = None
+        if valid_range:
+            for item in candidates:
+                execution_id = str(item.get("execution_id", "") or "").strip()
+                task_id = str(item.get("task_id", "") or "").strip()
+                if requested_execution_id and execution_id != requested_execution_id:
+                    continue
+                if requested_task_id and task_id != requested_task_id:
+                    continue
+                execution_record = item
+                break
+
+        result_code = pb.RESULT_SUCCESS
+        message = "task_trajectory_ready"
+        if not valid_range:
+            result_code = pb.RESULT_INVALID_PARAM
+            message = "start_time must be less than or equal to end_time"
+        elif execution_record is None:
+            result_code = pb.RESULT_FAILED
+            message = "task execution record not found"
+
+        points = []
+        total_point_count = 0
+        selected_execution_id = ""
+        selected_task_id = ""
+        selected_map_id = ""
+        selected_started_at_ms = 0
+        if execution_record is not None:
+            selected_execution_id = str(execution_record.get("execution_id", "") or "")
+            selected_task_id = str(execution_record.get("task_id", "") or "")
+            selected_map_id = str(execution_record.get("map_id", "") or "")
+            selected_started_at_ms = int(execution_record.get("started_at_ms", 0) or 0)
+            if selected_started_at_ms <= 0:
+                selected_started_at_ms = int(execution_record.get("started_at", 0) or 0) * 1000
+            relative_path = str(execution_record.get("trajectory_path", "") or "").strip()
+            trajectory_path = relative_path
+            if trajectory_path and not os.path.isabs(trajectory_path):
+                trajectory_path = os.path.join(self._persist_state_dir, trajectory_path)
+            if not trajectory_path or not os.path.exists(trajectory_path):
+                message = "task_trajectory_not_recorded"
+            else:
+                try:
+                    matched_index = 0
+                    with self._task_trajectory_lock:
+                        with open(trajectory_path, "rb") as handle:
+                            while True:
+                                header = handle.read(2)
+                                if not header:
+                                    break
+                                if len(header) != 2:
+                                    raise RuntimeError("truncated trajectory length prefix")
+                                point_size = struct.unpack("<H", header)[0]
+                                point_payload = handle.read(point_size)
+                                if len(point_payload) != point_size:
+                                    raise RuntimeError("truncated trajectory point payload")
+                                point = pb.TaskTrajectoryPoint()
+                                point.ParseFromString(point_payload)
+                                timestamp_ms = selected_started_at_ms + int(point.offset_ms)
+                                timestamp_sec = timestamp_ms // 1000
+                                if start_time > 0 and timestamp_sec < start_time:
+                                    continue
+                                if end_time > 0 and timestamp_sec > end_time:
+                                    continue
+                                current_match = matched_index
+                                matched_index += 1
+                                if current_match % sample_step != 0:
+                                    continue
+                                sampled_index = total_point_count
+                                total_point_count += 1
+                                if sampled_index < start_index or len(points) >= max_points:
+                                    continue
+                                points.append(point)
+                except Exception as exc:
+                    result_code = pb.RESULT_FAILED
+                    message = "task trajectory read failed: {}".format(exc)
+                    points = []
+                    total_point_count = 0
+
+        next_index = min(total_point_count, start_index + len(points))
+        has_more = next_index < total_point_count
+
+        map_details = {
+            "available": False,
+            "message": "task map unavailable",
+            "version": 0,
+            "source_width": 0,
+            "source_height": 0,
+            "resolution": 0.0,
+            "origin_x": 0.0,
+            "origin_y": 0.0,
+            "frame_id": "",
+            "image_format": "",
+            "image_width": 0,
+            "image_height": 0,
+            "preview_scale_x": 0.0,
+            "preview_scale_y": 0.0,
+            "alignment_yaw_deg": 0.0,
+            "app_rotation_deg": 0.0,
+            "rotation_alignment_delta_deg": 0.0,
+            "image_data": b"",
+        }
+        if execution_record is not None:
+            map_details.update(self._load_task_execution_raw_map_snapshot(execution_record))
+
+        point_groups = []
+        point_budget = max(128, chunk_size - 256)
+        current_group = []
+        current_size = 0
+        for point in points:
+            estimated_size = int(point.ByteSize()) + 5
+            if current_group and current_size + estimated_size > point_budget:
+                point_groups.append(current_group)
+                current_group = []
+                current_size = 0
+            current_group.append(point)
+            current_size += estimated_size
+        if current_group or not point_groups:
+            point_groups.append(current_group)
+        map_image_data = bytes(map_details["image_data"] or b"")
+        map_image_budget = max(128, chunk_size - 512)
+        map_image_groups = [
+            map_image_data[offset : offset + map_image_budget]
+            for offset in range(0, len(map_image_data), map_image_budget)
+        ]
+        total_chunks = len(point_groups) + len(map_image_groups)
+        outputs = []
+        total_payload_bytes = 0
+        for index in range(total_chunks):
+            point_group = point_groups[index] if index < len(point_groups) else []
+            image_group_index = index - len(point_groups)
+            image_group = (
+                map_image_groups[image_group_index]
+                if 0 <= image_group_index < len(map_image_groups)
+                else b""
+            )
+            chunk = pb.TaskTrajectoryChunk()
+            chunk.result = result_code
+            chunk.message = message
+            chunk.execution_id = selected_execution_id or requested_execution_id
+            chunk.chunk_index = index
+            chunk.total_chunks = total_chunks
+            chunk.total_point_count = total_point_count
+            chunk.returned_point_count = len(points)
+            chunk.start_index = start_index
+            chunk.next_index = next_index
+            chunk.has_more = has_more
+            chunk.started_at_ms = selected_started_at_ms
+            chunk.task_id = selected_task_id or requested_task_id
+            chunk.map_id = selected_map_id
+            chunk.start_time = start_time
+            chunk.end_time = end_time
+            chunk.sample_step = sample_step
+            chunk.map_available = bool(map_details["available"])
+            chunk.map_message = str(map_details["message"] or "")
+            chunk.map_version = max(0, int(map_details["version"]))
+            chunk.map_source_width = max(0, int(map_details["source_width"]))
+            chunk.map_source_height = max(0, int(map_details["source_height"]))
+            chunk.map_resolution = float(map_details["resolution"])
+            chunk.map_origin.x = float(map_details["origin_x"])
+            chunk.map_origin.y = float(map_details["origin_y"])
+            chunk.map_origin.heading_deg = 0.0
+            chunk.map_frame_id = str(map_details["frame_id"] or "")
+            chunk.map_image_format = str(map_details["image_format"] or "")
+            chunk.map_image_width = max(0, int(map_details["image_width"]))
+            chunk.map_image_height = max(0, int(map_details["image_height"]))
+            chunk.map_preview_scale_x = float(map_details["preview_scale_x"])
+            chunk.map_preview_scale_y = float(map_details["preview_scale_y"])
+            chunk.map_image_data = image_group
+            chunk.map_image_chunk_index = max(0, image_group_index)
+            chunk.map_image_total_chunks = len(map_image_groups)
+            chunk.alignment_yaw_deg = float(map_details["alignment_yaw_deg"])
+            chunk.app_rotation_deg = float(map_details["app_rotation_deg"])
+            chunk.rotation_alignment_delta_deg = float(
+                map_details["rotation_alignment_delta_deg"]
+            )
+            for point in point_group:
+                chunk.points.add().CopyFrom(point)
+            serialized_chunk = chunk.SerializeToString()
+            total_payload_bytes += len(serialized_chunk)
+            outputs.append(
+                (
+                    serialized_chunk,
+                    pb.MSG_ID_TASK_TRAJECTORY_CHUNK,
+                    pb.COMP_SCHEDULER,
+                )
+            )
+        rospy.loginfo(
+            "Task trajectory query: execution_id=%s task_id=%s start_time=%d end_time=%d total_points=%d returned_points=%d start_index=%d next_index=%d sample_step=%d chunks=%d bytes=%d map_available=%s map_id=%s map_image_bytes=%d map_image_chunks=%d",
+            selected_execution_id or requested_execution_id or "<latest>",
+            selected_task_id or requested_task_id or "<any>",
+            start_time,
+            end_time,
+            total_point_count,
+            len(points),
+            start_index,
+            next_index,
+            sample_step,
+            total_chunks,
+            total_payload_bytes,
+            str(bool(map_details["available"])),
+            selected_map_id or "<empty>",
+            len(map_image_data),
+            len(map_image_groups),
+        )
+        return outputs
 
     def _switch_to_localization_mode_after_map_save(self, publish_count=6):
         if self._set_map_localization_pub is None or SetMapLocalizationRequest is None:
@@ -8704,12 +10033,123 @@ class SchedulerNode:
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
+            rospy.logwarn(
+                "MapPreviewRequest failed: map_id=%s error=%s",
+                requested_map_id or self._live_map_id,
+                exc,
+            )
             self._apply_localization_covariance(response)
             self._apply_alignment_yaw_to_response(
                 response,
                 requested_map_id or self._current_map_id(),
             )
         return response.SerializeToString(), pb.MSG_ID_MAP_PREVIEW_RESPONSE, pb.COMP_SCHEDULER
+
+    @staticmethod
+    def _fill_polygon_region_message(pb_region, region, default_region_type):
+        pb_region.name = str(region.get("name", "") or "")
+        pb_region.region_id = str(region.get("region_id", "") or "")
+        pb_region.priority = max(
+            0,
+            int(region.get("order_index", region.get("priority", 0)) or 0),
+        )
+        pb_region.enabled = bool(region.get("enabled", True))
+        pb_region.color_argb = max(0, int(region.get("color_argb", 0) or 0))
+        pb_region.closed = bool(region.get("closed", True))
+        pb_region.region_type = int(region.get("region_type", default_region_type))
+        pb_region.global_direction = str(region.get("global_direction", "") or "")
+        for point in list(region.get("points", []) or []):
+            if not isinstance(point, dict):
+                continue
+            pb_point = pb_region.points.add()
+            pb_point.x = float(point.get("x", 0.0) or 0.0)
+            pb_point.y = float(point.get("y", 0.0) or 0.0)
+
+    @staticmethod
+    def _fill_pose2d_message(pb_pose, pose):
+        pb_pose.x = float(pose.get("x", 0.0) or 0.0)
+        pb_pose.y = float(pose.get("y", 0.0) or 0.0)
+        pb_pose.heading_deg = float(pose.get("heading_deg", 0.0) or 0.0)
+
+    def handle_map_region_point_request(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.MapRegionPointRequest()
+        request.ParseFromString(payload)
+        response = pb.MapRegionPointResponse()
+        requested_map_id = str(request.map_id or "").strip()
+        effective_map_id = requested_map_id or self._current_map_id() or self._live_map_id
+
+        try:
+            if self._is_live_map_id(effective_map_id) or effective_map_id == self._current_map_id():
+                region_service = self.map_service
+            else:
+                if self._find_recorded_map_by_id(effective_map_id) is None:
+                    raise RuntimeError("map_id not found: {}".format(effective_map_id))
+                region_service = MapService()
+                region_service.load_local_state(self._map_state_dir(effective_map_id))
+
+            regions = region_service.get_overlay_regions() or {}
+            response.result = pb.RESULT_SUCCESS
+            response.message = "region_point_info_ready"
+            response.map_id = effective_map_id
+            response.map_version = region_service.get_map_version()
+
+            for region in list(regions.get("work_regions", []) or []):
+                item = response.work_regions.add()
+                self._fill_polygon_region_message(item.region, region, pb.REGION_TYPE_WORK)
+                start_pose = region.get("start_pose", {})
+                if isinstance(start_pose, dict) and start_pose:
+                    item.start_pose_available = True
+                    self._fill_pose2d_message(item.start_pose, start_pose)
+                end_pose = region.get("end_pose", {})
+                if isinstance(end_pose, dict) and end_pose:
+                    item.end_pose_available = True
+                    self._fill_pose2d_message(item.end_pose, end_pose)
+
+            for region in list(regions.get("obstacle_regions", []) or []):
+                self._fill_polygon_region_message(
+                    response.obstacle_regions.add(),
+                    region,
+                    pb.REGION_TYPE_OBSTACLE,
+                )
+            for region in list(regions.get("erase_regions", []) or []):
+                self._fill_polygon_region_message(
+                    response.erase_regions.add(),
+                    region,
+                    pb.REGION_TYPE_ERASE,
+                )
+            crop_region = regions.get("crop_region")
+            if isinstance(crop_region, dict) and crop_region:
+                response.crop_region_available = True
+                self._fill_polygon_region_message(
+                    response.crop_region,
+                    crop_region,
+                    pb.REGION_TYPE_CROP,
+                )
+            rospy.loginfo(
+                "SL-LinkA map region/point response: map_id=%s map_version=%d "
+                "work=%d obstacle=%d erase=%d crop=%s",
+                response.map_id,
+                response.map_version,
+                len(response.work_regions),
+                len(response.obstacle_regions),
+                len(response.erase_regions),
+                str(response.crop_region_available),
+            )
+        except Exception as exc:
+            response.result = pb.RESULT_FAILED
+            response.message = str(exc)
+            response.map_id = effective_map_id
+            rospy.logwarn(
+                "SL-LinkA map region/point query failed: map_id=%s error=%s",
+                effective_map_id,
+                exc,
+            )
+        return (
+            response.SerializeToString(),
+            pb.MSG_ID_MAP_REGION_POINT_RESPONSE,
+            pb.COMP_SCHEDULER,
+        )
 
     def handle_map_edit_command(self, payload):
         pb = self.sl_link_server.pb
@@ -8876,7 +10316,7 @@ class SchedulerNode:
         region_global_direction = ""
         try:
             candidate = str(getattr(request.region, "global_direction", "") or "").strip().lower()
-            if candidate in ("x", "-x", "y", "-y"):
+            if is_planning_direction(candidate):
                 region_global_direction = candidate
         except Exception:
             region_global_direction = ""
@@ -8989,13 +10429,13 @@ class SchedulerNode:
             response.utc_time = local_state.last_update_utc
         return response.SerializeToString(), pb.MSG_ID_VIDEO_STREAM_INFO_RESPONSE, pb.COMP_SCHEDULER
 
-    def handle_path_plan_request(self, payload):
+    def handle_path_plan_request(self, payload, include_preview=True):
         pb = self.sl_link_server.pb
         request = pb.PathPlanRequest()
         try:
             request.ParseFromString(payload)
         except Exception:
-            return self._handle_path_plan_request_impl(payload)
+            return self._handle_path_plan_request_impl(payload, include_preview=include_preview)
 
         effective_map_id = self._effective_request_map_id_for_task(request)
         map_id_ok, current_map_id = self._validate_requested_map_id(
@@ -9004,7 +10444,7 @@ class SchedulerNode:
             keep_current_on_empty=False,
         )
         if (not map_id_ok) or self._is_live_map_id(current_map_id):
-            return self._handle_path_plan_request_impl(payload)
+            return self._handle_path_plan_request_impl(payload, include_preview=include_preview)
 
         original_service = self.map_service
         original_cache_key = self._preview_snapshot_cache_key
@@ -9024,13 +10464,53 @@ class SchedulerNode:
                 int(map_info.get("height", 0) or 0),
                 float(map_info.get("resolution", 0.0) or 0.0),
             )
-            return self._handle_path_plan_request_impl(payload)
+            return self._handle_path_plan_request_impl(payload, include_preview=include_preview)
         finally:
             self.map_service = original_service
             self._preview_snapshot_cache_key = original_cache_key
             self._preview_snapshot_cache = original_cache
 
-    def _handle_path_plan_request_impl(self, payload):
+    def _handle_path_plan_request_impl(self, payload, include_preview=True):
+        pb = self.sl_link_server.pb
+        request = pb.PathPlanRequest()
+        request.ParseFromString(payload)
+        if str(request.task_id or "").strip():
+            return self._handle_path_plan_request_impl_core(
+                payload,
+                task_scoped=True,
+                include_preview=include_preview,
+            )
+
+        # An ad-hoc request must not inherit selections, repeats or temporary
+        # obstacles from the last configured task. Keep the generated path,
+        # but restore the formal task configuration after building the reply.
+        original_task_config = self.task_config
+        self.task_config = deepcopy(original_task_config)
+        self.task_config.task_id = ""
+        self.task_config.selected_work_region_ids = []
+        self.task_config.region_repeat_config = {}
+        self.task_config.active_work_region_id = ""
+        self.task_config.start_pose = {}
+        self.task_config.end_pose = {}
+        try:
+            rospy.loginfo(
+                "PathPlanRequest without task_id: plan from current map regions only; "
+                "task selection, repeats and temporary obstacles are excluded"
+            )
+            return self._handle_path_plan_request_impl_core(
+                payload,
+                task_scoped=False,
+                include_preview=include_preview,
+            )
+        finally:
+            self.task_config = original_task_config
+
+    def _handle_path_plan_request_impl_core(
+        self,
+        payload,
+        task_scoped=True,
+        include_preview=True,
+    ):
         t0_all = time.perf_counter()
         pb = self.sl_link_server.pb
         request = pb.PathPlanRequest()
@@ -9059,12 +10539,13 @@ class SchedulerNode:
         # PathPlanRequest planning scope:
         # True  -> plan all configured/selected regions in order
         # False -> plan by current selected/active policy
-        self._sync_task_regions_from_overlay()
-        self._merge_task_obstacle_regions_for_planning(
-            current_map_id,
-            self.task_config.task_id,
-        )
-        self._sync_task_map_binding(update_binding=False)
+        self._sync_task_regions_from_overlay(update_task_binding=task_scoped)
+        if task_scoped:
+            self._merge_task_obstacle_regions_for_planning(
+                current_map_id,
+                self.task_config.task_id,
+            )
+            self._sync_task_map_binding(update_binding=False)
         total_regions = len(self.task_config.work_regions or [])
         selected_ids = self._effective_selected_work_region_ids(
             sorted(
@@ -9095,8 +10576,7 @@ class SchedulerNode:
         request_start_pose = {}
         request_end_pose = {}
         request_global_direction = str(getattr(request, "global_direction", "") or "").strip().lower()
-        if request_global_direction not in ("x", "-x", "y", "-y"):
-            request_global_direction = "x"
+        request_global_direction = normalize_planning_direction(request_global_direction)
         self.task_config.global_direction = request_global_direction
         if request.HasField("start_pose"):
             request_start_pose = {
@@ -9235,7 +10715,11 @@ class SchedulerNode:
             response.estimated_time_s = float(self._estimate_plan_time_s(self.current_path.length_m))
             t4_fields = time.perf_counter()
             try:
-                preview_payload = self._build_path_preview_payload(map_info)
+                preview_payload = (
+                    self._build_path_preview_payload(map_info)
+                    if include_preview
+                    else None
+                )
                 t5_preview = time.perf_counter()
                 if preview_payload is not None:
                     response.preview_image = preview_payload[0]
@@ -9281,7 +10765,11 @@ class SchedulerNode:
             t4_fields = time.perf_counter()
             # Even if planning fails, return current map preview for UI continuity.
             try:
-                failed_preview = self._build_failed_plan_preview_payload(response.message)
+                failed_preview = (
+                    self._build_failed_plan_preview_payload(response.message)
+                    if include_preview
+                    else None
+                )
                 t5_preview = time.perf_counter()
                 if failed_preview is not None:
                     response.preview_image = failed_preview[0]
@@ -9331,10 +10819,15 @@ class SchedulerNode:
         ]
 
         if planned and request.return_path_chunks and self.current_path is not None:
-            path_request = pb.TaskPathRequest()
-            path_request.task_id = self.task_config.task_id
-            path_request.max_chunk_size = request.max_chunk_size
-            chunks = self.build_task_path_chunks(path_request.SerializeToString())
+            chunks = self._serialize_path_point_plan_chunks(
+                task_id=self.task_config.task_id,
+                request_id=request.request_id,
+                map_id=current_map_id,
+                max_chunk_size=request.max_chunk_size,
+                planned=True,
+                result="success",
+                message="path_point_plan_ready",
+            )
             outputs.extend(chunks)
             response.path_chunked = True
             response_payload = response.SerializeToString()

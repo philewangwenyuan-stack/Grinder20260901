@@ -78,16 +78,25 @@ PB_BIND(sl_link_TaskCommandResponse, sl_link_TaskCommandResponse, AUTO)
 PB_BIND(sl_link_TaskStatusReport, sl_link_TaskStatusReport, AUTO)
 
 
-PB_BIND(sl_link_TaskPathRequest, sl_link_TaskPathRequest, AUTO)
+PB_BIND(sl_link_PathPointPlanRequest, sl_link_PathPointPlanRequest, AUTO)
 
 
-PB_BIND(sl_link_TaskPathChunk, sl_link_TaskPathChunk, AUTO)
+PB_BIND(sl_link_PathPointPlanResponse, sl_link_PathPointPlanResponse, AUTO)
 
 
 PB_BIND(sl_link_MapPreviewRequest, sl_link_MapPreviewRequest, AUTO)
 
 
 PB_BIND(sl_link_MapPreviewResponse, sl_link_MapPreviewResponse, AUTO)
+
+
+PB_BIND(sl_link_MapRegionPointRequest, sl_link_MapRegionPointRequest, AUTO)
+
+
+PB_BIND(sl_link_WorkRegionPointInfo, sl_link_WorkRegionPointInfo, AUTO)
+
+
+PB_BIND(sl_link_MapRegionPointResponse, sl_link_MapRegionPointResponse, AUTO)
 
 
 PB_BIND(sl_link_MapEditCommand, sl_link_MapEditCommand, AUTO)
@@ -171,7 +180,25 @@ PB_BIND(sl_link_TaskResultRequest, sl_link_TaskResultRequest, AUTO)
 PB_BIND(sl_link_TaskResultRegionItem, sl_link_TaskResultRegionItem, AUTO)
 
 
-PB_BIND(sl_link_TaskResultResponse, sl_link_TaskResultResponse, AUTO)
+PB_BIND(sl_link_TaskExecutionRecord, sl_link_TaskExecutionRecord, AUTO)
+
+
+PB_BIND(sl_link_TaskResultResponse, sl_link_TaskResultResponse, 2)
+
+
+PB_BIND(sl_link_TaskExecutionHistoryRequest, sl_link_TaskExecutionHistoryRequest, AUTO)
+
+
+PB_BIND(sl_link_TaskExecutionHistoryChunk, sl_link_TaskExecutionHistoryChunk, AUTO)
+
+
+PB_BIND(sl_link_TaskTrajectoryRequest, sl_link_TaskTrajectoryRequest, AUTO)
+
+
+PB_BIND(sl_link_TaskTrajectoryPoint, sl_link_TaskTrajectoryPoint, AUTO)
+
+
+PB_BIND(sl_link_TaskTrajectoryChunk, sl_link_TaskTrajectoryChunk, 2)
 
 
 PB_BIND(sl_link_LiveMapCacheClearRequest, sl_link_LiveMapCacheClearRequest, AUTO)

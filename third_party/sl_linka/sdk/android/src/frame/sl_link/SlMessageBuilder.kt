@@ -85,7 +85,7 @@ object SlMessageBuilder {
         return buildFrame(0x0502u, serializedData, dstId, 0x08u)
     }
 
-    fun buildTaskPathRequestRaw(serializedData: ByteArray, dstId: UByte): ByteArray {
+    fun buildPathPointPlanRequestRaw(serializedData: ByteArray, dstId: UByte): ByteArray {
         return buildFrame(0x0505u, serializedData, dstId, 0x08u)
     }
 

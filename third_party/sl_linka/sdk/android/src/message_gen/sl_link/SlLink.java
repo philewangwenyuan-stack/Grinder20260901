@@ -98,13 +98,13 @@ public final class SlLink {
      */
     MSG_ID_TASK_STATUS_REPORT(1284),
     /**
-     * <code>MSG_ID_TASK_PATH_REQUEST = 1285;</code>
+     * <code>MSG_ID_PATH_POINT_PLAN_REQUEST = 1285;</code>
      */
-    MSG_ID_TASK_PATH_REQUEST(1285),
+    MSG_ID_PATH_POINT_PLAN_REQUEST(1285),
     /**
-     * <code>MSG_ID_TASK_PATH_CHUNK = 1286;</code>
+     * <code>MSG_ID_PATH_POINT_PLAN_RESPONSE = 1286;</code>
      */
-    MSG_ID_TASK_PATH_CHUNK(1286),
+    MSG_ID_PATH_POINT_PLAN_RESPONSE(1286),
     /**
      * <code>MSG_ID_MAP_PREVIEW_REQUEST = 1287;</code>
      */
@@ -261,6 +261,30 @@ public final class SlLink {
      * <code>MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE = 1325;</code>
      */
     MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE(1325),
+    /**
+     * <code>MSG_ID_MAP_REGION_POINT_REQUEST = 1326;</code>
+     */
+    MSG_ID_MAP_REGION_POINT_REQUEST(1326),
+    /**
+     * <code>MSG_ID_MAP_REGION_POINT_RESPONSE = 1327;</code>
+     */
+    MSG_ID_MAP_REGION_POINT_RESPONSE(1327),
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_HISTORY_REQUEST = 1328;</code>
+     */
+    MSG_ID_TASK_EXECUTION_HISTORY_REQUEST(1328),
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_HISTORY_CHUNK = 1329;</code>
+     */
+    MSG_ID_TASK_EXECUTION_HISTORY_CHUNK(1329),
+    /**
+     * <code>MSG_ID_TASK_TRAJECTORY_REQUEST = 1330;</code>
+     */
+    MSG_ID_TASK_TRAJECTORY_REQUEST(1330),
+    /**
+     * <code>MSG_ID_TASK_TRAJECTORY_CHUNK = 1331;</code>
+     */
+    MSG_ID_TASK_TRAJECTORY_CHUNK(1331),
     UNRECOGNIZED(-1),
     ;
 
@@ -341,13 +365,13 @@ public final class SlLink {
      */
     public static final int MSG_ID_TASK_STATUS_REPORT_VALUE = 1284;
     /**
-     * <code>MSG_ID_TASK_PATH_REQUEST = 1285;</code>
+     * <code>MSG_ID_PATH_POINT_PLAN_REQUEST = 1285;</code>
      */
-    public static final int MSG_ID_TASK_PATH_REQUEST_VALUE = 1285;
+    public static final int MSG_ID_PATH_POINT_PLAN_REQUEST_VALUE = 1285;
     /**
-     * <code>MSG_ID_TASK_PATH_CHUNK = 1286;</code>
+     * <code>MSG_ID_PATH_POINT_PLAN_RESPONSE = 1286;</code>
      */
-    public static final int MSG_ID_TASK_PATH_CHUNK_VALUE = 1286;
+    public static final int MSG_ID_PATH_POINT_PLAN_RESPONSE_VALUE = 1286;
     /**
      * <code>MSG_ID_MAP_PREVIEW_REQUEST = 1287;</code>
      */
@@ -504,6 +528,30 @@ public final class SlLink {
      * <code>MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE = 1325;</code>
      */
     public static final int MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE_VALUE = 1325;
+    /**
+     * <code>MSG_ID_MAP_REGION_POINT_REQUEST = 1326;</code>
+     */
+    public static final int MSG_ID_MAP_REGION_POINT_REQUEST_VALUE = 1326;
+    /**
+     * <code>MSG_ID_MAP_REGION_POINT_RESPONSE = 1327;</code>
+     */
+    public static final int MSG_ID_MAP_REGION_POINT_RESPONSE_VALUE = 1327;
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_HISTORY_REQUEST = 1328;</code>
+     */
+    public static final int MSG_ID_TASK_EXECUTION_HISTORY_REQUEST_VALUE = 1328;
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_HISTORY_CHUNK = 1329;</code>
+     */
+    public static final int MSG_ID_TASK_EXECUTION_HISTORY_CHUNK_VALUE = 1329;
+    /**
+     * <code>MSG_ID_TASK_TRAJECTORY_REQUEST = 1330;</code>
+     */
+    public static final int MSG_ID_TASK_TRAJECTORY_REQUEST_VALUE = 1330;
+    /**
+     * <code>MSG_ID_TASK_TRAJECTORY_CHUNK = 1331;</code>
+     */
+    public static final int MSG_ID_TASK_TRAJECTORY_CHUNK_VALUE = 1331;
 
 
     public final int getNumber() {
@@ -543,8 +591,8 @@ public final class SlLink {
         case 1282: return MSG_ID_TASK_COMMAND;
         case 1283: return MSG_ID_TASK_COMMAND_RESPONSE;
         case 1284: return MSG_ID_TASK_STATUS_REPORT;
-        case 1285: return MSG_ID_TASK_PATH_REQUEST;
-        case 1286: return MSG_ID_TASK_PATH_CHUNK;
+        case 1285: return MSG_ID_PATH_POINT_PLAN_REQUEST;
+        case 1286: return MSG_ID_PATH_POINT_PLAN_RESPONSE;
         case 1287: return MSG_ID_MAP_PREVIEW_REQUEST;
         case 1288: return MSG_ID_MAP_PREVIEW_RESPONSE;
         case 1289: return MSG_ID_MAP_EDIT_COMMAND;
@@ -584,6 +632,12 @@ public final class SlLink {
         case 1323: return MSG_ID_RADAR_RELOCALIZATION_RESPONSE;
         case 1324: return MSG_ID_RADAR_RELOCALIZATION_STATUS_REQUEST;
         case 1325: return MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE;
+        case 1326: return MSG_ID_MAP_REGION_POINT_REQUEST;
+        case 1327: return MSG_ID_MAP_REGION_POINT_RESPONSE;
+        case 1328: return MSG_ID_TASK_EXECUTION_HISTORY_REQUEST;
+        case 1329: return MSG_ID_TASK_EXECUTION_HISTORY_CHUNK;
+        case 1330: return MSG_ID_TASK_TRAJECTORY_REQUEST;
+        case 1331: return MSG_ID_TASK_TRAJECTORY_CHUNK;
         default: return null;
       }
     }
@@ -6185,7 +6239,8 @@ public final class SlLink {
 
     /**
      * <pre>
-     * Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+     * Requested speed in m/s for task/navigation and manual command generation.
+     * Manual output is additionally capped by the chassis manual speed limit.
      * </pre>
      *
      * <code>float run_speed = 1 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
@@ -6327,7 +6382,8 @@ public final class SlLink {
     private float runSpeed_;
     /**
      * <pre>
-     * Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+     * Requested speed in m/s for task/navigation and manual command generation.
+     * Manual output is additionally capped by the chassis manual speed limit.
      * </pre>
      *
      * <code>float run_speed = 1 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
@@ -6765,7 +6821,8 @@ public final class SlLink {
       private float runSpeed_ ;
       /**
        * <pre>
-       * Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+       * Requested speed in m/s for task/navigation and manual command generation.
+       * Manual output is additionally capped by the chassis manual speed limit.
        * </pre>
        *
        * <code>float run_speed = 1 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
@@ -6775,7 +6832,8 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+       * Requested speed in m/s for task/navigation and manual command generation.
+       * Manual output is additionally capped by the chassis manual speed limit.
        * </pre>
        *
        * <code>float run_speed = 1 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
@@ -6788,7 +6846,8 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Maximum vehicle speed in m/s. Zero disables both task and manual motion.
+       * Requested speed in m/s for task/navigation and manual command generation.
+       * Manual output is additionally capped by the chassis manual speed limit.
        * </pre>
        *
        * <code>float run_speed = 1 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
@@ -18009,6 +18068,15 @@ public final class SlLink {
      * <code>float rotation_alignment_delta_deg = 17;</code>
      */
     float getRotationAlignmentDeltaDeg();
+
+    /**
+     * <pre>
+     * Same region/edit version semantics as MapPreviewResponse.map_version.
+     * </pre>
+     *
+     * <code>uint32 map_version = 18;</code>
+     */
+    int getMapVersion();
   }
   /**
    * Protobuf type {@code sl_link.MapChunk}
@@ -18038,6 +18106,7 @@ public final class SlLink {
       alignmentYawDeg_ = 0F;
       appRotationDeg_ = 0F;
       rotationAlignmentDeltaDeg_ = 0F;
+      mapVersion_ = 0;
     }
 
     @java.lang.Override
@@ -18165,6 +18234,11 @@ public final class SlLink {
             case 141: {
 
               rotationAlignmentDeltaDeg_ = input.readFloat();
+              break;
+            }
+            case 144: {
+
+              mapVersion_ = input.readUInt32();
               break;
             }
             default: {
@@ -18413,6 +18487,19 @@ public final class SlLink {
       return rotationAlignmentDeltaDeg_;
     }
 
+    public static final int MAP_VERSION_FIELD_NUMBER = 18;
+    private int mapVersion_;
+    /**
+     * <pre>
+     * Same region/edit version semantics as MapPreviewResponse.map_version.
+     * </pre>
+     *
+     * <code>uint32 map_version = 18;</code>
+     */
+    public int getMapVersion() {
+      return mapVersion_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -18477,6 +18564,9 @@ public final class SlLink {
       }
       if (rotationAlignmentDeltaDeg_ != 0F) {
         output.writeFloat(17, rotationAlignmentDeltaDeg_);
+      }
+      if (mapVersion_ != 0) {
+        output.writeUInt32(18, mapVersion_);
       }
       unknownFields.writeTo(output);
     }
@@ -18554,6 +18644,10 @@ public final class SlLink {
         size += com.google.protobuf.CodedOutputStream
           .computeFloatSize(17, rotationAlignmentDeltaDeg_);
       }
+      if (mapVersion_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(18, mapVersion_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -18621,6 +18715,8 @@ public final class SlLink {
           java.lang.Float.floatToIntBits(getRotationAlignmentDeltaDeg())
           == java.lang.Float.floatToIntBits(
               other.getRotationAlignmentDeltaDeg()));
+      result = result && (getMapVersion()
+          == other.getMapVersion());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -18676,6 +18772,8 @@ public final class SlLink {
       hash = (37 * hash) + ROTATION_ALIGNMENT_DELTA_DEG_FIELD_NUMBER;
       hash = (53 * hash) + java.lang.Float.floatToIntBits(
           getRotationAlignmentDeltaDeg());
+      hash = (37 * hash) + MAP_VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getMapVersion();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -18851,6 +18949,8 @@ public final class SlLink {
 
         rotationAlignmentDeltaDeg_ = 0F;
 
+        mapVersion_ = 0;
+
         return this;
       }
 
@@ -18902,6 +19002,7 @@ public final class SlLink {
         result.alignmentYawDeg_ = alignmentYawDeg_;
         result.appRotationDeg_ = appRotationDeg_;
         result.rotationAlignmentDeltaDeg_ = rotationAlignmentDeltaDeg_;
+        result.mapVersion_ = mapVersion_;
         onBuilt();
         return result;
       }
@@ -19001,6 +19102,9 @@ public final class SlLink {
         }
         if (other.getRotationAlignmentDeltaDeg() != 0F) {
           setRotationAlignmentDeltaDeg(other.getRotationAlignmentDeltaDeg());
+        }
+        if (other.getMapVersion() != 0) {
+          setMapVersion(other.getMapVersion());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -19728,6 +19832,44 @@ public final class SlLink {
       public Builder clearRotationAlignmentDeltaDeg() {
         
         rotationAlignmentDeltaDeg_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private int mapVersion_ ;
+      /**
+       * <pre>
+       * Same region/edit version semantics as MapPreviewResponse.map_version.
+       * </pre>
+       *
+       * <code>uint32 map_version = 18;</code>
+       */
+      public int getMapVersion() {
+        return mapVersion_;
+      }
+      /**
+       * <pre>
+       * Same region/edit version semantics as MapPreviewResponse.map_version.
+       * </pre>
+       *
+       * <code>uint32 map_version = 18;</code>
+       */
+      public Builder setMapVersion(int value) {
+        
+        mapVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Same region/edit version semantics as MapPreviewResponse.map_version.
+       * </pre>
+       *
+       * <code>uint32 map_version = 18;</code>
+       */
+      public Builder clearMapVersion() {
+        
+        mapVersion_ = 0;
         onChanged();
         return this;
       }
@@ -27546,15 +27688,25 @@ public final class SlLink {
 
   }
 
-  public interface TaskPathRequestOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:sl_link.TaskPathRequest)
+  public interface PathPointPlanRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.PathPointPlanRequest)
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     * Non-empty: plan with the matching task configuration and its temporary
+     * obstacles. Empty: plan only with current-map work/public obstacle regions.
+     * </pre>
+     *
      * <code>string task_id = 1;</code>
      */
     java.lang.String getTaskId();
     /**
+     * <pre>
+     * Non-empty: plan with the matching task configuration and its temporary
+     * obstacles. Empty: plan only with current-map work/public obstacle regions.
+     * </pre>
+     *
      * <code>string task_id = 1;</code>
      */
     com.google.protobuf.ByteString
@@ -27564,22 +27716,115 @@ public final class SlLink {
      * <code>uint32 max_chunk_size = 2;</code>
      */
     int getMaxChunkSize();
+
+    /**
+     * <code>string request_id = 3;</code>
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>bool force_replan = 4;</code>
+     */
+    boolean getForceReplan();
+
+    /**
+     * <pre>
+     * Optional planning endpoints. Omitted endpoints use planner defaults.
+     * </pre>
+     *
+     * <code>.sl_link.Pose2D start_pose = 5;</code>
+     */
+    boolean hasStartPose();
+    /**
+     * <pre>
+     * Optional planning endpoints. Omitted endpoints use planner defaults.
+     * </pre>
+     *
+     * <code>.sl_link.Pose2D start_pose = 5;</code>
+     */
+    sl_link.SlLink.Pose2D getStartPose();
+    /**
+     * <pre>
+     * Optional planning endpoints. Omitted endpoints use planner defaults.
+     * </pre>
+     *
+     * <code>.sl_link.Pose2D start_pose = 5;</code>
+     */
+    sl_link.SlLink.Pose2DOrBuilder getStartPoseOrBuilder();
+
+    /**
+     * <code>.sl_link.Pose2D end_pose = 6;</code>
+     */
+    boolean hasEndPose();
+    /**
+     * <code>.sl_link.Pose2D end_pose = 6;</code>
+     */
+    sl_link.SlLink.Pose2D getEndPose();
+    /**
+     * <code>.sl_link.Pose2D end_pose = 6;</code>
+     */
+    sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder();
+
+    /**
+     * <pre>
+     * Optional x/y planning direction.
+     * </pre>
+     *
+     * <code>string global_direction = 7;</code>
+     */
+    java.lang.String getGlobalDirection();
+    /**
+     * <pre>
+     * Optional x/y planning direction.
+     * </pre>
+     *
+     * <code>string global_direction = 7;</code>
+     */
+    com.google.protobuf.ByteString
+        getGlobalDirectionBytes();
+
+    /**
+     * <pre>
+     * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+     * </pre>
+     *
+     * <code>string map_id = 8;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <pre>
+     * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+     * </pre>
+     *
+     * <code>string map_id = 8;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
   }
   /**
-   * Protobuf type {@code sl_link.TaskPathRequest}
+   * Protobuf type {@code sl_link.PathPointPlanRequest}
    */
-  public  static final class TaskPathRequest extends
+  public  static final class PathPointPlanRequest extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:sl_link.TaskPathRequest)
-      TaskPathRequestOrBuilder {
+      // @@protoc_insertion_point(message_implements:sl_link.PathPointPlanRequest)
+      PathPointPlanRequestOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use TaskPathRequest.newBuilder() to construct.
-    private TaskPathRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use PathPointPlanRequest.newBuilder() to construct.
+    private PathPointPlanRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private TaskPathRequest() {
+    private PathPointPlanRequest() {
       taskId_ = "";
       maxChunkSize_ = 0;
+      requestId_ = "";
+      forceReplan_ = false;
+      globalDirection_ = "";
+      mapId_ = "";
     }
 
     @java.lang.Override
@@ -27587,7 +27832,7 @@ public final class SlLink {
     getUnknownFields() {
       return this.unknownFields;
     }
-    private TaskPathRequest(
+    private PathPointPlanRequest(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -27617,6 +27862,55 @@ public final class SlLink {
               maxChunkSize_ = input.readUInt32();
               break;
             }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              requestId_ = s;
+              break;
+            }
+            case 32: {
+
+              forceReplan_ = input.readBool();
+              break;
+            }
+            case 42: {
+              sl_link.SlLink.Pose2D.Builder subBuilder = null;
+              if (startPose_ != null) {
+                subBuilder = startPose_.toBuilder();
+              }
+              startPose_ = input.readMessage(sl_link.SlLink.Pose2D.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(startPose_);
+                startPose_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 50: {
+              sl_link.SlLink.Pose2D.Builder subBuilder = null;
+              if (endPose_ != null) {
+                subBuilder = endPose_.toBuilder();
+              }
+              endPose_ = input.readMessage(sl_link.SlLink.Pose2D.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(endPose_);
+                endPose_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 58: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              globalDirection_ = s;
+              break;
+            }
+            case 66: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
             default: {
               if (!parseUnknownFieldProto3(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -27638,20 +27932,25 @@ public final class SlLink {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return sl_link.SlLink.internal_static_sl_link_TaskPathRequest_descriptor;
+      return sl_link.SlLink.internal_static_sl_link_PathPointPlanRequest_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return sl_link.SlLink.internal_static_sl_link_TaskPathRequest_fieldAccessorTable
+      return sl_link.SlLink.internal_static_sl_link_PathPointPlanRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              sl_link.SlLink.TaskPathRequest.class, sl_link.SlLink.TaskPathRequest.Builder.class);
+              sl_link.SlLink.PathPointPlanRequest.class, sl_link.SlLink.PathPointPlanRequest.Builder.class);
     }
 
     public static final int TASK_ID_FIELD_NUMBER = 1;
     private volatile java.lang.Object taskId_;
     /**
+     * <pre>
+     * Non-empty: plan with the matching task configuration and its temporary
+     * obstacles. Empty: plan only with current-map work/public obstacle regions.
+     * </pre>
+     *
      * <code>string task_id = 1;</code>
      */
     public java.lang.String getTaskId() {
@@ -27667,6 +27966,11 @@ public final class SlLink {
       }
     }
     /**
+     * <pre>
+     * Non-empty: plan with the matching task configuration and its temporary
+     * obstacles. Empty: plan only with current-map work/public obstacle regions.
+     * </pre>
+     *
      * <code>string task_id = 1;</code>
      */
     public com.google.protobuf.ByteString
@@ -27692,6 +27996,187 @@ public final class SlLink {
       return maxChunkSize_;
     }
 
+    public static final int REQUEST_ID_FIELD_NUMBER = 3;
+    private volatile java.lang.Object requestId_;
+    /**
+     * <code>string request_id = 3;</code>
+     */
+    public java.lang.String getRequestId() {
+      java.lang.Object ref = requestId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        requestId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string request_id = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      java.lang.Object ref = requestId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        requestId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int FORCE_REPLAN_FIELD_NUMBER = 4;
+    private boolean forceReplan_;
+    /**
+     * <code>bool force_replan = 4;</code>
+     */
+    public boolean getForceReplan() {
+      return forceReplan_;
+    }
+
+    public static final int START_POSE_FIELD_NUMBER = 5;
+    private sl_link.SlLink.Pose2D startPose_;
+    /**
+     * <pre>
+     * Optional planning endpoints. Omitted endpoints use planner defaults.
+     * </pre>
+     *
+     * <code>.sl_link.Pose2D start_pose = 5;</code>
+     */
+    public boolean hasStartPose() {
+      return startPose_ != null;
+    }
+    /**
+     * <pre>
+     * Optional planning endpoints. Omitted endpoints use planner defaults.
+     * </pre>
+     *
+     * <code>.sl_link.Pose2D start_pose = 5;</code>
+     */
+    public sl_link.SlLink.Pose2D getStartPose() {
+      return startPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : startPose_;
+    }
+    /**
+     * <pre>
+     * Optional planning endpoints. Omitted endpoints use planner defaults.
+     * </pre>
+     *
+     * <code>.sl_link.Pose2D start_pose = 5;</code>
+     */
+    public sl_link.SlLink.Pose2DOrBuilder getStartPoseOrBuilder() {
+      return getStartPose();
+    }
+
+    public static final int END_POSE_FIELD_NUMBER = 6;
+    private sl_link.SlLink.Pose2D endPose_;
+    /**
+     * <code>.sl_link.Pose2D end_pose = 6;</code>
+     */
+    public boolean hasEndPose() {
+      return endPose_ != null;
+    }
+    /**
+     * <code>.sl_link.Pose2D end_pose = 6;</code>
+     */
+    public sl_link.SlLink.Pose2D getEndPose() {
+      return endPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : endPose_;
+    }
+    /**
+     * <code>.sl_link.Pose2D end_pose = 6;</code>
+     */
+    public sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder() {
+      return getEndPose();
+    }
+
+    public static final int GLOBAL_DIRECTION_FIELD_NUMBER = 7;
+    private volatile java.lang.Object globalDirection_;
+    /**
+     * <pre>
+     * Optional x/y planning direction.
+     * </pre>
+     *
+     * <code>string global_direction = 7;</code>
+     */
+    public java.lang.String getGlobalDirection() {
+      java.lang.Object ref = globalDirection_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        globalDirection_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Optional x/y planning direction.
+     * </pre>
+     *
+     * <code>string global_direction = 7;</code>
+     */
+    public com.google.protobuf.ByteString
+        getGlobalDirectionBytes() {
+      java.lang.Object ref = globalDirection_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        globalDirection_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 8;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <pre>
+     * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+     * </pre>
+     *
+     * <code>string map_id = 8;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+     * </pre>
+     *
+     * <code>string map_id = 8;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -27712,6 +28197,24 @@ public final class SlLink {
       if (maxChunkSize_ != 0) {
         output.writeUInt32(2, maxChunkSize_);
       }
+      if (!getRequestIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, requestId_);
+      }
+      if (forceReplan_ != false) {
+        output.writeBool(4, forceReplan_);
+      }
+      if (startPose_ != null) {
+        output.writeMessage(5, getStartPose());
+      }
+      if (endPose_ != null) {
+        output.writeMessage(6, getEndPose());
+      }
+      if (!getGlobalDirectionBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, globalDirection_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 8, mapId_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -27728,6 +28231,27 @@ public final class SlLink {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(2, maxChunkSize_);
       }
+      if (!getRequestIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, requestId_);
+      }
+      if (forceReplan_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(4, forceReplan_);
+      }
+      if (startPose_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(5, getStartPose());
+      }
+      if (endPose_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, getEndPose());
+      }
+      if (!getGlobalDirectionBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, globalDirection_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, mapId_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -27738,16 +28262,34 @@ public final class SlLink {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof sl_link.SlLink.TaskPathRequest)) {
+      if (!(obj instanceof sl_link.SlLink.PathPointPlanRequest)) {
         return super.equals(obj);
       }
-      sl_link.SlLink.TaskPathRequest other = (sl_link.SlLink.TaskPathRequest) obj;
+      sl_link.SlLink.PathPointPlanRequest other = (sl_link.SlLink.PathPointPlanRequest) obj;
 
       boolean result = true;
       result = result && getTaskId()
           .equals(other.getTaskId());
       result = result && (getMaxChunkSize()
           == other.getMaxChunkSize());
+      result = result && getRequestId()
+          .equals(other.getRequestId());
+      result = result && (getForceReplan()
+          == other.getForceReplan());
+      result = result && (hasStartPose() == other.hasStartPose());
+      if (hasStartPose()) {
+        result = result && getStartPose()
+            .equals(other.getStartPose());
+      }
+      result = result && (hasEndPose() == other.hasEndPose());
+      if (hasEndPose()) {
+        result = result && getEndPose()
+            .equals(other.getEndPose());
+      }
+      result = result && getGlobalDirection()
+          .equals(other.getGlobalDirection());
+      result = result && getMapId()
+          .equals(other.getMapId());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -27763,74 +28305,91 @@ public final class SlLink {
       hash = (53 * hash) + getTaskId().hashCode();
       hash = (37 * hash) + MAX_CHUNK_SIZE_FIELD_NUMBER;
       hash = (53 * hash) + getMaxChunkSize();
+      hash = (37 * hash) + REQUEST_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getRequestId().hashCode();
+      hash = (37 * hash) + FORCE_REPLAN_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getForceReplan());
+      if (hasStartPose()) {
+        hash = (37 * hash) + START_POSE_FIELD_NUMBER;
+        hash = (53 * hash) + getStartPose().hashCode();
+      }
+      if (hasEndPose()) {
+        hash = (37 * hash) + END_POSE_FIELD_NUMBER;
+        hash = (53 * hash) + getEndPose().hashCode();
+      }
+      hash = (37 * hash) + GLOBAL_DIRECTION_FIELD_NUMBER;
+      hash = (53 * hash) + getGlobalDirection().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
 
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(byte[] data)
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(java.io.InputStream input)
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathRequest parseDelimitedFrom(java.io.InputStream input)
+    public static sl_link.SlLink.PathPointPlanRequest parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static sl_link.SlLink.TaskPathRequest parseDelimitedFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static sl_link.SlLink.TaskPathRequest parseFrom(
+    public static sl_link.SlLink.PathPointPlanRequest parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -27843,7 +28402,7 @@ public final class SlLink {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(sl_link.SlLink.TaskPathRequest prototype) {
+    public static Builder newBuilder(sl_link.SlLink.PathPointPlanRequest prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -27859,26 +28418,26 @@ public final class SlLink {
       return builder;
     }
     /**
-     * Protobuf type {@code sl_link.TaskPathRequest}
+     * Protobuf type {@code sl_link.PathPointPlanRequest}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:sl_link.TaskPathRequest)
-        sl_link.SlLink.TaskPathRequestOrBuilder {
+        // @@protoc_insertion_point(builder_implements:sl_link.PathPointPlanRequest)
+        sl_link.SlLink.PathPointPlanRequestOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return sl_link.SlLink.internal_static_sl_link_TaskPathRequest_descriptor;
+        return sl_link.SlLink.internal_static_sl_link_PathPointPlanRequest_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return sl_link.SlLink.internal_static_sl_link_TaskPathRequest_fieldAccessorTable
+        return sl_link.SlLink.internal_static_sl_link_PathPointPlanRequest_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                sl_link.SlLink.TaskPathRequest.class, sl_link.SlLink.TaskPathRequest.Builder.class);
+                sl_link.SlLink.PathPointPlanRequest.class, sl_link.SlLink.PathPointPlanRequest.Builder.class);
       }
 
-      // Construct using sl_link.SlLink.TaskPathRequest.newBuilder()
+      // Construct using sl_link.SlLink.PathPointPlanRequest.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -27900,23 +28459,43 @@ public final class SlLink {
 
         maxChunkSize_ = 0;
 
+        requestId_ = "";
+
+        forceReplan_ = false;
+
+        if (startPoseBuilder_ == null) {
+          startPose_ = null;
+        } else {
+          startPose_ = null;
+          startPoseBuilder_ = null;
+        }
+        if (endPoseBuilder_ == null) {
+          endPose_ = null;
+        } else {
+          endPose_ = null;
+          endPoseBuilder_ = null;
+        }
+        globalDirection_ = "";
+
+        mapId_ = "";
+
         return this;
       }
 
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return sl_link.SlLink.internal_static_sl_link_TaskPathRequest_descriptor;
+        return sl_link.SlLink.internal_static_sl_link_PathPointPlanRequest_descriptor;
       }
 
       @java.lang.Override
-      public sl_link.SlLink.TaskPathRequest getDefaultInstanceForType() {
-        return sl_link.SlLink.TaskPathRequest.getDefaultInstance();
+      public sl_link.SlLink.PathPointPlanRequest getDefaultInstanceForType() {
+        return sl_link.SlLink.PathPointPlanRequest.getDefaultInstance();
       }
 
       @java.lang.Override
-      public sl_link.SlLink.TaskPathRequest build() {
-        sl_link.SlLink.TaskPathRequest result = buildPartial();
+      public sl_link.SlLink.PathPointPlanRequest build() {
+        sl_link.SlLink.PathPointPlanRequest result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -27924,10 +28503,24 @@ public final class SlLink {
       }
 
       @java.lang.Override
-      public sl_link.SlLink.TaskPathRequest buildPartial() {
-        sl_link.SlLink.TaskPathRequest result = new sl_link.SlLink.TaskPathRequest(this);
+      public sl_link.SlLink.PathPointPlanRequest buildPartial() {
+        sl_link.SlLink.PathPointPlanRequest result = new sl_link.SlLink.PathPointPlanRequest(this);
         result.taskId_ = taskId_;
         result.maxChunkSize_ = maxChunkSize_;
+        result.requestId_ = requestId_;
+        result.forceReplan_ = forceReplan_;
+        if (startPoseBuilder_ == null) {
+          result.startPose_ = startPose_;
+        } else {
+          result.startPose_ = startPoseBuilder_.build();
+        }
+        if (endPoseBuilder_ == null) {
+          result.endPose_ = endPose_;
+        } else {
+          result.endPose_ = endPoseBuilder_.build();
+        }
+        result.globalDirection_ = globalDirection_;
+        result.mapId_ = mapId_;
         onBuilt();
         return result;
       }
@@ -27966,22 +28559,43 @@ public final class SlLink {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof sl_link.SlLink.TaskPathRequest) {
-          return mergeFrom((sl_link.SlLink.TaskPathRequest)other);
+        if (other instanceof sl_link.SlLink.PathPointPlanRequest) {
+          return mergeFrom((sl_link.SlLink.PathPointPlanRequest)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(sl_link.SlLink.TaskPathRequest other) {
-        if (other == sl_link.SlLink.TaskPathRequest.getDefaultInstance()) return this;
+      public Builder mergeFrom(sl_link.SlLink.PathPointPlanRequest other) {
+        if (other == sl_link.SlLink.PathPointPlanRequest.getDefaultInstance()) return this;
         if (!other.getTaskId().isEmpty()) {
           taskId_ = other.taskId_;
           onChanged();
         }
         if (other.getMaxChunkSize() != 0) {
           setMaxChunkSize(other.getMaxChunkSize());
+        }
+        if (!other.getRequestId().isEmpty()) {
+          requestId_ = other.requestId_;
+          onChanged();
+        }
+        if (other.getForceReplan() != false) {
+          setForceReplan(other.getForceReplan());
+        }
+        if (other.hasStartPose()) {
+          mergeStartPose(other.getStartPose());
+        }
+        if (other.hasEndPose()) {
+          mergeEndPose(other.getEndPose());
+        }
+        if (!other.getGlobalDirection().isEmpty()) {
+          globalDirection_ = other.globalDirection_;
+          onChanged();
+        }
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -27998,11 +28612,11 @@ public final class SlLink {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        sl_link.SlLink.TaskPathRequest parsedMessage = null;
+        sl_link.SlLink.PathPointPlanRequest parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (sl_link.SlLink.TaskPathRequest) e.getUnfinishedMessage();
+          parsedMessage = (sl_link.SlLink.PathPointPlanRequest) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -28014,6 +28628,11 @@ public final class SlLink {
 
       private java.lang.Object taskId_ = "";
       /**
+       * <pre>
+       * Non-empty: plan with the matching task configuration and its temporary
+       * obstacles. Empty: plan only with current-map work/public obstacle regions.
+       * </pre>
+       *
        * <code>string task_id = 1;</code>
        */
       public java.lang.String getTaskId() {
@@ -28029,6 +28648,11 @@ public final class SlLink {
         }
       }
       /**
+       * <pre>
+       * Non-empty: plan with the matching task configuration and its temporary
+       * obstacles. Empty: plan only with current-map work/public obstacle regions.
+       * </pre>
+       *
        * <code>string task_id = 1;</code>
        */
       public com.google.protobuf.ByteString
@@ -28045,6 +28669,11 @@ public final class SlLink {
         }
       }
       /**
+       * <pre>
+       * Non-empty: plan with the matching task configuration and its temporary
+       * obstacles. Empty: plan only with current-map work/public obstacle regions.
+       * </pre>
+       *
        * <code>string task_id = 1;</code>
        */
       public Builder setTaskId(
@@ -28058,6 +28687,11 @@ public final class SlLink {
         return this;
       }
       /**
+       * <pre>
+       * Non-empty: plan with the matching task configuration and its temporary
+       * obstacles. Empty: plan only with current-map work/public obstacle regions.
+       * </pre>
+       *
        * <code>string task_id = 1;</code>
        */
       public Builder clearTaskId() {
@@ -28067,6 +28701,11 @@ public final class SlLink {
         return this;
       }
       /**
+       * <pre>
+       * Non-empty: plan with the matching task configuration and its temporary
+       * obstacles. Empty: plan only with current-map work/public obstacle regions.
+       * </pre>
+       *
        * <code>string task_id = 1;</code>
        */
       public Builder setTaskIdBytes(
@@ -28106,6 +28745,549 @@ public final class SlLink {
         onChanged();
         return this;
       }
+
+      private java.lang.Object requestId_ = "";
+      /**
+       * <code>string request_id = 3;</code>
+       */
+      public java.lang.String getRequestId() {
+        java.lang.Object ref = requestId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          requestId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        java.lang.Object ref = requestId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          requestId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        requestId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       */
+      public Builder clearRequestId() {
+        
+        requestId_ = getDefaultInstance().getRequestId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        requestId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private boolean forceReplan_ ;
+      /**
+       * <code>bool force_replan = 4;</code>
+       */
+      public boolean getForceReplan() {
+        return forceReplan_;
+      }
+      /**
+       * <code>bool force_replan = 4;</code>
+       */
+      public Builder setForceReplan(boolean value) {
+        
+        forceReplan_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool force_replan = 4;</code>
+       */
+      public Builder clearForceReplan() {
+        
+        forceReplan_ = false;
+        onChanged();
+        return this;
+      }
+
+      private sl_link.SlLink.Pose2D startPose_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> startPoseBuilder_;
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public boolean hasStartPose() {
+        return startPoseBuilder_ != null || startPose_ != null;
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public sl_link.SlLink.Pose2D getStartPose() {
+        if (startPoseBuilder_ == null) {
+          return startPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : startPose_;
+        } else {
+          return startPoseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public Builder setStartPose(sl_link.SlLink.Pose2D value) {
+        if (startPoseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          startPose_ = value;
+          onChanged();
+        } else {
+          startPoseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public Builder setStartPose(
+          sl_link.SlLink.Pose2D.Builder builderForValue) {
+        if (startPoseBuilder_ == null) {
+          startPose_ = builderForValue.build();
+          onChanged();
+        } else {
+          startPoseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public Builder mergeStartPose(sl_link.SlLink.Pose2D value) {
+        if (startPoseBuilder_ == null) {
+          if (startPose_ != null) {
+            startPose_ =
+              sl_link.SlLink.Pose2D.newBuilder(startPose_).mergeFrom(value).buildPartial();
+          } else {
+            startPose_ = value;
+          }
+          onChanged();
+        } else {
+          startPoseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public Builder clearStartPose() {
+        if (startPoseBuilder_ == null) {
+          startPose_ = null;
+          onChanged();
+        } else {
+          startPose_ = null;
+          startPoseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public sl_link.SlLink.Pose2D.Builder getStartPoseBuilder() {
+        
+        onChanged();
+        return getStartPoseFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      public sl_link.SlLink.Pose2DOrBuilder getStartPoseOrBuilder() {
+        if (startPoseBuilder_ != null) {
+          return startPoseBuilder_.getMessageOrBuilder();
+        } else {
+          return startPose_ == null ?
+              sl_link.SlLink.Pose2D.getDefaultInstance() : startPose_;
+        }
+      }
+      /**
+       * <pre>
+       * Optional planning endpoints. Omitted endpoints use planner defaults.
+       * </pre>
+       *
+       * <code>.sl_link.Pose2D start_pose = 5;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> 
+          getStartPoseFieldBuilder() {
+        if (startPoseBuilder_ == null) {
+          startPoseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>(
+                  getStartPose(),
+                  getParentForChildren(),
+                  isClean());
+          startPose_ = null;
+        }
+        return startPoseBuilder_;
+      }
+
+      private sl_link.SlLink.Pose2D endPose_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> endPoseBuilder_;
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public boolean hasEndPose() {
+        return endPoseBuilder_ != null || endPose_ != null;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public sl_link.SlLink.Pose2D getEndPose() {
+        if (endPoseBuilder_ == null) {
+          return endPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : endPose_;
+        } else {
+          return endPoseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public Builder setEndPose(sl_link.SlLink.Pose2D value) {
+        if (endPoseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          endPose_ = value;
+          onChanged();
+        } else {
+          endPoseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public Builder setEndPose(
+          sl_link.SlLink.Pose2D.Builder builderForValue) {
+        if (endPoseBuilder_ == null) {
+          endPose_ = builderForValue.build();
+          onChanged();
+        } else {
+          endPoseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public Builder mergeEndPose(sl_link.SlLink.Pose2D value) {
+        if (endPoseBuilder_ == null) {
+          if (endPose_ != null) {
+            endPose_ =
+              sl_link.SlLink.Pose2D.newBuilder(endPose_).mergeFrom(value).buildPartial();
+          } else {
+            endPose_ = value;
+          }
+          onChanged();
+        } else {
+          endPoseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public Builder clearEndPose() {
+        if (endPoseBuilder_ == null) {
+          endPose_ = null;
+          onChanged();
+        } else {
+          endPose_ = null;
+          endPoseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public sl_link.SlLink.Pose2D.Builder getEndPoseBuilder() {
+        
+        onChanged();
+        return getEndPoseFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      public sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder() {
+        if (endPoseBuilder_ != null) {
+          return endPoseBuilder_.getMessageOrBuilder();
+        } else {
+          return endPose_ == null ?
+              sl_link.SlLink.Pose2D.getDefaultInstance() : endPose_;
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> 
+          getEndPoseFieldBuilder() {
+        if (endPoseBuilder_ == null) {
+          endPoseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>(
+                  getEndPose(),
+                  getParentForChildren(),
+                  isClean());
+          endPose_ = null;
+        }
+        return endPoseBuilder_;
+      }
+
+      private java.lang.Object globalDirection_ = "";
+      /**
+       * <pre>
+       * Optional x/y planning direction.
+       * </pre>
+       *
+       * <code>string global_direction = 7;</code>
+       */
+      public java.lang.String getGlobalDirection() {
+        java.lang.Object ref = globalDirection_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          globalDirection_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Optional x/y planning direction.
+       * </pre>
+       *
+       * <code>string global_direction = 7;</code>
+       */
+      public com.google.protobuf.ByteString
+          getGlobalDirectionBytes() {
+        java.lang.Object ref = globalDirection_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          globalDirection_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Optional x/y planning direction.
+       * </pre>
+       *
+       * <code>string global_direction = 7;</code>
+       */
+      public Builder setGlobalDirection(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        globalDirection_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional x/y planning direction.
+       * </pre>
+       *
+       * <code>string global_direction = 7;</code>
+       */
+      public Builder clearGlobalDirection() {
+        
+        globalDirection_ = getDefaultInstance().getGlobalDirection();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional x/y planning direction.
+       * </pre>
+       *
+       * <code>string global_direction = 7;</code>
+       */
+      public Builder setGlobalDirectionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        globalDirection_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <pre>
+       * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+       * </pre>
+       *
+       * <code>string map_id = 8;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+       * </pre>
+       *
+       * <code>string map_id = 8;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+       * </pre>
+       *
+       * <code>string map_id = 8;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+       * </pre>
+       *
+       * <code>string map_id = 8;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
+       * </pre>
+       *
+       * <code>string map_id = 8;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -28119,48 +29301,48 @@ public final class SlLink {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:sl_link.TaskPathRequest)
+      // @@protoc_insertion_point(builder_scope:sl_link.PathPointPlanRequest)
     }
 
-    // @@protoc_insertion_point(class_scope:sl_link.TaskPathRequest)
-    private static final sl_link.SlLink.TaskPathRequest DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:sl_link.PathPointPlanRequest)
+    private static final sl_link.SlLink.PathPointPlanRequest DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new sl_link.SlLink.TaskPathRequest();
+      DEFAULT_INSTANCE = new sl_link.SlLink.PathPointPlanRequest();
     }
 
-    public static sl_link.SlLink.TaskPathRequest getDefaultInstance() {
+    public static sl_link.SlLink.PathPointPlanRequest getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<TaskPathRequest>
-        PARSER = new com.google.protobuf.AbstractParser<TaskPathRequest>() {
+    private static final com.google.protobuf.Parser<PathPointPlanRequest>
+        PARSER = new com.google.protobuf.AbstractParser<PathPointPlanRequest>() {
       @java.lang.Override
-      public TaskPathRequest parsePartialFrom(
+      public PathPointPlanRequest parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new TaskPathRequest(input, extensionRegistry);
+        return new PathPointPlanRequest(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<TaskPathRequest> parser() {
+    public static com.google.protobuf.Parser<PathPointPlanRequest> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<TaskPathRequest> getParserForType() {
+    public com.google.protobuf.Parser<PathPointPlanRequest> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public sl_link.SlLink.TaskPathRequest getDefaultInstanceForType() {
+    public sl_link.SlLink.PathPointPlanRequest getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
   }
 
-  public interface TaskPathChunkOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:sl_link.TaskPathChunk)
+  public interface PathPointPlanResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.PathPointPlanResponse)
       com.google.protobuf.MessageOrBuilder {
 
     /**
@@ -28192,25 +29374,115 @@ public final class SlLink {
      * <code>bytes data = 5;</code>
      */
     com.google.protobuf.ByteString getData();
+
+    /**
+     * <code>string request_id = 6;</code>
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 6;</code>
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>string map_id = 7;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 7;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>.sl_link.ResultCode result = 8;</code>
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 8;</code>
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 9;</code>
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 9;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>bool planned = 10;</code>
+     */
+    boolean getPlanned();
+
+    /**
+     * <code>uint32 map_version = 11;</code>
+     */
+    int getMapVersion();
+
+    /**
+     * <code>uint32 path_point_count = 12;</code>
+     */
+    int getPathPointCount();
+
+    /**
+     * <code>float path_length_m = 13;</code>
+     */
+    float getPathLengthM();
+
+    /**
+     * <code>float total_work_area_m2 = 14 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    float getTotalWorkAreaM2();
+
+    /**
+     * <code>float estimated_time_s = 15 [(.sl_link.unit) = "s", (.sl_link.scale) = 1];</code>
+     */
+    float getEstimatedTimeS();
+
+    /**
+     * <code>string frame_id = 16;</code>
+     */
+    java.lang.String getFrameId();
+    /**
+     * <code>string frame_id = 16;</code>
+     */
+    com.google.protobuf.ByteString
+        getFrameIdBytes();
   }
   /**
-   * Protobuf type {@code sl_link.TaskPathChunk}
+   * Protobuf type {@code sl_link.PathPointPlanResponse}
    */
-  public  static final class TaskPathChunk extends
+  public  static final class PathPointPlanResponse extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:sl_link.TaskPathChunk)
-      TaskPathChunkOrBuilder {
+      // @@protoc_insertion_point(message_implements:sl_link.PathPointPlanResponse)
+      PathPointPlanResponseOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use TaskPathChunk.newBuilder() to construct.
-    private TaskPathChunk(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use PathPointPlanResponse.newBuilder() to construct.
+    private PathPointPlanResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private TaskPathChunk() {
+    private PathPointPlanResponse() {
       taskId_ = "";
       chunkIndex_ = 0;
       totalChunks_ = 0;
       pathVersion_ = 0;
       data_ = com.google.protobuf.ByteString.EMPTY;
+      requestId_ = "";
+      mapId_ = "";
+      result_ = 0;
+      message_ = "";
+      planned_ = false;
+      mapVersion_ = 0;
+      pathPointCount_ = 0;
+      pathLengthM_ = 0F;
+      totalWorkAreaM2_ = 0F;
+      estimatedTimeS_ = 0F;
+      frameId_ = "";
     }
 
     @java.lang.Override
@@ -28218,7 +29490,7 @@ public final class SlLink {
     getUnknownFields() {
       return this.unknownFields;
     }
-    private TaskPathChunk(
+    private PathPointPlanResponse(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -28263,6 +29535,66 @@ public final class SlLink {
               data_ = input.readBytes();
               break;
             }
+            case 50: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              requestId_ = s;
+              break;
+            }
+            case 58: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            case 64: {
+              int rawValue = input.readEnum();
+
+              result_ = rawValue;
+              break;
+            }
+            case 74: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            case 80: {
+
+              planned_ = input.readBool();
+              break;
+            }
+            case 88: {
+
+              mapVersion_ = input.readUInt32();
+              break;
+            }
+            case 96: {
+
+              pathPointCount_ = input.readUInt32();
+              break;
+            }
+            case 109: {
+
+              pathLengthM_ = input.readFloat();
+              break;
+            }
+            case 117: {
+
+              totalWorkAreaM2_ = input.readFloat();
+              break;
+            }
+            case 125: {
+
+              estimatedTimeS_ = input.readFloat();
+              break;
+            }
+            case 130: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              frameId_ = s;
+              break;
+            }
             default: {
               if (!parseUnknownFieldProto3(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -28284,15 +29616,15 @@ public final class SlLink {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return sl_link.SlLink.internal_static_sl_link_TaskPathChunk_descriptor;
+      return sl_link.SlLink.internal_static_sl_link_PathPointPlanResponse_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return sl_link.SlLink.internal_static_sl_link_TaskPathChunk_fieldAccessorTable
+      return sl_link.SlLink.internal_static_sl_link_PathPointPlanResponse_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              sl_link.SlLink.TaskPathChunk.class, sl_link.SlLink.TaskPathChunk.Builder.class);
+              sl_link.SlLink.PathPointPlanResponse.class, sl_link.SlLink.PathPointPlanResponse.Builder.class);
     }
 
     public static final int TASK_ID_FIELD_NUMBER = 1;
@@ -28365,6 +29697,213 @@ public final class SlLink {
       return data_;
     }
 
+    public static final int REQUEST_ID_FIELD_NUMBER = 6;
+    private volatile java.lang.Object requestId_;
+    /**
+     * <code>string request_id = 6;</code>
+     */
+    public java.lang.String getRequestId() {
+      java.lang.Object ref = requestId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        requestId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string request_id = 6;</code>
+     */
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      java.lang.Object ref = requestId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        requestId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 7;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <code>string map_id = 7;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_id = 7;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 8;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 8;</code>
+     */
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 8;</code>
+     */
+    public sl_link.SlLink.ResultCode getResult() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 9;
+    private volatile java.lang.Object message_;
+    /**
+     * <code>string message = 9;</code>
+     */
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 9;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PLANNED_FIELD_NUMBER = 10;
+    private boolean planned_;
+    /**
+     * <code>bool planned = 10;</code>
+     */
+    public boolean getPlanned() {
+      return planned_;
+    }
+
+    public static final int MAP_VERSION_FIELD_NUMBER = 11;
+    private int mapVersion_;
+    /**
+     * <code>uint32 map_version = 11;</code>
+     */
+    public int getMapVersion() {
+      return mapVersion_;
+    }
+
+    public static final int PATH_POINT_COUNT_FIELD_NUMBER = 12;
+    private int pathPointCount_;
+    /**
+     * <code>uint32 path_point_count = 12;</code>
+     */
+    public int getPathPointCount() {
+      return pathPointCount_;
+    }
+
+    public static final int PATH_LENGTH_M_FIELD_NUMBER = 13;
+    private float pathLengthM_;
+    /**
+     * <code>float path_length_m = 13;</code>
+     */
+    public float getPathLengthM() {
+      return pathLengthM_;
+    }
+
+    public static final int TOTAL_WORK_AREA_M2_FIELD_NUMBER = 14;
+    private float totalWorkAreaM2_;
+    /**
+     * <code>float total_work_area_m2 = 14 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    public float getTotalWorkAreaM2() {
+      return totalWorkAreaM2_;
+    }
+
+    public static final int ESTIMATED_TIME_S_FIELD_NUMBER = 15;
+    private float estimatedTimeS_;
+    /**
+     * <code>float estimated_time_s = 15 [(.sl_link.unit) = "s", (.sl_link.scale) = 1];</code>
+     */
+    public float getEstimatedTimeS() {
+      return estimatedTimeS_;
+    }
+
+    public static final int FRAME_ID_FIELD_NUMBER = 16;
+    private volatile java.lang.Object frameId_;
+    /**
+     * <code>string frame_id = 16;</code>
+     */
+    public java.lang.String getFrameId() {
+      java.lang.Object ref = frameId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        frameId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string frame_id = 16;</code>
+     */
+    public com.google.protobuf.ByteString
+        getFrameIdBytes() {
+      java.lang.Object ref = frameId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        frameId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -28394,6 +29933,39 @@ public final class SlLink {
       if (!data_.isEmpty()) {
         output.writeBytes(5, data_);
       }
+      if (!getRequestIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, requestId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, mapId_);
+      }
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        output.writeEnum(8, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 9, message_);
+      }
+      if (planned_ != false) {
+        output.writeBool(10, planned_);
+      }
+      if (mapVersion_ != 0) {
+        output.writeUInt32(11, mapVersion_);
+      }
+      if (pathPointCount_ != 0) {
+        output.writeUInt32(12, pathPointCount_);
+      }
+      if (pathLengthM_ != 0F) {
+        output.writeFloat(13, pathLengthM_);
+      }
+      if (totalWorkAreaM2_ != 0F) {
+        output.writeFloat(14, totalWorkAreaM2_);
+      }
+      if (estimatedTimeS_ != 0F) {
+        output.writeFloat(15, estimatedTimeS_);
+      }
+      if (!getFrameIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 16, frameId_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -28422,6 +29994,46 @@ public final class SlLink {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(5, data_);
       }
+      if (!getRequestIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, requestId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, mapId_);
+      }
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(8, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, message_);
+      }
+      if (planned_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(10, planned_);
+      }
+      if (mapVersion_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(11, mapVersion_);
+      }
+      if (pathPointCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(12, pathPointCount_);
+      }
+      if (pathLengthM_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(13, pathLengthM_);
+      }
+      if (totalWorkAreaM2_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(14, totalWorkAreaM2_);
+      }
+      if (estimatedTimeS_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(15, estimatedTimeS_);
+      }
+      if (!getFrameIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(16, frameId_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -28432,10 +30044,10 @@ public final class SlLink {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof sl_link.SlLink.TaskPathChunk)) {
+      if (!(obj instanceof sl_link.SlLink.PathPointPlanResponse)) {
         return super.equals(obj);
       }
-      sl_link.SlLink.TaskPathChunk other = (sl_link.SlLink.TaskPathChunk) obj;
+      sl_link.SlLink.PathPointPlanResponse other = (sl_link.SlLink.PathPointPlanResponse) obj;
 
       boolean result = true;
       result = result && getTaskId()
@@ -28448,6 +30060,33 @@ public final class SlLink {
           == other.getPathVersion());
       result = result && getData()
           .equals(other.getData());
+      result = result && getRequestId()
+          .equals(other.getRequestId());
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && result_ == other.result_;
+      result = result && getMessage()
+          .equals(other.getMessage());
+      result = result && (getPlanned()
+          == other.getPlanned());
+      result = result && (getMapVersion()
+          == other.getMapVersion());
+      result = result && (getPathPointCount()
+          == other.getPathPointCount());
+      result = result && (
+          java.lang.Float.floatToIntBits(getPathLengthM())
+          == java.lang.Float.floatToIntBits(
+              other.getPathLengthM()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getTotalWorkAreaM2())
+          == java.lang.Float.floatToIntBits(
+              other.getTotalWorkAreaM2()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getEstimatedTimeS())
+          == java.lang.Float.floatToIntBits(
+              other.getEstimatedTimeS()));
+      result = result && getFrameId()
+          .equals(other.getFrameId());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -28469,74 +30108,100 @@ public final class SlLink {
       hash = (53 * hash) + getPathVersion();
       hash = (37 * hash) + DATA_FIELD_NUMBER;
       hash = (53 * hash) + getData().hashCode();
+      hash = (37 * hash) + REQUEST_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getRequestId().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + result_;
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + PLANNED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getPlanned());
+      hash = (37 * hash) + MAP_VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getMapVersion();
+      hash = (37 * hash) + PATH_POINT_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getPathPointCount();
+      hash = (37 * hash) + PATH_LENGTH_M_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getPathLengthM());
+      hash = (37 * hash) + TOTAL_WORK_AREA_M2_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getTotalWorkAreaM2());
+      hash = (37 * hash) + ESTIMATED_TIME_S_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getEstimatedTimeS());
+      hash = (37 * hash) + FRAME_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getFrameId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
 
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(byte[] data)
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(java.io.InputStream input)
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathChunk parseDelimitedFrom(java.io.InputStream input)
+    public static sl_link.SlLink.PathPointPlanResponse parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static sl_link.SlLink.TaskPathChunk parseDelimitedFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static sl_link.SlLink.TaskPathChunk parseFrom(
+    public static sl_link.SlLink.PathPointPlanResponse parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -28549,7 +30214,7 @@ public final class SlLink {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(sl_link.SlLink.TaskPathChunk prototype) {
+    public static Builder newBuilder(sl_link.SlLink.PathPointPlanResponse prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -28565,26 +30230,26 @@ public final class SlLink {
       return builder;
     }
     /**
-     * Protobuf type {@code sl_link.TaskPathChunk}
+     * Protobuf type {@code sl_link.PathPointPlanResponse}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:sl_link.TaskPathChunk)
-        sl_link.SlLink.TaskPathChunkOrBuilder {
+        // @@protoc_insertion_point(builder_implements:sl_link.PathPointPlanResponse)
+        sl_link.SlLink.PathPointPlanResponseOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return sl_link.SlLink.internal_static_sl_link_TaskPathChunk_descriptor;
+        return sl_link.SlLink.internal_static_sl_link_PathPointPlanResponse_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return sl_link.SlLink.internal_static_sl_link_TaskPathChunk_fieldAccessorTable
+        return sl_link.SlLink.internal_static_sl_link_PathPointPlanResponse_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                sl_link.SlLink.TaskPathChunk.class, sl_link.SlLink.TaskPathChunk.Builder.class);
+                sl_link.SlLink.PathPointPlanResponse.class, sl_link.SlLink.PathPointPlanResponse.Builder.class);
       }
 
-      // Construct using sl_link.SlLink.TaskPathChunk.newBuilder()
+      // Construct using sl_link.SlLink.PathPointPlanResponse.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -28612,23 +30277,45 @@ public final class SlLink {
 
         data_ = com.google.protobuf.ByteString.EMPTY;
 
+        requestId_ = "";
+
+        mapId_ = "";
+
+        result_ = 0;
+
+        message_ = "";
+
+        planned_ = false;
+
+        mapVersion_ = 0;
+
+        pathPointCount_ = 0;
+
+        pathLengthM_ = 0F;
+
+        totalWorkAreaM2_ = 0F;
+
+        estimatedTimeS_ = 0F;
+
+        frameId_ = "";
+
         return this;
       }
 
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return sl_link.SlLink.internal_static_sl_link_TaskPathChunk_descriptor;
+        return sl_link.SlLink.internal_static_sl_link_PathPointPlanResponse_descriptor;
       }
 
       @java.lang.Override
-      public sl_link.SlLink.TaskPathChunk getDefaultInstanceForType() {
-        return sl_link.SlLink.TaskPathChunk.getDefaultInstance();
+      public sl_link.SlLink.PathPointPlanResponse getDefaultInstanceForType() {
+        return sl_link.SlLink.PathPointPlanResponse.getDefaultInstance();
       }
 
       @java.lang.Override
-      public sl_link.SlLink.TaskPathChunk build() {
-        sl_link.SlLink.TaskPathChunk result = buildPartial();
+      public sl_link.SlLink.PathPointPlanResponse build() {
+        sl_link.SlLink.PathPointPlanResponse result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -28636,13 +30323,24 @@ public final class SlLink {
       }
 
       @java.lang.Override
-      public sl_link.SlLink.TaskPathChunk buildPartial() {
-        sl_link.SlLink.TaskPathChunk result = new sl_link.SlLink.TaskPathChunk(this);
+      public sl_link.SlLink.PathPointPlanResponse buildPartial() {
+        sl_link.SlLink.PathPointPlanResponse result = new sl_link.SlLink.PathPointPlanResponse(this);
         result.taskId_ = taskId_;
         result.chunkIndex_ = chunkIndex_;
         result.totalChunks_ = totalChunks_;
         result.pathVersion_ = pathVersion_;
         result.data_ = data_;
+        result.requestId_ = requestId_;
+        result.mapId_ = mapId_;
+        result.result_ = result_;
+        result.message_ = message_;
+        result.planned_ = planned_;
+        result.mapVersion_ = mapVersion_;
+        result.pathPointCount_ = pathPointCount_;
+        result.pathLengthM_ = pathLengthM_;
+        result.totalWorkAreaM2_ = totalWorkAreaM2_;
+        result.estimatedTimeS_ = estimatedTimeS_;
+        result.frameId_ = frameId_;
         onBuilt();
         return result;
       }
@@ -28681,16 +30379,16 @@ public final class SlLink {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof sl_link.SlLink.TaskPathChunk) {
-          return mergeFrom((sl_link.SlLink.TaskPathChunk)other);
+        if (other instanceof sl_link.SlLink.PathPointPlanResponse) {
+          return mergeFrom((sl_link.SlLink.PathPointPlanResponse)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(sl_link.SlLink.TaskPathChunk other) {
-        if (other == sl_link.SlLink.TaskPathChunk.getDefaultInstance()) return this;
+      public Builder mergeFrom(sl_link.SlLink.PathPointPlanResponse other) {
+        if (other == sl_link.SlLink.PathPointPlanResponse.getDefaultInstance()) return this;
         if (!other.getTaskId().isEmpty()) {
           taskId_ = other.taskId_;
           onChanged();
@@ -28707,6 +30405,43 @@ public final class SlLink {
         if (other.getData() != com.google.protobuf.ByteString.EMPTY) {
           setData(other.getData());
         }
+        if (!other.getRequestId().isEmpty()) {
+          requestId_ = other.requestId_;
+          onChanged();
+        }
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        if (other.result_ != 0) {
+          setResultValue(other.getResultValue());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          onChanged();
+        }
+        if (other.getPlanned() != false) {
+          setPlanned(other.getPlanned());
+        }
+        if (other.getMapVersion() != 0) {
+          setMapVersion(other.getMapVersion());
+        }
+        if (other.getPathPointCount() != 0) {
+          setPathPointCount(other.getPathPointCount());
+        }
+        if (other.getPathLengthM() != 0F) {
+          setPathLengthM(other.getPathLengthM());
+        }
+        if (other.getTotalWorkAreaM2() != 0F) {
+          setTotalWorkAreaM2(other.getTotalWorkAreaM2());
+        }
+        if (other.getEstimatedTimeS() != 0F) {
+          setEstimatedTimeS(other.getEstimatedTimeS());
+        }
+        if (!other.getFrameId().isEmpty()) {
+          frameId_ = other.frameId_;
+          onChanged();
+        }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -28722,11 +30457,11 @@ public final class SlLink {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        sl_link.SlLink.TaskPathChunk parsedMessage = null;
+        sl_link.SlLink.PathPointPlanResponse parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (sl_link.SlLink.TaskPathChunk) e.getUnfinishedMessage();
+          parsedMessage = (sl_link.SlLink.PathPointPlanResponse) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -28911,6 +30646,483 @@ public final class SlLink {
         onChanged();
         return this;
       }
+
+      private java.lang.Object requestId_ = "";
+      /**
+       * <code>string request_id = 6;</code>
+       */
+      public java.lang.String getRequestId() {
+        java.lang.Object ref = requestId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          requestId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string request_id = 6;</code>
+       */
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        java.lang.Object ref = requestId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          requestId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string request_id = 6;</code>
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        requestId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string request_id = 6;</code>
+       */
+      public Builder clearRequestId() {
+        
+        requestId_ = getDefaultInstance().getRequestId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string request_id = 6;</code>
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        requestId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <code>string map_id = 7;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 7;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 7;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 7;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 7;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int result_ = 0;
+      /**
+       * <code>.sl_link.ResultCode result = 8;</code>
+       */
+      public int getResultValue() {
+        return result_;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 8;</code>
+       */
+      public Builder setResultValue(int value) {
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 8;</code>
+       */
+      public sl_link.SlLink.ResultCode getResult() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+        return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 8;</code>
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        result_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 8;</code>
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 9;</code>
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 9;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 9;</code>
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        message_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 9;</code>
+       */
+      public Builder clearMessage() {
+        
+        message_ = getDefaultInstance().getMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 9;</code>
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        message_ = value;
+        onChanged();
+        return this;
+      }
+
+      private boolean planned_ ;
+      /**
+       * <code>bool planned = 10;</code>
+       */
+      public boolean getPlanned() {
+        return planned_;
+      }
+      /**
+       * <code>bool planned = 10;</code>
+       */
+      public Builder setPlanned(boolean value) {
+        
+        planned_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool planned = 10;</code>
+       */
+      public Builder clearPlanned() {
+        
+        planned_ = false;
+        onChanged();
+        return this;
+      }
+
+      private int mapVersion_ ;
+      /**
+       * <code>uint32 map_version = 11;</code>
+       */
+      public int getMapVersion() {
+        return mapVersion_;
+      }
+      /**
+       * <code>uint32 map_version = 11;</code>
+       */
+      public Builder setMapVersion(int value) {
+        
+        mapVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_version = 11;</code>
+       */
+      public Builder clearMapVersion() {
+        
+        mapVersion_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int pathPointCount_ ;
+      /**
+       * <code>uint32 path_point_count = 12;</code>
+       */
+      public int getPathPointCount() {
+        return pathPointCount_;
+      }
+      /**
+       * <code>uint32 path_point_count = 12;</code>
+       */
+      public Builder setPathPointCount(int value) {
+        
+        pathPointCount_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 path_point_count = 12;</code>
+       */
+      public Builder clearPathPointCount() {
+        
+        pathPointCount_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private float pathLengthM_ ;
+      /**
+       * <code>float path_length_m = 13;</code>
+       */
+      public float getPathLengthM() {
+        return pathLengthM_;
+      }
+      /**
+       * <code>float path_length_m = 13;</code>
+       */
+      public Builder setPathLengthM(float value) {
+        
+        pathLengthM_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float path_length_m = 13;</code>
+       */
+      public Builder clearPathLengthM() {
+        
+        pathLengthM_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float totalWorkAreaM2_ ;
+      /**
+       * <code>float total_work_area_m2 = 14 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public float getTotalWorkAreaM2() {
+        return totalWorkAreaM2_;
+      }
+      /**
+       * <code>float total_work_area_m2 = 14 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setTotalWorkAreaM2(float value) {
+        
+        totalWorkAreaM2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float total_work_area_m2 = 14 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearTotalWorkAreaM2() {
+        
+        totalWorkAreaM2_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float estimatedTimeS_ ;
+      /**
+       * <code>float estimated_time_s = 15 [(.sl_link.unit) = "s", (.sl_link.scale) = 1];</code>
+       */
+      public float getEstimatedTimeS() {
+        return estimatedTimeS_;
+      }
+      /**
+       * <code>float estimated_time_s = 15 [(.sl_link.unit) = "s", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setEstimatedTimeS(float value) {
+        
+        estimatedTimeS_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float estimated_time_s = 15 [(.sl_link.unit) = "s", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearEstimatedTimeS() {
+        
+        estimatedTimeS_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object frameId_ = "";
+      /**
+       * <code>string frame_id = 16;</code>
+       */
+      public java.lang.String getFrameId() {
+        java.lang.Object ref = frameId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          frameId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string frame_id = 16;</code>
+       */
+      public com.google.protobuf.ByteString
+          getFrameIdBytes() {
+        java.lang.Object ref = frameId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          frameId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string frame_id = 16;</code>
+       */
+      public Builder setFrameId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        frameId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string frame_id = 16;</code>
+       */
+      public Builder clearFrameId() {
+        
+        frameId_ = getDefaultInstance().getFrameId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string frame_id = 16;</code>
+       */
+      public Builder setFrameIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        frameId_ = value;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -28924,41 +31136,41 @@ public final class SlLink {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:sl_link.TaskPathChunk)
+      // @@protoc_insertion_point(builder_scope:sl_link.PathPointPlanResponse)
     }
 
-    // @@protoc_insertion_point(class_scope:sl_link.TaskPathChunk)
-    private static final sl_link.SlLink.TaskPathChunk DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:sl_link.PathPointPlanResponse)
+    private static final sl_link.SlLink.PathPointPlanResponse DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new sl_link.SlLink.TaskPathChunk();
+      DEFAULT_INSTANCE = new sl_link.SlLink.PathPointPlanResponse();
     }
 
-    public static sl_link.SlLink.TaskPathChunk getDefaultInstance() {
+    public static sl_link.SlLink.PathPointPlanResponse getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<TaskPathChunk>
-        PARSER = new com.google.protobuf.AbstractParser<TaskPathChunk>() {
+    private static final com.google.protobuf.Parser<PathPointPlanResponse>
+        PARSER = new com.google.protobuf.AbstractParser<PathPointPlanResponse>() {
       @java.lang.Override
-      public TaskPathChunk parsePartialFrom(
+      public PathPointPlanResponse parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new TaskPathChunk(input, extensionRegistry);
+        return new PathPointPlanResponse(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<TaskPathChunk> parser() {
+    public static com.google.protobuf.Parser<PathPointPlanResponse> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<TaskPathChunk> getParserForType() {
+    public com.google.protobuf.Parser<PathPointPlanResponse> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public sl_link.SlLink.TaskPathChunk getDefaultInstanceForType() {
+    public sl_link.SlLink.PathPointPlanResponse getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -31750,6 +33962,3931 @@ public final class SlLink {
 
     @java.lang.Override
     public sl_link.SlLink.MapPreviewResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface MapRegionPointRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.MapRegionPointRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * Empty means the currently active map; LIVE_MAP means the realtime map.
+     * </pre>
+     *
+     * <code>string map_id = 1;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <pre>
+     * Empty means the currently active map; LIVE_MAP means the realtime map.
+     * </pre>
+     *
+     * <code>string map_id = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+  }
+  /**
+   * <pre>
+   * Lightweight map annotation query. It does not render or return an image.
+   * </pre>
+   *
+   * Protobuf type {@code sl_link.MapRegionPointRequest}
+   */
+  public  static final class MapRegionPointRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.MapRegionPointRequest)
+      MapRegionPointRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use MapRegionPointRequest.newBuilder() to construct.
+    private MapRegionPointRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private MapRegionPointRequest() {
+      mapId_ = "";
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private MapRegionPointRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_MapRegionPointRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_MapRegionPointRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.MapRegionPointRequest.class, sl_link.SlLink.MapRegionPointRequest.Builder.class);
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <pre>
+     * Empty means the currently active map; LIVE_MAP means the realtime map.
+     * </pre>
+     *
+     * <code>string map_id = 1;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Empty means the currently active map; LIVE_MAP means the realtime map.
+     * </pre>
+     *
+     * <code>string map_id = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, mapId_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, mapId_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.MapRegionPointRequest)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.MapRegionPointRequest other = (sl_link.SlLink.MapRegionPointRequest) obj;
+
+      boolean result = true;
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.MapRegionPointRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.MapRegionPointRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * Lightweight map annotation query. It does not render or return an image.
+     * </pre>
+     *
+     * Protobuf type {@code sl_link.MapRegionPointRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.MapRegionPointRequest)
+        sl_link.SlLink.MapRegionPointRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_MapRegionPointRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_MapRegionPointRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.MapRegionPointRequest.class, sl_link.SlLink.MapRegionPointRequest.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.MapRegionPointRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        mapId_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_MapRegionPointRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.MapRegionPointRequest getDefaultInstanceForType() {
+        return sl_link.SlLink.MapRegionPointRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.MapRegionPointRequest build() {
+        sl_link.SlLink.MapRegionPointRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.MapRegionPointRequest buildPartial() {
+        sl_link.SlLink.MapRegionPointRequest result = new sl_link.SlLink.MapRegionPointRequest(this);
+        result.mapId_ = mapId_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.MapRegionPointRequest) {
+          return mergeFrom((sl_link.SlLink.MapRegionPointRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.MapRegionPointRequest other) {
+        if (other == sl_link.SlLink.MapRegionPointRequest.getDefaultInstance()) return this;
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.MapRegionPointRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.MapRegionPointRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <pre>
+       * Empty means the currently active map; LIVE_MAP means the realtime map.
+       * </pre>
+       *
+       * <code>string map_id = 1;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Empty means the currently active map; LIVE_MAP means the realtime map.
+       * </pre>
+       *
+       * <code>string map_id = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Empty means the currently active map; LIVE_MAP means the realtime map.
+       * </pre>
+       *
+       * <code>string map_id = 1;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Empty means the currently active map; LIVE_MAP means the realtime map.
+       * </pre>
+       *
+       * <code>string map_id = 1;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Empty means the currently active map; LIVE_MAP means the realtime map.
+       * </pre>
+       *
+       * <code>string map_id = 1;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.MapRegionPointRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.MapRegionPointRequest)
+    private static final sl_link.SlLink.MapRegionPointRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.MapRegionPointRequest();
+    }
+
+    public static sl_link.SlLink.MapRegionPointRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<MapRegionPointRequest>
+        PARSER = new com.google.protobuf.AbstractParser<MapRegionPointRequest>() {
+      @java.lang.Override
+      public MapRegionPointRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new MapRegionPointRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<MapRegionPointRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<MapRegionPointRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.MapRegionPointRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface WorkRegionPointInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.WorkRegionPointInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.sl_link.PolygonRegion region = 1;</code>
+     */
+    boolean hasRegion();
+    /**
+     * <code>.sl_link.PolygonRegion region = 1;</code>
+     */
+    sl_link.SlLink.PolygonRegion getRegion();
+    /**
+     * <code>.sl_link.PolygonRegion region = 1;</code>
+     */
+    sl_link.SlLink.PolygonRegionOrBuilder getRegionOrBuilder();
+
+    /**
+     * <code>bool start_pose_available = 2;</code>
+     */
+    boolean getStartPoseAvailable();
+
+    /**
+     * <code>.sl_link.Pose2D start_pose = 3;</code>
+     */
+    boolean hasStartPose();
+    /**
+     * <code>.sl_link.Pose2D start_pose = 3;</code>
+     */
+    sl_link.SlLink.Pose2D getStartPose();
+    /**
+     * <code>.sl_link.Pose2D start_pose = 3;</code>
+     */
+    sl_link.SlLink.Pose2DOrBuilder getStartPoseOrBuilder();
+
+    /**
+     * <code>bool end_pose_available = 4;</code>
+     */
+    boolean getEndPoseAvailable();
+
+    /**
+     * <code>.sl_link.Pose2D end_pose = 5;</code>
+     */
+    boolean hasEndPose();
+    /**
+     * <code>.sl_link.Pose2D end_pose = 5;</code>
+     */
+    sl_link.SlLink.Pose2D getEndPose();
+    /**
+     * <code>.sl_link.Pose2D end_pose = 5;</code>
+     */
+    sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder();
+  }
+  /**
+   * Protobuf type {@code sl_link.WorkRegionPointInfo}
+   */
+  public  static final class WorkRegionPointInfo extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.WorkRegionPointInfo)
+      WorkRegionPointInfoOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use WorkRegionPointInfo.newBuilder() to construct.
+    private WorkRegionPointInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private WorkRegionPointInfo() {
+      startPoseAvailable_ = false;
+      endPoseAvailable_ = false;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private WorkRegionPointInfo(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              sl_link.SlLink.PolygonRegion.Builder subBuilder = null;
+              if (region_ != null) {
+                subBuilder = region_.toBuilder();
+              }
+              region_ = input.readMessage(sl_link.SlLink.PolygonRegion.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(region_);
+                region_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 16: {
+
+              startPoseAvailable_ = input.readBool();
+              break;
+            }
+            case 26: {
+              sl_link.SlLink.Pose2D.Builder subBuilder = null;
+              if (startPose_ != null) {
+                subBuilder = startPose_.toBuilder();
+              }
+              startPose_ = input.readMessage(sl_link.SlLink.Pose2D.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(startPose_);
+                startPose_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 32: {
+
+              endPoseAvailable_ = input.readBool();
+              break;
+            }
+            case 42: {
+              sl_link.SlLink.Pose2D.Builder subBuilder = null;
+              if (endPose_ != null) {
+                subBuilder = endPose_.toBuilder();
+              }
+              endPose_ = input.readMessage(sl_link.SlLink.Pose2D.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(endPose_);
+                endPose_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_WorkRegionPointInfo_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_WorkRegionPointInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.WorkRegionPointInfo.class, sl_link.SlLink.WorkRegionPointInfo.Builder.class);
+    }
+
+    public static final int REGION_FIELD_NUMBER = 1;
+    private sl_link.SlLink.PolygonRegion region_;
+    /**
+     * <code>.sl_link.PolygonRegion region = 1;</code>
+     */
+    public boolean hasRegion() {
+      return region_ != null;
+    }
+    /**
+     * <code>.sl_link.PolygonRegion region = 1;</code>
+     */
+    public sl_link.SlLink.PolygonRegion getRegion() {
+      return region_ == null ? sl_link.SlLink.PolygonRegion.getDefaultInstance() : region_;
+    }
+    /**
+     * <code>.sl_link.PolygonRegion region = 1;</code>
+     */
+    public sl_link.SlLink.PolygonRegionOrBuilder getRegionOrBuilder() {
+      return getRegion();
+    }
+
+    public static final int START_POSE_AVAILABLE_FIELD_NUMBER = 2;
+    private boolean startPoseAvailable_;
+    /**
+     * <code>bool start_pose_available = 2;</code>
+     */
+    public boolean getStartPoseAvailable() {
+      return startPoseAvailable_;
+    }
+
+    public static final int START_POSE_FIELD_NUMBER = 3;
+    private sl_link.SlLink.Pose2D startPose_;
+    /**
+     * <code>.sl_link.Pose2D start_pose = 3;</code>
+     */
+    public boolean hasStartPose() {
+      return startPose_ != null;
+    }
+    /**
+     * <code>.sl_link.Pose2D start_pose = 3;</code>
+     */
+    public sl_link.SlLink.Pose2D getStartPose() {
+      return startPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : startPose_;
+    }
+    /**
+     * <code>.sl_link.Pose2D start_pose = 3;</code>
+     */
+    public sl_link.SlLink.Pose2DOrBuilder getStartPoseOrBuilder() {
+      return getStartPose();
+    }
+
+    public static final int END_POSE_AVAILABLE_FIELD_NUMBER = 4;
+    private boolean endPoseAvailable_;
+    /**
+     * <code>bool end_pose_available = 4;</code>
+     */
+    public boolean getEndPoseAvailable() {
+      return endPoseAvailable_;
+    }
+
+    public static final int END_POSE_FIELD_NUMBER = 5;
+    private sl_link.SlLink.Pose2D endPose_;
+    /**
+     * <code>.sl_link.Pose2D end_pose = 5;</code>
+     */
+    public boolean hasEndPose() {
+      return endPose_ != null;
+    }
+    /**
+     * <code>.sl_link.Pose2D end_pose = 5;</code>
+     */
+    public sl_link.SlLink.Pose2D getEndPose() {
+      return endPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : endPose_;
+    }
+    /**
+     * <code>.sl_link.Pose2D end_pose = 5;</code>
+     */
+    public sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder() {
+      return getEndPose();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (region_ != null) {
+        output.writeMessage(1, getRegion());
+      }
+      if (startPoseAvailable_ != false) {
+        output.writeBool(2, startPoseAvailable_);
+      }
+      if (startPose_ != null) {
+        output.writeMessage(3, getStartPose());
+      }
+      if (endPoseAvailable_ != false) {
+        output.writeBool(4, endPoseAvailable_);
+      }
+      if (endPose_ != null) {
+        output.writeMessage(5, getEndPose());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (region_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getRegion());
+      }
+      if (startPoseAvailable_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, startPoseAvailable_);
+      }
+      if (startPose_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(3, getStartPose());
+      }
+      if (endPoseAvailable_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(4, endPoseAvailable_);
+      }
+      if (endPose_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(5, getEndPose());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.WorkRegionPointInfo)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.WorkRegionPointInfo other = (sl_link.SlLink.WorkRegionPointInfo) obj;
+
+      boolean result = true;
+      result = result && (hasRegion() == other.hasRegion());
+      if (hasRegion()) {
+        result = result && getRegion()
+            .equals(other.getRegion());
+      }
+      result = result && (getStartPoseAvailable()
+          == other.getStartPoseAvailable());
+      result = result && (hasStartPose() == other.hasStartPose());
+      if (hasStartPose()) {
+        result = result && getStartPose()
+            .equals(other.getStartPose());
+      }
+      result = result && (getEndPoseAvailable()
+          == other.getEndPoseAvailable());
+      result = result && (hasEndPose() == other.hasEndPose());
+      if (hasEndPose()) {
+        result = result && getEndPose()
+            .equals(other.getEndPose());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasRegion()) {
+        hash = (37 * hash) + REGION_FIELD_NUMBER;
+        hash = (53 * hash) + getRegion().hashCode();
+      }
+      hash = (37 * hash) + START_POSE_AVAILABLE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getStartPoseAvailable());
+      if (hasStartPose()) {
+        hash = (37 * hash) + START_POSE_FIELD_NUMBER;
+        hash = (53 * hash) + getStartPose().hashCode();
+      }
+      hash = (37 * hash) + END_POSE_AVAILABLE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getEndPoseAvailable());
+      if (hasEndPose()) {
+        hash = (37 * hash) + END_POSE_FIELD_NUMBER;
+        hash = (53 * hash) + getEndPose().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.WorkRegionPointInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.WorkRegionPointInfo prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.WorkRegionPointInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.WorkRegionPointInfo)
+        sl_link.SlLink.WorkRegionPointInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_WorkRegionPointInfo_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_WorkRegionPointInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.WorkRegionPointInfo.class, sl_link.SlLink.WorkRegionPointInfo.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.WorkRegionPointInfo.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        if (regionBuilder_ == null) {
+          region_ = null;
+        } else {
+          region_ = null;
+          regionBuilder_ = null;
+        }
+        startPoseAvailable_ = false;
+
+        if (startPoseBuilder_ == null) {
+          startPose_ = null;
+        } else {
+          startPose_ = null;
+          startPoseBuilder_ = null;
+        }
+        endPoseAvailable_ = false;
+
+        if (endPoseBuilder_ == null) {
+          endPose_ = null;
+        } else {
+          endPose_ = null;
+          endPoseBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_WorkRegionPointInfo_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.WorkRegionPointInfo getDefaultInstanceForType() {
+        return sl_link.SlLink.WorkRegionPointInfo.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.WorkRegionPointInfo build() {
+        sl_link.SlLink.WorkRegionPointInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.WorkRegionPointInfo buildPartial() {
+        sl_link.SlLink.WorkRegionPointInfo result = new sl_link.SlLink.WorkRegionPointInfo(this);
+        if (regionBuilder_ == null) {
+          result.region_ = region_;
+        } else {
+          result.region_ = regionBuilder_.build();
+        }
+        result.startPoseAvailable_ = startPoseAvailable_;
+        if (startPoseBuilder_ == null) {
+          result.startPose_ = startPose_;
+        } else {
+          result.startPose_ = startPoseBuilder_.build();
+        }
+        result.endPoseAvailable_ = endPoseAvailable_;
+        if (endPoseBuilder_ == null) {
+          result.endPose_ = endPose_;
+        } else {
+          result.endPose_ = endPoseBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.WorkRegionPointInfo) {
+          return mergeFrom((sl_link.SlLink.WorkRegionPointInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.WorkRegionPointInfo other) {
+        if (other == sl_link.SlLink.WorkRegionPointInfo.getDefaultInstance()) return this;
+        if (other.hasRegion()) {
+          mergeRegion(other.getRegion());
+        }
+        if (other.getStartPoseAvailable() != false) {
+          setStartPoseAvailable(other.getStartPoseAvailable());
+        }
+        if (other.hasStartPose()) {
+          mergeStartPose(other.getStartPose());
+        }
+        if (other.getEndPoseAvailable() != false) {
+          setEndPoseAvailable(other.getEndPoseAvailable());
+        }
+        if (other.hasEndPose()) {
+          mergeEndPose(other.getEndPose());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.WorkRegionPointInfo parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.WorkRegionPointInfo) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private sl_link.SlLink.PolygonRegion region_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> regionBuilder_;
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public boolean hasRegion() {
+        return regionBuilder_ != null || region_ != null;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public sl_link.SlLink.PolygonRegion getRegion() {
+        if (regionBuilder_ == null) {
+          return region_ == null ? sl_link.SlLink.PolygonRegion.getDefaultInstance() : region_;
+        } else {
+          return regionBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public Builder setRegion(sl_link.SlLink.PolygonRegion value) {
+        if (regionBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          region_ = value;
+          onChanged();
+        } else {
+          regionBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public Builder setRegion(
+          sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (regionBuilder_ == null) {
+          region_ = builderForValue.build();
+          onChanged();
+        } else {
+          regionBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public Builder mergeRegion(sl_link.SlLink.PolygonRegion value) {
+        if (regionBuilder_ == null) {
+          if (region_ != null) {
+            region_ =
+              sl_link.SlLink.PolygonRegion.newBuilder(region_).mergeFrom(value).buildPartial();
+          } else {
+            region_ = value;
+          }
+          onChanged();
+        } else {
+          regionBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public Builder clearRegion() {
+        if (regionBuilder_ == null) {
+          region_ = null;
+          onChanged();
+        } else {
+          region_ = null;
+          regionBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder getRegionBuilder() {
+        
+        onChanged();
+        return getRegionFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      public sl_link.SlLink.PolygonRegionOrBuilder getRegionOrBuilder() {
+        if (regionBuilder_ != null) {
+          return regionBuilder_.getMessageOrBuilder();
+        } else {
+          return region_ == null ?
+              sl_link.SlLink.PolygonRegion.getDefaultInstance() : region_;
+        }
+      }
+      /**
+       * <code>.sl_link.PolygonRegion region = 1;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> 
+          getRegionFieldBuilder() {
+        if (regionBuilder_ == null) {
+          regionBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder>(
+                  getRegion(),
+                  getParentForChildren(),
+                  isClean());
+          region_ = null;
+        }
+        return regionBuilder_;
+      }
+
+      private boolean startPoseAvailable_ ;
+      /**
+       * <code>bool start_pose_available = 2;</code>
+       */
+      public boolean getStartPoseAvailable() {
+        return startPoseAvailable_;
+      }
+      /**
+       * <code>bool start_pose_available = 2;</code>
+       */
+      public Builder setStartPoseAvailable(boolean value) {
+        
+        startPoseAvailable_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool start_pose_available = 2;</code>
+       */
+      public Builder clearStartPoseAvailable() {
+        
+        startPoseAvailable_ = false;
+        onChanged();
+        return this;
+      }
+
+      private sl_link.SlLink.Pose2D startPose_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> startPoseBuilder_;
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public boolean hasStartPose() {
+        return startPoseBuilder_ != null || startPose_ != null;
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public sl_link.SlLink.Pose2D getStartPose() {
+        if (startPoseBuilder_ == null) {
+          return startPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : startPose_;
+        } else {
+          return startPoseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public Builder setStartPose(sl_link.SlLink.Pose2D value) {
+        if (startPoseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          startPose_ = value;
+          onChanged();
+        } else {
+          startPoseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public Builder setStartPose(
+          sl_link.SlLink.Pose2D.Builder builderForValue) {
+        if (startPoseBuilder_ == null) {
+          startPose_ = builderForValue.build();
+          onChanged();
+        } else {
+          startPoseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public Builder mergeStartPose(sl_link.SlLink.Pose2D value) {
+        if (startPoseBuilder_ == null) {
+          if (startPose_ != null) {
+            startPose_ =
+              sl_link.SlLink.Pose2D.newBuilder(startPose_).mergeFrom(value).buildPartial();
+          } else {
+            startPose_ = value;
+          }
+          onChanged();
+        } else {
+          startPoseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public Builder clearStartPose() {
+        if (startPoseBuilder_ == null) {
+          startPose_ = null;
+          onChanged();
+        } else {
+          startPose_ = null;
+          startPoseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public sl_link.SlLink.Pose2D.Builder getStartPoseBuilder() {
+        
+        onChanged();
+        return getStartPoseFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      public sl_link.SlLink.Pose2DOrBuilder getStartPoseOrBuilder() {
+        if (startPoseBuilder_ != null) {
+          return startPoseBuilder_.getMessageOrBuilder();
+        } else {
+          return startPose_ == null ?
+              sl_link.SlLink.Pose2D.getDefaultInstance() : startPose_;
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D start_pose = 3;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> 
+          getStartPoseFieldBuilder() {
+        if (startPoseBuilder_ == null) {
+          startPoseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>(
+                  getStartPose(),
+                  getParentForChildren(),
+                  isClean());
+          startPose_ = null;
+        }
+        return startPoseBuilder_;
+      }
+
+      private boolean endPoseAvailable_ ;
+      /**
+       * <code>bool end_pose_available = 4;</code>
+       */
+      public boolean getEndPoseAvailable() {
+        return endPoseAvailable_;
+      }
+      /**
+       * <code>bool end_pose_available = 4;</code>
+       */
+      public Builder setEndPoseAvailable(boolean value) {
+        
+        endPoseAvailable_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool end_pose_available = 4;</code>
+       */
+      public Builder clearEndPoseAvailable() {
+        
+        endPoseAvailable_ = false;
+        onChanged();
+        return this;
+      }
+
+      private sl_link.SlLink.Pose2D endPose_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> endPoseBuilder_;
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public boolean hasEndPose() {
+        return endPoseBuilder_ != null || endPose_ != null;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public sl_link.SlLink.Pose2D getEndPose() {
+        if (endPoseBuilder_ == null) {
+          return endPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : endPose_;
+        } else {
+          return endPoseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public Builder setEndPose(sl_link.SlLink.Pose2D value) {
+        if (endPoseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          endPose_ = value;
+          onChanged();
+        } else {
+          endPoseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public Builder setEndPose(
+          sl_link.SlLink.Pose2D.Builder builderForValue) {
+        if (endPoseBuilder_ == null) {
+          endPose_ = builderForValue.build();
+          onChanged();
+        } else {
+          endPoseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public Builder mergeEndPose(sl_link.SlLink.Pose2D value) {
+        if (endPoseBuilder_ == null) {
+          if (endPose_ != null) {
+            endPose_ =
+              sl_link.SlLink.Pose2D.newBuilder(endPose_).mergeFrom(value).buildPartial();
+          } else {
+            endPose_ = value;
+          }
+          onChanged();
+        } else {
+          endPoseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public Builder clearEndPose() {
+        if (endPoseBuilder_ == null) {
+          endPose_ = null;
+          onChanged();
+        } else {
+          endPose_ = null;
+          endPoseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public sl_link.SlLink.Pose2D.Builder getEndPoseBuilder() {
+        
+        onChanged();
+        return getEndPoseFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      public sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder() {
+        if (endPoseBuilder_ != null) {
+          return endPoseBuilder_.getMessageOrBuilder();
+        } else {
+          return endPose_ == null ?
+              sl_link.SlLink.Pose2D.getDefaultInstance() : endPose_;
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D end_pose = 5;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> 
+          getEndPoseFieldBuilder() {
+        if (endPoseBuilder_ == null) {
+          endPoseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>(
+                  getEndPose(),
+                  getParentForChildren(),
+                  isClean());
+          endPose_ = null;
+        }
+        return endPoseBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.WorkRegionPointInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.WorkRegionPointInfo)
+    private static final sl_link.SlLink.WorkRegionPointInfo DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.WorkRegionPointInfo();
+    }
+
+    public static sl_link.SlLink.WorkRegionPointInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<WorkRegionPointInfo>
+        PARSER = new com.google.protobuf.AbstractParser<WorkRegionPointInfo>() {
+      @java.lang.Override
+      public WorkRegionPointInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new WorkRegionPointInfo(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<WorkRegionPointInfo> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WorkRegionPointInfo> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.WorkRegionPointInfo getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface MapRegionPointResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.MapRegionPointResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>string map_id = 3;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>uint32 map_version = 4;</code>
+     */
+    int getMapVersion();
+
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    java.util.List<sl_link.SlLink.WorkRegionPointInfo> 
+        getWorkRegionsList();
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    sl_link.SlLink.WorkRegionPointInfo getWorkRegions(int index);
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    int getWorkRegionsCount();
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    java.util.List<? extends sl_link.SlLink.WorkRegionPointInfoOrBuilder> 
+        getWorkRegionsOrBuilderList();
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    sl_link.SlLink.WorkRegionPointInfoOrBuilder getWorkRegionsOrBuilder(
+        int index);
+
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    java.util.List<sl_link.SlLink.PolygonRegion> 
+        getObstacleRegionsList();
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    sl_link.SlLink.PolygonRegion getObstacleRegions(int index);
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    int getObstacleRegionsCount();
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+        getObstacleRegionsOrBuilderList();
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    sl_link.SlLink.PolygonRegionOrBuilder getObstacleRegionsOrBuilder(
+        int index);
+
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    java.util.List<sl_link.SlLink.PolygonRegion> 
+        getEraseRegionsList();
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    sl_link.SlLink.PolygonRegion getEraseRegions(int index);
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    int getEraseRegionsCount();
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+        getEraseRegionsOrBuilderList();
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    sl_link.SlLink.PolygonRegionOrBuilder getEraseRegionsOrBuilder(
+        int index);
+
+    /**
+     * <code>bool crop_region_available = 8;</code>
+     */
+    boolean getCropRegionAvailable();
+
+    /**
+     * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+     */
+    boolean hasCropRegion();
+    /**
+     * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+     */
+    sl_link.SlLink.PolygonRegion getCropRegion();
+    /**
+     * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+     */
+    sl_link.SlLink.PolygonRegionOrBuilder getCropRegionOrBuilder();
+  }
+  /**
+   * Protobuf type {@code sl_link.MapRegionPointResponse}
+   */
+  public  static final class MapRegionPointResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.MapRegionPointResponse)
+      MapRegionPointResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use MapRegionPointResponse.newBuilder() to construct.
+    private MapRegionPointResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private MapRegionPointResponse() {
+      result_ = 0;
+      message_ = "";
+      mapId_ = "";
+      mapVersion_ = 0;
+      workRegions_ = java.util.Collections.emptyList();
+      obstacleRegions_ = java.util.Collections.emptyList();
+      eraseRegions_ = java.util.Collections.emptyList();
+      cropRegionAvailable_ = false;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private MapRegionPointResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              result_ = rawValue;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            case 32: {
+
+              mapVersion_ = input.readUInt32();
+              break;
+            }
+            case 42: {
+              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+                workRegions_ = new java.util.ArrayList<sl_link.SlLink.WorkRegionPointInfo>();
+                mutable_bitField0_ |= 0x00000010;
+              }
+              workRegions_.add(
+                  input.readMessage(sl_link.SlLink.WorkRegionPointInfo.parser(), extensionRegistry));
+              break;
+            }
+            case 50: {
+              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+                obstacleRegions_ = new java.util.ArrayList<sl_link.SlLink.PolygonRegion>();
+                mutable_bitField0_ |= 0x00000020;
+              }
+              obstacleRegions_.add(
+                  input.readMessage(sl_link.SlLink.PolygonRegion.parser(), extensionRegistry));
+              break;
+            }
+            case 58: {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+                eraseRegions_ = new java.util.ArrayList<sl_link.SlLink.PolygonRegion>();
+                mutable_bitField0_ |= 0x00000040;
+              }
+              eraseRegions_.add(
+                  input.readMessage(sl_link.SlLink.PolygonRegion.parser(), extensionRegistry));
+              break;
+            }
+            case 64: {
+
+              cropRegionAvailable_ = input.readBool();
+              break;
+            }
+            case 74: {
+              sl_link.SlLink.PolygonRegion.Builder subBuilder = null;
+              if (cropRegion_ != null) {
+                subBuilder = cropRegion_.toBuilder();
+              }
+              cropRegion_ = input.readMessage(sl_link.SlLink.PolygonRegion.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(cropRegion_);
+                cropRegion_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+          workRegions_ = java.util.Collections.unmodifiableList(workRegions_);
+        }
+        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+          obstacleRegions_ = java.util.Collections.unmodifiableList(obstacleRegions_);
+        }
+        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+          eraseRegions_ = java.util.Collections.unmodifiableList(eraseRegions_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_MapRegionPointResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_MapRegionPointResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.MapRegionPointResponse.class, sl_link.SlLink.MapRegionPointResponse.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public sl_link.SlLink.ResultCode getResult() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object message_;
+    /**
+     * <code>string message = 2;</code>
+     */
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 3;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <code>string map_id = 3;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_id = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_VERSION_FIELD_NUMBER = 4;
+    private int mapVersion_;
+    /**
+     * <code>uint32 map_version = 4;</code>
+     */
+    public int getMapVersion() {
+      return mapVersion_;
+    }
+
+    public static final int WORK_REGIONS_FIELD_NUMBER = 5;
+    private java.util.List<sl_link.SlLink.WorkRegionPointInfo> workRegions_;
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    public java.util.List<sl_link.SlLink.WorkRegionPointInfo> getWorkRegionsList() {
+      return workRegions_;
+    }
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.WorkRegionPointInfoOrBuilder> 
+        getWorkRegionsOrBuilderList() {
+      return workRegions_;
+    }
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    public int getWorkRegionsCount() {
+      return workRegions_.size();
+    }
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    public sl_link.SlLink.WorkRegionPointInfo getWorkRegions(int index) {
+      return workRegions_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+     */
+    public sl_link.SlLink.WorkRegionPointInfoOrBuilder getWorkRegionsOrBuilder(
+        int index) {
+      return workRegions_.get(index);
+    }
+
+    public static final int OBSTACLE_REGIONS_FIELD_NUMBER = 6;
+    private java.util.List<sl_link.SlLink.PolygonRegion> obstacleRegions_;
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    public java.util.List<sl_link.SlLink.PolygonRegion> getObstacleRegionsList() {
+      return obstacleRegions_;
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+        getObstacleRegionsOrBuilderList() {
+      return obstacleRegions_;
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    public int getObstacleRegionsCount() {
+      return obstacleRegions_.size();
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    public sl_link.SlLink.PolygonRegion getObstacleRegions(int index) {
+      return obstacleRegions_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+     */
+    public sl_link.SlLink.PolygonRegionOrBuilder getObstacleRegionsOrBuilder(
+        int index) {
+      return obstacleRegions_.get(index);
+    }
+
+    public static final int ERASE_REGIONS_FIELD_NUMBER = 7;
+    private java.util.List<sl_link.SlLink.PolygonRegion> eraseRegions_;
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    public java.util.List<sl_link.SlLink.PolygonRegion> getEraseRegionsList() {
+      return eraseRegions_;
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+        getEraseRegionsOrBuilderList() {
+      return eraseRegions_;
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    public int getEraseRegionsCount() {
+      return eraseRegions_.size();
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    public sl_link.SlLink.PolygonRegion getEraseRegions(int index) {
+      return eraseRegions_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+     */
+    public sl_link.SlLink.PolygonRegionOrBuilder getEraseRegionsOrBuilder(
+        int index) {
+      return eraseRegions_.get(index);
+    }
+
+    public static final int CROP_REGION_AVAILABLE_FIELD_NUMBER = 8;
+    private boolean cropRegionAvailable_;
+    /**
+     * <code>bool crop_region_available = 8;</code>
+     */
+    public boolean getCropRegionAvailable() {
+      return cropRegionAvailable_;
+    }
+
+    public static final int CROP_REGION_FIELD_NUMBER = 9;
+    private sl_link.SlLink.PolygonRegion cropRegion_;
+    /**
+     * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+     */
+    public boolean hasCropRegion() {
+      return cropRegion_ != null;
+    }
+    /**
+     * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+     */
+    public sl_link.SlLink.PolygonRegion getCropRegion() {
+      return cropRegion_ == null ? sl_link.SlLink.PolygonRegion.getDefaultInstance() : cropRegion_;
+    }
+    /**
+     * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+     */
+    public sl_link.SlLink.PolygonRegionOrBuilder getCropRegionOrBuilder() {
+      return getCropRegion();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        output.writeEnum(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, mapId_);
+      }
+      if (mapVersion_ != 0) {
+        output.writeUInt32(4, mapVersion_);
+      }
+      for (int i = 0; i < workRegions_.size(); i++) {
+        output.writeMessage(5, workRegions_.get(i));
+      }
+      for (int i = 0; i < obstacleRegions_.size(); i++) {
+        output.writeMessage(6, obstacleRegions_.get(i));
+      }
+      for (int i = 0; i < eraseRegions_.size(); i++) {
+        output.writeMessage(7, eraseRegions_.get(i));
+      }
+      if (cropRegionAvailable_ != false) {
+        output.writeBool(8, cropRegionAvailable_);
+      }
+      if (cropRegion_ != null) {
+        output.writeMessage(9, getCropRegion());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, mapId_);
+      }
+      if (mapVersion_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(4, mapVersion_);
+      }
+      for (int i = 0; i < workRegions_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(5, workRegions_.get(i));
+      }
+      for (int i = 0; i < obstacleRegions_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, obstacleRegions_.get(i));
+      }
+      for (int i = 0; i < eraseRegions_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(7, eraseRegions_.get(i));
+      }
+      if (cropRegionAvailable_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(8, cropRegionAvailable_);
+      }
+      if (cropRegion_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(9, getCropRegion());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.MapRegionPointResponse)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.MapRegionPointResponse other = (sl_link.SlLink.MapRegionPointResponse) obj;
+
+      boolean result = true;
+      result = result && result_ == other.result_;
+      result = result && getMessage()
+          .equals(other.getMessage());
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && (getMapVersion()
+          == other.getMapVersion());
+      result = result && getWorkRegionsList()
+          .equals(other.getWorkRegionsList());
+      result = result && getObstacleRegionsList()
+          .equals(other.getObstacleRegionsList());
+      result = result && getEraseRegionsList()
+          .equals(other.getEraseRegionsList());
+      result = result && (getCropRegionAvailable()
+          == other.getCropRegionAvailable());
+      result = result && (hasCropRegion() == other.hasCropRegion());
+      if (hasCropRegion()) {
+        result = result && getCropRegion()
+            .equals(other.getCropRegion());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + result_;
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (37 * hash) + MAP_VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getMapVersion();
+      if (getWorkRegionsCount() > 0) {
+        hash = (37 * hash) + WORK_REGIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getWorkRegionsList().hashCode();
+      }
+      if (getObstacleRegionsCount() > 0) {
+        hash = (37 * hash) + OBSTACLE_REGIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getObstacleRegionsList().hashCode();
+      }
+      if (getEraseRegionsCount() > 0) {
+        hash = (37 * hash) + ERASE_REGIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getEraseRegionsList().hashCode();
+      }
+      hash = (37 * hash) + CROP_REGION_AVAILABLE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getCropRegionAvailable());
+      if (hasCropRegion()) {
+        hash = (37 * hash) + CROP_REGION_FIELD_NUMBER;
+        hash = (53 * hash) + getCropRegion().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.MapRegionPointResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.MapRegionPointResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.MapRegionPointResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.MapRegionPointResponse)
+        sl_link.SlLink.MapRegionPointResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_MapRegionPointResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_MapRegionPointResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.MapRegionPointResponse.class, sl_link.SlLink.MapRegionPointResponse.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.MapRegionPointResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getWorkRegionsFieldBuilder();
+          getObstacleRegionsFieldBuilder();
+          getEraseRegionsFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        result_ = 0;
+
+        message_ = "";
+
+        mapId_ = "";
+
+        mapVersion_ = 0;
+
+        if (workRegionsBuilder_ == null) {
+          workRegions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+        } else {
+          workRegionsBuilder_.clear();
+        }
+        if (obstacleRegionsBuilder_ == null) {
+          obstacleRegions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000020);
+        } else {
+          obstacleRegionsBuilder_.clear();
+        }
+        if (eraseRegionsBuilder_ == null) {
+          eraseRegions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000040);
+        } else {
+          eraseRegionsBuilder_.clear();
+        }
+        cropRegionAvailable_ = false;
+
+        if (cropRegionBuilder_ == null) {
+          cropRegion_ = null;
+        } else {
+          cropRegion_ = null;
+          cropRegionBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_MapRegionPointResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.MapRegionPointResponse getDefaultInstanceForType() {
+        return sl_link.SlLink.MapRegionPointResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.MapRegionPointResponse build() {
+        sl_link.SlLink.MapRegionPointResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.MapRegionPointResponse buildPartial() {
+        sl_link.SlLink.MapRegionPointResponse result = new sl_link.SlLink.MapRegionPointResponse(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        result.result_ = result_;
+        result.message_ = message_;
+        result.mapId_ = mapId_;
+        result.mapVersion_ = mapVersion_;
+        if (workRegionsBuilder_ == null) {
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            workRegions_ = java.util.Collections.unmodifiableList(workRegions_);
+            bitField0_ = (bitField0_ & ~0x00000010);
+          }
+          result.workRegions_ = workRegions_;
+        } else {
+          result.workRegions_ = workRegionsBuilder_.build();
+        }
+        if (obstacleRegionsBuilder_ == null) {
+          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+            obstacleRegions_ = java.util.Collections.unmodifiableList(obstacleRegions_);
+            bitField0_ = (bitField0_ & ~0x00000020);
+          }
+          result.obstacleRegions_ = obstacleRegions_;
+        } else {
+          result.obstacleRegions_ = obstacleRegionsBuilder_.build();
+        }
+        if (eraseRegionsBuilder_ == null) {
+          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+            eraseRegions_ = java.util.Collections.unmodifiableList(eraseRegions_);
+            bitField0_ = (bitField0_ & ~0x00000040);
+          }
+          result.eraseRegions_ = eraseRegions_;
+        } else {
+          result.eraseRegions_ = eraseRegionsBuilder_.build();
+        }
+        result.cropRegionAvailable_ = cropRegionAvailable_;
+        if (cropRegionBuilder_ == null) {
+          result.cropRegion_ = cropRegion_;
+        } else {
+          result.cropRegion_ = cropRegionBuilder_.build();
+        }
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.MapRegionPointResponse) {
+          return mergeFrom((sl_link.SlLink.MapRegionPointResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.MapRegionPointResponse other) {
+        if (other == sl_link.SlLink.MapRegionPointResponse.getDefaultInstance()) return this;
+        if (other.result_ != 0) {
+          setResultValue(other.getResultValue());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          onChanged();
+        }
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        if (other.getMapVersion() != 0) {
+          setMapVersion(other.getMapVersion());
+        }
+        if (workRegionsBuilder_ == null) {
+          if (!other.workRegions_.isEmpty()) {
+            if (workRegions_.isEmpty()) {
+              workRegions_ = other.workRegions_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+            } else {
+              ensureWorkRegionsIsMutable();
+              workRegions_.addAll(other.workRegions_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.workRegions_.isEmpty()) {
+            if (workRegionsBuilder_.isEmpty()) {
+              workRegionsBuilder_.dispose();
+              workRegionsBuilder_ = null;
+              workRegions_ = other.workRegions_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+              workRegionsBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getWorkRegionsFieldBuilder() : null;
+            } else {
+              workRegionsBuilder_.addAllMessages(other.workRegions_);
+            }
+          }
+        }
+        if (obstacleRegionsBuilder_ == null) {
+          if (!other.obstacleRegions_.isEmpty()) {
+            if (obstacleRegions_.isEmpty()) {
+              obstacleRegions_ = other.obstacleRegions_;
+              bitField0_ = (bitField0_ & ~0x00000020);
+            } else {
+              ensureObstacleRegionsIsMutable();
+              obstacleRegions_.addAll(other.obstacleRegions_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.obstacleRegions_.isEmpty()) {
+            if (obstacleRegionsBuilder_.isEmpty()) {
+              obstacleRegionsBuilder_.dispose();
+              obstacleRegionsBuilder_ = null;
+              obstacleRegions_ = other.obstacleRegions_;
+              bitField0_ = (bitField0_ & ~0x00000020);
+              obstacleRegionsBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getObstacleRegionsFieldBuilder() : null;
+            } else {
+              obstacleRegionsBuilder_.addAllMessages(other.obstacleRegions_);
+            }
+          }
+        }
+        if (eraseRegionsBuilder_ == null) {
+          if (!other.eraseRegions_.isEmpty()) {
+            if (eraseRegions_.isEmpty()) {
+              eraseRegions_ = other.eraseRegions_;
+              bitField0_ = (bitField0_ & ~0x00000040);
+            } else {
+              ensureEraseRegionsIsMutable();
+              eraseRegions_.addAll(other.eraseRegions_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.eraseRegions_.isEmpty()) {
+            if (eraseRegionsBuilder_.isEmpty()) {
+              eraseRegionsBuilder_.dispose();
+              eraseRegionsBuilder_ = null;
+              eraseRegions_ = other.eraseRegions_;
+              bitField0_ = (bitField0_ & ~0x00000040);
+              eraseRegionsBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getEraseRegionsFieldBuilder() : null;
+            } else {
+              eraseRegionsBuilder_.addAllMessages(other.eraseRegions_);
+            }
+          }
+        }
+        if (other.getCropRegionAvailable() != false) {
+          setCropRegionAvailable(other.getCropRegionAvailable());
+        }
+        if (other.hasCropRegion()) {
+          mergeCropRegion(other.getCropRegion());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.MapRegionPointResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.MapRegionPointResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private int result_ = 0;
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public int getResultValue() {
+        return result_;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResultValue(int value) {
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public sl_link.SlLink.ResultCode getResult() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+        return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        result_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 2;</code>
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        message_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder clearMessage() {
+        
+        message_ = getDefaultInstance().getMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        message_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <code>string map_id = 3;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int mapVersion_ ;
+      /**
+       * <code>uint32 map_version = 4;</code>
+       */
+      public int getMapVersion() {
+        return mapVersion_;
+      }
+      /**
+       * <code>uint32 map_version = 4;</code>
+       */
+      public Builder setMapVersion(int value) {
+        
+        mapVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_version = 4;</code>
+       */
+      public Builder clearMapVersion() {
+        
+        mapVersion_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.util.List<sl_link.SlLink.WorkRegionPointInfo> workRegions_ =
+        java.util.Collections.emptyList();
+      private void ensureWorkRegionsIsMutable() {
+        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+          workRegions_ = new java.util.ArrayList<sl_link.SlLink.WorkRegionPointInfo>(workRegions_);
+          bitField0_ |= 0x00000010;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.WorkRegionPointInfo, sl_link.SlLink.WorkRegionPointInfo.Builder, sl_link.SlLink.WorkRegionPointInfoOrBuilder> workRegionsBuilder_;
+
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public java.util.List<sl_link.SlLink.WorkRegionPointInfo> getWorkRegionsList() {
+        if (workRegionsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(workRegions_);
+        } else {
+          return workRegionsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public int getWorkRegionsCount() {
+        if (workRegionsBuilder_ == null) {
+          return workRegions_.size();
+        } else {
+          return workRegionsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public sl_link.SlLink.WorkRegionPointInfo getWorkRegions(int index) {
+        if (workRegionsBuilder_ == null) {
+          return workRegions_.get(index);
+        } else {
+          return workRegionsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder setWorkRegions(
+          int index, sl_link.SlLink.WorkRegionPointInfo value) {
+        if (workRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureWorkRegionsIsMutable();
+          workRegions_.set(index, value);
+          onChanged();
+        } else {
+          workRegionsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder setWorkRegions(
+          int index, sl_link.SlLink.WorkRegionPointInfo.Builder builderForValue) {
+        if (workRegionsBuilder_ == null) {
+          ensureWorkRegionsIsMutable();
+          workRegions_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          workRegionsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder addWorkRegions(sl_link.SlLink.WorkRegionPointInfo value) {
+        if (workRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureWorkRegionsIsMutable();
+          workRegions_.add(value);
+          onChanged();
+        } else {
+          workRegionsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder addWorkRegions(
+          int index, sl_link.SlLink.WorkRegionPointInfo value) {
+        if (workRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureWorkRegionsIsMutable();
+          workRegions_.add(index, value);
+          onChanged();
+        } else {
+          workRegionsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder addWorkRegions(
+          sl_link.SlLink.WorkRegionPointInfo.Builder builderForValue) {
+        if (workRegionsBuilder_ == null) {
+          ensureWorkRegionsIsMutable();
+          workRegions_.add(builderForValue.build());
+          onChanged();
+        } else {
+          workRegionsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder addWorkRegions(
+          int index, sl_link.SlLink.WorkRegionPointInfo.Builder builderForValue) {
+        if (workRegionsBuilder_ == null) {
+          ensureWorkRegionsIsMutable();
+          workRegions_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          workRegionsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder addAllWorkRegions(
+          java.lang.Iterable<? extends sl_link.SlLink.WorkRegionPointInfo> values) {
+        if (workRegionsBuilder_ == null) {
+          ensureWorkRegionsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, workRegions_);
+          onChanged();
+        } else {
+          workRegionsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder clearWorkRegions() {
+        if (workRegionsBuilder_ == null) {
+          workRegions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+          onChanged();
+        } else {
+          workRegionsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public Builder removeWorkRegions(int index) {
+        if (workRegionsBuilder_ == null) {
+          ensureWorkRegionsIsMutable();
+          workRegions_.remove(index);
+          onChanged();
+        } else {
+          workRegionsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public sl_link.SlLink.WorkRegionPointInfo.Builder getWorkRegionsBuilder(
+          int index) {
+        return getWorkRegionsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public sl_link.SlLink.WorkRegionPointInfoOrBuilder getWorkRegionsOrBuilder(
+          int index) {
+        if (workRegionsBuilder_ == null) {
+          return workRegions_.get(index);  } else {
+          return workRegionsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public java.util.List<? extends sl_link.SlLink.WorkRegionPointInfoOrBuilder> 
+           getWorkRegionsOrBuilderList() {
+        if (workRegionsBuilder_ != null) {
+          return workRegionsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(workRegions_);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public sl_link.SlLink.WorkRegionPointInfo.Builder addWorkRegionsBuilder() {
+        return getWorkRegionsFieldBuilder().addBuilder(
+            sl_link.SlLink.WorkRegionPointInfo.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public sl_link.SlLink.WorkRegionPointInfo.Builder addWorkRegionsBuilder(
+          int index) {
+        return getWorkRegionsFieldBuilder().addBuilder(
+            index, sl_link.SlLink.WorkRegionPointInfo.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
+       */
+      public java.util.List<sl_link.SlLink.WorkRegionPointInfo.Builder> 
+           getWorkRegionsBuilderList() {
+        return getWorkRegionsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.WorkRegionPointInfo, sl_link.SlLink.WorkRegionPointInfo.Builder, sl_link.SlLink.WorkRegionPointInfoOrBuilder> 
+          getWorkRegionsFieldBuilder() {
+        if (workRegionsBuilder_ == null) {
+          workRegionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              sl_link.SlLink.WorkRegionPointInfo, sl_link.SlLink.WorkRegionPointInfo.Builder, sl_link.SlLink.WorkRegionPointInfoOrBuilder>(
+                  workRegions_,
+                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  getParentForChildren(),
+                  isClean());
+          workRegions_ = null;
+        }
+        return workRegionsBuilder_;
+      }
+
+      private java.util.List<sl_link.SlLink.PolygonRegion> obstacleRegions_ =
+        java.util.Collections.emptyList();
+      private void ensureObstacleRegionsIsMutable() {
+        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+          obstacleRegions_ = new java.util.ArrayList<sl_link.SlLink.PolygonRegion>(obstacleRegions_);
+          bitField0_ |= 0x00000020;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> obstacleRegionsBuilder_;
+
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public java.util.List<sl_link.SlLink.PolygonRegion> getObstacleRegionsList() {
+        if (obstacleRegionsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(obstacleRegions_);
+        } else {
+          return obstacleRegionsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public int getObstacleRegionsCount() {
+        if (obstacleRegionsBuilder_ == null) {
+          return obstacleRegions_.size();
+        } else {
+          return obstacleRegionsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public sl_link.SlLink.PolygonRegion getObstacleRegions(int index) {
+        if (obstacleRegionsBuilder_ == null) {
+          return obstacleRegions_.get(index);
+        } else {
+          return obstacleRegionsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder setObstacleRegions(
+          int index, sl_link.SlLink.PolygonRegion value) {
+        if (obstacleRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.set(index, value);
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder setObstacleRegions(
+          int index, sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (obstacleRegionsBuilder_ == null) {
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder addObstacleRegions(sl_link.SlLink.PolygonRegion value) {
+        if (obstacleRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.add(value);
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder addObstacleRegions(
+          int index, sl_link.SlLink.PolygonRegion value) {
+        if (obstacleRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.add(index, value);
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder addObstacleRegions(
+          sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (obstacleRegionsBuilder_ == null) {
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.add(builderForValue.build());
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder addObstacleRegions(
+          int index, sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (obstacleRegionsBuilder_ == null) {
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder addAllObstacleRegions(
+          java.lang.Iterable<? extends sl_link.SlLink.PolygonRegion> values) {
+        if (obstacleRegionsBuilder_ == null) {
+          ensureObstacleRegionsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, obstacleRegions_);
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder clearObstacleRegions() {
+        if (obstacleRegionsBuilder_ == null) {
+          obstacleRegions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000020);
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public Builder removeObstacleRegions(int index) {
+        if (obstacleRegionsBuilder_ == null) {
+          ensureObstacleRegionsIsMutable();
+          obstacleRegions_.remove(index);
+          onChanged();
+        } else {
+          obstacleRegionsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder getObstacleRegionsBuilder(
+          int index) {
+        return getObstacleRegionsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public sl_link.SlLink.PolygonRegionOrBuilder getObstacleRegionsOrBuilder(
+          int index) {
+        if (obstacleRegionsBuilder_ == null) {
+          return obstacleRegions_.get(index);  } else {
+          return obstacleRegionsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+           getObstacleRegionsOrBuilderList() {
+        if (obstacleRegionsBuilder_ != null) {
+          return obstacleRegionsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(obstacleRegions_);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder addObstacleRegionsBuilder() {
+        return getObstacleRegionsFieldBuilder().addBuilder(
+            sl_link.SlLink.PolygonRegion.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder addObstacleRegionsBuilder(
+          int index) {
+        return getObstacleRegionsFieldBuilder().addBuilder(
+            index, sl_link.SlLink.PolygonRegion.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
+       */
+      public java.util.List<sl_link.SlLink.PolygonRegion.Builder> 
+           getObstacleRegionsBuilderList() {
+        return getObstacleRegionsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> 
+          getObstacleRegionsFieldBuilder() {
+        if (obstacleRegionsBuilder_ == null) {
+          obstacleRegionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder>(
+                  obstacleRegions_,
+                  ((bitField0_ & 0x00000020) == 0x00000020),
+                  getParentForChildren(),
+                  isClean());
+          obstacleRegions_ = null;
+        }
+        return obstacleRegionsBuilder_;
+      }
+
+      private java.util.List<sl_link.SlLink.PolygonRegion> eraseRegions_ =
+        java.util.Collections.emptyList();
+      private void ensureEraseRegionsIsMutable() {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+          eraseRegions_ = new java.util.ArrayList<sl_link.SlLink.PolygonRegion>(eraseRegions_);
+          bitField0_ |= 0x00000040;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> eraseRegionsBuilder_;
+
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public java.util.List<sl_link.SlLink.PolygonRegion> getEraseRegionsList() {
+        if (eraseRegionsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(eraseRegions_);
+        } else {
+          return eraseRegionsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public int getEraseRegionsCount() {
+        if (eraseRegionsBuilder_ == null) {
+          return eraseRegions_.size();
+        } else {
+          return eraseRegionsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public sl_link.SlLink.PolygonRegion getEraseRegions(int index) {
+        if (eraseRegionsBuilder_ == null) {
+          return eraseRegions_.get(index);
+        } else {
+          return eraseRegionsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder setEraseRegions(
+          int index, sl_link.SlLink.PolygonRegion value) {
+        if (eraseRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.set(index, value);
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder setEraseRegions(
+          int index, sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (eraseRegionsBuilder_ == null) {
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder addEraseRegions(sl_link.SlLink.PolygonRegion value) {
+        if (eraseRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.add(value);
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder addEraseRegions(
+          int index, sl_link.SlLink.PolygonRegion value) {
+        if (eraseRegionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.add(index, value);
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder addEraseRegions(
+          sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (eraseRegionsBuilder_ == null) {
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.add(builderForValue.build());
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder addEraseRegions(
+          int index, sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (eraseRegionsBuilder_ == null) {
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder addAllEraseRegions(
+          java.lang.Iterable<? extends sl_link.SlLink.PolygonRegion> values) {
+        if (eraseRegionsBuilder_ == null) {
+          ensureEraseRegionsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, eraseRegions_);
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder clearEraseRegions() {
+        if (eraseRegionsBuilder_ == null) {
+          eraseRegions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000040);
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public Builder removeEraseRegions(int index) {
+        if (eraseRegionsBuilder_ == null) {
+          ensureEraseRegionsIsMutable();
+          eraseRegions_.remove(index);
+          onChanged();
+        } else {
+          eraseRegionsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder getEraseRegionsBuilder(
+          int index) {
+        return getEraseRegionsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public sl_link.SlLink.PolygonRegionOrBuilder getEraseRegionsOrBuilder(
+          int index) {
+        if (eraseRegionsBuilder_ == null) {
+          return eraseRegions_.get(index);  } else {
+          return eraseRegionsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+           getEraseRegionsOrBuilderList() {
+        if (eraseRegionsBuilder_ != null) {
+          return eraseRegionsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(eraseRegions_);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder addEraseRegionsBuilder() {
+        return getEraseRegionsFieldBuilder().addBuilder(
+            sl_link.SlLink.PolygonRegion.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder addEraseRegionsBuilder(
+          int index) {
+        return getEraseRegionsFieldBuilder().addBuilder(
+            index, sl_link.SlLink.PolygonRegion.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
+       */
+      public java.util.List<sl_link.SlLink.PolygonRegion.Builder> 
+           getEraseRegionsBuilderList() {
+        return getEraseRegionsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> 
+          getEraseRegionsFieldBuilder() {
+        if (eraseRegionsBuilder_ == null) {
+          eraseRegionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder>(
+                  eraseRegions_,
+                  ((bitField0_ & 0x00000040) == 0x00000040),
+                  getParentForChildren(),
+                  isClean());
+          eraseRegions_ = null;
+        }
+        return eraseRegionsBuilder_;
+      }
+
+      private boolean cropRegionAvailable_ ;
+      /**
+       * <code>bool crop_region_available = 8;</code>
+       */
+      public boolean getCropRegionAvailable() {
+        return cropRegionAvailable_;
+      }
+      /**
+       * <code>bool crop_region_available = 8;</code>
+       */
+      public Builder setCropRegionAvailable(boolean value) {
+        
+        cropRegionAvailable_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool crop_region_available = 8;</code>
+       */
+      public Builder clearCropRegionAvailable() {
+        
+        cropRegionAvailable_ = false;
+        onChanged();
+        return this;
+      }
+
+      private sl_link.SlLink.PolygonRegion cropRegion_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> cropRegionBuilder_;
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public boolean hasCropRegion() {
+        return cropRegionBuilder_ != null || cropRegion_ != null;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public sl_link.SlLink.PolygonRegion getCropRegion() {
+        if (cropRegionBuilder_ == null) {
+          return cropRegion_ == null ? sl_link.SlLink.PolygonRegion.getDefaultInstance() : cropRegion_;
+        } else {
+          return cropRegionBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public Builder setCropRegion(sl_link.SlLink.PolygonRegion value) {
+        if (cropRegionBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          cropRegion_ = value;
+          onChanged();
+        } else {
+          cropRegionBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public Builder setCropRegion(
+          sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        if (cropRegionBuilder_ == null) {
+          cropRegion_ = builderForValue.build();
+          onChanged();
+        } else {
+          cropRegionBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public Builder mergeCropRegion(sl_link.SlLink.PolygonRegion value) {
+        if (cropRegionBuilder_ == null) {
+          if (cropRegion_ != null) {
+            cropRegion_ =
+              sl_link.SlLink.PolygonRegion.newBuilder(cropRegion_).mergeFrom(value).buildPartial();
+          } else {
+            cropRegion_ = value;
+          }
+          onChanged();
+        } else {
+          cropRegionBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public Builder clearCropRegion() {
+        if (cropRegionBuilder_ == null) {
+          cropRegion_ = null;
+          onChanged();
+        } else {
+          cropRegion_ = null;
+          cropRegionBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public sl_link.SlLink.PolygonRegion.Builder getCropRegionBuilder() {
+        
+        onChanged();
+        return getCropRegionFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      public sl_link.SlLink.PolygonRegionOrBuilder getCropRegionOrBuilder() {
+        if (cropRegionBuilder_ != null) {
+          return cropRegionBuilder_.getMessageOrBuilder();
+        } else {
+          return cropRegion_ == null ?
+              sl_link.SlLink.PolygonRegion.getDefaultInstance() : cropRegion_;
+        }
+      }
+      /**
+       * <code>.sl_link.PolygonRegion crop_region = 9;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder> 
+          getCropRegionFieldBuilder() {
+        if (cropRegionBuilder_ == null) {
+          cropRegionBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.PolygonRegion, sl_link.SlLink.PolygonRegion.Builder, sl_link.SlLink.PolygonRegionOrBuilder>(
+                  getCropRegion(),
+                  getParentForChildren(),
+                  isClean());
+          cropRegion_ = null;
+        }
+        return cropRegionBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.MapRegionPointResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.MapRegionPointResponse)
+    private static final sl_link.SlLink.MapRegionPointResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.MapRegionPointResponse();
+    }
+
+    public static sl_link.SlLink.MapRegionPointResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<MapRegionPointResponse>
+        PARSER = new com.google.protobuf.AbstractParser<MapRegionPointResponse>() {
+      @java.lang.Override
+      public MapRegionPointResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new MapRegionPointResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<MapRegionPointResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<MapRegionPointResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.MapRegionPointResponse getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -57883,6 +64020,11 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getTaskIdBytes();
+
+    /**
+     * <code>uint32 max_execution_records = 3;</code>
+     */
+    int getMaxExecutionRecords();
   }
   /**
    * Protobuf type {@code sl_link.TaskResultRequest}
@@ -57899,6 +64041,7 @@ public final class SlLink {
     private TaskResultRequest() {
       mapId_ = "";
       taskId_ = "";
+      maxExecutionRecords_ = 0;
     }
 
     @java.lang.Override
@@ -57935,6 +64078,11 @@ public final class SlLink {
               java.lang.String s = input.readStringRequireUtf8();
 
               taskId_ = s;
+              break;
+            }
+            case 24: {
+
+              maxExecutionRecords_ = input.readUInt32();
               break;
             }
             default: {
@@ -58037,6 +64185,15 @@ public final class SlLink {
       }
     }
 
+    public static final int MAX_EXECUTION_RECORDS_FIELD_NUMBER = 3;
+    private int maxExecutionRecords_;
+    /**
+     * <code>uint32 max_execution_records = 3;</code>
+     */
+    public int getMaxExecutionRecords() {
+      return maxExecutionRecords_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -58057,6 +64214,9 @@ public final class SlLink {
       if (!getTaskIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, taskId_);
       }
+      if (maxExecutionRecords_ != 0) {
+        output.writeUInt32(3, maxExecutionRecords_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -58071,6 +64231,10 @@ public final class SlLink {
       }
       if (!getTaskIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, taskId_);
+      }
+      if (maxExecutionRecords_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(3, maxExecutionRecords_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -58092,6 +64256,8 @@ public final class SlLink {
           .equals(other.getMapId());
       result = result && getTaskId()
           .equals(other.getTaskId());
+      result = result && (getMaxExecutionRecords()
+          == other.getMaxExecutionRecords());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -58107,6 +64273,8 @@ public final class SlLink {
       hash = (53 * hash) + getMapId().hashCode();
       hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
       hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + MAX_EXECUTION_RECORDS_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxExecutionRecords();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -58244,6 +64412,8 @@ public final class SlLink {
 
         taskId_ = "";
 
+        maxExecutionRecords_ = 0;
+
         return this;
       }
 
@@ -58272,6 +64442,7 @@ public final class SlLink {
         sl_link.SlLink.TaskResultRequest result = new sl_link.SlLink.TaskResultRequest(this);
         result.mapId_ = mapId_;
         result.taskId_ = taskId_;
+        result.maxExecutionRecords_ = maxExecutionRecords_;
         onBuilt();
         return result;
       }
@@ -58327,6 +64498,9 @@ public final class SlLink {
         if (!other.getTaskId().isEmpty()) {
           taskId_ = other.taskId_;
           onChanged();
+        }
+        if (other.getMaxExecutionRecords() != 0) {
+          setMaxExecutionRecords(other.getMaxExecutionRecords());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -58491,6 +64665,32 @@ public final class SlLink {
   checkByteStringIsUtf8(value);
         
         taskId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int maxExecutionRecords_ ;
+      /**
+       * <code>uint32 max_execution_records = 3;</code>
+       */
+      public int getMaxExecutionRecords() {
+        return maxExecutionRecords_;
+      }
+      /**
+       * <code>uint32 max_execution_records = 3;</code>
+       */
+      public Builder setMaxExecutionRecords(int value) {
+        
+        maxExecutionRecords_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 max_execution_records = 3;</code>
+       */
+      public Builder clearMaxExecutionRecords() {
+        
+        maxExecutionRecords_ = 0;
         onChanged();
         return this;
       }
@@ -59561,6 +65761,1514 @@ public final class SlLink {
 
   }
 
+  public interface TaskExecutionRecordOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskExecutionRecord)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string execution_id = 1;</code>
+     */
+    java.lang.String getExecutionId();
+    /**
+     * <code>string execution_id = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getExecutionIdBytes();
+
+    /**
+     * <code>string map_id = 2;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>string task_id = 3;</code>
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>.sl_link.TaskState final_state = 4;</code>
+     */
+    int getFinalStateValue();
+    /**
+     * <code>.sl_link.TaskState final_state = 4;</code>
+     */
+    sl_link.SlLink.TaskState getFinalState();
+
+    /**
+     * <code>string stop_reason = 5;</code>
+     */
+    java.lang.String getStopReason();
+    /**
+     * <code>string stop_reason = 5;</code>
+     */
+    com.google.protobuf.ByteString
+        getStopReasonBytes();
+
+    /**
+     * <code>uint64 started_at = 6;</code>
+     */
+    long getStartedAt();
+
+    /**
+     * <code>uint64 finished_at = 7;</code>
+     */
+    long getFinishedAt();
+
+    /**
+     * <code>float planned_area_m2 = 8 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    float getPlannedAreaM2();
+
+    /**
+     * <code>float executed_area_m2 = 9 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    float getExecutedAreaM2();
+
+    /**
+     * <code>float progress = 10 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+     */
+    float getProgress();
+
+    /**
+     * <code>uint32 path_version = 11;</code>
+     */
+    int getPathVersion();
+
+    /**
+     * <code>bool all_completed = 12;</code>
+     */
+    boolean getAllCompleted();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskExecutionRecord}
+   */
+  public  static final class TaskExecutionRecord extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskExecutionRecord)
+      TaskExecutionRecordOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskExecutionRecord.newBuilder() to construct.
+    private TaskExecutionRecord(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskExecutionRecord() {
+      executionId_ = "";
+      mapId_ = "";
+      taskId_ = "";
+      finalState_ = 0;
+      stopReason_ = "";
+      startedAt_ = 0L;
+      finishedAt_ = 0L;
+      plannedAreaM2_ = 0F;
+      executedAreaM2_ = 0F;
+      progress_ = 0F;
+      pathVersion_ = 0;
+      allCompleted_ = false;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskExecutionRecord(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              executionId_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              taskId_ = s;
+              break;
+            }
+            case 32: {
+              int rawValue = input.readEnum();
+
+              finalState_ = rawValue;
+              break;
+            }
+            case 42: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              stopReason_ = s;
+              break;
+            }
+            case 48: {
+
+              startedAt_ = input.readUInt64();
+              break;
+            }
+            case 56: {
+
+              finishedAt_ = input.readUInt64();
+              break;
+            }
+            case 69: {
+
+              plannedAreaM2_ = input.readFloat();
+              break;
+            }
+            case 77: {
+
+              executedAreaM2_ = input.readFloat();
+              break;
+            }
+            case 85: {
+
+              progress_ = input.readFloat();
+              break;
+            }
+            case 88: {
+
+              pathVersion_ = input.readUInt32();
+              break;
+            }
+            case 96: {
+
+              allCompleted_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionRecord_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionRecord_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskExecutionRecord.class, sl_link.SlLink.TaskExecutionRecord.Builder.class);
+    }
+
+    public static final int EXECUTION_ID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object executionId_;
+    /**
+     * <code>string execution_id = 1;</code>
+     */
+    public java.lang.String getExecutionId() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        executionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string execution_id = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getExecutionIdBytes() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        executionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 2;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <code>string map_id = 2;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_id = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 3;
+    private volatile java.lang.Object taskId_;
+    /**
+     * <code>string task_id = 3;</code>
+     */
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int FINAL_STATE_FIELD_NUMBER = 4;
+    private int finalState_;
+    /**
+     * <code>.sl_link.TaskState final_state = 4;</code>
+     */
+    public int getFinalStateValue() {
+      return finalState_;
+    }
+    /**
+     * <code>.sl_link.TaskState final_state = 4;</code>
+     */
+    public sl_link.SlLink.TaskState getFinalState() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.TaskState result = sl_link.SlLink.TaskState.valueOf(finalState_);
+      return result == null ? sl_link.SlLink.TaskState.UNRECOGNIZED : result;
+    }
+
+    public static final int STOP_REASON_FIELD_NUMBER = 5;
+    private volatile java.lang.Object stopReason_;
+    /**
+     * <code>string stop_reason = 5;</code>
+     */
+    public java.lang.String getStopReason() {
+      java.lang.Object ref = stopReason_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        stopReason_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string stop_reason = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getStopReasonBytes() {
+      java.lang.Object ref = stopReason_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        stopReason_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int STARTED_AT_FIELD_NUMBER = 6;
+    private long startedAt_;
+    /**
+     * <code>uint64 started_at = 6;</code>
+     */
+    public long getStartedAt() {
+      return startedAt_;
+    }
+
+    public static final int FINISHED_AT_FIELD_NUMBER = 7;
+    private long finishedAt_;
+    /**
+     * <code>uint64 finished_at = 7;</code>
+     */
+    public long getFinishedAt() {
+      return finishedAt_;
+    }
+
+    public static final int PLANNED_AREA_M2_FIELD_NUMBER = 8;
+    private float plannedAreaM2_;
+    /**
+     * <code>float planned_area_m2 = 8 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    public float getPlannedAreaM2() {
+      return plannedAreaM2_;
+    }
+
+    public static final int EXECUTED_AREA_M2_FIELD_NUMBER = 9;
+    private float executedAreaM2_;
+    /**
+     * <code>float executed_area_m2 = 9 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    public float getExecutedAreaM2() {
+      return executedAreaM2_;
+    }
+
+    public static final int PROGRESS_FIELD_NUMBER = 10;
+    private float progress_;
+    /**
+     * <code>float progress = 10 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+     */
+    public float getProgress() {
+      return progress_;
+    }
+
+    public static final int PATH_VERSION_FIELD_NUMBER = 11;
+    private int pathVersion_;
+    /**
+     * <code>uint32 path_version = 11;</code>
+     */
+    public int getPathVersion() {
+      return pathVersion_;
+    }
+
+    public static final int ALL_COMPLETED_FIELD_NUMBER = 12;
+    private boolean allCompleted_;
+    /**
+     * <code>bool all_completed = 12;</code>
+     */
+    public boolean getAllCompleted() {
+      return allCompleted_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getExecutionIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, executionId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, mapId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, taskId_);
+      }
+      if (finalState_ != sl_link.SlLink.TaskState.TASK_STATE_IDLE.getNumber()) {
+        output.writeEnum(4, finalState_);
+      }
+      if (!getStopReasonBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, stopReason_);
+      }
+      if (startedAt_ != 0L) {
+        output.writeUInt64(6, startedAt_);
+      }
+      if (finishedAt_ != 0L) {
+        output.writeUInt64(7, finishedAt_);
+      }
+      if (plannedAreaM2_ != 0F) {
+        output.writeFloat(8, plannedAreaM2_);
+      }
+      if (executedAreaM2_ != 0F) {
+        output.writeFloat(9, executedAreaM2_);
+      }
+      if (progress_ != 0F) {
+        output.writeFloat(10, progress_);
+      }
+      if (pathVersion_ != 0) {
+        output.writeUInt32(11, pathVersion_);
+      }
+      if (allCompleted_ != false) {
+        output.writeBool(12, allCompleted_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getExecutionIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, executionId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, mapId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, taskId_);
+      }
+      if (finalState_ != sl_link.SlLink.TaskState.TASK_STATE_IDLE.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(4, finalState_);
+      }
+      if (!getStopReasonBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, stopReason_);
+      }
+      if (startedAt_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(6, startedAt_);
+      }
+      if (finishedAt_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(7, finishedAt_);
+      }
+      if (plannedAreaM2_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(8, plannedAreaM2_);
+      }
+      if (executedAreaM2_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(9, executedAreaM2_);
+      }
+      if (progress_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(10, progress_);
+      }
+      if (pathVersion_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(11, pathVersion_);
+      }
+      if (allCompleted_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(12, allCompleted_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskExecutionRecord)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskExecutionRecord other = (sl_link.SlLink.TaskExecutionRecord) obj;
+
+      boolean result = true;
+      result = result && getExecutionId()
+          .equals(other.getExecutionId());
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && getTaskId()
+          .equals(other.getTaskId());
+      result = result && finalState_ == other.finalState_;
+      result = result && getStopReason()
+          .equals(other.getStopReason());
+      result = result && (getStartedAt()
+          == other.getStartedAt());
+      result = result && (getFinishedAt()
+          == other.getFinishedAt());
+      result = result && (
+          java.lang.Float.floatToIntBits(getPlannedAreaM2())
+          == java.lang.Float.floatToIntBits(
+              other.getPlannedAreaM2()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getExecutedAreaM2())
+          == java.lang.Float.floatToIntBits(
+              other.getExecutedAreaM2()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getProgress())
+          == java.lang.Float.floatToIntBits(
+              other.getProgress()));
+      result = result && (getPathVersion()
+          == other.getPathVersion());
+      result = result && (getAllCompleted()
+          == other.getAllCompleted());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + EXECUTION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getExecutionId().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + FINAL_STATE_FIELD_NUMBER;
+      hash = (53 * hash) + finalState_;
+      hash = (37 * hash) + STOP_REASON_FIELD_NUMBER;
+      hash = (53 * hash) + getStopReason().hashCode();
+      hash = (37 * hash) + STARTED_AT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartedAt());
+      hash = (37 * hash) + FINISHED_AT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getFinishedAt());
+      hash = (37 * hash) + PLANNED_AREA_M2_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getPlannedAreaM2());
+      hash = (37 * hash) + EXECUTED_AREA_M2_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getExecutedAreaM2());
+      hash = (37 * hash) + PROGRESS_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getProgress());
+      hash = (37 * hash) + PATH_VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getPathVersion();
+      hash = (37 * hash) + ALL_COMPLETED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getAllCompleted());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionRecord parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskExecutionRecord prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskExecutionRecord}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskExecutionRecord)
+        sl_link.SlLink.TaskExecutionRecordOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionRecord_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionRecord_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskExecutionRecord.class, sl_link.SlLink.TaskExecutionRecord.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskExecutionRecord.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        executionId_ = "";
+
+        mapId_ = "";
+
+        taskId_ = "";
+
+        finalState_ = 0;
+
+        stopReason_ = "";
+
+        startedAt_ = 0L;
+
+        finishedAt_ = 0L;
+
+        plannedAreaM2_ = 0F;
+
+        executedAreaM2_ = 0F;
+
+        progress_ = 0F;
+
+        pathVersion_ = 0;
+
+        allCompleted_ = false;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionRecord_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionRecord getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskExecutionRecord.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionRecord build() {
+        sl_link.SlLink.TaskExecutionRecord result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionRecord buildPartial() {
+        sl_link.SlLink.TaskExecutionRecord result = new sl_link.SlLink.TaskExecutionRecord(this);
+        result.executionId_ = executionId_;
+        result.mapId_ = mapId_;
+        result.taskId_ = taskId_;
+        result.finalState_ = finalState_;
+        result.stopReason_ = stopReason_;
+        result.startedAt_ = startedAt_;
+        result.finishedAt_ = finishedAt_;
+        result.plannedAreaM2_ = plannedAreaM2_;
+        result.executedAreaM2_ = executedAreaM2_;
+        result.progress_ = progress_;
+        result.pathVersion_ = pathVersion_;
+        result.allCompleted_ = allCompleted_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskExecutionRecord) {
+          return mergeFrom((sl_link.SlLink.TaskExecutionRecord)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskExecutionRecord other) {
+        if (other == sl_link.SlLink.TaskExecutionRecord.getDefaultInstance()) return this;
+        if (!other.getExecutionId().isEmpty()) {
+          executionId_ = other.executionId_;
+          onChanged();
+        }
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          onChanged();
+        }
+        if (other.finalState_ != 0) {
+          setFinalStateValue(other.getFinalStateValue());
+        }
+        if (!other.getStopReason().isEmpty()) {
+          stopReason_ = other.stopReason_;
+          onChanged();
+        }
+        if (other.getStartedAt() != 0L) {
+          setStartedAt(other.getStartedAt());
+        }
+        if (other.getFinishedAt() != 0L) {
+          setFinishedAt(other.getFinishedAt());
+        }
+        if (other.getPlannedAreaM2() != 0F) {
+          setPlannedAreaM2(other.getPlannedAreaM2());
+        }
+        if (other.getExecutedAreaM2() != 0F) {
+          setExecutedAreaM2(other.getExecutedAreaM2());
+        }
+        if (other.getProgress() != 0F) {
+          setProgress(other.getProgress());
+        }
+        if (other.getPathVersion() != 0) {
+          setPathVersion(other.getPathVersion());
+        }
+        if (other.getAllCompleted() != false) {
+          setAllCompleted(other.getAllCompleted());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskExecutionRecord parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskExecutionRecord) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object executionId_ = "";
+      /**
+       * <code>string execution_id = 1;</code>
+       */
+      public java.lang.String getExecutionId() {
+        java.lang.Object ref = executionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          executionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getExecutionIdBytes() {
+        java.lang.Object ref = executionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          executionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder setExecutionId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder clearExecutionId() {
+        
+        executionId_ = getDefaultInstance().getExecutionId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder setExecutionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <code>string map_id = 2;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 3;</code>
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       */
+      public Builder clearTaskId() {
+        
+        taskId_ = getDefaultInstance().getTaskId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int finalState_ = 0;
+      /**
+       * <code>.sl_link.TaskState final_state = 4;</code>
+       */
+      public int getFinalStateValue() {
+        return finalState_;
+      }
+      /**
+       * <code>.sl_link.TaskState final_state = 4;</code>
+       */
+      public Builder setFinalStateValue(int value) {
+        finalState_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.TaskState final_state = 4;</code>
+       */
+      public sl_link.SlLink.TaskState getFinalState() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.TaskState result = sl_link.SlLink.TaskState.valueOf(finalState_);
+        return result == null ? sl_link.SlLink.TaskState.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.TaskState final_state = 4;</code>
+       */
+      public Builder setFinalState(sl_link.SlLink.TaskState value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        finalState_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.TaskState final_state = 4;</code>
+       */
+      public Builder clearFinalState() {
+        
+        finalState_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object stopReason_ = "";
+      /**
+       * <code>string stop_reason = 5;</code>
+       */
+      public java.lang.String getStopReason() {
+        java.lang.Object ref = stopReason_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          stopReason_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string stop_reason = 5;</code>
+       */
+      public com.google.protobuf.ByteString
+          getStopReasonBytes() {
+        java.lang.Object ref = stopReason_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          stopReason_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string stop_reason = 5;</code>
+       */
+      public Builder setStopReason(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        stopReason_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string stop_reason = 5;</code>
+       */
+      public Builder clearStopReason() {
+        
+        stopReason_ = getDefaultInstance().getStopReason();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string stop_reason = 5;</code>
+       */
+      public Builder setStopReasonBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        stopReason_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long startedAt_ ;
+      /**
+       * <code>uint64 started_at = 6;</code>
+       */
+      public long getStartedAt() {
+        return startedAt_;
+      }
+      /**
+       * <code>uint64 started_at = 6;</code>
+       */
+      public Builder setStartedAt(long value) {
+        
+        startedAt_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 started_at = 6;</code>
+       */
+      public Builder clearStartedAt() {
+        
+        startedAt_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long finishedAt_ ;
+      /**
+       * <code>uint64 finished_at = 7;</code>
+       */
+      public long getFinishedAt() {
+        return finishedAt_;
+      }
+      /**
+       * <code>uint64 finished_at = 7;</code>
+       */
+      public Builder setFinishedAt(long value) {
+        
+        finishedAt_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 finished_at = 7;</code>
+       */
+      public Builder clearFinishedAt() {
+        
+        finishedAt_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private float plannedAreaM2_ ;
+      /**
+       * <code>float planned_area_m2 = 8 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public float getPlannedAreaM2() {
+        return plannedAreaM2_;
+      }
+      /**
+       * <code>float planned_area_m2 = 8 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setPlannedAreaM2(float value) {
+        
+        plannedAreaM2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float planned_area_m2 = 8 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearPlannedAreaM2() {
+        
+        plannedAreaM2_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float executedAreaM2_ ;
+      /**
+       * <code>float executed_area_m2 = 9 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public float getExecutedAreaM2() {
+        return executedAreaM2_;
+      }
+      /**
+       * <code>float executed_area_m2 = 9 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setExecutedAreaM2(float value) {
+        
+        executedAreaM2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float executed_area_m2 = 9 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearExecutedAreaM2() {
+        
+        executedAreaM2_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float progress_ ;
+      /**
+       * <code>float progress = 10 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+       */
+      public float getProgress() {
+        return progress_;
+      }
+      /**
+       * <code>float progress = 10 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setProgress(float value) {
+        
+        progress_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float progress = 10 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearProgress() {
+        
+        progress_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private int pathVersion_ ;
+      /**
+       * <code>uint32 path_version = 11;</code>
+       */
+      public int getPathVersion() {
+        return pathVersion_;
+      }
+      /**
+       * <code>uint32 path_version = 11;</code>
+       */
+      public Builder setPathVersion(int value) {
+        
+        pathVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 path_version = 11;</code>
+       */
+      public Builder clearPathVersion() {
+        
+        pathVersion_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private boolean allCompleted_ ;
+      /**
+       * <code>bool all_completed = 12;</code>
+       */
+      public boolean getAllCompleted() {
+        return allCompleted_;
+      }
+      /**
+       * <code>bool all_completed = 12;</code>
+       */
+      public Builder setAllCompleted(boolean value) {
+        
+        allCompleted_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool all_completed = 12;</code>
+       */
+      public Builder clearAllCompleted() {
+        
+        allCompleted_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskExecutionRecord)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskExecutionRecord)
+    private static final sl_link.SlLink.TaskExecutionRecord DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskExecutionRecord();
+    }
+
+    public static sl_link.SlLink.TaskExecutionRecord getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskExecutionRecord>
+        PARSER = new com.google.protobuf.AbstractParser<TaskExecutionRecord>() {
+      @java.lang.Override
+      public TaskExecutionRecord parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskExecutionRecord(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskExecutionRecord> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskExecutionRecord> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskExecutionRecord getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface TaskResultResponseOrBuilder extends
       // @@protoc_insertion_point(interface_extends:sl_link.TaskResultResponse)
       com.google.protobuf.MessageOrBuilder {
@@ -59737,6 +67445,60 @@ public final class SlLink {
      * <code>float rotation_alignment_delta_deg = 19;</code>
      */
     float getRotationAlignmentDeltaDeg();
+
+    /**
+     * <code>string execution_id = 20;</code>
+     */
+    java.lang.String getExecutionId();
+    /**
+     * <code>string execution_id = 20;</code>
+     */
+    com.google.protobuf.ByteString
+        getExecutionIdBytes();
+
+    /**
+     * <code>uint64 started_at = 21;</code>
+     */
+    long getStartedAt();
+
+    /**
+     * <code>float planned_area_m2 = 22 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    float getPlannedAreaM2();
+
+    /**
+     * <code>float executed_area_m2 = 23 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    float getExecutedAreaM2();
+
+    /**
+     * <code>float execution_progress = 24 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+     */
+    float getExecutionProgress();
+
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    java.util.List<sl_link.SlLink.TaskExecutionRecord> 
+        getExecutionRecordsList();
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    sl_link.SlLink.TaskExecutionRecord getExecutionRecords(int index);
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    int getExecutionRecordsCount();
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    java.util.List<? extends sl_link.SlLink.TaskExecutionRecordOrBuilder> 
+        getExecutionRecordsOrBuilderList();
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    sl_link.SlLink.TaskExecutionRecordOrBuilder getExecutionRecordsOrBuilder(
+        int index);
   }
   /**
    * Protobuf type {@code sl_link.TaskResultResponse}
@@ -59769,6 +67531,12 @@ public final class SlLink {
       alignmentYawDeg_ = 0F;
       appRotationDeg_ = 0F;
       rotationAlignmentDeltaDeg_ = 0F;
+      executionId_ = "";
+      startedAt_ = 0L;
+      plannedAreaM2_ = 0F;
+      executedAreaM2_ = 0F;
+      executionProgress_ = 0F;
+      executionRecords_ = java.util.Collections.emptyList();
     }
 
     @java.lang.Override
@@ -59913,6 +67681,41 @@ public final class SlLink {
               rotationAlignmentDeltaDeg_ = input.readFloat();
               break;
             }
+            case 162: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              executionId_ = s;
+              break;
+            }
+            case 168: {
+
+              startedAt_ = input.readUInt64();
+              break;
+            }
+            case 181: {
+
+              plannedAreaM2_ = input.readFloat();
+              break;
+            }
+            case 189: {
+
+              executedAreaM2_ = input.readFloat();
+              break;
+            }
+            case 197: {
+
+              executionProgress_ = input.readFloat();
+              break;
+            }
+            case 202: {
+              if (!((mutable_bitField0_ & 0x01000000) == 0x01000000)) {
+                executionRecords_ = new java.util.ArrayList<sl_link.SlLink.TaskExecutionRecord>();
+                mutable_bitField0_ |= 0x01000000;
+              }
+              executionRecords_.add(
+                  input.readMessage(sl_link.SlLink.TaskExecutionRecord.parser(), extensionRegistry));
+              break;
+            }
             default: {
               if (!parseUnknownFieldProto3(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -59933,6 +67736,9 @@ public final class SlLink {
         }
         if (((mutable_bitField0_ & 0x00004000) == 0x00004000)) {
           regionResults_ = java.util.Collections.unmodifiableList(regionResults_);
+        }
+        if (((mutable_bitField0_ & 0x01000000) == 0x01000000)) {
+          executionRecords_ = java.util.Collections.unmodifiableList(executionRecords_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -60326,6 +68132,111 @@ public final class SlLink {
       return rotationAlignmentDeltaDeg_;
     }
 
+    public static final int EXECUTION_ID_FIELD_NUMBER = 20;
+    private volatile java.lang.Object executionId_;
+    /**
+     * <code>string execution_id = 20;</code>
+     */
+    public java.lang.String getExecutionId() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        executionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string execution_id = 20;</code>
+     */
+    public com.google.protobuf.ByteString
+        getExecutionIdBytes() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        executionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int STARTED_AT_FIELD_NUMBER = 21;
+    private long startedAt_;
+    /**
+     * <code>uint64 started_at = 21;</code>
+     */
+    public long getStartedAt() {
+      return startedAt_;
+    }
+
+    public static final int PLANNED_AREA_M2_FIELD_NUMBER = 22;
+    private float plannedAreaM2_;
+    /**
+     * <code>float planned_area_m2 = 22 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    public float getPlannedAreaM2() {
+      return plannedAreaM2_;
+    }
+
+    public static final int EXECUTED_AREA_M2_FIELD_NUMBER = 23;
+    private float executedAreaM2_;
+    /**
+     * <code>float executed_area_m2 = 23 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+     */
+    public float getExecutedAreaM2() {
+      return executedAreaM2_;
+    }
+
+    public static final int EXECUTION_PROGRESS_FIELD_NUMBER = 24;
+    private float executionProgress_;
+    /**
+     * <code>float execution_progress = 24 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+     */
+    public float getExecutionProgress() {
+      return executionProgress_;
+    }
+
+    public static final int EXECUTION_RECORDS_FIELD_NUMBER = 25;
+    private java.util.List<sl_link.SlLink.TaskExecutionRecord> executionRecords_;
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    public java.util.List<sl_link.SlLink.TaskExecutionRecord> getExecutionRecordsList() {
+      return executionRecords_;
+    }
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.TaskExecutionRecordOrBuilder> 
+        getExecutionRecordsOrBuilderList() {
+      return executionRecords_;
+    }
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    public int getExecutionRecordsCount() {
+      return executionRecords_.size();
+    }
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    public sl_link.SlLink.TaskExecutionRecord getExecutionRecords(int index) {
+      return executionRecords_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+     */
+    public sl_link.SlLink.TaskExecutionRecordOrBuilder getExecutionRecordsOrBuilder(
+        int index) {
+      return executionRecords_.get(index);
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -60396,6 +68307,24 @@ public final class SlLink {
       }
       if (rotationAlignmentDeltaDeg_ != 0F) {
         output.writeFloat(19, rotationAlignmentDeltaDeg_);
+      }
+      if (!getExecutionIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 20, executionId_);
+      }
+      if (startedAt_ != 0L) {
+        output.writeUInt64(21, startedAt_);
+      }
+      if (plannedAreaM2_ != 0F) {
+        output.writeFloat(22, plannedAreaM2_);
+      }
+      if (executedAreaM2_ != 0F) {
+        output.writeFloat(23, executedAreaM2_);
+      }
+      if (executionProgress_ != 0F) {
+        output.writeFloat(24, executionProgress_);
+      }
+      for (int i = 0; i < executionRecords_.size(); i++) {
+        output.writeMessage(25, executionRecords_.get(i));
       }
       unknownFields.writeTo(output);
     }
@@ -60481,6 +68410,29 @@ public final class SlLink {
         size += com.google.protobuf.CodedOutputStream
           .computeFloatSize(19, rotationAlignmentDeltaDeg_);
       }
+      if (!getExecutionIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(20, executionId_);
+      }
+      if (startedAt_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(21, startedAt_);
+      }
+      if (plannedAreaM2_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(22, plannedAreaM2_);
+      }
+      if (executedAreaM2_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(23, executedAreaM2_);
+      }
+      if (executionProgress_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(24, executionProgress_);
+      }
+      for (int i = 0; i < executionRecords_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(25, executionRecords_.get(i));
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -60542,6 +68494,24 @@ public final class SlLink {
           java.lang.Float.floatToIntBits(getRotationAlignmentDeltaDeg())
           == java.lang.Float.floatToIntBits(
               other.getRotationAlignmentDeltaDeg()));
+      result = result && getExecutionId()
+          .equals(other.getExecutionId());
+      result = result && (getStartedAt()
+          == other.getStartedAt());
+      result = result && (
+          java.lang.Float.floatToIntBits(getPlannedAreaM2())
+          == java.lang.Float.floatToIntBits(
+              other.getPlannedAreaM2()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getExecutedAreaM2())
+          == java.lang.Float.floatToIntBits(
+              other.getExecutedAreaM2()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getExecutionProgress())
+          == java.lang.Float.floatToIntBits(
+              other.getExecutionProgress()));
+      result = result && getExecutionRecordsList()
+          .equals(other.getExecutionRecordsList());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -60602,6 +68572,24 @@ public final class SlLink {
       hash = (37 * hash) + ROTATION_ALIGNMENT_DELTA_DEG_FIELD_NUMBER;
       hash = (53 * hash) + java.lang.Float.floatToIntBits(
           getRotationAlignmentDeltaDeg());
+      hash = (37 * hash) + EXECUTION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getExecutionId().hashCode();
+      hash = (37 * hash) + STARTED_AT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartedAt());
+      hash = (37 * hash) + PLANNED_AREA_M2_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getPlannedAreaM2());
+      hash = (37 * hash) + EXECUTED_AREA_M2_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getExecutedAreaM2());
+      hash = (37 * hash) + EXECUTION_PROGRESS_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getExecutionProgress());
+      if (getExecutionRecordsCount() > 0) {
+        hash = (37 * hash) + EXECUTION_RECORDS_FIELD_NUMBER;
+        hash = (53 * hash) + getExecutionRecordsList().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -60731,6 +68719,7 @@ public final class SlLink {
         if (com.google.protobuf.GeneratedMessageV3
                 .alwaysUseFieldBuilders) {
           getRegionResultsFieldBuilder();
+          getExecutionRecordsFieldBuilder();
         }
       }
       @java.lang.Override
@@ -60782,6 +68771,22 @@ public final class SlLink {
 
         rotationAlignmentDeltaDeg_ = 0F;
 
+        executionId_ = "";
+
+        startedAt_ = 0L;
+
+        plannedAreaM2_ = 0F;
+
+        executedAreaM2_ = 0F;
+
+        executionProgress_ = 0F;
+
+        if (executionRecordsBuilder_ == null) {
+          executionRecords_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x01000000);
+        } else {
+          executionRecordsBuilder_.clear();
+        }
         return this;
       }
 
@@ -60845,6 +68850,20 @@ public final class SlLink {
         result.alignmentYawDeg_ = alignmentYawDeg_;
         result.appRotationDeg_ = appRotationDeg_;
         result.rotationAlignmentDeltaDeg_ = rotationAlignmentDeltaDeg_;
+        result.executionId_ = executionId_;
+        result.startedAt_ = startedAt_;
+        result.plannedAreaM2_ = plannedAreaM2_;
+        result.executedAreaM2_ = executedAreaM2_;
+        result.executionProgress_ = executionProgress_;
+        if (executionRecordsBuilder_ == null) {
+          if (((bitField0_ & 0x01000000) == 0x01000000)) {
+            executionRecords_ = java.util.Collections.unmodifiableList(executionRecords_);
+            bitField0_ = (bitField0_ & ~0x01000000);
+          }
+          result.executionRecords_ = executionRecords_;
+        } else {
+          result.executionRecords_ = executionRecordsBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -60985,6 +69004,48 @@ public final class SlLink {
         }
         if (other.getRotationAlignmentDeltaDeg() != 0F) {
           setRotationAlignmentDeltaDeg(other.getRotationAlignmentDeltaDeg());
+        }
+        if (!other.getExecutionId().isEmpty()) {
+          executionId_ = other.executionId_;
+          onChanged();
+        }
+        if (other.getStartedAt() != 0L) {
+          setStartedAt(other.getStartedAt());
+        }
+        if (other.getPlannedAreaM2() != 0F) {
+          setPlannedAreaM2(other.getPlannedAreaM2());
+        }
+        if (other.getExecutedAreaM2() != 0F) {
+          setExecutedAreaM2(other.getExecutedAreaM2());
+        }
+        if (other.getExecutionProgress() != 0F) {
+          setExecutionProgress(other.getExecutionProgress());
+        }
+        if (executionRecordsBuilder_ == null) {
+          if (!other.executionRecords_.isEmpty()) {
+            if (executionRecords_.isEmpty()) {
+              executionRecords_ = other.executionRecords_;
+              bitField0_ = (bitField0_ & ~0x01000000);
+            } else {
+              ensureExecutionRecordsIsMutable();
+              executionRecords_.addAll(other.executionRecords_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.executionRecords_.isEmpty()) {
+            if (executionRecordsBuilder_.isEmpty()) {
+              executionRecordsBuilder_.dispose();
+              executionRecordsBuilder_ = null;
+              executionRecords_ = other.executionRecords_;
+              bitField0_ = (bitField0_ & ~0x01000000);
+              executionRecordsBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getExecutionRecordsFieldBuilder() : null;
+            } else {
+              executionRecordsBuilder_.addAllMessages(other.executionRecords_);
+            }
+          }
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -62150,6 +70211,419 @@ public final class SlLink {
         onChanged();
         return this;
       }
+
+      private java.lang.Object executionId_ = "";
+      /**
+       * <code>string execution_id = 20;</code>
+       */
+      public java.lang.String getExecutionId() {
+        java.lang.Object ref = executionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          executionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 20;</code>
+       */
+      public com.google.protobuf.ByteString
+          getExecutionIdBytes() {
+        java.lang.Object ref = executionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          executionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 20;</code>
+       */
+      public Builder setExecutionId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 20;</code>
+       */
+      public Builder clearExecutionId() {
+        
+        executionId_ = getDefaultInstance().getExecutionId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 20;</code>
+       */
+      public Builder setExecutionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long startedAt_ ;
+      /**
+       * <code>uint64 started_at = 21;</code>
+       */
+      public long getStartedAt() {
+        return startedAt_;
+      }
+      /**
+       * <code>uint64 started_at = 21;</code>
+       */
+      public Builder setStartedAt(long value) {
+        
+        startedAt_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 started_at = 21;</code>
+       */
+      public Builder clearStartedAt() {
+        
+        startedAt_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private float plannedAreaM2_ ;
+      /**
+       * <code>float planned_area_m2 = 22 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public float getPlannedAreaM2() {
+        return plannedAreaM2_;
+      }
+      /**
+       * <code>float planned_area_m2 = 22 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setPlannedAreaM2(float value) {
+        
+        plannedAreaM2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float planned_area_m2 = 22 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearPlannedAreaM2() {
+        
+        plannedAreaM2_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float executedAreaM2_ ;
+      /**
+       * <code>float executed_area_m2 = 23 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public float getExecutedAreaM2() {
+        return executedAreaM2_;
+      }
+      /**
+       * <code>float executed_area_m2 = 23 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setExecutedAreaM2(float value) {
+        
+        executedAreaM2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float executed_area_m2 = 23 [(.sl_link.unit) = "m2", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearExecutedAreaM2() {
+        
+        executedAreaM2_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float executionProgress_ ;
+      /**
+       * <code>float execution_progress = 24 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+       */
+      public float getExecutionProgress() {
+        return executionProgress_;
+      }
+      /**
+       * <code>float execution_progress = 24 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+       */
+      public Builder setExecutionProgress(float value) {
+        
+        executionProgress_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float execution_progress = 24 [(.sl_link.unit) = "ratio", (.sl_link.scale) = 1];</code>
+       */
+      public Builder clearExecutionProgress() {
+        
+        executionProgress_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private java.util.List<sl_link.SlLink.TaskExecutionRecord> executionRecords_ =
+        java.util.Collections.emptyList();
+      private void ensureExecutionRecordsIsMutable() {
+        if (!((bitField0_ & 0x01000000) == 0x01000000)) {
+          executionRecords_ = new java.util.ArrayList<sl_link.SlLink.TaskExecutionRecord>(executionRecords_);
+          bitField0_ |= 0x01000000;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.TaskExecutionRecord, sl_link.SlLink.TaskExecutionRecord.Builder, sl_link.SlLink.TaskExecutionRecordOrBuilder> executionRecordsBuilder_;
+
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public java.util.List<sl_link.SlLink.TaskExecutionRecord> getExecutionRecordsList() {
+        if (executionRecordsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(executionRecords_);
+        } else {
+          return executionRecordsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public int getExecutionRecordsCount() {
+        if (executionRecordsBuilder_ == null) {
+          return executionRecords_.size();
+        } else {
+          return executionRecordsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public sl_link.SlLink.TaskExecutionRecord getExecutionRecords(int index) {
+        if (executionRecordsBuilder_ == null) {
+          return executionRecords_.get(index);
+        } else {
+          return executionRecordsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder setExecutionRecords(
+          int index, sl_link.SlLink.TaskExecutionRecord value) {
+        if (executionRecordsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.set(index, value);
+          onChanged();
+        } else {
+          executionRecordsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder setExecutionRecords(
+          int index, sl_link.SlLink.TaskExecutionRecord.Builder builderForValue) {
+        if (executionRecordsBuilder_ == null) {
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          executionRecordsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder addExecutionRecords(sl_link.SlLink.TaskExecutionRecord value) {
+        if (executionRecordsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.add(value);
+          onChanged();
+        } else {
+          executionRecordsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder addExecutionRecords(
+          int index, sl_link.SlLink.TaskExecutionRecord value) {
+        if (executionRecordsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.add(index, value);
+          onChanged();
+        } else {
+          executionRecordsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder addExecutionRecords(
+          sl_link.SlLink.TaskExecutionRecord.Builder builderForValue) {
+        if (executionRecordsBuilder_ == null) {
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.add(builderForValue.build());
+          onChanged();
+        } else {
+          executionRecordsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder addExecutionRecords(
+          int index, sl_link.SlLink.TaskExecutionRecord.Builder builderForValue) {
+        if (executionRecordsBuilder_ == null) {
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          executionRecordsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder addAllExecutionRecords(
+          java.lang.Iterable<? extends sl_link.SlLink.TaskExecutionRecord> values) {
+        if (executionRecordsBuilder_ == null) {
+          ensureExecutionRecordsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, executionRecords_);
+          onChanged();
+        } else {
+          executionRecordsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder clearExecutionRecords() {
+        if (executionRecordsBuilder_ == null) {
+          executionRecords_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x01000000);
+          onChanged();
+        } else {
+          executionRecordsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public Builder removeExecutionRecords(int index) {
+        if (executionRecordsBuilder_ == null) {
+          ensureExecutionRecordsIsMutable();
+          executionRecords_.remove(index);
+          onChanged();
+        } else {
+          executionRecordsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public sl_link.SlLink.TaskExecutionRecord.Builder getExecutionRecordsBuilder(
+          int index) {
+        return getExecutionRecordsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public sl_link.SlLink.TaskExecutionRecordOrBuilder getExecutionRecordsOrBuilder(
+          int index) {
+        if (executionRecordsBuilder_ == null) {
+          return executionRecords_.get(index);  } else {
+          return executionRecordsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public java.util.List<? extends sl_link.SlLink.TaskExecutionRecordOrBuilder> 
+           getExecutionRecordsOrBuilderList() {
+        if (executionRecordsBuilder_ != null) {
+          return executionRecordsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(executionRecords_);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public sl_link.SlLink.TaskExecutionRecord.Builder addExecutionRecordsBuilder() {
+        return getExecutionRecordsFieldBuilder().addBuilder(
+            sl_link.SlLink.TaskExecutionRecord.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public sl_link.SlLink.TaskExecutionRecord.Builder addExecutionRecordsBuilder(
+          int index) {
+        return getExecutionRecordsFieldBuilder().addBuilder(
+            index, sl_link.SlLink.TaskExecutionRecord.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
+       */
+      public java.util.List<sl_link.SlLink.TaskExecutionRecord.Builder> 
+           getExecutionRecordsBuilderList() {
+        return getExecutionRecordsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.TaskExecutionRecord, sl_link.SlLink.TaskExecutionRecord.Builder, sl_link.SlLink.TaskExecutionRecordOrBuilder> 
+          getExecutionRecordsFieldBuilder() {
+        if (executionRecordsBuilder_ == null) {
+          executionRecordsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              sl_link.SlLink.TaskExecutionRecord, sl_link.SlLink.TaskExecutionRecord.Builder, sl_link.SlLink.TaskExecutionRecordOrBuilder>(
+                  executionRecords_,
+                  ((bitField0_ & 0x01000000) == 0x01000000),
+                  getParentForChildren(),
+                  isClean());
+          executionRecords_ = null;
+        }
+        return executionRecordsBuilder_;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -62198,6 +70672,7955 @@ public final class SlLink {
 
     @java.lang.Override
     public sl_link.SlLink.TaskResultResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TaskExecutionHistoryRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskExecutionHistoryRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string map_id = 1;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <pre>
+     * Inclusive execution start-time range, epoch seconds. Zero means unbounded.
+     * </pre>
+     *
+     * <code>uint64 start_time = 3;</code>
+     */
+    long getStartTime();
+
+    /**
+     * <code>uint64 end_time = 4;</code>
+     */
+    long getEndTime();
+
+    /**
+     * <code>uint32 max_chunk_size = 5;</code>
+     */
+    int getMaxChunkSize();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskExecutionHistoryRequest}
+   */
+  public  static final class TaskExecutionHistoryRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskExecutionHistoryRequest)
+      TaskExecutionHistoryRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskExecutionHistoryRequest.newBuilder() to construct.
+    private TaskExecutionHistoryRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskExecutionHistoryRequest() {
+      mapId_ = "";
+      taskId_ = "";
+      startTime_ = 0L;
+      endTime_ = 0L;
+      maxChunkSize_ = 0;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskExecutionHistoryRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              taskId_ = s;
+              break;
+            }
+            case 24: {
+
+              startTime_ = input.readUInt64();
+              break;
+            }
+            case 32: {
+
+              endTime_ = input.readUInt64();
+              break;
+            }
+            case 40: {
+
+              maxChunkSize_ = input.readUInt32();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskExecutionHistoryRequest.class, sl_link.SlLink.TaskExecutionHistoryRequest.Builder.class);
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <code>string map_id = 1;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_id = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 2;
+    private volatile java.lang.Object taskId_;
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int START_TIME_FIELD_NUMBER = 3;
+    private long startTime_;
+    /**
+     * <pre>
+     * Inclusive execution start-time range, epoch seconds. Zero means unbounded.
+     * </pre>
+     *
+     * <code>uint64 start_time = 3;</code>
+     */
+    public long getStartTime() {
+      return startTime_;
+    }
+
+    public static final int END_TIME_FIELD_NUMBER = 4;
+    private long endTime_;
+    /**
+     * <code>uint64 end_time = 4;</code>
+     */
+    public long getEndTime() {
+      return endTime_;
+    }
+
+    public static final int MAX_CHUNK_SIZE_FIELD_NUMBER = 5;
+    private int maxChunkSize_;
+    /**
+     * <code>uint32 max_chunk_size = 5;</code>
+     */
+    public int getMaxChunkSize() {
+      return maxChunkSize_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, mapId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, taskId_);
+      }
+      if (startTime_ != 0L) {
+        output.writeUInt64(3, startTime_);
+      }
+      if (endTime_ != 0L) {
+        output.writeUInt64(4, endTime_);
+      }
+      if (maxChunkSize_ != 0) {
+        output.writeUInt32(5, maxChunkSize_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, mapId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, taskId_);
+      }
+      if (startTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(3, startTime_);
+      }
+      if (endTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(4, endTime_);
+      }
+      if (maxChunkSize_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(5, maxChunkSize_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskExecutionHistoryRequest)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskExecutionHistoryRequest other = (sl_link.SlLink.TaskExecutionHistoryRequest) obj;
+
+      boolean result = true;
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && getTaskId()
+          .equals(other.getTaskId());
+      result = result && (getStartTime()
+          == other.getStartTime());
+      result = result && (getEndTime()
+          == other.getEndTime());
+      result = result && (getMaxChunkSize()
+          == other.getMaxChunkSize());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + START_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartTime());
+      hash = (37 * hash) + END_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getEndTime());
+      hash = (37 * hash) + MAX_CHUNK_SIZE_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxChunkSize();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskExecutionHistoryRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskExecutionHistoryRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskExecutionHistoryRequest)
+        sl_link.SlLink.TaskExecutionHistoryRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskExecutionHistoryRequest.class, sl_link.SlLink.TaskExecutionHistoryRequest.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskExecutionHistoryRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        mapId_ = "";
+
+        taskId_ = "";
+
+        startTime_ = 0L;
+
+        endTime_ = 0L;
+
+        maxChunkSize_ = 0;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionHistoryRequest getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskExecutionHistoryRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionHistoryRequest build() {
+        sl_link.SlLink.TaskExecutionHistoryRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionHistoryRequest buildPartial() {
+        sl_link.SlLink.TaskExecutionHistoryRequest result = new sl_link.SlLink.TaskExecutionHistoryRequest(this);
+        result.mapId_ = mapId_;
+        result.taskId_ = taskId_;
+        result.startTime_ = startTime_;
+        result.endTime_ = endTime_;
+        result.maxChunkSize_ = maxChunkSize_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskExecutionHistoryRequest) {
+          return mergeFrom((sl_link.SlLink.TaskExecutionHistoryRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskExecutionHistoryRequest other) {
+        if (other == sl_link.SlLink.TaskExecutionHistoryRequest.getDefaultInstance()) return this;
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          onChanged();
+        }
+        if (other.getStartTime() != 0L) {
+          setStartTime(other.getStartTime());
+        }
+        if (other.getEndTime() != 0L) {
+          setEndTime(other.getEndTime());
+        }
+        if (other.getMaxChunkSize() != 0) {
+          setMaxChunkSize(other.getMaxChunkSize());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskExecutionHistoryRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskExecutionHistoryRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <code>string map_id = 1;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public Builder clearTaskId() {
+        
+        taskId_ = getDefaultInstance().getTaskId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long startTime_ ;
+      /**
+       * <pre>
+       * Inclusive execution start-time range, epoch seconds. Zero means unbounded.
+       * </pre>
+       *
+       * <code>uint64 start_time = 3;</code>
+       */
+      public long getStartTime() {
+        return startTime_;
+      }
+      /**
+       * <pre>
+       * Inclusive execution start-time range, epoch seconds. Zero means unbounded.
+       * </pre>
+       *
+       * <code>uint64 start_time = 3;</code>
+       */
+      public Builder setStartTime(long value) {
+        
+        startTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Inclusive execution start-time range, epoch seconds. Zero means unbounded.
+       * </pre>
+       *
+       * <code>uint64 start_time = 3;</code>
+       */
+      public Builder clearStartTime() {
+        
+        startTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long endTime_ ;
+      /**
+       * <code>uint64 end_time = 4;</code>
+       */
+      public long getEndTime() {
+        return endTime_;
+      }
+      /**
+       * <code>uint64 end_time = 4;</code>
+       */
+      public Builder setEndTime(long value) {
+        
+        endTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 end_time = 4;</code>
+       */
+      public Builder clearEndTime() {
+        
+        endTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int maxChunkSize_ ;
+      /**
+       * <code>uint32 max_chunk_size = 5;</code>
+       */
+      public int getMaxChunkSize() {
+        return maxChunkSize_;
+      }
+      /**
+       * <code>uint32 max_chunk_size = 5;</code>
+       */
+      public Builder setMaxChunkSize(int value) {
+        
+        maxChunkSize_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 max_chunk_size = 5;</code>
+       */
+      public Builder clearMaxChunkSize() {
+        
+        maxChunkSize_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskExecutionHistoryRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskExecutionHistoryRequest)
+    private static final sl_link.SlLink.TaskExecutionHistoryRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskExecutionHistoryRequest();
+    }
+
+    public static sl_link.SlLink.TaskExecutionHistoryRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskExecutionHistoryRequest>
+        PARSER = new com.google.protobuf.AbstractParser<TaskExecutionHistoryRequest>() {
+      @java.lang.Override
+      public TaskExecutionHistoryRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskExecutionHistoryRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskExecutionHistoryRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskExecutionHistoryRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskExecutionHistoryRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TaskExecutionHistoryChunkOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskExecutionHistoryChunk)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>uint32 chunk_index = 3;</code>
+     */
+    int getChunkIndex();
+
+    /**
+     * <code>uint32 total_chunks = 4;</code>
+     */
+    int getTotalChunks();
+
+    /**
+     * <code>uint32 total_record_count = 5;</code>
+     */
+    int getTotalRecordCount();
+
+    /**
+     * <code>bytes data = 6;</code>
+     */
+    com.google.protobuf.ByteString getData();
+
+    /**
+     * <code>uint64 start_time = 7;</code>
+     */
+    long getStartTime();
+
+    /**
+     * <code>uint64 end_time = 8;</code>
+     */
+    long getEndTime();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskExecutionHistoryChunk}
+   */
+  public  static final class TaskExecutionHistoryChunk extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskExecutionHistoryChunk)
+      TaskExecutionHistoryChunkOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskExecutionHistoryChunk.newBuilder() to construct.
+    private TaskExecutionHistoryChunk(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskExecutionHistoryChunk() {
+      result_ = 0;
+      message_ = "";
+      chunkIndex_ = 0;
+      totalChunks_ = 0;
+      totalRecordCount_ = 0;
+      data_ = com.google.protobuf.ByteString.EMPTY;
+      startTime_ = 0L;
+      endTime_ = 0L;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskExecutionHistoryChunk(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              result_ = rawValue;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            case 24: {
+
+              chunkIndex_ = input.readUInt32();
+              break;
+            }
+            case 32: {
+
+              totalChunks_ = input.readUInt32();
+              break;
+            }
+            case 40: {
+
+              totalRecordCount_ = input.readUInt32();
+              break;
+            }
+            case 50: {
+
+              data_ = input.readBytes();
+              break;
+            }
+            case 56: {
+
+              startTime_ = input.readUInt64();
+              break;
+            }
+            case 64: {
+
+              endTime_ = input.readUInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryChunk_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryChunk_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskExecutionHistoryChunk.class, sl_link.SlLink.TaskExecutionHistoryChunk.Builder.class);
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public sl_link.SlLink.ResultCode getResult() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object message_;
+    /**
+     * <code>string message = 2;</code>
+     */
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CHUNK_INDEX_FIELD_NUMBER = 3;
+    private int chunkIndex_;
+    /**
+     * <code>uint32 chunk_index = 3;</code>
+     */
+    public int getChunkIndex() {
+      return chunkIndex_;
+    }
+
+    public static final int TOTAL_CHUNKS_FIELD_NUMBER = 4;
+    private int totalChunks_;
+    /**
+     * <code>uint32 total_chunks = 4;</code>
+     */
+    public int getTotalChunks() {
+      return totalChunks_;
+    }
+
+    public static final int TOTAL_RECORD_COUNT_FIELD_NUMBER = 5;
+    private int totalRecordCount_;
+    /**
+     * <code>uint32 total_record_count = 5;</code>
+     */
+    public int getTotalRecordCount() {
+      return totalRecordCount_;
+    }
+
+    public static final int DATA_FIELD_NUMBER = 6;
+    private com.google.protobuf.ByteString data_;
+    /**
+     * <code>bytes data = 6;</code>
+     */
+    public com.google.protobuf.ByteString getData() {
+      return data_;
+    }
+
+    public static final int START_TIME_FIELD_NUMBER = 7;
+    private long startTime_;
+    /**
+     * <code>uint64 start_time = 7;</code>
+     */
+    public long getStartTime() {
+      return startTime_;
+    }
+
+    public static final int END_TIME_FIELD_NUMBER = 8;
+    private long endTime_;
+    /**
+     * <code>uint64 end_time = 8;</code>
+     */
+    public long getEndTime() {
+      return endTime_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        output.writeEnum(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      }
+      if (chunkIndex_ != 0) {
+        output.writeUInt32(3, chunkIndex_);
+      }
+      if (totalChunks_ != 0) {
+        output.writeUInt32(4, totalChunks_);
+      }
+      if (totalRecordCount_ != 0) {
+        output.writeUInt32(5, totalRecordCount_);
+      }
+      if (!data_.isEmpty()) {
+        output.writeBytes(6, data_);
+      }
+      if (startTime_ != 0L) {
+        output.writeUInt64(7, startTime_);
+      }
+      if (endTime_ != 0L) {
+        output.writeUInt64(8, endTime_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      }
+      if (chunkIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(3, chunkIndex_);
+      }
+      if (totalChunks_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(4, totalChunks_);
+      }
+      if (totalRecordCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(5, totalRecordCount_);
+      }
+      if (!data_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(6, data_);
+      }
+      if (startTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(7, startTime_);
+      }
+      if (endTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(8, endTime_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskExecutionHistoryChunk)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskExecutionHistoryChunk other = (sl_link.SlLink.TaskExecutionHistoryChunk) obj;
+
+      boolean result = true;
+      result = result && result_ == other.result_;
+      result = result && getMessage()
+          .equals(other.getMessage());
+      result = result && (getChunkIndex()
+          == other.getChunkIndex());
+      result = result && (getTotalChunks()
+          == other.getTotalChunks());
+      result = result && (getTotalRecordCount()
+          == other.getTotalRecordCount());
+      result = result && getData()
+          .equals(other.getData());
+      result = result && (getStartTime()
+          == other.getStartTime());
+      result = result && (getEndTime()
+          == other.getEndTime());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + result_;
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + CHUNK_INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getChunkIndex();
+      hash = (37 * hash) + TOTAL_CHUNKS_FIELD_NUMBER;
+      hash = (53 * hash) + getTotalChunks();
+      hash = (37 * hash) + TOTAL_RECORD_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getTotalRecordCount();
+      hash = (37 * hash) + DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getData().hashCode();
+      hash = (37 * hash) + START_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartTime());
+      hash = (37 * hash) + END_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getEndTime());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionHistoryChunk parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskExecutionHistoryChunk prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskExecutionHistoryChunk}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskExecutionHistoryChunk)
+        sl_link.SlLink.TaskExecutionHistoryChunkOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryChunk_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryChunk_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskExecutionHistoryChunk.class, sl_link.SlLink.TaskExecutionHistoryChunk.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskExecutionHistoryChunk.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        result_ = 0;
+
+        message_ = "";
+
+        chunkIndex_ = 0;
+
+        totalChunks_ = 0;
+
+        totalRecordCount_ = 0;
+
+        data_ = com.google.protobuf.ByteString.EMPTY;
+
+        startTime_ = 0L;
+
+        endTime_ = 0L;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionHistoryChunk_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionHistoryChunk getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskExecutionHistoryChunk.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionHistoryChunk build() {
+        sl_link.SlLink.TaskExecutionHistoryChunk result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionHistoryChunk buildPartial() {
+        sl_link.SlLink.TaskExecutionHistoryChunk result = new sl_link.SlLink.TaskExecutionHistoryChunk(this);
+        result.result_ = result_;
+        result.message_ = message_;
+        result.chunkIndex_ = chunkIndex_;
+        result.totalChunks_ = totalChunks_;
+        result.totalRecordCount_ = totalRecordCount_;
+        result.data_ = data_;
+        result.startTime_ = startTime_;
+        result.endTime_ = endTime_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskExecutionHistoryChunk) {
+          return mergeFrom((sl_link.SlLink.TaskExecutionHistoryChunk)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskExecutionHistoryChunk other) {
+        if (other == sl_link.SlLink.TaskExecutionHistoryChunk.getDefaultInstance()) return this;
+        if (other.result_ != 0) {
+          setResultValue(other.getResultValue());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          onChanged();
+        }
+        if (other.getChunkIndex() != 0) {
+          setChunkIndex(other.getChunkIndex());
+        }
+        if (other.getTotalChunks() != 0) {
+          setTotalChunks(other.getTotalChunks());
+        }
+        if (other.getTotalRecordCount() != 0) {
+          setTotalRecordCount(other.getTotalRecordCount());
+        }
+        if (other.getData() != com.google.protobuf.ByteString.EMPTY) {
+          setData(other.getData());
+        }
+        if (other.getStartTime() != 0L) {
+          setStartTime(other.getStartTime());
+        }
+        if (other.getEndTime() != 0L) {
+          setEndTime(other.getEndTime());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskExecutionHistoryChunk parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskExecutionHistoryChunk) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private int result_ = 0;
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public int getResultValue() {
+        return result_;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResultValue(int value) {
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public sl_link.SlLink.ResultCode getResult() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+        return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        result_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 2;</code>
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        message_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder clearMessage() {
+        
+        message_ = getDefaultInstance().getMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        message_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int chunkIndex_ ;
+      /**
+       * <code>uint32 chunk_index = 3;</code>
+       */
+      public int getChunkIndex() {
+        return chunkIndex_;
+      }
+      /**
+       * <code>uint32 chunk_index = 3;</code>
+       */
+      public Builder setChunkIndex(int value) {
+        
+        chunkIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 chunk_index = 3;</code>
+       */
+      public Builder clearChunkIndex() {
+        
+        chunkIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int totalChunks_ ;
+      /**
+       * <code>uint32 total_chunks = 4;</code>
+       */
+      public int getTotalChunks() {
+        return totalChunks_;
+      }
+      /**
+       * <code>uint32 total_chunks = 4;</code>
+       */
+      public Builder setTotalChunks(int value) {
+        
+        totalChunks_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 total_chunks = 4;</code>
+       */
+      public Builder clearTotalChunks() {
+        
+        totalChunks_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int totalRecordCount_ ;
+      /**
+       * <code>uint32 total_record_count = 5;</code>
+       */
+      public int getTotalRecordCount() {
+        return totalRecordCount_;
+      }
+      /**
+       * <code>uint32 total_record_count = 5;</code>
+       */
+      public Builder setTotalRecordCount(int value) {
+        
+        totalRecordCount_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 total_record_count = 5;</code>
+       */
+      public Builder clearTotalRecordCount() {
+        
+        totalRecordCount_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>bytes data = 6;</code>
+       */
+      public com.google.protobuf.ByteString getData() {
+        return data_;
+      }
+      /**
+       * <code>bytes data = 6;</code>
+       */
+      public Builder setData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        data_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bytes data = 6;</code>
+       */
+      public Builder clearData() {
+        
+        data_ = getDefaultInstance().getData();
+        onChanged();
+        return this;
+      }
+
+      private long startTime_ ;
+      /**
+       * <code>uint64 start_time = 7;</code>
+       */
+      public long getStartTime() {
+        return startTime_;
+      }
+      /**
+       * <code>uint64 start_time = 7;</code>
+       */
+      public Builder setStartTime(long value) {
+        
+        startTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 start_time = 7;</code>
+       */
+      public Builder clearStartTime() {
+        
+        startTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long endTime_ ;
+      /**
+       * <code>uint64 end_time = 8;</code>
+       */
+      public long getEndTime() {
+        return endTime_;
+      }
+      /**
+       * <code>uint64 end_time = 8;</code>
+       */
+      public Builder setEndTime(long value) {
+        
+        endTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 end_time = 8;</code>
+       */
+      public Builder clearEndTime() {
+        
+        endTime_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskExecutionHistoryChunk)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskExecutionHistoryChunk)
+    private static final sl_link.SlLink.TaskExecutionHistoryChunk DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskExecutionHistoryChunk();
+    }
+
+    public static sl_link.SlLink.TaskExecutionHistoryChunk getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskExecutionHistoryChunk>
+        PARSER = new com.google.protobuf.AbstractParser<TaskExecutionHistoryChunk>() {
+      @java.lang.Override
+      public TaskExecutionHistoryChunk parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskExecutionHistoryChunk(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskExecutionHistoryChunk> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskExecutionHistoryChunk> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskExecutionHistoryChunk getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TaskTrajectoryRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskTrajectoryRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * Prefer execution_id. If empty, task_id selects its latest execution.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    java.lang.String getExecutionId();
+    /**
+     * <pre>
+     * Prefer execution_id. If empty, task_id selects its latest execution.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getExecutionIdBytes();
+
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <pre>
+     * Inclusive point timestamp range, epoch seconds. Zero means unbounded.
+     * </pre>
+     *
+     * <code>uint64 start_time = 3;</code>
+     */
+    long getStartTime();
+
+    /**
+     * <code>uint64 end_time = 4;</code>
+     */
+    long getEndTime();
+
+    /**
+     * <code>uint32 start_index = 5;</code>
+     */
+    int getStartIndex();
+
+    /**
+     * <code>uint32 max_points = 6;</code>
+     */
+    int getMaxPoints();
+
+    /**
+     * <code>uint32 sample_step = 7;</code>
+     */
+    int getSampleStep();
+
+    /**
+     * <code>uint32 max_chunk_size = 8;</code>
+     */
+    int getMaxChunkSize();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskTrajectoryRequest}
+   */
+  public  static final class TaskTrajectoryRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskTrajectoryRequest)
+      TaskTrajectoryRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskTrajectoryRequest.newBuilder() to construct.
+    private TaskTrajectoryRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskTrajectoryRequest() {
+      executionId_ = "";
+      taskId_ = "";
+      startTime_ = 0L;
+      endTime_ = 0L;
+      startIndex_ = 0;
+      maxPoints_ = 0;
+      sampleStep_ = 0;
+      maxChunkSize_ = 0;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskTrajectoryRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              executionId_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              taskId_ = s;
+              break;
+            }
+            case 24: {
+
+              startTime_ = input.readUInt64();
+              break;
+            }
+            case 32: {
+
+              endTime_ = input.readUInt64();
+              break;
+            }
+            case 40: {
+
+              startIndex_ = input.readUInt32();
+              break;
+            }
+            case 48: {
+
+              maxPoints_ = input.readUInt32();
+              break;
+            }
+            case 56: {
+
+              sampleStep_ = input.readUInt32();
+              break;
+            }
+            case 64: {
+
+              maxChunkSize_ = input.readUInt32();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskTrajectoryRequest.class, sl_link.SlLink.TaskTrajectoryRequest.Builder.class);
+    }
+
+    public static final int EXECUTION_ID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object executionId_;
+    /**
+     * <pre>
+     * Prefer execution_id. If empty, task_id selects its latest execution.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    public java.lang.String getExecutionId() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        executionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Prefer execution_id. If empty, task_id selects its latest execution.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getExecutionIdBytes() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        executionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 2;
+    private volatile java.lang.Object taskId_;
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int START_TIME_FIELD_NUMBER = 3;
+    private long startTime_;
+    /**
+     * <pre>
+     * Inclusive point timestamp range, epoch seconds. Zero means unbounded.
+     * </pre>
+     *
+     * <code>uint64 start_time = 3;</code>
+     */
+    public long getStartTime() {
+      return startTime_;
+    }
+
+    public static final int END_TIME_FIELD_NUMBER = 4;
+    private long endTime_;
+    /**
+     * <code>uint64 end_time = 4;</code>
+     */
+    public long getEndTime() {
+      return endTime_;
+    }
+
+    public static final int START_INDEX_FIELD_NUMBER = 5;
+    private int startIndex_;
+    /**
+     * <code>uint32 start_index = 5;</code>
+     */
+    public int getStartIndex() {
+      return startIndex_;
+    }
+
+    public static final int MAX_POINTS_FIELD_NUMBER = 6;
+    private int maxPoints_;
+    /**
+     * <code>uint32 max_points = 6;</code>
+     */
+    public int getMaxPoints() {
+      return maxPoints_;
+    }
+
+    public static final int SAMPLE_STEP_FIELD_NUMBER = 7;
+    private int sampleStep_;
+    /**
+     * <code>uint32 sample_step = 7;</code>
+     */
+    public int getSampleStep() {
+      return sampleStep_;
+    }
+
+    public static final int MAX_CHUNK_SIZE_FIELD_NUMBER = 8;
+    private int maxChunkSize_;
+    /**
+     * <code>uint32 max_chunk_size = 8;</code>
+     */
+    public int getMaxChunkSize() {
+      return maxChunkSize_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getExecutionIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, executionId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, taskId_);
+      }
+      if (startTime_ != 0L) {
+        output.writeUInt64(3, startTime_);
+      }
+      if (endTime_ != 0L) {
+        output.writeUInt64(4, endTime_);
+      }
+      if (startIndex_ != 0) {
+        output.writeUInt32(5, startIndex_);
+      }
+      if (maxPoints_ != 0) {
+        output.writeUInt32(6, maxPoints_);
+      }
+      if (sampleStep_ != 0) {
+        output.writeUInt32(7, sampleStep_);
+      }
+      if (maxChunkSize_ != 0) {
+        output.writeUInt32(8, maxChunkSize_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getExecutionIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, executionId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, taskId_);
+      }
+      if (startTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(3, startTime_);
+      }
+      if (endTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(4, endTime_);
+      }
+      if (startIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(5, startIndex_);
+      }
+      if (maxPoints_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(6, maxPoints_);
+      }
+      if (sampleStep_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(7, sampleStep_);
+      }
+      if (maxChunkSize_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(8, maxChunkSize_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskTrajectoryRequest)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskTrajectoryRequest other = (sl_link.SlLink.TaskTrajectoryRequest) obj;
+
+      boolean result = true;
+      result = result && getExecutionId()
+          .equals(other.getExecutionId());
+      result = result && getTaskId()
+          .equals(other.getTaskId());
+      result = result && (getStartTime()
+          == other.getStartTime());
+      result = result && (getEndTime()
+          == other.getEndTime());
+      result = result && (getStartIndex()
+          == other.getStartIndex());
+      result = result && (getMaxPoints()
+          == other.getMaxPoints());
+      result = result && (getSampleStep()
+          == other.getSampleStep());
+      result = result && (getMaxChunkSize()
+          == other.getMaxChunkSize());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + EXECUTION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getExecutionId().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + START_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartTime());
+      hash = (37 * hash) + END_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getEndTime());
+      hash = (37 * hash) + START_INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getStartIndex();
+      hash = (37 * hash) + MAX_POINTS_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxPoints();
+      hash = (37 * hash) + SAMPLE_STEP_FIELD_NUMBER;
+      hash = (53 * hash) + getSampleStep();
+      hash = (37 * hash) + MAX_CHUNK_SIZE_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxChunkSize();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskTrajectoryRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskTrajectoryRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskTrajectoryRequest)
+        sl_link.SlLink.TaskTrajectoryRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskTrajectoryRequest.class, sl_link.SlLink.TaskTrajectoryRequest.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskTrajectoryRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        executionId_ = "";
+
+        taskId_ = "";
+
+        startTime_ = 0L;
+
+        endTime_ = 0L;
+
+        startIndex_ = 0;
+
+        maxPoints_ = 0;
+
+        sampleStep_ = 0;
+
+        maxChunkSize_ = 0;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryRequest getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskTrajectoryRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryRequest build() {
+        sl_link.SlLink.TaskTrajectoryRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryRequest buildPartial() {
+        sl_link.SlLink.TaskTrajectoryRequest result = new sl_link.SlLink.TaskTrajectoryRequest(this);
+        result.executionId_ = executionId_;
+        result.taskId_ = taskId_;
+        result.startTime_ = startTime_;
+        result.endTime_ = endTime_;
+        result.startIndex_ = startIndex_;
+        result.maxPoints_ = maxPoints_;
+        result.sampleStep_ = sampleStep_;
+        result.maxChunkSize_ = maxChunkSize_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskTrajectoryRequest) {
+          return mergeFrom((sl_link.SlLink.TaskTrajectoryRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskTrajectoryRequest other) {
+        if (other == sl_link.SlLink.TaskTrajectoryRequest.getDefaultInstance()) return this;
+        if (!other.getExecutionId().isEmpty()) {
+          executionId_ = other.executionId_;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          onChanged();
+        }
+        if (other.getStartTime() != 0L) {
+          setStartTime(other.getStartTime());
+        }
+        if (other.getEndTime() != 0L) {
+          setEndTime(other.getEndTime());
+        }
+        if (other.getStartIndex() != 0) {
+          setStartIndex(other.getStartIndex());
+        }
+        if (other.getMaxPoints() != 0) {
+          setMaxPoints(other.getMaxPoints());
+        }
+        if (other.getSampleStep() != 0) {
+          setSampleStep(other.getSampleStep());
+        }
+        if (other.getMaxChunkSize() != 0) {
+          setMaxChunkSize(other.getMaxChunkSize());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskTrajectoryRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskTrajectoryRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object executionId_ = "";
+      /**
+       * <pre>
+       * Prefer execution_id. If empty, task_id selects its latest execution.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public java.lang.String getExecutionId() {
+        java.lang.Object ref = executionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          executionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Prefer execution_id. If empty, task_id selects its latest execution.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getExecutionIdBytes() {
+        java.lang.Object ref = executionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          executionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Prefer execution_id. If empty, task_id selects its latest execution.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder setExecutionId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Prefer execution_id. If empty, task_id selects its latest execution.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder clearExecutionId() {
+        
+        executionId_ = getDefaultInstance().getExecutionId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Prefer execution_id. If empty, task_id selects its latest execution.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder setExecutionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public Builder clearTaskId() {
+        
+        taskId_ = getDefaultInstance().getTaskId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long startTime_ ;
+      /**
+       * <pre>
+       * Inclusive point timestamp range, epoch seconds. Zero means unbounded.
+       * </pre>
+       *
+       * <code>uint64 start_time = 3;</code>
+       */
+      public long getStartTime() {
+        return startTime_;
+      }
+      /**
+       * <pre>
+       * Inclusive point timestamp range, epoch seconds. Zero means unbounded.
+       * </pre>
+       *
+       * <code>uint64 start_time = 3;</code>
+       */
+      public Builder setStartTime(long value) {
+        
+        startTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Inclusive point timestamp range, epoch seconds. Zero means unbounded.
+       * </pre>
+       *
+       * <code>uint64 start_time = 3;</code>
+       */
+      public Builder clearStartTime() {
+        
+        startTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long endTime_ ;
+      /**
+       * <code>uint64 end_time = 4;</code>
+       */
+      public long getEndTime() {
+        return endTime_;
+      }
+      /**
+       * <code>uint64 end_time = 4;</code>
+       */
+      public Builder setEndTime(long value) {
+        
+        endTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 end_time = 4;</code>
+       */
+      public Builder clearEndTime() {
+        
+        endTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int startIndex_ ;
+      /**
+       * <code>uint32 start_index = 5;</code>
+       */
+      public int getStartIndex() {
+        return startIndex_;
+      }
+      /**
+       * <code>uint32 start_index = 5;</code>
+       */
+      public Builder setStartIndex(int value) {
+        
+        startIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 start_index = 5;</code>
+       */
+      public Builder clearStartIndex() {
+        
+        startIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int maxPoints_ ;
+      /**
+       * <code>uint32 max_points = 6;</code>
+       */
+      public int getMaxPoints() {
+        return maxPoints_;
+      }
+      /**
+       * <code>uint32 max_points = 6;</code>
+       */
+      public Builder setMaxPoints(int value) {
+        
+        maxPoints_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 max_points = 6;</code>
+       */
+      public Builder clearMaxPoints() {
+        
+        maxPoints_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int sampleStep_ ;
+      /**
+       * <code>uint32 sample_step = 7;</code>
+       */
+      public int getSampleStep() {
+        return sampleStep_;
+      }
+      /**
+       * <code>uint32 sample_step = 7;</code>
+       */
+      public Builder setSampleStep(int value) {
+        
+        sampleStep_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 sample_step = 7;</code>
+       */
+      public Builder clearSampleStep() {
+        
+        sampleStep_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int maxChunkSize_ ;
+      /**
+       * <code>uint32 max_chunk_size = 8;</code>
+       */
+      public int getMaxChunkSize() {
+        return maxChunkSize_;
+      }
+      /**
+       * <code>uint32 max_chunk_size = 8;</code>
+       */
+      public Builder setMaxChunkSize(int value) {
+        
+        maxChunkSize_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 max_chunk_size = 8;</code>
+       */
+      public Builder clearMaxChunkSize() {
+        
+        maxChunkSize_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskTrajectoryRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskTrajectoryRequest)
+    private static final sl_link.SlLink.TaskTrajectoryRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskTrajectoryRequest();
+    }
+
+    public static sl_link.SlLink.TaskTrajectoryRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskTrajectoryRequest>
+        PARSER = new com.google.protobuf.AbstractParser<TaskTrajectoryRequest>() {
+      @java.lang.Override
+      public TaskTrajectoryRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskTrajectoryRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskTrajectoryRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskTrajectoryRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskTrajectoryRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TaskTrajectoryPointOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskTrajectoryPoint)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>uint32 index = 1;</code>
+     */
+    int getIndex();
+
+    /**
+     * <pre>
+     * Milliseconds relative to TaskTrajectoryChunk.started_at_ms.
+     * </pre>
+     *
+     * <code>uint32 offset_ms = 2;</code>
+     */
+    int getOffsetMs();
+
+    /**
+     * <code>sint32 x_mm = 3;</code>
+     */
+    int getXMm();
+
+    /**
+     * <code>sint32 y_mm = 4;</code>
+     */
+    int getYMm();
+
+    /**
+     * <code>sint32 heading_mdeg = 5;</code>
+     */
+    int getHeadingMdeg();
+
+    /**
+     * <code>sint32 linear_speed_mmps = 6;</code>
+     */
+    int getLinearSpeedMmps();
+
+    /**
+     * <code>sint32 angular_speed_mradps = 7;</code>
+     */
+    int getAngularSpeedMradps();
+
+    /**
+     * <code>uint32 disc_speed_rpm = 8;</code>
+     */
+    int getDiscSpeedRpm();
+
+    /**
+     * <code>bool speed_available = 9;</code>
+     */
+    boolean getSpeedAvailable();
+
+    /**
+     * <code>bool disc_enabled = 10;</code>
+     */
+    boolean getDiscEnabled();
+
+    /**
+     * <code>.sl_link.TaskState task_state = 11;</code>
+     */
+    int getTaskStateValue();
+    /**
+     * <code>.sl_link.TaskState task_state = 11;</code>
+     */
+    sl_link.SlLink.TaskState getTaskState();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskTrajectoryPoint}
+   */
+  public  static final class TaskTrajectoryPoint extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskTrajectoryPoint)
+      TaskTrajectoryPointOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskTrajectoryPoint.newBuilder() to construct.
+    private TaskTrajectoryPoint(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskTrajectoryPoint() {
+      index_ = 0;
+      offsetMs_ = 0;
+      xMm_ = 0;
+      yMm_ = 0;
+      headingMdeg_ = 0;
+      linearSpeedMmps_ = 0;
+      angularSpeedMradps_ = 0;
+      discSpeedRpm_ = 0;
+      speedAvailable_ = false;
+      discEnabled_ = false;
+      taskState_ = 0;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskTrajectoryPoint(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              index_ = input.readUInt32();
+              break;
+            }
+            case 16: {
+
+              offsetMs_ = input.readUInt32();
+              break;
+            }
+            case 24: {
+
+              xMm_ = input.readSInt32();
+              break;
+            }
+            case 32: {
+
+              yMm_ = input.readSInt32();
+              break;
+            }
+            case 40: {
+
+              headingMdeg_ = input.readSInt32();
+              break;
+            }
+            case 48: {
+
+              linearSpeedMmps_ = input.readSInt32();
+              break;
+            }
+            case 56: {
+
+              angularSpeedMradps_ = input.readSInt32();
+              break;
+            }
+            case 64: {
+
+              discSpeedRpm_ = input.readUInt32();
+              break;
+            }
+            case 72: {
+
+              speedAvailable_ = input.readBool();
+              break;
+            }
+            case 80: {
+
+              discEnabled_ = input.readBool();
+              break;
+            }
+            case 88: {
+              int rawValue = input.readEnum();
+
+              taskState_ = rawValue;
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryPoint_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryPoint_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskTrajectoryPoint.class, sl_link.SlLink.TaskTrajectoryPoint.Builder.class);
+    }
+
+    public static final int INDEX_FIELD_NUMBER = 1;
+    private int index_;
+    /**
+     * <code>uint32 index = 1;</code>
+     */
+    public int getIndex() {
+      return index_;
+    }
+
+    public static final int OFFSET_MS_FIELD_NUMBER = 2;
+    private int offsetMs_;
+    /**
+     * <pre>
+     * Milliseconds relative to TaskTrajectoryChunk.started_at_ms.
+     * </pre>
+     *
+     * <code>uint32 offset_ms = 2;</code>
+     */
+    public int getOffsetMs() {
+      return offsetMs_;
+    }
+
+    public static final int X_MM_FIELD_NUMBER = 3;
+    private int xMm_;
+    /**
+     * <code>sint32 x_mm = 3;</code>
+     */
+    public int getXMm() {
+      return xMm_;
+    }
+
+    public static final int Y_MM_FIELD_NUMBER = 4;
+    private int yMm_;
+    /**
+     * <code>sint32 y_mm = 4;</code>
+     */
+    public int getYMm() {
+      return yMm_;
+    }
+
+    public static final int HEADING_MDEG_FIELD_NUMBER = 5;
+    private int headingMdeg_;
+    /**
+     * <code>sint32 heading_mdeg = 5;</code>
+     */
+    public int getHeadingMdeg() {
+      return headingMdeg_;
+    }
+
+    public static final int LINEAR_SPEED_MMPS_FIELD_NUMBER = 6;
+    private int linearSpeedMmps_;
+    /**
+     * <code>sint32 linear_speed_mmps = 6;</code>
+     */
+    public int getLinearSpeedMmps() {
+      return linearSpeedMmps_;
+    }
+
+    public static final int ANGULAR_SPEED_MRADPS_FIELD_NUMBER = 7;
+    private int angularSpeedMradps_;
+    /**
+     * <code>sint32 angular_speed_mradps = 7;</code>
+     */
+    public int getAngularSpeedMradps() {
+      return angularSpeedMradps_;
+    }
+
+    public static final int DISC_SPEED_RPM_FIELD_NUMBER = 8;
+    private int discSpeedRpm_;
+    /**
+     * <code>uint32 disc_speed_rpm = 8;</code>
+     */
+    public int getDiscSpeedRpm() {
+      return discSpeedRpm_;
+    }
+
+    public static final int SPEED_AVAILABLE_FIELD_NUMBER = 9;
+    private boolean speedAvailable_;
+    /**
+     * <code>bool speed_available = 9;</code>
+     */
+    public boolean getSpeedAvailable() {
+      return speedAvailable_;
+    }
+
+    public static final int DISC_ENABLED_FIELD_NUMBER = 10;
+    private boolean discEnabled_;
+    /**
+     * <code>bool disc_enabled = 10;</code>
+     */
+    public boolean getDiscEnabled() {
+      return discEnabled_;
+    }
+
+    public static final int TASK_STATE_FIELD_NUMBER = 11;
+    private int taskState_;
+    /**
+     * <code>.sl_link.TaskState task_state = 11;</code>
+     */
+    public int getTaskStateValue() {
+      return taskState_;
+    }
+    /**
+     * <code>.sl_link.TaskState task_state = 11;</code>
+     */
+    public sl_link.SlLink.TaskState getTaskState() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.TaskState result = sl_link.SlLink.TaskState.valueOf(taskState_);
+      return result == null ? sl_link.SlLink.TaskState.UNRECOGNIZED : result;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (index_ != 0) {
+        output.writeUInt32(1, index_);
+      }
+      if (offsetMs_ != 0) {
+        output.writeUInt32(2, offsetMs_);
+      }
+      if (xMm_ != 0) {
+        output.writeSInt32(3, xMm_);
+      }
+      if (yMm_ != 0) {
+        output.writeSInt32(4, yMm_);
+      }
+      if (headingMdeg_ != 0) {
+        output.writeSInt32(5, headingMdeg_);
+      }
+      if (linearSpeedMmps_ != 0) {
+        output.writeSInt32(6, linearSpeedMmps_);
+      }
+      if (angularSpeedMradps_ != 0) {
+        output.writeSInt32(7, angularSpeedMradps_);
+      }
+      if (discSpeedRpm_ != 0) {
+        output.writeUInt32(8, discSpeedRpm_);
+      }
+      if (speedAvailable_ != false) {
+        output.writeBool(9, speedAvailable_);
+      }
+      if (discEnabled_ != false) {
+        output.writeBool(10, discEnabled_);
+      }
+      if (taskState_ != sl_link.SlLink.TaskState.TASK_STATE_IDLE.getNumber()) {
+        output.writeEnum(11, taskState_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (index_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(1, index_);
+      }
+      if (offsetMs_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(2, offsetMs_);
+      }
+      if (xMm_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSInt32Size(3, xMm_);
+      }
+      if (yMm_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSInt32Size(4, yMm_);
+      }
+      if (headingMdeg_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSInt32Size(5, headingMdeg_);
+      }
+      if (linearSpeedMmps_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSInt32Size(6, linearSpeedMmps_);
+      }
+      if (angularSpeedMradps_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeSInt32Size(7, angularSpeedMradps_);
+      }
+      if (discSpeedRpm_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(8, discSpeedRpm_);
+      }
+      if (speedAvailable_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(9, speedAvailable_);
+      }
+      if (discEnabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(10, discEnabled_);
+      }
+      if (taskState_ != sl_link.SlLink.TaskState.TASK_STATE_IDLE.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(11, taskState_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskTrajectoryPoint)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskTrajectoryPoint other = (sl_link.SlLink.TaskTrajectoryPoint) obj;
+
+      boolean result = true;
+      result = result && (getIndex()
+          == other.getIndex());
+      result = result && (getOffsetMs()
+          == other.getOffsetMs());
+      result = result && (getXMm()
+          == other.getXMm());
+      result = result && (getYMm()
+          == other.getYMm());
+      result = result && (getHeadingMdeg()
+          == other.getHeadingMdeg());
+      result = result && (getLinearSpeedMmps()
+          == other.getLinearSpeedMmps());
+      result = result && (getAngularSpeedMradps()
+          == other.getAngularSpeedMradps());
+      result = result && (getDiscSpeedRpm()
+          == other.getDiscSpeedRpm());
+      result = result && (getSpeedAvailable()
+          == other.getSpeedAvailable());
+      result = result && (getDiscEnabled()
+          == other.getDiscEnabled());
+      result = result && taskState_ == other.taskState_;
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getIndex();
+      hash = (37 * hash) + OFFSET_MS_FIELD_NUMBER;
+      hash = (53 * hash) + getOffsetMs();
+      hash = (37 * hash) + X_MM_FIELD_NUMBER;
+      hash = (53 * hash) + getXMm();
+      hash = (37 * hash) + Y_MM_FIELD_NUMBER;
+      hash = (53 * hash) + getYMm();
+      hash = (37 * hash) + HEADING_MDEG_FIELD_NUMBER;
+      hash = (53 * hash) + getHeadingMdeg();
+      hash = (37 * hash) + LINEAR_SPEED_MMPS_FIELD_NUMBER;
+      hash = (53 * hash) + getLinearSpeedMmps();
+      hash = (37 * hash) + ANGULAR_SPEED_MRADPS_FIELD_NUMBER;
+      hash = (53 * hash) + getAngularSpeedMradps();
+      hash = (37 * hash) + DISC_SPEED_RPM_FIELD_NUMBER;
+      hash = (53 * hash) + getDiscSpeedRpm();
+      hash = (37 * hash) + SPEED_AVAILABLE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSpeedAvailable());
+      hash = (37 * hash) + DISC_ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getDiscEnabled());
+      hash = (37 * hash) + TASK_STATE_FIELD_NUMBER;
+      hash = (53 * hash) + taskState_;
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryPoint parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskTrajectoryPoint prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskTrajectoryPoint}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskTrajectoryPoint)
+        sl_link.SlLink.TaskTrajectoryPointOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryPoint_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryPoint_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskTrajectoryPoint.class, sl_link.SlLink.TaskTrajectoryPoint.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskTrajectoryPoint.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        index_ = 0;
+
+        offsetMs_ = 0;
+
+        xMm_ = 0;
+
+        yMm_ = 0;
+
+        headingMdeg_ = 0;
+
+        linearSpeedMmps_ = 0;
+
+        angularSpeedMradps_ = 0;
+
+        discSpeedRpm_ = 0;
+
+        speedAvailable_ = false;
+
+        discEnabled_ = false;
+
+        taskState_ = 0;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryPoint_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryPoint getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskTrajectoryPoint.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryPoint build() {
+        sl_link.SlLink.TaskTrajectoryPoint result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryPoint buildPartial() {
+        sl_link.SlLink.TaskTrajectoryPoint result = new sl_link.SlLink.TaskTrajectoryPoint(this);
+        result.index_ = index_;
+        result.offsetMs_ = offsetMs_;
+        result.xMm_ = xMm_;
+        result.yMm_ = yMm_;
+        result.headingMdeg_ = headingMdeg_;
+        result.linearSpeedMmps_ = linearSpeedMmps_;
+        result.angularSpeedMradps_ = angularSpeedMradps_;
+        result.discSpeedRpm_ = discSpeedRpm_;
+        result.speedAvailable_ = speedAvailable_;
+        result.discEnabled_ = discEnabled_;
+        result.taskState_ = taskState_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskTrajectoryPoint) {
+          return mergeFrom((sl_link.SlLink.TaskTrajectoryPoint)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskTrajectoryPoint other) {
+        if (other == sl_link.SlLink.TaskTrajectoryPoint.getDefaultInstance()) return this;
+        if (other.getIndex() != 0) {
+          setIndex(other.getIndex());
+        }
+        if (other.getOffsetMs() != 0) {
+          setOffsetMs(other.getOffsetMs());
+        }
+        if (other.getXMm() != 0) {
+          setXMm(other.getXMm());
+        }
+        if (other.getYMm() != 0) {
+          setYMm(other.getYMm());
+        }
+        if (other.getHeadingMdeg() != 0) {
+          setHeadingMdeg(other.getHeadingMdeg());
+        }
+        if (other.getLinearSpeedMmps() != 0) {
+          setLinearSpeedMmps(other.getLinearSpeedMmps());
+        }
+        if (other.getAngularSpeedMradps() != 0) {
+          setAngularSpeedMradps(other.getAngularSpeedMradps());
+        }
+        if (other.getDiscSpeedRpm() != 0) {
+          setDiscSpeedRpm(other.getDiscSpeedRpm());
+        }
+        if (other.getSpeedAvailable() != false) {
+          setSpeedAvailable(other.getSpeedAvailable());
+        }
+        if (other.getDiscEnabled() != false) {
+          setDiscEnabled(other.getDiscEnabled());
+        }
+        if (other.taskState_ != 0) {
+          setTaskStateValue(other.getTaskStateValue());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskTrajectoryPoint parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskTrajectoryPoint) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private int index_ ;
+      /**
+       * <code>uint32 index = 1;</code>
+       */
+      public int getIndex() {
+        return index_;
+      }
+      /**
+       * <code>uint32 index = 1;</code>
+       */
+      public Builder setIndex(int value) {
+        
+        index_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 index = 1;</code>
+       */
+      public Builder clearIndex() {
+        
+        index_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int offsetMs_ ;
+      /**
+       * <pre>
+       * Milliseconds relative to TaskTrajectoryChunk.started_at_ms.
+       * </pre>
+       *
+       * <code>uint32 offset_ms = 2;</code>
+       */
+      public int getOffsetMs() {
+        return offsetMs_;
+      }
+      /**
+       * <pre>
+       * Milliseconds relative to TaskTrajectoryChunk.started_at_ms.
+       * </pre>
+       *
+       * <code>uint32 offset_ms = 2;</code>
+       */
+      public Builder setOffsetMs(int value) {
+        
+        offsetMs_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Milliseconds relative to TaskTrajectoryChunk.started_at_ms.
+       * </pre>
+       *
+       * <code>uint32 offset_ms = 2;</code>
+       */
+      public Builder clearOffsetMs() {
+        
+        offsetMs_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int xMm_ ;
+      /**
+       * <code>sint32 x_mm = 3;</code>
+       */
+      public int getXMm() {
+        return xMm_;
+      }
+      /**
+       * <code>sint32 x_mm = 3;</code>
+       */
+      public Builder setXMm(int value) {
+        
+        xMm_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>sint32 x_mm = 3;</code>
+       */
+      public Builder clearXMm() {
+        
+        xMm_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int yMm_ ;
+      /**
+       * <code>sint32 y_mm = 4;</code>
+       */
+      public int getYMm() {
+        return yMm_;
+      }
+      /**
+       * <code>sint32 y_mm = 4;</code>
+       */
+      public Builder setYMm(int value) {
+        
+        yMm_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>sint32 y_mm = 4;</code>
+       */
+      public Builder clearYMm() {
+        
+        yMm_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int headingMdeg_ ;
+      /**
+       * <code>sint32 heading_mdeg = 5;</code>
+       */
+      public int getHeadingMdeg() {
+        return headingMdeg_;
+      }
+      /**
+       * <code>sint32 heading_mdeg = 5;</code>
+       */
+      public Builder setHeadingMdeg(int value) {
+        
+        headingMdeg_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>sint32 heading_mdeg = 5;</code>
+       */
+      public Builder clearHeadingMdeg() {
+        
+        headingMdeg_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int linearSpeedMmps_ ;
+      /**
+       * <code>sint32 linear_speed_mmps = 6;</code>
+       */
+      public int getLinearSpeedMmps() {
+        return linearSpeedMmps_;
+      }
+      /**
+       * <code>sint32 linear_speed_mmps = 6;</code>
+       */
+      public Builder setLinearSpeedMmps(int value) {
+        
+        linearSpeedMmps_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>sint32 linear_speed_mmps = 6;</code>
+       */
+      public Builder clearLinearSpeedMmps() {
+        
+        linearSpeedMmps_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int angularSpeedMradps_ ;
+      /**
+       * <code>sint32 angular_speed_mradps = 7;</code>
+       */
+      public int getAngularSpeedMradps() {
+        return angularSpeedMradps_;
+      }
+      /**
+       * <code>sint32 angular_speed_mradps = 7;</code>
+       */
+      public Builder setAngularSpeedMradps(int value) {
+        
+        angularSpeedMradps_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>sint32 angular_speed_mradps = 7;</code>
+       */
+      public Builder clearAngularSpeedMradps() {
+        
+        angularSpeedMradps_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int discSpeedRpm_ ;
+      /**
+       * <code>uint32 disc_speed_rpm = 8;</code>
+       */
+      public int getDiscSpeedRpm() {
+        return discSpeedRpm_;
+      }
+      /**
+       * <code>uint32 disc_speed_rpm = 8;</code>
+       */
+      public Builder setDiscSpeedRpm(int value) {
+        
+        discSpeedRpm_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 disc_speed_rpm = 8;</code>
+       */
+      public Builder clearDiscSpeedRpm() {
+        
+        discSpeedRpm_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private boolean speedAvailable_ ;
+      /**
+       * <code>bool speed_available = 9;</code>
+       */
+      public boolean getSpeedAvailable() {
+        return speedAvailable_;
+      }
+      /**
+       * <code>bool speed_available = 9;</code>
+       */
+      public Builder setSpeedAvailable(boolean value) {
+        
+        speedAvailable_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool speed_available = 9;</code>
+       */
+      public Builder clearSpeedAvailable() {
+        
+        speedAvailable_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean discEnabled_ ;
+      /**
+       * <code>bool disc_enabled = 10;</code>
+       */
+      public boolean getDiscEnabled() {
+        return discEnabled_;
+      }
+      /**
+       * <code>bool disc_enabled = 10;</code>
+       */
+      public Builder setDiscEnabled(boolean value) {
+        
+        discEnabled_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool disc_enabled = 10;</code>
+       */
+      public Builder clearDiscEnabled() {
+        
+        discEnabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      private int taskState_ = 0;
+      /**
+       * <code>.sl_link.TaskState task_state = 11;</code>
+       */
+      public int getTaskStateValue() {
+        return taskState_;
+      }
+      /**
+       * <code>.sl_link.TaskState task_state = 11;</code>
+       */
+      public Builder setTaskStateValue(int value) {
+        taskState_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.TaskState task_state = 11;</code>
+       */
+      public sl_link.SlLink.TaskState getTaskState() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.TaskState result = sl_link.SlLink.TaskState.valueOf(taskState_);
+        return result == null ? sl_link.SlLink.TaskState.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.TaskState task_state = 11;</code>
+       */
+      public Builder setTaskState(sl_link.SlLink.TaskState value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        taskState_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.TaskState task_state = 11;</code>
+       */
+      public Builder clearTaskState() {
+        
+        taskState_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskTrajectoryPoint)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskTrajectoryPoint)
+    private static final sl_link.SlLink.TaskTrajectoryPoint DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskTrajectoryPoint();
+    }
+
+    public static sl_link.SlLink.TaskTrajectoryPoint getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskTrajectoryPoint>
+        PARSER = new com.google.protobuf.AbstractParser<TaskTrajectoryPoint>() {
+      @java.lang.Override
+      public TaskTrajectoryPoint parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskTrajectoryPoint(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskTrajectoryPoint> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskTrajectoryPoint> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskTrajectoryPoint getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TaskTrajectoryChunkOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskTrajectoryChunk)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    java.lang.String getExecutionId();
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getExecutionIdBytes();
+
+    /**
+     * <code>uint32 chunk_index = 4;</code>
+     */
+    int getChunkIndex();
+
+    /**
+     * <code>uint32 total_chunks = 5;</code>
+     */
+    int getTotalChunks();
+
+    /**
+     * <code>uint32 total_point_count = 6;</code>
+     */
+    int getTotalPointCount();
+
+    /**
+     * <code>uint32 returned_point_count = 7;</code>
+     */
+    int getReturnedPointCount();
+
+    /**
+     * <code>uint32 start_index = 8;</code>
+     */
+    int getStartIndex();
+
+    /**
+     * <code>uint32 next_index = 9;</code>
+     */
+    int getNextIndex();
+
+    /**
+     * <code>bool has_more = 10;</code>
+     */
+    boolean getHasMore();
+
+    /**
+     * <code>uint64 started_at_ms = 11;</code>
+     */
+    long getStartedAtMs();
+
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    java.util.List<sl_link.SlLink.TaskTrajectoryPoint> 
+        getPointsList();
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    sl_link.SlLink.TaskTrajectoryPoint getPoints(int index);
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    int getPointsCount();
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    java.util.List<? extends sl_link.SlLink.TaskTrajectoryPointOrBuilder> 
+        getPointsOrBuilderList();
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    sl_link.SlLink.TaskTrajectoryPointOrBuilder getPointsOrBuilder(
+        int index);
+
+    /**
+     * <code>string task_id = 13;</code>
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 13;</code>
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>string map_id = 14;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 14;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>uint64 start_time = 15;</code>
+     */
+    long getStartTime();
+
+    /**
+     * <code>uint64 end_time = 16;</code>
+     */
+    long getEndTime();
+
+    /**
+     * <code>uint32 sample_step = 17;</code>
+     */
+    int getSampleStep();
+
+    /**
+     * <code>bool map_available = 18;</code>
+     */
+    boolean getMapAvailable();
+
+    /**
+     * <code>string map_message = 19;</code>
+     */
+    java.lang.String getMapMessage();
+    /**
+     * <code>string map_message = 19;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapMessageBytes();
+
+    /**
+     * <code>uint32 map_version = 20;</code>
+     */
+    int getMapVersion();
+
+    /**
+     * <pre>
+     * Source occupancy-grid dimensions before preview scaling.
+     * </pre>
+     *
+     * <code>uint32 map_source_width = 21;</code>
+     */
+    int getMapSourceWidth();
+
+    /**
+     * <code>uint32 map_source_height = 22;</code>
+     */
+    int getMapSourceHeight();
+
+    /**
+     * <code>float map_resolution = 23;</code>
+     */
+    float getMapResolution();
+
+    /**
+     * <code>.sl_link.Pose2D map_origin = 24;</code>
+     */
+    boolean hasMapOrigin();
+    /**
+     * <code>.sl_link.Pose2D map_origin = 24;</code>
+     */
+    sl_link.SlLink.Pose2D getMapOrigin();
+    /**
+     * <code>.sl_link.Pose2D map_origin = 24;</code>
+     */
+    sl_link.SlLink.Pose2DOrBuilder getMapOriginOrBuilder();
+
+    /**
+     * <code>string map_frame_id = 25;</code>
+     */
+    java.lang.String getMapFrameId();
+    /**
+     * <code>string map_frame_id = 25;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapFrameIdBytes();
+
+    /**
+     * <code>string map_image_format = 26;</code>
+     */
+    java.lang.String getMapImageFormat();
+    /**
+     * <code>string map_image_format = 26;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapImageFormatBytes();
+
+    /**
+     * <code>uint32 map_image_width = 27;</code>
+     */
+    int getMapImageWidth();
+
+    /**
+     * <code>uint32 map_image_height = 28;</code>
+     */
+    int getMapImageHeight();
+
+    /**
+     * <code>float map_preview_scale_x = 29;</code>
+     */
+    float getMapPreviewScaleX();
+
+    /**
+     * <code>float map_preview_scale_y = 30;</code>
+     */
+    float getMapPreviewScaleY();
+
+    /**
+     * <pre>
+     * Raw map preview without region/point/path overlays.
+     * </pre>
+     *
+     * <code>bytes map_image_data = 31;</code>
+     */
+    com.google.protobuf.ByteString getMapImageData();
+
+    /**
+     * <code>uint32 map_image_chunk_index = 32;</code>
+     */
+    int getMapImageChunkIndex();
+
+    /**
+     * <code>uint32 map_image_total_chunks = 33;</code>
+     */
+    int getMapImageTotalChunks();
+
+    /**
+     * <code>float alignment_yaw_deg = 34;</code>
+     */
+    float getAlignmentYawDeg();
+
+    /**
+     * <code>float app_rotation_deg = 35;</code>
+     */
+    float getAppRotationDeg();
+
+    /**
+     * <code>float rotation_alignment_delta_deg = 36;</code>
+     */
+    float getRotationAlignmentDeltaDeg();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskTrajectoryChunk}
+   */
+  public  static final class TaskTrajectoryChunk extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskTrajectoryChunk)
+      TaskTrajectoryChunkOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskTrajectoryChunk.newBuilder() to construct.
+    private TaskTrajectoryChunk(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskTrajectoryChunk() {
+      result_ = 0;
+      message_ = "";
+      executionId_ = "";
+      chunkIndex_ = 0;
+      totalChunks_ = 0;
+      totalPointCount_ = 0;
+      returnedPointCount_ = 0;
+      startIndex_ = 0;
+      nextIndex_ = 0;
+      hasMore_ = false;
+      startedAtMs_ = 0L;
+      points_ = java.util.Collections.emptyList();
+      taskId_ = "";
+      mapId_ = "";
+      startTime_ = 0L;
+      endTime_ = 0L;
+      sampleStep_ = 0;
+      mapAvailable_ = false;
+      mapMessage_ = "";
+      mapVersion_ = 0;
+      mapSourceWidth_ = 0;
+      mapSourceHeight_ = 0;
+      mapResolution_ = 0F;
+      mapFrameId_ = "";
+      mapImageFormat_ = "";
+      mapImageWidth_ = 0;
+      mapImageHeight_ = 0;
+      mapPreviewScaleX_ = 0F;
+      mapPreviewScaleY_ = 0F;
+      mapImageData_ = com.google.protobuf.ByteString.EMPTY;
+      mapImageChunkIndex_ = 0;
+      mapImageTotalChunks_ = 0;
+      alignmentYawDeg_ = 0F;
+      appRotationDeg_ = 0F;
+      rotationAlignmentDeltaDeg_ = 0F;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskTrajectoryChunk(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      int mutable_bitField1_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              result_ = rawValue;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              executionId_ = s;
+              break;
+            }
+            case 32: {
+
+              chunkIndex_ = input.readUInt32();
+              break;
+            }
+            case 40: {
+
+              totalChunks_ = input.readUInt32();
+              break;
+            }
+            case 48: {
+
+              totalPointCount_ = input.readUInt32();
+              break;
+            }
+            case 56: {
+
+              returnedPointCount_ = input.readUInt32();
+              break;
+            }
+            case 64: {
+
+              startIndex_ = input.readUInt32();
+              break;
+            }
+            case 72: {
+
+              nextIndex_ = input.readUInt32();
+              break;
+            }
+            case 80: {
+
+              hasMore_ = input.readBool();
+              break;
+            }
+            case 88: {
+
+              startedAtMs_ = input.readUInt64();
+              break;
+            }
+            case 98: {
+              if (!((mutable_bitField0_ & 0x00000800) == 0x00000800)) {
+                points_ = new java.util.ArrayList<sl_link.SlLink.TaskTrajectoryPoint>();
+                mutable_bitField0_ |= 0x00000800;
+              }
+              points_.add(
+                  input.readMessage(sl_link.SlLink.TaskTrajectoryPoint.parser(), extensionRegistry));
+              break;
+            }
+            case 106: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              taskId_ = s;
+              break;
+            }
+            case 114: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            case 120: {
+
+              startTime_ = input.readUInt64();
+              break;
+            }
+            case 128: {
+
+              endTime_ = input.readUInt64();
+              break;
+            }
+            case 136: {
+
+              sampleStep_ = input.readUInt32();
+              break;
+            }
+            case 144: {
+
+              mapAvailable_ = input.readBool();
+              break;
+            }
+            case 154: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapMessage_ = s;
+              break;
+            }
+            case 160: {
+
+              mapVersion_ = input.readUInt32();
+              break;
+            }
+            case 168: {
+
+              mapSourceWidth_ = input.readUInt32();
+              break;
+            }
+            case 176: {
+
+              mapSourceHeight_ = input.readUInt32();
+              break;
+            }
+            case 189: {
+
+              mapResolution_ = input.readFloat();
+              break;
+            }
+            case 194: {
+              sl_link.SlLink.Pose2D.Builder subBuilder = null;
+              if (mapOrigin_ != null) {
+                subBuilder = mapOrigin_.toBuilder();
+              }
+              mapOrigin_ = input.readMessage(sl_link.SlLink.Pose2D.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(mapOrigin_);
+                mapOrigin_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 202: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapFrameId_ = s;
+              break;
+            }
+            case 210: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapImageFormat_ = s;
+              break;
+            }
+            case 216: {
+
+              mapImageWidth_ = input.readUInt32();
+              break;
+            }
+            case 224: {
+
+              mapImageHeight_ = input.readUInt32();
+              break;
+            }
+            case 237: {
+
+              mapPreviewScaleX_ = input.readFloat();
+              break;
+            }
+            case 245: {
+
+              mapPreviewScaleY_ = input.readFloat();
+              break;
+            }
+            case 250: {
+
+              mapImageData_ = input.readBytes();
+              break;
+            }
+            case 256: {
+
+              mapImageChunkIndex_ = input.readUInt32();
+              break;
+            }
+            case 264: {
+
+              mapImageTotalChunks_ = input.readUInt32();
+              break;
+            }
+            case 277: {
+
+              alignmentYawDeg_ = input.readFloat();
+              break;
+            }
+            case 285: {
+
+              appRotationDeg_ = input.readFloat();
+              break;
+            }
+            case 293: {
+
+              rotationAlignmentDeltaDeg_ = input.readFloat();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000800) == 0x00000800)) {
+          points_ = java.util.Collections.unmodifiableList(points_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryChunk_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryChunk_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskTrajectoryChunk.class, sl_link.SlLink.TaskTrajectoryChunk.Builder.class);
+    }
+
+    private int bitField0_;
+    private int bitField1_;
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public sl_link.SlLink.ResultCode getResult() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object message_;
+    /**
+     * <code>string message = 2;</code>
+     */
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int EXECUTION_ID_FIELD_NUMBER = 3;
+    private volatile java.lang.Object executionId_;
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    public java.lang.String getExecutionId() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        executionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getExecutionIdBytes() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        executionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CHUNK_INDEX_FIELD_NUMBER = 4;
+    private int chunkIndex_;
+    /**
+     * <code>uint32 chunk_index = 4;</code>
+     */
+    public int getChunkIndex() {
+      return chunkIndex_;
+    }
+
+    public static final int TOTAL_CHUNKS_FIELD_NUMBER = 5;
+    private int totalChunks_;
+    /**
+     * <code>uint32 total_chunks = 5;</code>
+     */
+    public int getTotalChunks() {
+      return totalChunks_;
+    }
+
+    public static final int TOTAL_POINT_COUNT_FIELD_NUMBER = 6;
+    private int totalPointCount_;
+    /**
+     * <code>uint32 total_point_count = 6;</code>
+     */
+    public int getTotalPointCount() {
+      return totalPointCount_;
+    }
+
+    public static final int RETURNED_POINT_COUNT_FIELD_NUMBER = 7;
+    private int returnedPointCount_;
+    /**
+     * <code>uint32 returned_point_count = 7;</code>
+     */
+    public int getReturnedPointCount() {
+      return returnedPointCount_;
+    }
+
+    public static final int START_INDEX_FIELD_NUMBER = 8;
+    private int startIndex_;
+    /**
+     * <code>uint32 start_index = 8;</code>
+     */
+    public int getStartIndex() {
+      return startIndex_;
+    }
+
+    public static final int NEXT_INDEX_FIELD_NUMBER = 9;
+    private int nextIndex_;
+    /**
+     * <code>uint32 next_index = 9;</code>
+     */
+    public int getNextIndex() {
+      return nextIndex_;
+    }
+
+    public static final int HAS_MORE_FIELD_NUMBER = 10;
+    private boolean hasMore_;
+    /**
+     * <code>bool has_more = 10;</code>
+     */
+    public boolean getHasMore() {
+      return hasMore_;
+    }
+
+    public static final int STARTED_AT_MS_FIELD_NUMBER = 11;
+    private long startedAtMs_;
+    /**
+     * <code>uint64 started_at_ms = 11;</code>
+     */
+    public long getStartedAtMs() {
+      return startedAtMs_;
+    }
+
+    public static final int POINTS_FIELD_NUMBER = 12;
+    private java.util.List<sl_link.SlLink.TaskTrajectoryPoint> points_;
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    public java.util.List<sl_link.SlLink.TaskTrajectoryPoint> getPointsList() {
+      return points_;
+    }
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.TaskTrajectoryPointOrBuilder> 
+        getPointsOrBuilderList() {
+      return points_;
+    }
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    public int getPointsCount() {
+      return points_.size();
+    }
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    public sl_link.SlLink.TaskTrajectoryPoint getPoints(int index) {
+      return points_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+     */
+    public sl_link.SlLink.TaskTrajectoryPointOrBuilder getPointsOrBuilder(
+        int index) {
+      return points_.get(index);
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 13;
+    private volatile java.lang.Object taskId_;
+    /**
+     * <code>string task_id = 13;</code>
+     */
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 13;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 14;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <code>string map_id = 14;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_id = 14;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int START_TIME_FIELD_NUMBER = 15;
+    private long startTime_;
+    /**
+     * <code>uint64 start_time = 15;</code>
+     */
+    public long getStartTime() {
+      return startTime_;
+    }
+
+    public static final int END_TIME_FIELD_NUMBER = 16;
+    private long endTime_;
+    /**
+     * <code>uint64 end_time = 16;</code>
+     */
+    public long getEndTime() {
+      return endTime_;
+    }
+
+    public static final int SAMPLE_STEP_FIELD_NUMBER = 17;
+    private int sampleStep_;
+    /**
+     * <code>uint32 sample_step = 17;</code>
+     */
+    public int getSampleStep() {
+      return sampleStep_;
+    }
+
+    public static final int MAP_AVAILABLE_FIELD_NUMBER = 18;
+    private boolean mapAvailable_;
+    /**
+     * <code>bool map_available = 18;</code>
+     */
+    public boolean getMapAvailable() {
+      return mapAvailable_;
+    }
+
+    public static final int MAP_MESSAGE_FIELD_NUMBER = 19;
+    private volatile java.lang.Object mapMessage_;
+    /**
+     * <code>string map_message = 19;</code>
+     */
+    public java.lang.String getMapMessage() {
+      java.lang.Object ref = mapMessage_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapMessage_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_message = 19;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapMessageBytes() {
+      java.lang.Object ref = mapMessage_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapMessage_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_VERSION_FIELD_NUMBER = 20;
+    private int mapVersion_;
+    /**
+     * <code>uint32 map_version = 20;</code>
+     */
+    public int getMapVersion() {
+      return mapVersion_;
+    }
+
+    public static final int MAP_SOURCE_WIDTH_FIELD_NUMBER = 21;
+    private int mapSourceWidth_;
+    /**
+     * <pre>
+     * Source occupancy-grid dimensions before preview scaling.
+     * </pre>
+     *
+     * <code>uint32 map_source_width = 21;</code>
+     */
+    public int getMapSourceWidth() {
+      return mapSourceWidth_;
+    }
+
+    public static final int MAP_SOURCE_HEIGHT_FIELD_NUMBER = 22;
+    private int mapSourceHeight_;
+    /**
+     * <code>uint32 map_source_height = 22;</code>
+     */
+    public int getMapSourceHeight() {
+      return mapSourceHeight_;
+    }
+
+    public static final int MAP_RESOLUTION_FIELD_NUMBER = 23;
+    private float mapResolution_;
+    /**
+     * <code>float map_resolution = 23;</code>
+     */
+    public float getMapResolution() {
+      return mapResolution_;
+    }
+
+    public static final int MAP_ORIGIN_FIELD_NUMBER = 24;
+    private sl_link.SlLink.Pose2D mapOrigin_;
+    /**
+     * <code>.sl_link.Pose2D map_origin = 24;</code>
+     */
+    public boolean hasMapOrigin() {
+      return mapOrigin_ != null;
+    }
+    /**
+     * <code>.sl_link.Pose2D map_origin = 24;</code>
+     */
+    public sl_link.SlLink.Pose2D getMapOrigin() {
+      return mapOrigin_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : mapOrigin_;
+    }
+    /**
+     * <code>.sl_link.Pose2D map_origin = 24;</code>
+     */
+    public sl_link.SlLink.Pose2DOrBuilder getMapOriginOrBuilder() {
+      return getMapOrigin();
+    }
+
+    public static final int MAP_FRAME_ID_FIELD_NUMBER = 25;
+    private volatile java.lang.Object mapFrameId_;
+    /**
+     * <code>string map_frame_id = 25;</code>
+     */
+    public java.lang.String getMapFrameId() {
+      java.lang.Object ref = mapFrameId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapFrameId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_frame_id = 25;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapFrameIdBytes() {
+      java.lang.Object ref = mapFrameId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapFrameId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_IMAGE_FORMAT_FIELD_NUMBER = 26;
+    private volatile java.lang.Object mapImageFormat_;
+    /**
+     * <code>string map_image_format = 26;</code>
+     */
+    public java.lang.String getMapImageFormat() {
+      java.lang.Object ref = mapImageFormat_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapImageFormat_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_image_format = 26;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapImageFormatBytes() {
+      java.lang.Object ref = mapImageFormat_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapImageFormat_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_IMAGE_WIDTH_FIELD_NUMBER = 27;
+    private int mapImageWidth_;
+    /**
+     * <code>uint32 map_image_width = 27;</code>
+     */
+    public int getMapImageWidth() {
+      return mapImageWidth_;
+    }
+
+    public static final int MAP_IMAGE_HEIGHT_FIELD_NUMBER = 28;
+    private int mapImageHeight_;
+    /**
+     * <code>uint32 map_image_height = 28;</code>
+     */
+    public int getMapImageHeight() {
+      return mapImageHeight_;
+    }
+
+    public static final int MAP_PREVIEW_SCALE_X_FIELD_NUMBER = 29;
+    private float mapPreviewScaleX_;
+    /**
+     * <code>float map_preview_scale_x = 29;</code>
+     */
+    public float getMapPreviewScaleX() {
+      return mapPreviewScaleX_;
+    }
+
+    public static final int MAP_PREVIEW_SCALE_Y_FIELD_NUMBER = 30;
+    private float mapPreviewScaleY_;
+    /**
+     * <code>float map_preview_scale_y = 30;</code>
+     */
+    public float getMapPreviewScaleY() {
+      return mapPreviewScaleY_;
+    }
+
+    public static final int MAP_IMAGE_DATA_FIELD_NUMBER = 31;
+    private com.google.protobuf.ByteString mapImageData_;
+    /**
+     * <pre>
+     * Raw map preview without region/point/path overlays.
+     * </pre>
+     *
+     * <code>bytes map_image_data = 31;</code>
+     */
+    public com.google.protobuf.ByteString getMapImageData() {
+      return mapImageData_;
+    }
+
+    public static final int MAP_IMAGE_CHUNK_INDEX_FIELD_NUMBER = 32;
+    private int mapImageChunkIndex_;
+    /**
+     * <code>uint32 map_image_chunk_index = 32;</code>
+     */
+    public int getMapImageChunkIndex() {
+      return mapImageChunkIndex_;
+    }
+
+    public static final int MAP_IMAGE_TOTAL_CHUNKS_FIELD_NUMBER = 33;
+    private int mapImageTotalChunks_;
+    /**
+     * <code>uint32 map_image_total_chunks = 33;</code>
+     */
+    public int getMapImageTotalChunks() {
+      return mapImageTotalChunks_;
+    }
+
+    public static final int ALIGNMENT_YAW_DEG_FIELD_NUMBER = 34;
+    private float alignmentYawDeg_;
+    /**
+     * <code>float alignment_yaw_deg = 34;</code>
+     */
+    public float getAlignmentYawDeg() {
+      return alignmentYawDeg_;
+    }
+
+    public static final int APP_ROTATION_DEG_FIELD_NUMBER = 35;
+    private float appRotationDeg_;
+    /**
+     * <code>float app_rotation_deg = 35;</code>
+     */
+    public float getAppRotationDeg() {
+      return appRotationDeg_;
+    }
+
+    public static final int ROTATION_ALIGNMENT_DELTA_DEG_FIELD_NUMBER = 36;
+    private float rotationAlignmentDeltaDeg_;
+    /**
+     * <code>float rotation_alignment_delta_deg = 36;</code>
+     */
+    public float getRotationAlignmentDeltaDeg() {
+      return rotationAlignmentDeltaDeg_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        output.writeEnum(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      }
+      if (!getExecutionIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, executionId_);
+      }
+      if (chunkIndex_ != 0) {
+        output.writeUInt32(4, chunkIndex_);
+      }
+      if (totalChunks_ != 0) {
+        output.writeUInt32(5, totalChunks_);
+      }
+      if (totalPointCount_ != 0) {
+        output.writeUInt32(6, totalPointCount_);
+      }
+      if (returnedPointCount_ != 0) {
+        output.writeUInt32(7, returnedPointCount_);
+      }
+      if (startIndex_ != 0) {
+        output.writeUInt32(8, startIndex_);
+      }
+      if (nextIndex_ != 0) {
+        output.writeUInt32(9, nextIndex_);
+      }
+      if (hasMore_ != false) {
+        output.writeBool(10, hasMore_);
+      }
+      if (startedAtMs_ != 0L) {
+        output.writeUInt64(11, startedAtMs_);
+      }
+      for (int i = 0; i < points_.size(); i++) {
+        output.writeMessage(12, points_.get(i));
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 13, taskId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 14, mapId_);
+      }
+      if (startTime_ != 0L) {
+        output.writeUInt64(15, startTime_);
+      }
+      if (endTime_ != 0L) {
+        output.writeUInt64(16, endTime_);
+      }
+      if (sampleStep_ != 0) {
+        output.writeUInt32(17, sampleStep_);
+      }
+      if (mapAvailable_ != false) {
+        output.writeBool(18, mapAvailable_);
+      }
+      if (!getMapMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 19, mapMessage_);
+      }
+      if (mapVersion_ != 0) {
+        output.writeUInt32(20, mapVersion_);
+      }
+      if (mapSourceWidth_ != 0) {
+        output.writeUInt32(21, mapSourceWidth_);
+      }
+      if (mapSourceHeight_ != 0) {
+        output.writeUInt32(22, mapSourceHeight_);
+      }
+      if (mapResolution_ != 0F) {
+        output.writeFloat(23, mapResolution_);
+      }
+      if (mapOrigin_ != null) {
+        output.writeMessage(24, getMapOrigin());
+      }
+      if (!getMapFrameIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 25, mapFrameId_);
+      }
+      if (!getMapImageFormatBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 26, mapImageFormat_);
+      }
+      if (mapImageWidth_ != 0) {
+        output.writeUInt32(27, mapImageWidth_);
+      }
+      if (mapImageHeight_ != 0) {
+        output.writeUInt32(28, mapImageHeight_);
+      }
+      if (mapPreviewScaleX_ != 0F) {
+        output.writeFloat(29, mapPreviewScaleX_);
+      }
+      if (mapPreviewScaleY_ != 0F) {
+        output.writeFloat(30, mapPreviewScaleY_);
+      }
+      if (!mapImageData_.isEmpty()) {
+        output.writeBytes(31, mapImageData_);
+      }
+      if (mapImageChunkIndex_ != 0) {
+        output.writeUInt32(32, mapImageChunkIndex_);
+      }
+      if (mapImageTotalChunks_ != 0) {
+        output.writeUInt32(33, mapImageTotalChunks_);
+      }
+      if (alignmentYawDeg_ != 0F) {
+        output.writeFloat(34, alignmentYawDeg_);
+      }
+      if (appRotationDeg_ != 0F) {
+        output.writeFloat(35, appRotationDeg_);
+      }
+      if (rotationAlignmentDeltaDeg_ != 0F) {
+        output.writeFloat(36, rotationAlignmentDeltaDeg_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      }
+      if (!getExecutionIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, executionId_);
+      }
+      if (chunkIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(4, chunkIndex_);
+      }
+      if (totalChunks_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(5, totalChunks_);
+      }
+      if (totalPointCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(6, totalPointCount_);
+      }
+      if (returnedPointCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(7, returnedPointCount_);
+      }
+      if (startIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(8, startIndex_);
+      }
+      if (nextIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(9, nextIndex_);
+      }
+      if (hasMore_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(10, hasMore_);
+      }
+      if (startedAtMs_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(11, startedAtMs_);
+      }
+      for (int i = 0; i < points_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(12, points_.get(i));
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, taskId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(14, mapId_);
+      }
+      if (startTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(15, startTime_);
+      }
+      if (endTime_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(16, endTime_);
+      }
+      if (sampleStep_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(17, sampleStep_);
+      }
+      if (mapAvailable_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(18, mapAvailable_);
+      }
+      if (!getMapMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(19, mapMessage_);
+      }
+      if (mapVersion_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(20, mapVersion_);
+      }
+      if (mapSourceWidth_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(21, mapSourceWidth_);
+      }
+      if (mapSourceHeight_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(22, mapSourceHeight_);
+      }
+      if (mapResolution_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(23, mapResolution_);
+      }
+      if (mapOrigin_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(24, getMapOrigin());
+      }
+      if (!getMapFrameIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(25, mapFrameId_);
+      }
+      if (!getMapImageFormatBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(26, mapImageFormat_);
+      }
+      if (mapImageWidth_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(27, mapImageWidth_);
+      }
+      if (mapImageHeight_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(28, mapImageHeight_);
+      }
+      if (mapPreviewScaleX_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(29, mapPreviewScaleX_);
+      }
+      if (mapPreviewScaleY_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(30, mapPreviewScaleY_);
+      }
+      if (!mapImageData_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(31, mapImageData_);
+      }
+      if (mapImageChunkIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(32, mapImageChunkIndex_);
+      }
+      if (mapImageTotalChunks_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(33, mapImageTotalChunks_);
+      }
+      if (alignmentYawDeg_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(34, alignmentYawDeg_);
+      }
+      if (appRotationDeg_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(35, appRotationDeg_);
+      }
+      if (rotationAlignmentDeltaDeg_ != 0F) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(36, rotationAlignmentDeltaDeg_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskTrajectoryChunk)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskTrajectoryChunk other = (sl_link.SlLink.TaskTrajectoryChunk) obj;
+
+      boolean result = true;
+      result = result && result_ == other.result_;
+      result = result && getMessage()
+          .equals(other.getMessage());
+      result = result && getExecutionId()
+          .equals(other.getExecutionId());
+      result = result && (getChunkIndex()
+          == other.getChunkIndex());
+      result = result && (getTotalChunks()
+          == other.getTotalChunks());
+      result = result && (getTotalPointCount()
+          == other.getTotalPointCount());
+      result = result && (getReturnedPointCount()
+          == other.getReturnedPointCount());
+      result = result && (getStartIndex()
+          == other.getStartIndex());
+      result = result && (getNextIndex()
+          == other.getNextIndex());
+      result = result && (getHasMore()
+          == other.getHasMore());
+      result = result && (getStartedAtMs()
+          == other.getStartedAtMs());
+      result = result && getPointsList()
+          .equals(other.getPointsList());
+      result = result && getTaskId()
+          .equals(other.getTaskId());
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && (getStartTime()
+          == other.getStartTime());
+      result = result && (getEndTime()
+          == other.getEndTime());
+      result = result && (getSampleStep()
+          == other.getSampleStep());
+      result = result && (getMapAvailable()
+          == other.getMapAvailable());
+      result = result && getMapMessage()
+          .equals(other.getMapMessage());
+      result = result && (getMapVersion()
+          == other.getMapVersion());
+      result = result && (getMapSourceWidth()
+          == other.getMapSourceWidth());
+      result = result && (getMapSourceHeight()
+          == other.getMapSourceHeight());
+      result = result && (
+          java.lang.Float.floatToIntBits(getMapResolution())
+          == java.lang.Float.floatToIntBits(
+              other.getMapResolution()));
+      result = result && (hasMapOrigin() == other.hasMapOrigin());
+      if (hasMapOrigin()) {
+        result = result && getMapOrigin()
+            .equals(other.getMapOrigin());
+      }
+      result = result && getMapFrameId()
+          .equals(other.getMapFrameId());
+      result = result && getMapImageFormat()
+          .equals(other.getMapImageFormat());
+      result = result && (getMapImageWidth()
+          == other.getMapImageWidth());
+      result = result && (getMapImageHeight()
+          == other.getMapImageHeight());
+      result = result && (
+          java.lang.Float.floatToIntBits(getMapPreviewScaleX())
+          == java.lang.Float.floatToIntBits(
+              other.getMapPreviewScaleX()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getMapPreviewScaleY())
+          == java.lang.Float.floatToIntBits(
+              other.getMapPreviewScaleY()));
+      result = result && getMapImageData()
+          .equals(other.getMapImageData());
+      result = result && (getMapImageChunkIndex()
+          == other.getMapImageChunkIndex());
+      result = result && (getMapImageTotalChunks()
+          == other.getMapImageTotalChunks());
+      result = result && (
+          java.lang.Float.floatToIntBits(getAlignmentYawDeg())
+          == java.lang.Float.floatToIntBits(
+              other.getAlignmentYawDeg()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getAppRotationDeg())
+          == java.lang.Float.floatToIntBits(
+              other.getAppRotationDeg()));
+      result = result && (
+          java.lang.Float.floatToIntBits(getRotationAlignmentDeltaDeg())
+          == java.lang.Float.floatToIntBits(
+              other.getRotationAlignmentDeltaDeg()));
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + result_;
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + EXECUTION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getExecutionId().hashCode();
+      hash = (37 * hash) + CHUNK_INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getChunkIndex();
+      hash = (37 * hash) + TOTAL_CHUNKS_FIELD_NUMBER;
+      hash = (53 * hash) + getTotalChunks();
+      hash = (37 * hash) + TOTAL_POINT_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getTotalPointCount();
+      hash = (37 * hash) + RETURNED_POINT_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getReturnedPointCount();
+      hash = (37 * hash) + START_INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getStartIndex();
+      hash = (37 * hash) + NEXT_INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getNextIndex();
+      hash = (37 * hash) + HAS_MORE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getHasMore());
+      hash = (37 * hash) + STARTED_AT_MS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartedAtMs());
+      if (getPointsCount() > 0) {
+        hash = (37 * hash) + POINTS_FIELD_NUMBER;
+        hash = (53 * hash) + getPointsList().hashCode();
+      }
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (37 * hash) + START_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getStartTime());
+      hash = (37 * hash) + END_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getEndTime());
+      hash = (37 * hash) + SAMPLE_STEP_FIELD_NUMBER;
+      hash = (53 * hash) + getSampleStep();
+      hash = (37 * hash) + MAP_AVAILABLE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getMapAvailable());
+      hash = (37 * hash) + MAP_MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMapMessage().hashCode();
+      hash = (37 * hash) + MAP_VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getMapVersion();
+      hash = (37 * hash) + MAP_SOURCE_WIDTH_FIELD_NUMBER;
+      hash = (53 * hash) + getMapSourceWidth();
+      hash = (37 * hash) + MAP_SOURCE_HEIGHT_FIELD_NUMBER;
+      hash = (53 * hash) + getMapSourceHeight();
+      hash = (37 * hash) + MAP_RESOLUTION_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getMapResolution());
+      if (hasMapOrigin()) {
+        hash = (37 * hash) + MAP_ORIGIN_FIELD_NUMBER;
+        hash = (53 * hash) + getMapOrigin().hashCode();
+      }
+      hash = (37 * hash) + MAP_FRAME_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapFrameId().hashCode();
+      hash = (37 * hash) + MAP_IMAGE_FORMAT_FIELD_NUMBER;
+      hash = (53 * hash) + getMapImageFormat().hashCode();
+      hash = (37 * hash) + MAP_IMAGE_WIDTH_FIELD_NUMBER;
+      hash = (53 * hash) + getMapImageWidth();
+      hash = (37 * hash) + MAP_IMAGE_HEIGHT_FIELD_NUMBER;
+      hash = (53 * hash) + getMapImageHeight();
+      hash = (37 * hash) + MAP_PREVIEW_SCALE_X_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getMapPreviewScaleX());
+      hash = (37 * hash) + MAP_PREVIEW_SCALE_Y_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getMapPreviewScaleY());
+      hash = (37 * hash) + MAP_IMAGE_DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getMapImageData().hashCode();
+      hash = (37 * hash) + MAP_IMAGE_CHUNK_INDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getMapImageChunkIndex();
+      hash = (37 * hash) + MAP_IMAGE_TOTAL_CHUNKS_FIELD_NUMBER;
+      hash = (53 * hash) + getMapImageTotalChunks();
+      hash = (37 * hash) + ALIGNMENT_YAW_DEG_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getAlignmentYawDeg());
+      hash = (37 * hash) + APP_ROTATION_DEG_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getAppRotationDeg());
+      hash = (37 * hash) + ROTATION_ALIGNMENT_DELTA_DEG_FIELD_NUMBER;
+      hash = (53 * hash) + java.lang.Float.floatToIntBits(
+          getRotationAlignmentDeltaDeg());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskTrajectoryChunk parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskTrajectoryChunk prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskTrajectoryChunk}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskTrajectoryChunk)
+        sl_link.SlLink.TaskTrajectoryChunkOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryChunk_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryChunk_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskTrajectoryChunk.class, sl_link.SlLink.TaskTrajectoryChunk.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskTrajectoryChunk.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getPointsFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        result_ = 0;
+
+        message_ = "";
+
+        executionId_ = "";
+
+        chunkIndex_ = 0;
+
+        totalChunks_ = 0;
+
+        totalPointCount_ = 0;
+
+        returnedPointCount_ = 0;
+
+        startIndex_ = 0;
+
+        nextIndex_ = 0;
+
+        hasMore_ = false;
+
+        startedAtMs_ = 0L;
+
+        if (pointsBuilder_ == null) {
+          points_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000800);
+        } else {
+          pointsBuilder_.clear();
+        }
+        taskId_ = "";
+
+        mapId_ = "";
+
+        startTime_ = 0L;
+
+        endTime_ = 0L;
+
+        sampleStep_ = 0;
+
+        mapAvailable_ = false;
+
+        mapMessage_ = "";
+
+        mapVersion_ = 0;
+
+        mapSourceWidth_ = 0;
+
+        mapSourceHeight_ = 0;
+
+        mapResolution_ = 0F;
+
+        if (mapOriginBuilder_ == null) {
+          mapOrigin_ = null;
+        } else {
+          mapOrigin_ = null;
+          mapOriginBuilder_ = null;
+        }
+        mapFrameId_ = "";
+
+        mapImageFormat_ = "";
+
+        mapImageWidth_ = 0;
+
+        mapImageHeight_ = 0;
+
+        mapPreviewScaleX_ = 0F;
+
+        mapPreviewScaleY_ = 0F;
+
+        mapImageData_ = com.google.protobuf.ByteString.EMPTY;
+
+        mapImageChunkIndex_ = 0;
+
+        mapImageTotalChunks_ = 0;
+
+        alignmentYawDeg_ = 0F;
+
+        appRotationDeg_ = 0F;
+
+        rotationAlignmentDeltaDeg_ = 0F;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskTrajectoryChunk_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryChunk getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskTrajectoryChunk.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryChunk build() {
+        sl_link.SlLink.TaskTrajectoryChunk result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskTrajectoryChunk buildPartial() {
+        sl_link.SlLink.TaskTrajectoryChunk result = new sl_link.SlLink.TaskTrajectoryChunk(this);
+        int from_bitField0_ = bitField0_;
+        int from_bitField1_ = bitField1_;
+        int to_bitField0_ = 0;
+        int to_bitField1_ = 0;
+        result.result_ = result_;
+        result.message_ = message_;
+        result.executionId_ = executionId_;
+        result.chunkIndex_ = chunkIndex_;
+        result.totalChunks_ = totalChunks_;
+        result.totalPointCount_ = totalPointCount_;
+        result.returnedPointCount_ = returnedPointCount_;
+        result.startIndex_ = startIndex_;
+        result.nextIndex_ = nextIndex_;
+        result.hasMore_ = hasMore_;
+        result.startedAtMs_ = startedAtMs_;
+        if (pointsBuilder_ == null) {
+          if (((bitField0_ & 0x00000800) == 0x00000800)) {
+            points_ = java.util.Collections.unmodifiableList(points_);
+            bitField0_ = (bitField0_ & ~0x00000800);
+          }
+          result.points_ = points_;
+        } else {
+          result.points_ = pointsBuilder_.build();
+        }
+        result.taskId_ = taskId_;
+        result.mapId_ = mapId_;
+        result.startTime_ = startTime_;
+        result.endTime_ = endTime_;
+        result.sampleStep_ = sampleStep_;
+        result.mapAvailable_ = mapAvailable_;
+        result.mapMessage_ = mapMessage_;
+        result.mapVersion_ = mapVersion_;
+        result.mapSourceWidth_ = mapSourceWidth_;
+        result.mapSourceHeight_ = mapSourceHeight_;
+        result.mapResolution_ = mapResolution_;
+        if (mapOriginBuilder_ == null) {
+          result.mapOrigin_ = mapOrigin_;
+        } else {
+          result.mapOrigin_ = mapOriginBuilder_.build();
+        }
+        result.mapFrameId_ = mapFrameId_;
+        result.mapImageFormat_ = mapImageFormat_;
+        result.mapImageWidth_ = mapImageWidth_;
+        result.mapImageHeight_ = mapImageHeight_;
+        result.mapPreviewScaleX_ = mapPreviewScaleX_;
+        result.mapPreviewScaleY_ = mapPreviewScaleY_;
+        result.mapImageData_ = mapImageData_;
+        result.mapImageChunkIndex_ = mapImageChunkIndex_;
+        result.mapImageTotalChunks_ = mapImageTotalChunks_;
+        result.alignmentYawDeg_ = alignmentYawDeg_;
+        result.appRotationDeg_ = appRotationDeg_;
+        result.rotationAlignmentDeltaDeg_ = rotationAlignmentDeltaDeg_;
+        result.bitField0_ = to_bitField0_;
+        result.bitField1_ = to_bitField1_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskTrajectoryChunk) {
+          return mergeFrom((sl_link.SlLink.TaskTrajectoryChunk)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskTrajectoryChunk other) {
+        if (other == sl_link.SlLink.TaskTrajectoryChunk.getDefaultInstance()) return this;
+        if (other.result_ != 0) {
+          setResultValue(other.getResultValue());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          onChanged();
+        }
+        if (!other.getExecutionId().isEmpty()) {
+          executionId_ = other.executionId_;
+          onChanged();
+        }
+        if (other.getChunkIndex() != 0) {
+          setChunkIndex(other.getChunkIndex());
+        }
+        if (other.getTotalChunks() != 0) {
+          setTotalChunks(other.getTotalChunks());
+        }
+        if (other.getTotalPointCount() != 0) {
+          setTotalPointCount(other.getTotalPointCount());
+        }
+        if (other.getReturnedPointCount() != 0) {
+          setReturnedPointCount(other.getReturnedPointCount());
+        }
+        if (other.getStartIndex() != 0) {
+          setStartIndex(other.getStartIndex());
+        }
+        if (other.getNextIndex() != 0) {
+          setNextIndex(other.getNextIndex());
+        }
+        if (other.getHasMore() != false) {
+          setHasMore(other.getHasMore());
+        }
+        if (other.getStartedAtMs() != 0L) {
+          setStartedAtMs(other.getStartedAtMs());
+        }
+        if (pointsBuilder_ == null) {
+          if (!other.points_.isEmpty()) {
+            if (points_.isEmpty()) {
+              points_ = other.points_;
+              bitField0_ = (bitField0_ & ~0x00000800);
+            } else {
+              ensurePointsIsMutable();
+              points_.addAll(other.points_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.points_.isEmpty()) {
+            if (pointsBuilder_.isEmpty()) {
+              pointsBuilder_.dispose();
+              pointsBuilder_ = null;
+              points_ = other.points_;
+              bitField0_ = (bitField0_ & ~0x00000800);
+              pointsBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getPointsFieldBuilder() : null;
+            } else {
+              pointsBuilder_.addAllMessages(other.points_);
+            }
+          }
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          onChanged();
+        }
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        if (other.getStartTime() != 0L) {
+          setStartTime(other.getStartTime());
+        }
+        if (other.getEndTime() != 0L) {
+          setEndTime(other.getEndTime());
+        }
+        if (other.getSampleStep() != 0) {
+          setSampleStep(other.getSampleStep());
+        }
+        if (other.getMapAvailable() != false) {
+          setMapAvailable(other.getMapAvailable());
+        }
+        if (!other.getMapMessage().isEmpty()) {
+          mapMessage_ = other.mapMessage_;
+          onChanged();
+        }
+        if (other.getMapVersion() != 0) {
+          setMapVersion(other.getMapVersion());
+        }
+        if (other.getMapSourceWidth() != 0) {
+          setMapSourceWidth(other.getMapSourceWidth());
+        }
+        if (other.getMapSourceHeight() != 0) {
+          setMapSourceHeight(other.getMapSourceHeight());
+        }
+        if (other.getMapResolution() != 0F) {
+          setMapResolution(other.getMapResolution());
+        }
+        if (other.hasMapOrigin()) {
+          mergeMapOrigin(other.getMapOrigin());
+        }
+        if (!other.getMapFrameId().isEmpty()) {
+          mapFrameId_ = other.mapFrameId_;
+          onChanged();
+        }
+        if (!other.getMapImageFormat().isEmpty()) {
+          mapImageFormat_ = other.mapImageFormat_;
+          onChanged();
+        }
+        if (other.getMapImageWidth() != 0) {
+          setMapImageWidth(other.getMapImageWidth());
+        }
+        if (other.getMapImageHeight() != 0) {
+          setMapImageHeight(other.getMapImageHeight());
+        }
+        if (other.getMapPreviewScaleX() != 0F) {
+          setMapPreviewScaleX(other.getMapPreviewScaleX());
+        }
+        if (other.getMapPreviewScaleY() != 0F) {
+          setMapPreviewScaleY(other.getMapPreviewScaleY());
+        }
+        if (other.getMapImageData() != com.google.protobuf.ByteString.EMPTY) {
+          setMapImageData(other.getMapImageData());
+        }
+        if (other.getMapImageChunkIndex() != 0) {
+          setMapImageChunkIndex(other.getMapImageChunkIndex());
+        }
+        if (other.getMapImageTotalChunks() != 0) {
+          setMapImageTotalChunks(other.getMapImageTotalChunks());
+        }
+        if (other.getAlignmentYawDeg() != 0F) {
+          setAlignmentYawDeg(other.getAlignmentYawDeg());
+        }
+        if (other.getAppRotationDeg() != 0F) {
+          setAppRotationDeg(other.getAppRotationDeg());
+        }
+        if (other.getRotationAlignmentDeltaDeg() != 0F) {
+          setRotationAlignmentDeltaDeg(other.getRotationAlignmentDeltaDeg());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskTrajectoryChunk parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskTrajectoryChunk) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+      private int bitField1_;
+
+      private int result_ = 0;
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public int getResultValue() {
+        return result_;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResultValue(int value) {
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public sl_link.SlLink.ResultCode getResult() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+        return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        result_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 2;</code>
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        message_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder clearMessage() {
+        
+        message_ = getDefaultInstance().getMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        message_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object executionId_ = "";
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public java.lang.String getExecutionId() {
+        java.lang.Object ref = executionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          executionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getExecutionIdBytes() {
+        java.lang.Object ref = executionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          executionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public Builder setExecutionId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public Builder clearExecutionId() {
+        
+        executionId_ = getDefaultInstance().getExecutionId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public Builder setExecutionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int chunkIndex_ ;
+      /**
+       * <code>uint32 chunk_index = 4;</code>
+       */
+      public int getChunkIndex() {
+        return chunkIndex_;
+      }
+      /**
+       * <code>uint32 chunk_index = 4;</code>
+       */
+      public Builder setChunkIndex(int value) {
+        
+        chunkIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 chunk_index = 4;</code>
+       */
+      public Builder clearChunkIndex() {
+        
+        chunkIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int totalChunks_ ;
+      /**
+       * <code>uint32 total_chunks = 5;</code>
+       */
+      public int getTotalChunks() {
+        return totalChunks_;
+      }
+      /**
+       * <code>uint32 total_chunks = 5;</code>
+       */
+      public Builder setTotalChunks(int value) {
+        
+        totalChunks_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 total_chunks = 5;</code>
+       */
+      public Builder clearTotalChunks() {
+        
+        totalChunks_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int totalPointCount_ ;
+      /**
+       * <code>uint32 total_point_count = 6;</code>
+       */
+      public int getTotalPointCount() {
+        return totalPointCount_;
+      }
+      /**
+       * <code>uint32 total_point_count = 6;</code>
+       */
+      public Builder setTotalPointCount(int value) {
+        
+        totalPointCount_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 total_point_count = 6;</code>
+       */
+      public Builder clearTotalPointCount() {
+        
+        totalPointCount_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int returnedPointCount_ ;
+      /**
+       * <code>uint32 returned_point_count = 7;</code>
+       */
+      public int getReturnedPointCount() {
+        return returnedPointCount_;
+      }
+      /**
+       * <code>uint32 returned_point_count = 7;</code>
+       */
+      public Builder setReturnedPointCount(int value) {
+        
+        returnedPointCount_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 returned_point_count = 7;</code>
+       */
+      public Builder clearReturnedPointCount() {
+        
+        returnedPointCount_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int startIndex_ ;
+      /**
+       * <code>uint32 start_index = 8;</code>
+       */
+      public int getStartIndex() {
+        return startIndex_;
+      }
+      /**
+       * <code>uint32 start_index = 8;</code>
+       */
+      public Builder setStartIndex(int value) {
+        
+        startIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 start_index = 8;</code>
+       */
+      public Builder clearStartIndex() {
+        
+        startIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int nextIndex_ ;
+      /**
+       * <code>uint32 next_index = 9;</code>
+       */
+      public int getNextIndex() {
+        return nextIndex_;
+      }
+      /**
+       * <code>uint32 next_index = 9;</code>
+       */
+      public Builder setNextIndex(int value) {
+        
+        nextIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 next_index = 9;</code>
+       */
+      public Builder clearNextIndex() {
+        
+        nextIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private boolean hasMore_ ;
+      /**
+       * <code>bool has_more = 10;</code>
+       */
+      public boolean getHasMore() {
+        return hasMore_;
+      }
+      /**
+       * <code>bool has_more = 10;</code>
+       */
+      public Builder setHasMore(boolean value) {
+        
+        hasMore_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool has_more = 10;</code>
+       */
+      public Builder clearHasMore() {
+        
+        hasMore_ = false;
+        onChanged();
+        return this;
+      }
+
+      private long startedAtMs_ ;
+      /**
+       * <code>uint64 started_at_ms = 11;</code>
+       */
+      public long getStartedAtMs() {
+        return startedAtMs_;
+      }
+      /**
+       * <code>uint64 started_at_ms = 11;</code>
+       */
+      public Builder setStartedAtMs(long value) {
+        
+        startedAtMs_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 started_at_ms = 11;</code>
+       */
+      public Builder clearStartedAtMs() {
+        
+        startedAtMs_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private java.util.List<sl_link.SlLink.TaskTrajectoryPoint> points_ =
+        java.util.Collections.emptyList();
+      private void ensurePointsIsMutable() {
+        if (!((bitField0_ & 0x00000800) == 0x00000800)) {
+          points_ = new java.util.ArrayList<sl_link.SlLink.TaskTrajectoryPoint>(points_);
+          bitField0_ |= 0x00000800;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.TaskTrajectoryPoint, sl_link.SlLink.TaskTrajectoryPoint.Builder, sl_link.SlLink.TaskTrajectoryPointOrBuilder> pointsBuilder_;
+
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public java.util.List<sl_link.SlLink.TaskTrajectoryPoint> getPointsList() {
+        if (pointsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(points_);
+        } else {
+          return pointsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public int getPointsCount() {
+        if (pointsBuilder_ == null) {
+          return points_.size();
+        } else {
+          return pointsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public sl_link.SlLink.TaskTrajectoryPoint getPoints(int index) {
+        if (pointsBuilder_ == null) {
+          return points_.get(index);
+        } else {
+          return pointsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder setPoints(
+          int index, sl_link.SlLink.TaskTrajectoryPoint value) {
+        if (pointsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensurePointsIsMutable();
+          points_.set(index, value);
+          onChanged();
+        } else {
+          pointsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder setPoints(
+          int index, sl_link.SlLink.TaskTrajectoryPoint.Builder builderForValue) {
+        if (pointsBuilder_ == null) {
+          ensurePointsIsMutable();
+          points_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          pointsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder addPoints(sl_link.SlLink.TaskTrajectoryPoint value) {
+        if (pointsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensurePointsIsMutable();
+          points_.add(value);
+          onChanged();
+        } else {
+          pointsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder addPoints(
+          int index, sl_link.SlLink.TaskTrajectoryPoint value) {
+        if (pointsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensurePointsIsMutable();
+          points_.add(index, value);
+          onChanged();
+        } else {
+          pointsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder addPoints(
+          sl_link.SlLink.TaskTrajectoryPoint.Builder builderForValue) {
+        if (pointsBuilder_ == null) {
+          ensurePointsIsMutable();
+          points_.add(builderForValue.build());
+          onChanged();
+        } else {
+          pointsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder addPoints(
+          int index, sl_link.SlLink.TaskTrajectoryPoint.Builder builderForValue) {
+        if (pointsBuilder_ == null) {
+          ensurePointsIsMutable();
+          points_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          pointsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder addAllPoints(
+          java.lang.Iterable<? extends sl_link.SlLink.TaskTrajectoryPoint> values) {
+        if (pointsBuilder_ == null) {
+          ensurePointsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, points_);
+          onChanged();
+        } else {
+          pointsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder clearPoints() {
+        if (pointsBuilder_ == null) {
+          points_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000800);
+          onChanged();
+        } else {
+          pointsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public Builder removePoints(int index) {
+        if (pointsBuilder_ == null) {
+          ensurePointsIsMutable();
+          points_.remove(index);
+          onChanged();
+        } else {
+          pointsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public sl_link.SlLink.TaskTrajectoryPoint.Builder getPointsBuilder(
+          int index) {
+        return getPointsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public sl_link.SlLink.TaskTrajectoryPointOrBuilder getPointsOrBuilder(
+          int index) {
+        if (pointsBuilder_ == null) {
+          return points_.get(index);  } else {
+          return pointsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public java.util.List<? extends sl_link.SlLink.TaskTrajectoryPointOrBuilder> 
+           getPointsOrBuilderList() {
+        if (pointsBuilder_ != null) {
+          return pointsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(points_);
+        }
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public sl_link.SlLink.TaskTrajectoryPoint.Builder addPointsBuilder() {
+        return getPointsFieldBuilder().addBuilder(
+            sl_link.SlLink.TaskTrajectoryPoint.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public sl_link.SlLink.TaskTrajectoryPoint.Builder addPointsBuilder(
+          int index) {
+        return getPointsFieldBuilder().addBuilder(
+            index, sl_link.SlLink.TaskTrajectoryPoint.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
+       */
+      public java.util.List<sl_link.SlLink.TaskTrajectoryPoint.Builder> 
+           getPointsBuilderList() {
+        return getPointsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          sl_link.SlLink.TaskTrajectoryPoint, sl_link.SlLink.TaskTrajectoryPoint.Builder, sl_link.SlLink.TaskTrajectoryPointOrBuilder> 
+          getPointsFieldBuilder() {
+        if (pointsBuilder_ == null) {
+          pointsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              sl_link.SlLink.TaskTrajectoryPoint, sl_link.SlLink.TaskTrajectoryPoint.Builder, sl_link.SlLink.TaskTrajectoryPointOrBuilder>(
+                  points_,
+                  ((bitField0_ & 0x00000800) == 0x00000800),
+                  getParentForChildren(),
+                  isClean());
+          points_ = null;
+        }
+        return pointsBuilder_;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 13;</code>
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 13;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 13;</code>
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 13;</code>
+       */
+      public Builder clearTaskId() {
+        
+        taskId_ = getDefaultInstance().getTaskId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 13;</code>
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <code>string map_id = 14;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 14;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 14;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 14;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 14;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long startTime_ ;
+      /**
+       * <code>uint64 start_time = 15;</code>
+       */
+      public long getStartTime() {
+        return startTime_;
+      }
+      /**
+       * <code>uint64 start_time = 15;</code>
+       */
+      public Builder setStartTime(long value) {
+        
+        startTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 start_time = 15;</code>
+       */
+      public Builder clearStartTime() {
+        
+        startTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long endTime_ ;
+      /**
+       * <code>uint64 end_time = 16;</code>
+       */
+      public long getEndTime() {
+        return endTime_;
+      }
+      /**
+       * <code>uint64 end_time = 16;</code>
+       */
+      public Builder setEndTime(long value) {
+        
+        endTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 end_time = 16;</code>
+       */
+      public Builder clearEndTime() {
+        
+        endTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int sampleStep_ ;
+      /**
+       * <code>uint32 sample_step = 17;</code>
+       */
+      public int getSampleStep() {
+        return sampleStep_;
+      }
+      /**
+       * <code>uint32 sample_step = 17;</code>
+       */
+      public Builder setSampleStep(int value) {
+        
+        sampleStep_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 sample_step = 17;</code>
+       */
+      public Builder clearSampleStep() {
+        
+        sampleStep_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private boolean mapAvailable_ ;
+      /**
+       * <code>bool map_available = 18;</code>
+       */
+      public boolean getMapAvailable() {
+        return mapAvailable_;
+      }
+      /**
+       * <code>bool map_available = 18;</code>
+       */
+      public Builder setMapAvailable(boolean value) {
+        
+        mapAvailable_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool map_available = 18;</code>
+       */
+      public Builder clearMapAvailable() {
+        
+        mapAvailable_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapMessage_ = "";
+      /**
+       * <code>string map_message = 19;</code>
+       */
+      public java.lang.String getMapMessage() {
+        java.lang.Object ref = mapMessage_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapMessage_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_message = 19;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapMessageBytes() {
+        java.lang.Object ref = mapMessage_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapMessage_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_message = 19;</code>
+       */
+      public Builder setMapMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapMessage_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_message = 19;</code>
+       */
+      public Builder clearMapMessage() {
+        
+        mapMessage_ = getDefaultInstance().getMapMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_message = 19;</code>
+       */
+      public Builder setMapMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapMessage_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int mapVersion_ ;
+      /**
+       * <code>uint32 map_version = 20;</code>
+       */
+      public int getMapVersion() {
+        return mapVersion_;
+      }
+      /**
+       * <code>uint32 map_version = 20;</code>
+       */
+      public Builder setMapVersion(int value) {
+        
+        mapVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_version = 20;</code>
+       */
+      public Builder clearMapVersion() {
+        
+        mapVersion_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int mapSourceWidth_ ;
+      /**
+       * <pre>
+       * Source occupancy-grid dimensions before preview scaling.
+       * </pre>
+       *
+       * <code>uint32 map_source_width = 21;</code>
+       */
+      public int getMapSourceWidth() {
+        return mapSourceWidth_;
+      }
+      /**
+       * <pre>
+       * Source occupancy-grid dimensions before preview scaling.
+       * </pre>
+       *
+       * <code>uint32 map_source_width = 21;</code>
+       */
+      public Builder setMapSourceWidth(int value) {
+        
+        mapSourceWidth_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Source occupancy-grid dimensions before preview scaling.
+       * </pre>
+       *
+       * <code>uint32 map_source_width = 21;</code>
+       */
+      public Builder clearMapSourceWidth() {
+        
+        mapSourceWidth_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int mapSourceHeight_ ;
+      /**
+       * <code>uint32 map_source_height = 22;</code>
+       */
+      public int getMapSourceHeight() {
+        return mapSourceHeight_;
+      }
+      /**
+       * <code>uint32 map_source_height = 22;</code>
+       */
+      public Builder setMapSourceHeight(int value) {
+        
+        mapSourceHeight_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_source_height = 22;</code>
+       */
+      public Builder clearMapSourceHeight() {
+        
+        mapSourceHeight_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private float mapResolution_ ;
+      /**
+       * <code>float map_resolution = 23;</code>
+       */
+      public float getMapResolution() {
+        return mapResolution_;
+      }
+      /**
+       * <code>float map_resolution = 23;</code>
+       */
+      public Builder setMapResolution(float value) {
+        
+        mapResolution_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float map_resolution = 23;</code>
+       */
+      public Builder clearMapResolution() {
+        
+        mapResolution_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private sl_link.SlLink.Pose2D mapOrigin_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> mapOriginBuilder_;
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public boolean hasMapOrigin() {
+        return mapOriginBuilder_ != null || mapOrigin_ != null;
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public sl_link.SlLink.Pose2D getMapOrigin() {
+        if (mapOriginBuilder_ == null) {
+          return mapOrigin_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : mapOrigin_;
+        } else {
+          return mapOriginBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public Builder setMapOrigin(sl_link.SlLink.Pose2D value) {
+        if (mapOriginBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          mapOrigin_ = value;
+          onChanged();
+        } else {
+          mapOriginBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public Builder setMapOrigin(
+          sl_link.SlLink.Pose2D.Builder builderForValue) {
+        if (mapOriginBuilder_ == null) {
+          mapOrigin_ = builderForValue.build();
+          onChanged();
+        } else {
+          mapOriginBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public Builder mergeMapOrigin(sl_link.SlLink.Pose2D value) {
+        if (mapOriginBuilder_ == null) {
+          if (mapOrigin_ != null) {
+            mapOrigin_ =
+              sl_link.SlLink.Pose2D.newBuilder(mapOrigin_).mergeFrom(value).buildPartial();
+          } else {
+            mapOrigin_ = value;
+          }
+          onChanged();
+        } else {
+          mapOriginBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public Builder clearMapOrigin() {
+        if (mapOriginBuilder_ == null) {
+          mapOrigin_ = null;
+          onChanged();
+        } else {
+          mapOrigin_ = null;
+          mapOriginBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public sl_link.SlLink.Pose2D.Builder getMapOriginBuilder() {
+        
+        onChanged();
+        return getMapOriginFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      public sl_link.SlLink.Pose2DOrBuilder getMapOriginOrBuilder() {
+        if (mapOriginBuilder_ != null) {
+          return mapOriginBuilder_.getMessageOrBuilder();
+        } else {
+          return mapOrigin_ == null ?
+              sl_link.SlLink.Pose2D.getDefaultInstance() : mapOrigin_;
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D map_origin = 24;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> 
+          getMapOriginFieldBuilder() {
+        if (mapOriginBuilder_ == null) {
+          mapOriginBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>(
+                  getMapOrigin(),
+                  getParentForChildren(),
+                  isClean());
+          mapOrigin_ = null;
+        }
+        return mapOriginBuilder_;
+      }
+
+      private java.lang.Object mapFrameId_ = "";
+      /**
+       * <code>string map_frame_id = 25;</code>
+       */
+      public java.lang.String getMapFrameId() {
+        java.lang.Object ref = mapFrameId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapFrameId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_frame_id = 25;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapFrameIdBytes() {
+        java.lang.Object ref = mapFrameId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapFrameId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_frame_id = 25;</code>
+       */
+      public Builder setMapFrameId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapFrameId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_frame_id = 25;</code>
+       */
+      public Builder clearMapFrameId() {
+        
+        mapFrameId_ = getDefaultInstance().getMapFrameId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_frame_id = 25;</code>
+       */
+      public Builder setMapFrameIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapFrameId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapImageFormat_ = "";
+      /**
+       * <code>string map_image_format = 26;</code>
+       */
+      public java.lang.String getMapImageFormat() {
+        java.lang.Object ref = mapImageFormat_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapImageFormat_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_image_format = 26;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapImageFormatBytes() {
+        java.lang.Object ref = mapImageFormat_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapImageFormat_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_image_format = 26;</code>
+       */
+      public Builder setMapImageFormat(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapImageFormat_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_image_format = 26;</code>
+       */
+      public Builder clearMapImageFormat() {
+        
+        mapImageFormat_ = getDefaultInstance().getMapImageFormat();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_image_format = 26;</code>
+       */
+      public Builder setMapImageFormatBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapImageFormat_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int mapImageWidth_ ;
+      /**
+       * <code>uint32 map_image_width = 27;</code>
+       */
+      public int getMapImageWidth() {
+        return mapImageWidth_;
+      }
+      /**
+       * <code>uint32 map_image_width = 27;</code>
+       */
+      public Builder setMapImageWidth(int value) {
+        
+        mapImageWidth_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_image_width = 27;</code>
+       */
+      public Builder clearMapImageWidth() {
+        
+        mapImageWidth_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int mapImageHeight_ ;
+      /**
+       * <code>uint32 map_image_height = 28;</code>
+       */
+      public int getMapImageHeight() {
+        return mapImageHeight_;
+      }
+      /**
+       * <code>uint32 map_image_height = 28;</code>
+       */
+      public Builder setMapImageHeight(int value) {
+        
+        mapImageHeight_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_image_height = 28;</code>
+       */
+      public Builder clearMapImageHeight() {
+        
+        mapImageHeight_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private float mapPreviewScaleX_ ;
+      /**
+       * <code>float map_preview_scale_x = 29;</code>
+       */
+      public float getMapPreviewScaleX() {
+        return mapPreviewScaleX_;
+      }
+      /**
+       * <code>float map_preview_scale_x = 29;</code>
+       */
+      public Builder setMapPreviewScaleX(float value) {
+        
+        mapPreviewScaleX_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float map_preview_scale_x = 29;</code>
+       */
+      public Builder clearMapPreviewScaleX() {
+        
+        mapPreviewScaleX_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float mapPreviewScaleY_ ;
+      /**
+       * <code>float map_preview_scale_y = 30;</code>
+       */
+      public float getMapPreviewScaleY() {
+        return mapPreviewScaleY_;
+      }
+      /**
+       * <code>float map_preview_scale_y = 30;</code>
+       */
+      public Builder setMapPreviewScaleY(float value) {
+        
+        mapPreviewScaleY_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float map_preview_scale_y = 30;</code>
+       */
+      public Builder clearMapPreviewScaleY() {
+        
+        mapPreviewScaleY_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString mapImageData_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <pre>
+       * Raw map preview without region/point/path overlays.
+       * </pre>
+       *
+       * <code>bytes map_image_data = 31;</code>
+       */
+      public com.google.protobuf.ByteString getMapImageData() {
+        return mapImageData_;
+      }
+      /**
+       * <pre>
+       * Raw map preview without region/point/path overlays.
+       * </pre>
+       *
+       * <code>bytes map_image_data = 31;</code>
+       */
+      public Builder setMapImageData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapImageData_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Raw map preview without region/point/path overlays.
+       * </pre>
+       *
+       * <code>bytes map_image_data = 31;</code>
+       */
+      public Builder clearMapImageData() {
+        
+        mapImageData_ = getDefaultInstance().getMapImageData();
+        onChanged();
+        return this;
+      }
+
+      private int mapImageChunkIndex_ ;
+      /**
+       * <code>uint32 map_image_chunk_index = 32;</code>
+       */
+      public int getMapImageChunkIndex() {
+        return mapImageChunkIndex_;
+      }
+      /**
+       * <code>uint32 map_image_chunk_index = 32;</code>
+       */
+      public Builder setMapImageChunkIndex(int value) {
+        
+        mapImageChunkIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_image_chunk_index = 32;</code>
+       */
+      public Builder clearMapImageChunkIndex() {
+        
+        mapImageChunkIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int mapImageTotalChunks_ ;
+      /**
+       * <code>uint32 map_image_total_chunks = 33;</code>
+       */
+      public int getMapImageTotalChunks() {
+        return mapImageTotalChunks_;
+      }
+      /**
+       * <code>uint32 map_image_total_chunks = 33;</code>
+       */
+      public Builder setMapImageTotalChunks(int value) {
+        
+        mapImageTotalChunks_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 map_image_total_chunks = 33;</code>
+       */
+      public Builder clearMapImageTotalChunks() {
+        
+        mapImageTotalChunks_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private float alignmentYawDeg_ ;
+      /**
+       * <code>float alignment_yaw_deg = 34;</code>
+       */
+      public float getAlignmentYawDeg() {
+        return alignmentYawDeg_;
+      }
+      /**
+       * <code>float alignment_yaw_deg = 34;</code>
+       */
+      public Builder setAlignmentYawDeg(float value) {
+        
+        alignmentYawDeg_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float alignment_yaw_deg = 34;</code>
+       */
+      public Builder clearAlignmentYawDeg() {
+        
+        alignmentYawDeg_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float appRotationDeg_ ;
+      /**
+       * <code>float app_rotation_deg = 35;</code>
+       */
+      public float getAppRotationDeg() {
+        return appRotationDeg_;
+      }
+      /**
+       * <code>float app_rotation_deg = 35;</code>
+       */
+      public Builder setAppRotationDeg(float value) {
+        
+        appRotationDeg_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float app_rotation_deg = 35;</code>
+       */
+      public Builder clearAppRotationDeg() {
+        
+        appRotationDeg_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      private float rotationAlignmentDeltaDeg_ ;
+      /**
+       * <code>float rotation_alignment_delta_deg = 36;</code>
+       */
+      public float getRotationAlignmentDeltaDeg() {
+        return rotationAlignmentDeltaDeg_;
+      }
+      /**
+       * <code>float rotation_alignment_delta_deg = 36;</code>
+       */
+      public Builder setRotationAlignmentDeltaDeg(float value) {
+        
+        rotationAlignmentDeltaDeg_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>float rotation_alignment_delta_deg = 36;</code>
+       */
+      public Builder clearRotationAlignmentDeltaDeg() {
+        
+        rotationAlignmentDeltaDeg_ = 0F;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskTrajectoryChunk)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskTrajectoryChunk)
+    private static final sl_link.SlLink.TaskTrajectoryChunk DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskTrajectoryChunk();
+    }
+
+    public static sl_link.SlLink.TaskTrajectoryChunk getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskTrajectoryChunk>
+        PARSER = new com.google.protobuf.AbstractParser<TaskTrajectoryChunk>() {
+      @java.lang.Override
+      public TaskTrajectoryChunk parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskTrajectoryChunk(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskTrajectoryChunk> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskTrajectoryChunk> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskTrajectoryChunk getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -75180,15 +91603,15 @@ public final class SlLink {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sl_link_TaskStatusReport_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_sl_link_TaskPathRequest_descriptor;
+    internal_static_sl_link_PathPointPlanRequest_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_sl_link_TaskPathRequest_fieldAccessorTable;
+      internal_static_sl_link_PathPointPlanRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_sl_link_TaskPathChunk_descriptor;
+    internal_static_sl_link_PathPointPlanResponse_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_sl_link_TaskPathChunk_fieldAccessorTable;
+      internal_static_sl_link_PathPointPlanResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sl_link_MapPreviewRequest_descriptor;
   private static final 
@@ -75199,6 +91622,21 @@ public final class SlLink {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sl_link_MapPreviewResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_MapRegionPointRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_MapRegionPointRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_WorkRegionPointInfo_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_WorkRegionPointInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_MapRegionPointResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_MapRegionPointResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sl_link_MapEditCommand_descriptor;
   private static final 
@@ -75335,10 +91773,40 @@ public final class SlLink {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sl_link_TaskResultRegionItem_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskExecutionRecord_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskExecutionRecord_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sl_link_TaskResultResponse_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sl_link_TaskResultResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskExecutionHistoryRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskExecutionHistoryRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskExecutionHistoryChunk_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskExecutionHistoryChunk_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskTrajectoryRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskTrajectoryRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskTrajectoryPoint_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskTrajectoryPoint_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskTrajectoryChunk_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskTrajectoryChunk_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sl_link_LiveMapCacheClearRequest_descriptor;
   private static final 
@@ -75517,7 +91985,7 @@ public final class SlLink {
       "index\030\006 \001(\r\022\024\n\014total_chunks\030\007 \001(\r\022\014\n\004dat" +
       "a\030\010 \001(\014\"F\n\nMapRequest\022\020\n\010snapshot\030\001 \001(\010\022" +
       "\026\n\016max_chunk_size\030\002 \001(\r\022\016\n\006map_id\030\003 \001(\t\"" +
-      "\302\003\n\010MapChunk\022\016\n\006map_id\030\001 \001(\r\022\020\n\010utc_time" +
+      "\327\003\n\010MapChunk\022\016\n\006map_id\030\001 \001(\r\022\020\n\010utc_time" +
       "\030\002 \001(\r\022&\n\010encoding\030\003 \001(\0162\024.sl_link.MapEn" +
       "coding\022\r\n\005width\030\004 \001(\r\022\016\n\006height\030\005 \001(\r\022\022\n" +
       "\nresolution\030\006 \001(\002\022\023\n\013chunk_index\030\007 \001(\r\022\024" +
@@ -75528,337 +91996,429 @@ public final class SlLink {
       "ce\030\016 \001(\0132\037.sl_link.LocalizationCovarianc" +
       "e\022\031\n\021alignment_yaw_deg\030\017 \001(\002\022\030\n\020app_rota" +
       "tion_deg\030\020 \001(\002\022$\n\034rotation_alignment_del" +
-      "ta_deg\030\021 \001(\002\"6\n\013PathPoint2D\022\t\n\001x\030\001 \001(\002\022\t" +
-      "\n\001y\030\002 \001(\002\022\021\n\tpath_type\030\003 \001(\t\"5\n\020RegionRe" +
-      "peatItem\022\021\n\tregion_id\030\001 \001(\t\022\016\n\006repeat\030\002 " +
-      "\001(\r\"\222\003\n\nTaskConfig\022\017\n\007task_id\030\001 \001(\t\022,\n\014w" +
-      "ork_regions\030\002 \003(\0132\026.sl_link.PolygonRegio" +
-      "n\0220\n\020obstacle_regions\030\003 \003(\0132\026.sl_link.Po" +
-      "lygonRegion\022.\n\024default_path_spacing\030\004 \001(" +
-      "\002B\020\212\265\030\001m\221\265\030\000\000\000\000\000\000\360?\022%\n\013turn_radius\030\005 \001(\002" +
-      "B\020\212\265\030\001m\221\265\030\000\000\000\000\000\000\360?\022+\n\roverlap_ratio\030\006 \001(" +
-      "\002B\024\212\265\030\005ratio\221\265\030\000\000\000\000\000\000\360?\022*\n\020inflation_rad" +
-      "ius\030\007 \001(\002B\020\212\265\030\001m\221\265\030\000\000\000\000\000\000\360?\022\016\n\006map_id\030\010 " +
-      "\001(\t\022 \n\030selected_work_region_ids\030\t \003(\t\0221\n" +
-      "\016region_repeats\030\n \003(\0132\031.sl_link.RegionRe" +
-      "peatItem\"[\n\022TaskConfigResponse\022#\n\006result" +
-      "\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007message\030\002" +
-      " \001(\t\022\017\n\007task_id\030\003 \001(\t\"I\n\013TaskCommand\022\017\n\007" +
-      "task_id\030\001 \001(\t\022)\n\007command\030\002 \001(\0162\030.sl_link" +
-      ".TaskCommandType\"\\\n\023TaskCommandResponse\022" +
-      "#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007" +
-      "message\030\002 \001(\t\022\017\n\007task_id\030\003 \001(\t\"\273\004\n\020TaskS" +
-      "tatusReport\022\017\n\007task_id\030\001 \001(\t\022!\n\005state\030\002 " +
-      "\001(\0162\022.sl_link.TaskState\022\020\n\010progress\030\003 \001(" +
-      "\002\022\023\n\013map_version\030\004 \001(\r\022\017\n\007message\030\005 \001(\t\022" +
-      "!\n\010position\030\006 \001(\0132\017.sl_link.Pose2D\022\030\n\020re" +
-      "plan_requested\030\007 \001(\010\022\030\n\020path_point_count" +
-      "\030\010 \001(\r\022\024\n\014path_version\030\t \001(\r\022-\n\022total_wo" +
-      "rk_area_m2\030\n \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\0221\n\026r" +
-      "emaining_work_area_m2\030\013 \001(\002B\021\212\265\030\002m2\221\265\030\000\000" +
-      "\000\000\000\000\360?\022*\n\020remaining_time_s\030\014 \001(\002B\020\212\265\030\001s\221" +
-      "\265\030\000\000\000\000\000\000\360?\022\031\n\021current_region_id\030\r \001(\t\022#\n" +
-      "\033current_region_repeat_index\030\016 \001(\r\022#\n\033cu" +
-      "rrent_region_repeat_total\030\017 \001(\r\022\031\n\021align" +
-      "ment_yaw_deg\030\020 \001(\002\022@\n\027localization_covar" +
-      "iance\030\021 \001(\0132\037.sl_link.LocalizationCovari" +
-      "ance\":\n\017TaskPathRequest\022\017\n\007task_id\030\001 \001(\t" +
-      "\022\026\n\016max_chunk_size\030\002 \001(\r\"o\n\rTaskPathChun" +
-      "k\022\017\n\007task_id\030\001 \001(\t\022\023\n\013chunk_index\030\002 \001(\r\022" +
-      "\024\n\014total_chunks\030\003 \001(\r\022\024\n\014path_version\030\004 " +
-      "\001(\r\022\014\n\004data\030\005 \001(\014\"d\n\021MapPreviewRequest\022\020" +
-      "\n\010max_edge\030\001 \001(\r\022\024\n\014image_format\030\002 \001(\t\022\027" +
-      "\n\017include_overlay\030\003 \001(\010\022\016\n\006map_id\030\004 \001(\t\"" +
-      "\276\003\n\022MapPreviewResponse\022#\n\006result\030\001 \001(\0162\023" +
-      ".sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\023\n\013" +
-      "map_version\030\003 \001(\r\022\r\n\005width\030\004 \001(\r\022\016\n\006heig" +
-      "ht\030\005 \001(\r\022\022\n\nresolution\030\006 \001(\002\022\037\n\006origin\030\007" +
-      " \001(\0132\017.sl_link.Pose2D\022\020\n\010frame_id\030\010 \001(\t\022" +
-      "\022\n\nimage_data\030\t \001(\014\022\024\n\014overlay_json\030\n \001(" +
-      "\t\022\027\n\017preview_scale_x\030\013 \001(\002\022\027\n\017preview_sc" +
-      "ale_y\030\014 \001(\002\022@\n\027localization_covariance\030\r" +
-      " \001(\0132\037.sl_link.LocalizationCovariance\022\031\n" +
-      "\021alignment_yaw_deg\030\016 \001(\002\022\030\n\020app_rotation" +
-      "_deg\030\017 \001(\002\022$\n\034rotation_alignment_delta_d" +
-      "eg\030\020 \001(\002\"\261\003\n\016MapEditCommand\022\017\n\007edit_id\030\001" +
-      " \001(\t\022,\n\toperation\030\002 \001(\0162\031.sl_link.MapEdi" +
-      "tOperation\022\023\n\013region_name\030\003 \001(\t\022&\n\006regio" +
-      "n\030\004 \001(\0132\026.sl_link.PolygonRegion\022&\n\007polyg" +
-      "on\030\005 \003(\0132\025.sl_link.PolygonPoint\022\024\n\014brush" +
-      "_radius\030\006 \001(\002\022\023\n\013paint_value\030\007 \001(\005\022\030\n\020ta" +
-      "rget_region_id\030\010 \001(\t\022/\n\022target_region_ty" +
-      "pe\030\t \001(\0162\023.sl_link.RegionType\022\034\n\024expecte" +
-      "d_map_version\030\n \001(\r\022\017\n\007dry_run\030\013 \001(\010\022#\n\n" +
-      "start_pose\030\014 \001(\0132\017.sl_link.Pose2D\022!\n\010end" +
-      "_pose\030\r \001(\0132\017.sl_link.Pose2D\022\016\n\006map_id\030\016" +
-      " \001(\t\"\\\n\017MapEditResponse\022#\n\006result\030\001 \001(\0162" +
-      "\023.sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\023\n" +
-      "\013map_version\030\003 \001(\r\"W\n\023MapEditStatusRepor" +
-      "t\022\023\n\013map_version\030\001 \001(\r\022\032\n\022applied_to_pla" +
-      "nner\030\002 \001(\010\022\017\n\007message\030\003 \001(\t\"/\n\026VideoStre" +
-      "amInfoRequest\022\025\n\rinclude_debug\030\001 \001(\010\"\263\001\n" +
-      "\027VideoStreamInfoResponse\022#\n\006result\030\001 \001(\016" +
-      "2\023.sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\022" +
-      "\n\nstream_url\030\003 \001(\t\022\r\n\005codec\030\004 \001(\t\022\r\n\005wid" +
-      "th\030\005 \001(\r\022\016\n\006height\030\006 \001(\r\022\016\n\006online\030\007 \001(\010" +
-      "\022\020\n\010utc_time\030\010 \001(\r\"\362\001\n\017PathPlanRequest\022\022" +
-      "\n\nrequest_id\030\001 \001(\t\022\017\n\007task_id\030\002 \001(\t\022\024\n\014f" +
-      "orce_replan\030\003 \001(\010\022\032\n\022return_path_chunks\030" +
-      "\004 \001(\010\022\026\n\016max_chunk_size\030\005 \001(\r\022#\n\nstart_p" +
-      "ose\030\006 \001(\0132\017.sl_link.Pose2D\022!\n\010end_pose\030\007" +
-      " \001(\0132\017.sl_link.Pose2D\022\030\n\020global_directio" +
-      "n\030\010 \001(\t\022\016\n\006map_id\030\t \001(\t\"\257\005\n\020PathPlanResp" +
-      "onse\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCod" +
-      "e\022\017\n\007message\030\002 \001(\t\022\022\n\nrequest_id\030\003 \001(\t\022\017" +
-      "\n\007task_id\030\004 \001(\t\022\023\n\013map_version\030\005 \001(\r\022\024\n\014" +
-      "path_version\030\006 \001(\r\022\030\n\020path_point_count\030\007" +
-      " \001(\r\022\025\n\rpath_length_m\030\010 \001(\002\022\017\n\007planned\030\t" +
-      " \001(\010\022\024\n\014path_chunked\030\n \001(\010\022\025\n\rpreview_im" +
-      "age\030\013 \001(\014\022\026\n\016preview_format\030\014 \001(\t\022\r\n\005wid" +
-      "th\030\r \001(\r\022\016\n\006height\030\016 \001(\r\022\022\n\nresolution\030\017" +
-      " \001(\002\022\037\n\006origin\030\020 \001(\0132\017.sl_link.Pose2D\022\020\n" +
-      "\010frame_id\030\021 \001(\t\022\027\n\017preview_scale_x\030\022 \001(\002" +
-      "\022\027\n\017preview_scale_y\030\023 \001(\002\022-\n\022total_work_" +
-      "area_m2\030\024 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020esti" +
-      "mated_time_s\030\025 \001(\002B\020\212\265\030\001s\221\265\030\000\000\000\000\000\000\360?\022@\n\027" +
-      "localization_covariance\030\026 \001(\0132\037.sl_link." +
-      "LocalizationCovariance\022\031\n\021alignment_yaw_" +
-      "deg\030\027 \001(\002\022\030\n\020app_rotation_deg\030\030 \001(\002\022$\n\034r" +
-      "otation_alignment_delta_deg\030\031 \001(\002\"m\n\016Map" +
-      "SyncRequest\022,\n\toperation\030\001 \001(\0162\031.sl_link" +
-      ".MapSyncOperation\022\016\n\006map_id\030\002 \001(\t\022\035\n\025upd" +
-      "ate_navigation_map\030\003 \001(\010\"\347\001\n\017MapSyncResp" +
-      "onse\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCod" +
-      "e\022\017\n\007message\030\002 \001(\t\022,\n\toperation\030\003 \001(\0162\031." +
-      "sl_link.MapSyncOperation\022\016\n\006map_id\030\004 \001(\t" +
-      "\022\020\n\010map_name\030\010 \001(\t\022\025\n\rmap_yaml_path\030\005 \001(" +
-      "\t\022\026\n\016map_image_path\030\006 \001(\t\022\037\n\027navigation_" +
-      "map_reloaded\030\007 \001(\010\")\n\027MapImportToRadarRe" +
-      "quest\022\016\n\006map_id\030\001 \001(\t\"\204\001\n\030MapImportToRad" +
-      "arResponse\022#\n\006result\030\001 \001(\0162\023.sl_link.Res" +
-      "ultCode\022\017\n\007message\030\002 \001(\t\022\016\n\006map_id\030\003 \001(\t" +
-      "\022\020\n\010map_name\030\004 \001(\t\022\020\n\010imported\030\005 \001(\010\"W\n\016" +
-      "MapModeRequest\022\"\n\004mode\030\001 \001(\0162\024.sl_link.M" +
-      "apModeType\022\017\n\007enabled\030\002 \001(\010\022\020\n\010map_kind\030" +
-      "\003 \001(\005\"\216\001\n\017MapModeResponse\022#\n\006result\030\001 \001(" +
-      "\0162\023.sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022" +
-      "\"\n\004mode\030\003 \001(\0162\024.sl_link.MapModeType\022\017\n\007e" +
-      "nabled\030\004 \001(\010\022\020\n\010map_kind\030\005 \001(\005\";\n\023MapAli" +
-      "gnmentRequest\022\016\n\006map_id\030\001 \001(\t\022\024\n\014rotatio" +
-      "n_deg\030\002 \001(\002\"\311\001\n\024MapAlignmentResponse\022#\n\006" +
-      "result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007mes" +
-      "sage\030\002 \001(\t\022\016\n\006map_id\030\003 \001(\t\022\024\n\014rotation_d" +
-      "eg\030\004 \001(\002\022\024\n\014rotation_rad\030\005 \001(\002\022\031\n\021alignm" +
-      "ent_yaw_deg\030\006 \001(\002\022$\n\034rotation_alignment_" +
-      "delta_deg\030\007 \001(\002\"\023\n\021MapCatalogRequest\"\255\002\n" +
-      "\016MapCatalogItem\022\016\n\006map_id\030\001 \001(\t\022\014\n\004name\030" +
-      "\002 \001(\t\022\022\n\nsize_bytes\030\003 \001(\004\022\020\n\010saved_at\030\004 " +
-      "\001(\004\022-\n\022total_work_area_m2\030\005 \001(\002B\021\212\265\030\002m2\221" +
-      "\265\030\000\000\000\000\000\000\360?\022*\n\020estimated_time_s\030\006 \001(\002B\020\212\265" +
-      "\030\001s\221\265\030\000\000\000\000\000\000\360?\022\030\n\020thumbnail_format\030\007 \001(\t" +
-      "\022\027\n\017thumbnail_width\030\010 \001(\r\022\030\n\020thumbnail_h" +
-      "eight\030\t \001(\r\022\033\n\023thumbnail_image_b64\030\n \001(\t" +
-      "\022\022\n\ncreated_at\030\013 \001(\t\"\207\001\n\022MapCatalogRespo" +
-      "nse\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode" +
-      "\022\017\n\007message\030\002 \001(\t\022\023\n\013total_count\030\003 \001(\r\022&" +
-      "\n\005items\030\004 \003(\0132\027.sl_link.MapCatalogItem\"\"" +
-      "\n\020MapDeleteRequest\022\016\n\006map_id\030\001 \001(\t\"|\n\021Ma" +
-      "pDeleteResponse\022#\n\006result\030\001 \001(\0162\023.sl_lin" +
-      "k.ResultCode\022\017\n\007message\030\002 \001(\t\022\016\n\006map_id\030" +
-      "\003 \001(\t\022\020\n\010map_name\030\004 \001(\t\022\017\n\007deleted\030\005 \001(\010" +
-      "\"b\n\016MapSaveRequest\022\020\n\010map_name\030\001 \001(\t\022\016\n\006" +
-      "map_id\030\002 \001(\t\022\030\n\020has_rotation_deg\030\003 \001(\010\022\024" +
-      "\n\014rotation_deg\030\004 \001(\002\"\250\002\n\017MapSaveResponse" +
-      "\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n" +
-      "\007message\030\002 \001(\t\022\016\n\006map_id\030\003 \001(\t\022\020\n\010map_na" +
-      "me\030\004 \001(\t\022\025\n\rmap_yaml_path\030\005 \001(\t\022\026\n\016map_i" +
-      "mage_path\030\006 \001(\t\022\037\n\027navigation_map_reload" +
-      "ed\030\007 \001(\010\022-\n\022total_work_area_m2\030\010 \001(\002B\021\212\265" +
-      "\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020estimated_time_s\030\t \001(" +
-      "\002B\020\212\265\030\001s\221\265\030\000\000\000\000\000\000\360?\022\022\n\ncreated_at\030\n \001(\t\"" +
-      "#\n\021MapMetricsRequest\022\016\n\006map_id\030\001 \001(\t\"\233\001\n" +
-      "\021RegionMetricsItem\022\021\n\tregion_id\030\001 \001(\t\022\023\n" +
-      "\013region_name\030\002 \001(\t\022\016\n\006repeat\030\003 \001(\r\022\"\n\007ar" +
-      "ea_m2\030\004 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020estima" +
-      "ted_time_h\030\005 \001(\002B\020\212\265\030\001h\221\265\030\000\000\000\000\000\000\360?\"\240\001\n\022M" +
-      "apMetricsResponse\022#\n\006result\030\001 \001(\0162\023.sl_l" +
-      "ink.ResultCode\022\017\n\007message\030\002 \001(\t\022\016\n\006map_i" +
-      "d\030\003 \001(\t\022\020\n\010map_name\030\004 \001(\t\0222\n\016region_metr" +
-      "ics\030\005 \003(\0132\032.sl_link.RegionMetricsItem\"4\n" +
-      "\021TaskResultRequest\022\016\n\006map_id\030\001 \001(\t\022\017\n\007ta" +
-      "sk_id\030\002 \001(\t\"\234\001\n\024TaskResultRegionItem\022\021\n\t" +
-      "region_id\030\001 \001(\t\022\023\n\013region_name\030\002 \001(\t\022\025\n\r" +
-      "target_repeat\030\003 \001(\r\022\027\n\017executed_repeat\030\004" +
-      " \001(\r\022\021\n\tcompleted\030\005 \001(\010\022\031\n\021unfinished_re" +
-      "ason\030\006 \001(\t\"\266\004\n\022TaskResultResponse\022#\n\006res" +
-      "ult\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007messag" +
-      "e\030\002 \001(\t\022\016\n\006map_id\030\003 \001(\t\022\017\n\007task_id\030\004 \001(\t" +
-      "\022\'\n\013final_state\030\005 \001(\0162\022.sl_link.TaskStat" +
-      "e\022\025\n\rall_completed\030\006 \001(\010\022\023\n\013stop_reason\030" +
-      "\007 \001(\t\022\024\n\014path_version\030\010 \001(\r\022\024\n\014image_for" +
-      "mat\030\t \001(\t\022\022\n\nimage_data\030\n \001(\014\022\023\n\013image_w" +
-      "idth\030\013 \001(\r\022\024\n\014image_height\030\014 \001(\r\022\023\n\013fini" +
-      "shed_at\030\r \001(\004\022 \n\030selected_work_region_id" +
-      "s\030\016 \003(\t\0225\n\016region_results\030\017 \003(\0132\035.sl_lin" +
-      "k.TaskResultRegionItem\022@\n\027localization_c" +
-      "ovariance\030\020 \001(\0132\037.sl_link.LocalizationCo" +
-      "variance\022\031\n\021alignment_yaw_deg\030\021 \001(\002\022\030\n\020a" +
-      "pp_rotation_deg\030\022 \001(\002\022$\n\034rotation_alignm" +
-      "ent_delta_deg\030\023 \001(\002\"\032\n\030LiveMapCacheClear" +
-      "Request\"Q\n\031LiveMapCacheClearResponse\022#\n\006" +
-      "result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007mes" +
-      "sage\030\002 \001(\t\"\033\n\031RadarMapCacheClearRequest\"" +
-      "R\n\032RadarMapCacheClearResponse\022#\n\006result\030" +
-      "\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007message\030\002 " +
-      "\001(\t\"\032\n\030RadarSystemStatusRequest\"\212\001\n\031Rada" +
-      "rSystemStatusResponse\022#\n\006result\030\001 \001(\0162\023." +
-      "sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\021\n\ta" +
-      "vailable\030\003 \001(\010\022\016\n\006status\030\004 \001(\t\022\024\n\014timest" +
-      "amp_ns\030\005 \001(\004\"\025\n\023RadarMapSyncRequest\"Z\n\024R" +
-      "adarMapSyncResponse\022#\n\006result\030\001 \001(\0162\023.sl" +
-      "_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\014\n\004sen" +
-      "t\030\003 \001(\010\"\034\n\032RadarRelocalizationRequest\"u\n" +
-      "\033RadarRelocalizationResponse\022#\n\006result\030\001" +
+      "ta_deg\030\021 \001(\002\022\023\n\013map_version\030\022 \001(\r\"6\n\013Pat" +
+      "hPoint2D\022\t\n\001x\030\001 \001(\002\022\t\n\001y\030\002 \001(\002\022\021\n\tpath_t" +
+      "ype\030\003 \001(\t\"5\n\020RegionRepeatItem\022\021\n\tregion_" +
+      "id\030\001 \001(\t\022\016\n\006repeat\030\002 \001(\r\"\222\003\n\nTaskConfig\022" +
+      "\017\n\007task_id\030\001 \001(\t\022,\n\014work_regions\030\002 \003(\0132\026" +
+      ".sl_link.PolygonRegion\0220\n\020obstacle_regio" +
+      "ns\030\003 \003(\0132\026.sl_link.PolygonRegion\022.\n\024defa" +
+      "ult_path_spacing\030\004 \001(\002B\020\212\265\030\001m\221\265\030\000\000\000\000\000\000\360?" +
+      "\022%\n\013turn_radius\030\005 \001(\002B\020\212\265\030\001m\221\265\030\000\000\000\000\000\000\360?\022" +
+      "+\n\roverlap_ratio\030\006 \001(\002B\024\212\265\030\005ratio\221\265\030\000\000\000\000" +
+      "\000\000\360?\022*\n\020inflation_radius\030\007 \001(\002B\020\212\265\030\001m\221\265\030" +
+      "\000\000\000\000\000\000\360?\022\016\n\006map_id\030\010 \001(\t\022 \n\030selected_wor" +
+      "k_region_ids\030\t \003(\t\0221\n\016region_repeats\030\n \003" +
+      "(\0132\031.sl_link.RegionRepeatItem\"[\n\022TaskCon" +
+      "figResponse\022#\n\006result\030\001 \001(\0162\023.sl_link.Re" +
+      "sultCode\022\017\n\007message\030\002 \001(\t\022\017\n\007task_id\030\003 \001" +
+      "(\t\"I\n\013TaskCommand\022\017\n\007task_id\030\001 \001(\t\022)\n\007co" +
+      "mmand\030\002 \001(\0162\030.sl_link.TaskCommandType\"\\\n" +
+      "\023TaskCommandResponse\022#\n\006result\030\001 \001(\0162\023.s" +
+      "l_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\017\n\007ta" +
+      "sk_id\030\003 \001(\t\"\273\004\n\020TaskStatusReport\022\017\n\007task" +
+      "_id\030\001 \001(\t\022!\n\005state\030\002 \001(\0162\022.sl_link.TaskS" +
+      "tate\022\020\n\010progress\030\003 \001(\002\022\023\n\013map_version\030\004 " +
+      "\001(\r\022\017\n\007message\030\005 \001(\t\022!\n\010position\030\006 \001(\0132\017" +
+      ".sl_link.Pose2D\022\030\n\020replan_requested\030\007 \001(" +
+      "\010\022\030\n\020path_point_count\030\010 \001(\r\022\024\n\014path_vers" +
+      "ion\030\t \001(\r\022-\n\022total_work_area_m2\030\n \001(\002B\021\212" +
+      "\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\0221\n\026remaining_work_area_" +
+      "m2\030\013 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020remaining" +
+      "_time_s\030\014 \001(\002B\020\212\265\030\001s\221\265\030\000\000\000\000\000\000\360?\022\031\n\021curre" +
+      "nt_region_id\030\r \001(\t\022#\n\033current_region_rep" +
+      "eat_index\030\016 \001(\r\022#\n\033current_region_repeat" +
+      "_total\030\017 \001(\r\022\031\n\021alignment_yaw_deg\030\020 \001(\002\022" +
+      "@\n\027localization_covariance\030\021 \001(\0132\037.sl_li" +
+      "nk.LocalizationCovariance\"\333\001\n\024PathPointP" +
+      "lanRequest\022\017\n\007task_id\030\001 \001(\t\022\026\n\016max_chunk" +
+      "_size\030\002 \001(\r\022\022\n\nrequest_id\030\003 \001(\t\022\024\n\014force" +
+      "_replan\030\004 \001(\010\022#\n\nstart_pose\030\005 \001(\0132\017.sl_l" +
+      "ink.Pose2D\022!\n\010end_pose\030\006 \001(\0132\017.sl_link.P" +
+      "ose2D\022\030\n\020global_direction\030\007 \001(\t\022\016\n\006map_i" +
+      "d\030\010 \001(\t\"\225\003\n\025PathPointPlanResponse\022\017\n\007tas" +
+      "k_id\030\001 \001(\t\022\023\n\013chunk_index\030\002 \001(\r\022\024\n\014total" +
+      "_chunks\030\003 \001(\r\022\024\n\014path_version\030\004 \001(\r\022\014\n\004d" +
+      "ata\030\005 \001(\014\022\022\n\nrequest_id\030\006 \001(\t\022\016\n\006map_id\030" +
+      "\007 \001(\t\022#\n\006result\030\010 \001(\0162\023.sl_link.ResultCo" +
+      "de\022\017\n\007message\030\t \001(\t\022\017\n\007planned\030\n \001(\010\022\023\n\013" +
+      "map_version\030\013 \001(\r\022\030\n\020path_point_count\030\014 " +
+      "\001(\r\022\025\n\rpath_length_m\030\r \001(\002\022-\n\022total_work" +
+      "_area_m2\030\016 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020est" +
+      "imated_time_s\030\017 \001(\002B\020\212\265\030\001s\221\265\030\000\000\000\000\000\000\360?\022\020\n" +
+      "\010frame_id\030\020 \001(\t\"d\n\021MapPreviewRequest\022\020\n\010" +
+      "max_edge\030\001 \001(\r\022\024\n\014image_format\030\002 \001(\t\022\027\n\017" +
+      "include_overlay\030\003 \001(\010\022\016\n\006map_id\030\004 \001(\t\"\276\003" +
+      "\n\022MapPreviewResponse\022#\n\006result\030\001 \001(\0162\023.s" +
+      "l_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\023\n\013ma" +
+      "p_version\030\003 \001(\r\022\r\n\005width\030\004 \001(\r\022\016\n\006height" +
+      "\030\005 \001(\r\022\022\n\nresolution\030\006 \001(\002\022\037\n\006origin\030\007 \001" +
+      "(\0132\017.sl_link.Pose2D\022\020\n\010frame_id\030\010 \001(\t\022\022\n" +
+      "\nimage_data\030\t \001(\014\022\024\n\014overlay_json\030\n \001(\t\022" +
+      "\027\n\017preview_scale_x\030\013 \001(\002\022\027\n\017preview_scal" +
+      "e_y\030\014 \001(\002\022@\n\027localization_covariance\030\r \001" +
+      "(\0132\037.sl_link.LocalizationCovariance\022\031\n\021a" +
+      "lignment_yaw_deg\030\016 \001(\002\022\030\n\020app_rotation_d" +
+      "eg\030\017 \001(\002\022$\n\034rotation_alignment_delta_deg" +
+      "\030\020 \001(\002\"\'\n\025MapRegionPointRequest\022\016\n\006map_i" +
+      "d\030\001 \001(\t\"\277\001\n\023WorkRegionPointInfo\022&\n\006regio" +
+      "n\030\001 \001(\0132\026.sl_link.PolygonRegion\022\034\n\024start" +
+      "_pose_available\030\002 \001(\010\022#\n\nstart_pose\030\003 \001(" +
+      "\0132\017.sl_link.Pose2D\022\032\n\022end_pose_available" +
+      "\030\004 \001(\010\022!\n\010end_pose\030\005 \001(\0132\017.sl_link.Pose2" +
+      "D\"\324\002\n\026MapRegionPointResponse\022#\n\006result\030\001" +
       " \001(\0162\023.sl_link.ResultCode\022\017\n\007message\030\002 \001" +
-      "(\t\022\020\n\010accepted\030\003 \001(\010\022\016\n\006status\030\004 \001(\t\"\"\n " +
-      "RadarRelocalizationStatusRequest\"\361\001\n!Rad" +
-      "arRelocalizationStatusResponse\022\022\n\nraw_st" +
-      "atus\030\005 \001(\t\022\024\n\014timestamp_ns\030\n \001(\004J\004\010\001\020\002J\004" +
-      "\010\002\020\003J\004\010\003\020\004J\004\010\004\020\005J\004\010\006\020\007J\004\010\007\020\010J\004\010\010\020\tJ\004\010\t\020\n" +
-      "R\006resultR\007messageR\tavailableR\006statusR\rsy" +
-      "stem_statusR\016odom_availableR\025odom_linear" +
-      "_speed_mpsR\030odom_angular_speed_radps\"<\n\017" +
-      "DiscLiftControl\022)\n\007command\030\001 \001(\0162\030.sl_li" +
-      "nk.DiscLiftCommand\"\"\n\017LightingControl\022\017\n" +
-      "\007enabled\030\001 \001(\010\"&\n\023ChassisPowerControl\022\017\n" +
-      "\007enabled\030\001 \001(\010\"1\n\013DiscControl\022\017\n\007enabled" +
-      "\030\001 \001(\010\022\021\n\tspeed_rpm\030\002 \001(\r\"\'\n\024EmergencySt" +
-      "opControl\022\017\n\007enabled\030\001 \001(\010\"\260\001\n\022ManualDri" +
-      "veControl\022,\n\006motion\030\001 \001(\0162\034.sl_link.Manu" +
-      "alMotionCommand\022\023\n\013speed_ratio\030\002 \001(\002\022\020\n\010" +
-      "remote_x\030\003 \001(\002\022\020\n\010remote_y\030\004 \001(\002\022\025\n\rmax_" +
-      "speed_mps\030\005 \001(\002\022\034\n\024max_turn_speed_ratio\030" +
-      "\006 \001(\002\"\313\002\n\016ControlCommand\022-\n\tdisc_lift\030\001 " +
-      "\001(\0132\030.sl_link.DiscLiftControlH\000\022,\n\010light" +
-      "ing\030\002 \001(\0132\030.sl_link.LightingControlH\000\0223\n" +
-      "\014manual_drive\030\003 \001(\0132\033.sl_link.ManualDriv" +
-      "eControlH\000\0225\n\rchassis_power\030\004 \001(\0132\034.sl_l" +
-      "ink.ChassisPowerControlH\000\022,\n\014disc_contro" +
-      "l\030\005 \001(\0132\024.sl_link.DiscControlH\000\0227\n\016emerg" +
-      "ency_stop\030\006 \001(\0132\035.sl_link.EmergencyStopC" +
-      "ontrolH\000B\t\n\007command\"\200\001\n\026ControlCommandRe" +
-      "sponse\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultC" +
-      "ode\022\017\n\007message\030\002 \001(\t\0220\n\017applied_command\030" +
-      "\003 \001(\0132\027.sl_link.ControlCommand*\240\020\n\tMessa" +
-      "geId\022\022\n\016MSG_ID_UNKNOWN\020\000\022\027\n\022MSG_ID_WIFI_" +
-      "CONFIG\020\201\004\022\036\n\031MSG_ID_WIFI_STATUS_REPORT\020\202" +
-      "\004\022!\n\034MSG_ID_SETTINGS_READ_REQUEST\020\203\004\022\"\n\035" +
-      "MSG_ID_SETTINGS_READ_RESPONSE\020\204\004\022\"\n\035MSG_" +
-      "ID_SETTINGS_WRITE_REQUEST\020\205\004\022#\n\036MSG_ID_S" +
-      "ETTINGS_WRITE_RESPONSE\020\206\004\022 \n\033MSG_ID_DEVI" +
-      "CE_STATUS_REPORT\020\201\006\022 \n\033MSG_ID_CAMERA_FRA" +
-      "ME_REQUEST\020\202\006\022\036\n\031MSG_ID_CAMERA_FRAME_CHU" +
-      "NK\020\203\006\022\027\n\022MSG_ID_MAP_REQUEST\020\204\006\022\025\n\020MSG_ID" +
-      "_MAP_CHUNK\020\205\006\022\033\n\026MSG_ID_CONTROL_COMMAND\020" +
-      "\201\010\022$\n\037MSG_ID_CONTROL_COMMAND_RESPONSE\020\202\010" +
-      "\022\027\n\022MSG_ID_TASK_CONFIG\020\200\n\022 \n\033MSG_ID_TASK" +
-      "_CONFIG_RESPONSE\020\201\n\022\030\n\023MSG_ID_TASK_COMMA" +
-      "ND\020\202\n\022!\n\034MSG_ID_TASK_COMMAND_RESPONSE\020\203\n" +
-      "\022\036\n\031MSG_ID_TASK_STATUS_REPORT\020\204\n\022\035\n\030MSG_" +
-      "ID_TASK_PATH_REQUEST\020\205\n\022\033\n\026MSG_ID_TASK_P" +
-      "ATH_CHUNK\020\206\n\022\037\n\032MSG_ID_MAP_PREVIEW_REQUE" +
-      "ST\020\207\n\022 \n\033MSG_ID_MAP_PREVIEW_RESPONSE\020\210\n\022" +
-      "\034\n\027MSG_ID_MAP_EDIT_COMMAND\020\211\n\022\035\n\030MSG_ID_" +
-      "MAP_EDIT_RESPONSE\020\212\n\022\"\n\035MSG_ID_MAP_EDIT_" +
-      "STATUS_REPORT\020\213\n\022%\n MSG_ID_VIDEO_STREAM_" +
-      "INFO_REQUEST\020\214\n\022&\n!MSG_ID_VIDEO_STREAM_I" +
-      "NFO_RESPONSE\020\215\n\022\035\n\030MSG_ID_PATH_PLAN_REQU" +
-      "EST\020\216\n\022\036\n\031MSG_ID_PATH_PLAN_RESPONSE\020\217\n\022\034" +
-      "\n\027MSG_ID_MAP_SYNC_REQUEST\020\220\n\022\035\n\030MSG_ID_M" +
-      "AP_SYNC_RESPONSE\020\221\n\022\034\n\027MSG_ID_MAP_MODE_R" +
-      "EQUEST\020\222\n\022\035\n\030MSG_ID_MAP_MODE_RESPONSE\020\223\n" +
-      "\022\037\n\032MSG_ID_MAP_CATALOG_REQUEST\020\224\n\022 \n\033MSG" +
-      "_ID_MAP_CATALOG_RESPONSE\020\225\n\022\036\n\031MSG_ID_MA" +
-      "P_DELETE_REQUEST\020\226\n\022\037\n\032MSG_ID_MAP_DELETE" +
-      "_RESPONSE\020\227\n\022\034\n\027MSG_ID_MAP_SAVE_REQUEST\020" +
-      "\230\n\022\035\n\030MSG_ID_MAP_SAVE_RESPONSE\020\231\n\022\037\n\032MSG" +
-      "_ID_MAP_METRICS_REQUEST\020\232\n\022 \n\033MSG_ID_MAP" +
-      "_METRICS_RESPONSE\020\233\n\022\037\n\032MSG_ID_TASK_RESU" +
-      "LT_REQUEST\020\234\n\022 \n\033MSG_ID_TASK_RESULT_RESP" +
-      "ONSE\020\235\n\022(\n#MSG_ID_LIVE_MAP_CACHE_CLEAR_R" +
-      "EQUEST\020\236\n\022)\n$MSG_ID_LIVE_MAP_CACHE_CLEAR" +
-      "_RESPONSE\020\237\n\022)\n$MSG_ID_RADAR_MAP_CACHE_C" +
-      "LEAR_REQUEST\020\240\n\022*\n%MSG_ID_RADAR_MAP_CACH" +
-      "E_CLEAR_RESPONSE\020\241\n\022\'\n\"MSG_ID_MAP_IMPORT" +
-      "_TO_RADAR_REQUEST\020\242\n\022(\n#MSG_ID_MAP_IMPOR" +
-      "T_TO_RADAR_RESPONSE\020\243\n\022!\n\034MSG_ID_MAP_ALI" +
-      "GNMENT_REQUEST\020\244\n\022\"\n\035MSG_ID_MAP_ALIGNMEN" +
-      "T_RESPONSE\020\245\n\022\'\n\"MSG_ID_RADAR_SYSTEM_STA" +
-      "TUS_REQUEST\020\246\n\022(\n#MSG_ID_RADAR_SYSTEM_ST" +
-      "ATUS_RESPONSE\020\247\n\022\"\n\035MSG_ID_RADAR_MAP_SYN" +
-      "C_REQUEST\020\250\n\022#\n\036MSG_ID_RADAR_MAP_SYNC_RE" +
-      "SPONSE\020\251\n\022(\n#MSG_ID_RADAR_RELOCALIZATION" +
-      "_REQUEST\020\252\n\022)\n$MSG_ID_RADAR_RELOCALIZATI" +
-      "ON_RESPONSE\020\253\n\022/\n*MSG_ID_RADAR_RELOCALIZ" +
-      "ATION_STATUS_REQUEST\020\254\n\0220\n+MSG_ID_RADAR_" +
-      "RELOCALIZATION_STATUS_RESPONSE\020\255\n*X\n\010Dev" +
-      "iceId\022\023\n\017DEVICE_RESERVED\020\000\022\016\n\nDEVICE_APP" +
-      "\020\001\022\020\n\014DEVICE_LOWER\020\020\022\025\n\020DEVICE_BROADCAST" +
-      "\020\377\001*v\n\013ComponentId\022\017\n\013COMP_SYSTEM\020\000\022\r\n\tC" +
-      "OMP_WIFI\020\004\022\021\n\rCOMP_SETTINGS\020\005\022\016\n\nCOMP_ME" +
-      "DIA\020\006\022\020\n\014COMP_CONTROL\020\007\022\022\n\016COMP_SCHEDULE" +
-      "R\020\010*v\n\nResultCode\022\022\n\016RESULT_SUCCESS\020\000\022\030\n" +
-      "\024RESULT_INVALID_PARAM\020\001\022\026\n\022RESULT_UNSUPP" +
-      "ORTED\020\002\022\017\n\013RESULT_BUSY\020\003\022\021\n\rRESULT_FAILE" +
-      "D\020\004*;\n\014SystemStatus\022\025\n\021SYS_STATUS_NORMAL" +
-      "\020\000\022\024\n\020SYS_STATUS_ERROR\020\001*Q\n\nWifiResult\022\020" +
-      "\n\014WIFI_PENDING\020\000\022\020\n\014WIFI_SUCCESS\020\001\022\r\n\tWI" +
-      "FI_FAIL\020\002\022\020\n\014WIFI_TIMEOUT\020\003*s\n\010WorkMode\022" +
-      "\025\n\021WORK_MODE_UNKNOWN\020\000\022\024\n\020WORK_MODE_MANU" +
-      "AL\020\001\022\022\n\016WORK_MODE_AUTO\020\002\022\022\n\016WORK_MODE_ED" +
-      "GE\020\003\022\022\n\016WORK_MODE_DOCK\020\004*z\n\rDiscLiftStat" +
-      "e\022\033\n\027DISC_LIFT_STATE_UNKNOWN\020\000\022\026\n\022DISC_L" +
-      "IFT_STATE_UP\020\001\022\030\n\024DISC_LIFT_STATE_DOWN\020\002" +
-      "\022\032\n\026DISC_LIFT_STATE_MOVING\020\003*W\n\017DiscLift" +
-      "Command\022\026\n\022DISC_LIFT_CMD_STOP\020\000\022\024\n\020DISC_" +
-      "LIFT_CMD_UP\020\001\022\026\n\022DISC_LIFT_CMD_DOWN\020\002*\350\001" +
-      "\n\023ManualMotionCommand\022\026\n\022MANUAL_MOTION_S" +
-      "TOP\020\000\022\031\n\025MANUAL_MOTION_FORWARD\020\001\022\032\n\026MANU" +
-      "AL_MOTION_BACKWARD\020\002\022\036\n\032MANUAL_MOTION_FO" +
-      "RWARD_LEFT\020\003\022\037\n\033MANUAL_MOTION_FORWARD_RI" +
-      "GHT\020\004\022\037\n\033MANUAL_MOTION_BACKWARD_LEFT\020\005\022 " +
-      "\n\034MANUAL_MOTION_BACKWARD_RIGHT\020\006*;\n\013Came" +
-      "raCodec\022\025\n\021CAMERA_CODEC_JPEG\020\000\022\025\n\021CAMERA" +
-      "_CODEC_H264\020\001*[\n\013MapEncoding\022\037\n\033MAP_ENCO" +
-      "DING_OCCUPANCY_GRID\020\000\022\024\n\020MAP_ENCODING_PN" +
-      "G\020\001\022\025\n\021MAP_ENCODING_JSON\020\002*\202\001\n\nRegionTyp" +
-      "e\022\027\n\023REGION_TYPE_UNKNOWN\020\000\022\024\n\020REGION_TYP" +
-      "E_WORK\020\001\022\030\n\024REGION_TYPE_OBSTACLE\020\002\022\025\n\021RE" +
-      "GION_TYPE_ERASE\020\003\022\024\n\020REGION_TYPE_CROP\020\004*" +
-      "\306\001\n\tTaskState\022\023\n\017TASK_STATE_IDLE\020\000\022\024\n\020TA" +
-      "SK_STATE_READY\020\001\022\027\n\023TASK_STATE_PLANNING\020" +
-      "\002\022\026\n\022TASK_STATE_RUNNING\020\003\022\025\n\021TASK_STATE_" +
-      "PAUSED\020\004\022\030\n\024TASK_STATE_COMPLETED\020\005\022\026\n\022TA" +
-      "SK_STATE_STOPPED\020\006\022\024\n\020TASK_STATE_ERROR\020\007" +
-      "*a\n\017TaskCommandType\022\022\n\016TASK_CMD_START\020\000\022" +
-      "\022\n\016TASK_CMD_PAUSE\020\001\022\023\n\017TASK_CMD_RESUME\020\002" +
-      "\022\021\n\rTASK_CMD_STOP\020\003*\337\002\n\020MapEditOperation" +
-      "\022\027\n\023MAP_EDIT_OP_UNKNOWN\020\000\022\"\n\036MAP_EDIT_OP" +
-      "_UPSERT_WORK_REGION\020\001\022&\n\"MAP_EDIT_OP_UPS" +
-      "ERT_OBSTACLE_REGION\020\002\022\035\n\031MAP_EDIT_OP_DEL" +
-      "ETE_REGION\020\003\022\032\n\026MAP_EDIT_OP_PAINT_FREE\020\004" +
-      "\022\036\n\032MAP_EDIT_OP_PAINT_OCCUPIED\020\005\022\035\n\031MAP_",
-      "EDIT_OP_PAINT_UNKNOWN\020\006\022#\n\037MAP_EDIT_OP_C" +
-      "LEAR_OVERLAY_PATCH\020\007\022#\n\037MAP_EDIT_OP_UPSE" +
-      "RT_ERASE_REGION\020\010\022\"\n\036MAP_EDIT_OP_UPSERT_" +
-      "CROP_REGION\020\t*s\n\020MapSyncOperation\022\027\n\023MAP" +
-      "_SYNC_OP_UNKNOWN\020\000\022$\n MAP_SYNC_OP_DOWNLO" +
-      "AD_FROM_AURORA\020\001\022 \n\034MAP_SYNC_OP_UPLOAD_T" +
-      "O_AURORA\020\002*T\n\013MapModeType\022\024\n\020MAP_MODE_UN" +
-      "KNOWN\020\000\022\024\n\020MAP_MODE_MAPPING\020\001\022\031\n\025MAP_MOD" +
-      "E_LOCALIZATION\020\002:-\n\004unit\022\035.google.protob" +
-      "uf.FieldOptions\030\321\206\003 \001(\t:.\n\005scale\022\035.googl" +
-      "e.protobuf.FieldOptions\030\322\206\003 \001(\001b\006proto3"
+      "(\t\022\016\n\006map_id\030\003 \001(\t\022\023\n\013map_version\030\004 \001(\r\022" +
+      "2\n\014work_regions\030\005 \003(\0132\034.sl_link.WorkRegi" +
+      "onPointInfo\0220\n\020obstacle_regions\030\006 \003(\0132\026." +
+      "sl_link.PolygonRegion\022-\n\rerase_regions\030\007" +
+      " \003(\0132\026.sl_link.PolygonRegion\022\035\n\025crop_reg" +
+      "ion_available\030\010 \001(\010\022+\n\013crop_region\030\t \001(\013" +
+      "2\026.sl_link.PolygonRegion\"\261\003\n\016MapEditComm" +
+      "and\022\017\n\007edit_id\030\001 \001(\t\022,\n\toperation\030\002 \001(\0162" +
+      "\031.sl_link.MapEditOperation\022\023\n\013region_nam" +
+      "e\030\003 \001(\t\022&\n\006region\030\004 \001(\0132\026.sl_link.Polygo" +
+      "nRegion\022&\n\007polygon\030\005 \003(\0132\025.sl_link.Polyg" +
+      "onPoint\022\024\n\014brush_radius\030\006 \001(\002\022\023\n\013paint_v" +
+      "alue\030\007 \001(\005\022\030\n\020target_region_id\030\010 \001(\t\022/\n\022" +
+      "target_region_type\030\t \001(\0162\023.sl_link.Regio" +
+      "nType\022\034\n\024expected_map_version\030\n \001(\r\022\017\n\007d" +
+      "ry_run\030\013 \001(\010\022#\n\nstart_pose\030\014 \001(\0132\017.sl_li" +
+      "nk.Pose2D\022!\n\010end_pose\030\r \001(\0132\017.sl_link.Po" +
+      "se2D\022\016\n\006map_id\030\016 \001(\t\"\\\n\017MapEditResponse\022" +
+      "#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007" +
+      "message\030\002 \001(\t\022\023\n\013map_version\030\003 \001(\r\"W\n\023Ma" +
+      "pEditStatusReport\022\023\n\013map_version\030\001 \001(\r\022\032" +
+      "\n\022applied_to_planner\030\002 \001(\010\022\017\n\007message\030\003 " +
+      "\001(\t\"/\n\026VideoStreamInfoRequest\022\025\n\rinclude" +
+      "_debug\030\001 \001(\010\"\263\001\n\027VideoStreamInfoResponse" +
+      "\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n" +
+      "\007message\030\002 \001(\t\022\022\n\nstream_url\030\003 \001(\t\022\r\n\005co" +
+      "dec\030\004 \001(\t\022\r\n\005width\030\005 \001(\r\022\016\n\006height\030\006 \001(\r" +
+      "\022\016\n\006online\030\007 \001(\010\022\020\n\010utc_time\030\010 \001(\r\"\362\001\n\017P" +
+      "athPlanRequest\022\022\n\nrequest_id\030\001 \001(\t\022\017\n\007ta" +
+      "sk_id\030\002 \001(\t\022\024\n\014force_replan\030\003 \001(\010\022\032\n\022ret" +
+      "urn_path_chunks\030\004 \001(\010\022\026\n\016max_chunk_size\030" +
+      "\005 \001(\r\022#\n\nstart_pose\030\006 \001(\0132\017.sl_link.Pose" +
+      "2D\022!\n\010end_pose\030\007 \001(\0132\017.sl_link.Pose2D\022\030\n" +
+      "\020global_direction\030\010 \001(\t\022\016\n\006map_id\030\t \001(\t\"" +
+      "\257\005\n\020PathPlanResponse\022#\n\006result\030\001 \001(\0162\023.s" +
+      "l_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\022\n\nre" +
+      "quest_id\030\003 \001(\t\022\017\n\007task_id\030\004 \001(\t\022\023\n\013map_v" +
+      "ersion\030\005 \001(\r\022\024\n\014path_version\030\006 \001(\r\022\030\n\020pa" +
+      "th_point_count\030\007 \001(\r\022\025\n\rpath_length_m\030\010 " +
+      "\001(\002\022\017\n\007planned\030\t \001(\010\022\024\n\014path_chunked\030\n \001" +
+      "(\010\022\025\n\rpreview_image\030\013 \001(\014\022\026\n\016preview_for" +
+      "mat\030\014 \001(\t\022\r\n\005width\030\r \001(\r\022\016\n\006height\030\016 \001(\r" +
+      "\022\022\n\nresolution\030\017 \001(\002\022\037\n\006origin\030\020 \001(\0132\017.s" +
+      "l_link.Pose2D\022\020\n\010frame_id\030\021 \001(\t\022\027\n\017previ" +
+      "ew_scale_x\030\022 \001(\002\022\027\n\017preview_scale_y\030\023 \001(" +
+      "\002\022-\n\022total_work_area_m2\030\024 \001(\002B\021\212\265\030\002m2\221\265\030" +
+      "\000\000\000\000\000\000\360?\022*\n\020estimated_time_s\030\025 \001(\002B\020\212\265\030\001" +
+      "s\221\265\030\000\000\000\000\000\000\360?\022@\n\027localization_covariance\030" +
+      "\026 \001(\0132\037.sl_link.LocalizationCovariance\022\031" +
+      "\n\021alignment_yaw_deg\030\027 \001(\002\022\030\n\020app_rotatio" +
+      "n_deg\030\030 \001(\002\022$\n\034rotation_alignment_delta_" +
+      "deg\030\031 \001(\002\"m\n\016MapSyncRequest\022,\n\toperation" +
+      "\030\001 \001(\0162\031.sl_link.MapSyncOperation\022\016\n\006map" +
+      "_id\030\002 \001(\t\022\035\n\025update_navigation_map\030\003 \001(\010" +
+      "\"\347\001\n\017MapSyncResponse\022#\n\006result\030\001 \001(\0162\023.s" +
+      "l_link.ResultCode\022\017\n\007message\030\002 \001(\t\022,\n\top" +
+      "eration\030\003 \001(\0162\031.sl_link.MapSyncOperation" +
+      "\022\016\n\006map_id\030\004 \001(\t\022\020\n\010map_name\030\010 \001(\t\022\025\n\rma" +
+      "p_yaml_path\030\005 \001(\t\022\026\n\016map_image_path\030\006 \001(" +
+      "\t\022\037\n\027navigation_map_reloaded\030\007 \001(\010\")\n\027Ma" +
+      "pImportToRadarRequest\022\016\n\006map_id\030\001 \001(\t\"\204\001" +
+      "\n\030MapImportToRadarResponse\022#\n\006result\030\001 \001" +
+      "(\0162\023.sl_link.ResultCode\022\017\n\007message\030\002 \001(\t" +
+      "\022\016\n\006map_id\030\003 \001(\t\022\020\n\010map_name\030\004 \001(\t\022\020\n\010im" +
+      "ported\030\005 \001(\010\"W\n\016MapModeRequest\022\"\n\004mode\030\001" +
+      " \001(\0162\024.sl_link.MapModeType\022\017\n\007enabled\030\002 " +
+      "\001(\010\022\020\n\010map_kind\030\003 \001(\005\"\216\001\n\017MapModeRespons" +
+      "e\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017" +
+      "\n\007message\030\002 \001(\t\022\"\n\004mode\030\003 \001(\0162\024.sl_link." +
+      "MapModeType\022\017\n\007enabled\030\004 \001(\010\022\020\n\010map_kind" +
+      "\030\005 \001(\005\";\n\023MapAlignmentRequest\022\016\n\006map_id\030" +
+      "\001 \001(\t\022\024\n\014rotation_deg\030\002 \001(\002\"\311\001\n\024MapAlign" +
+      "mentResponse\022#\n\006result\030\001 \001(\0162\023.sl_link.R" +
+      "esultCode\022\017\n\007message\030\002 \001(\t\022\016\n\006map_id\030\003 \001" +
+      "(\t\022\024\n\014rotation_deg\030\004 \001(\002\022\024\n\014rotation_rad" +
+      "\030\005 \001(\002\022\031\n\021alignment_yaw_deg\030\006 \001(\002\022$\n\034rot" +
+      "ation_alignment_delta_deg\030\007 \001(\002\"\023\n\021MapCa" +
+      "talogRequest\"\255\002\n\016MapCatalogItem\022\016\n\006map_i" +
+      "d\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\022\n\nsize_bytes\030\003 \001(" +
+      "\004\022\020\n\010saved_at\030\004 \001(\004\022-\n\022total_work_area_m" +
+      "2\030\005 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020estimated_" +
+      "time_s\030\006 \001(\002B\020\212\265\030\001s\221\265\030\000\000\000\000\000\000\360?\022\030\n\020thumbn" +
+      "ail_format\030\007 \001(\t\022\027\n\017thumbnail_width\030\010 \001(" +
+      "\r\022\030\n\020thumbnail_height\030\t \001(\r\022\033\n\023thumbnail" +
+      "_image_b64\030\n \001(\t\022\022\n\ncreated_at\030\013 \001(\t\"\207\001\n" +
+      "\022MapCatalogResponse\022#\n\006result\030\001 \001(\0162\023.sl" +
+      "_link.ResultCode\022\017\n\007message\030\002 \001(\t\022\023\n\013tot" +
+      "al_count\030\003 \001(\r\022&\n\005items\030\004 \003(\0132\027.sl_link." +
+      "MapCatalogItem\"\"\n\020MapDeleteRequest\022\016\n\006ma" +
+      "p_id\030\001 \001(\t\"|\n\021MapDeleteResponse\022#\n\006resul" +
+      "t\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007message\030" +
+      "\002 \001(\t\022\016\n\006map_id\030\003 \001(\t\022\020\n\010map_name\030\004 \001(\t\022" +
+      "\017\n\007deleted\030\005 \001(\010\"b\n\016MapSaveRequest\022\020\n\010ma" +
+      "p_name\030\001 \001(\t\022\016\n\006map_id\030\002 \001(\t\022\030\n\020has_rota" +
+      "tion_deg\030\003 \001(\010\022\024\n\014rotation_deg\030\004 \001(\002\"\250\002\n" +
+      "\017MapSaveResponse\022#\n\006result\030\001 \001(\0162\023.sl_li" +
+      "nk.ResultCode\022\017\n\007message\030\002 \001(\t\022\016\n\006map_id" +
+      "\030\003 \001(\t\022\020\n\010map_name\030\004 \001(\t\022\025\n\rmap_yaml_pat" +
+      "h\030\005 \001(\t\022\026\n\016map_image_path\030\006 \001(\t\022\037\n\027navig" +
+      "ation_map_reloaded\030\007 \001(\010\022-\n\022total_work_a" +
+      "rea_m2\030\010 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022*\n\020estim" +
+      "ated_time_s\030\t \001(\002B\020\212\265\030\001s\221\265\030\000\000\000\000\000\000\360?\022\022\n\nc" +
+      "reated_at\030\n \001(\t\"#\n\021MapMetricsRequest\022\016\n\006" +
+      "map_id\030\001 \001(\t\"\233\001\n\021RegionMetricsItem\022\021\n\tre" +
+      "gion_id\030\001 \001(\t\022\023\n\013region_name\030\002 \001(\t\022\016\n\006re" +
+      "peat\030\003 \001(\r\022\"\n\007area_m2\030\004 \001(\002B\021\212\265\030\002m2\221\265\030\000\000" +
+      "\000\000\000\000\360?\022*\n\020estimated_time_h\030\005 \001(\002B\020\212\265\030\001h\221" +
+      "\265\030\000\000\000\000\000\000\360?\"\240\001\n\022MapMetricsResponse\022#\n\006res" +
+      "ult\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007messag" +
+      "e\030\002 \001(\t\022\016\n\006map_id\030\003 \001(\t\022\020\n\010map_name\030\004 \001(" +
+      "\t\0222\n\016region_metrics\030\005 \003(\0132\032.sl_link.Regi" +
+      "onMetricsItem\"S\n\021TaskResultRequest\022\016\n\006ma" +
+      "p_id\030\001 \001(\t\022\017\n\007task_id\030\002 \001(\t\022\035\n\025max_execu" +
+      "tion_records\030\003 \001(\r\"\234\001\n\024TaskResultRegionI" +
+      "tem\022\021\n\tregion_id\030\001 \001(\t\022\023\n\013region_name\030\002 " +
+      "\001(\t\022\025\n\rtarget_repeat\030\003 \001(\r\022\027\n\017executed_r" +
+      "epeat\030\004 \001(\r\022\021\n\tcompleted\030\005 \001(\010\022\031\n\021unfini" +
+      "shed_reason\030\006 \001(\t\"\341\002\n\023TaskExecutionRecor" +
+      "d\022\024\n\014execution_id\030\001 \001(\t\022\016\n\006map_id\030\002 \001(\t\022" +
+      "\017\n\007task_id\030\003 \001(\t\022\'\n\013final_state\030\004 \001(\0162\022." +
+      "sl_link.TaskState\022\023\n\013stop_reason\030\005 \001(\t\022\022" +
+      "\n\nstarted_at\030\006 \001(\004\022\023\n\013finished_at\030\007 \001(\004\022" +
+      "*\n\017planned_area_m2\030\010 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000" +
+      "\000\360?\022+\n\020executed_area_m2\030\t \001(\002B\021\212\265\030\002m2\221\265\030" +
+      "\000\000\000\000\000\000\360?\022&\n\010progress\030\n \001(\002B\024\212\265\030\005ratio\221\265\030" +
+      "\000\000\000\000\000\000\360?\022\024\n\014path_version\030\013 \001(\r\022\025\n\rall_co" +
+      "mpleted\030\014 \001(\010\"\244\006\n\022TaskResultResponse\022#\n\006" +
+      "result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007mes" +
+      "sage\030\002 \001(\t\022\016\n\006map_id\030\003 \001(\t\022\017\n\007task_id\030\004 " +
+      "\001(\t\022\'\n\013final_state\030\005 \001(\0162\022.sl_link.TaskS" +
+      "tate\022\025\n\rall_completed\030\006 \001(\010\022\023\n\013stop_reas" +
+      "on\030\007 \001(\t\022\024\n\014path_version\030\010 \001(\r\022\024\n\014image_" +
+      "format\030\t \001(\t\022\022\n\nimage_data\030\n \001(\014\022\023\n\013imag" +
+      "e_width\030\013 \001(\r\022\024\n\014image_height\030\014 \001(\r\022\023\n\013f" +
+      "inished_at\030\r \001(\004\022 \n\030selected_work_region" +
+      "_ids\030\016 \003(\t\0225\n\016region_results\030\017 \003(\0132\035.sl_" +
+      "link.TaskResultRegionItem\022@\n\027localizatio" +
+      "n_covariance\030\020 \001(\0132\037.sl_link.Localizatio" +
+      "nCovariance\022\031\n\021alignment_yaw_deg\030\021 \001(\002\022\030" +
+      "\n\020app_rotation_deg\030\022 \001(\002\022$\n\034rotation_ali" +
+      "gnment_delta_deg\030\023 \001(\002\022\024\n\014execution_id\030\024" +
+      " \001(\t\022\022\n\nstarted_at\030\025 \001(\004\022*\n\017planned_area" +
+      "_m2\030\026 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\022+\n\020executed" +
+      "_area_m2\030\027 \001(\002B\021\212\265\030\002m2\221\265\030\000\000\000\000\000\000\360?\0220\n\022exe" +
+      "cution_progress\030\030 \001(\002B\024\212\265\030\005ratio\221\265\030\000\000\000\000\000" +
+      "\000\360?\0227\n\021execution_records\030\031 \003(\0132\034.sl_link" +
+      ".TaskExecutionRecord\"|\n\033TaskExecutionHis" +
+      "toryRequest\022\016\n\006map_id\030\001 \001(\t\022\017\n\007task_id\030\002" +
+      " \001(\t\022\022\n\nstart_time\030\003 \001(\004\022\020\n\010end_time\030\004 \001" +
+      "(\004\022\026\n\016max_chunk_size\030\005 \001(\r\"\314\001\n\031TaskExecu" +
+      "tionHistoryChunk\022#\n\006result\030\001 \001(\0162\023.sl_li" +
+      "nk.ResultCode\022\017\n\007message\030\002 \001(\t\022\023\n\013chunk_" +
+      "index\030\003 \001(\r\022\024\n\014total_chunks\030\004 \001(\r\022\032\n\022tot" +
+      "al_record_count\030\005 \001(\r\022\014\n\004data\030\006 \001(\014\022\022\n\ns" +
+      "tart_time\030\007 \001(\004\022\020\n\010end_time\030\010 \001(\004\"\272\001\n\025Ta" +
+      "skTrajectoryRequest\022\024\n\014execution_id\030\001 \001(" +
+      "\t\022\017\n\007task_id\030\002 \001(\t\022\022\n\nstart_time\030\003 \001(\004\022\020" +
+      "\n\010end_time\030\004 \001(\004\022\023\n\013start_index\030\005 \001(\r\022\022\n" +
+      "\nmax_points\030\006 \001(\r\022\023\n\013sample_step\030\007 \001(\r\022\026" +
+      "\n\016max_chunk_size\030\010 \001(\r\"\221\002\n\023TaskTrajector" +
+      "yPoint\022\r\n\005index\030\001 \001(\r\022\021\n\toffset_ms\030\002 \001(\r" +
+      "\022\014\n\004x_mm\030\003 \001(\021\022\014\n\004y_mm\030\004 \001(\021\022\024\n\014heading_" +
+      "mdeg\030\005 \001(\021\022\031\n\021linear_speed_mmps\030\006 \001(\021\022\034\n" +
+      "\024angular_speed_mradps\030\007 \001(\021\022\026\n\016disc_spee" +
+      "d_rpm\030\010 \001(\r\022\027\n\017speed_available\030\t \001(\010\022\024\n\014" +
+      "disc_enabled\030\n \001(\010\022&\n\ntask_state\030\013 \001(\0162\022" +
+      ".sl_link.TaskState\"\243\007\n\023TaskTrajectoryChu" +
+      "nk\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022" +
+      "\017\n\007message\030\002 \001(\t\022\024\n\014execution_id\030\003 \001(\t\022\023" +
+      "\n\013chunk_index\030\004 \001(\r\022\024\n\014total_chunks\030\005 \001(" +
+      "\r\022\031\n\021total_point_count\030\006 \001(\r\022\034\n\024returned" +
+      "_point_count\030\007 \001(\r\022\023\n\013start_index\030\010 \001(\r\022" +
+      "\022\n\nnext_index\030\t \001(\r\022\020\n\010has_more\030\n \001(\010\022\025\n" +
+      "\rstarted_at_ms\030\013 \001(\004\022,\n\006points\030\014 \003(\0132\034.s" +
+      "l_link.TaskTrajectoryPoint\022\017\n\007task_id\030\r " +
+      "\001(\t\022\016\n\006map_id\030\016 \001(\t\022\022\n\nstart_time\030\017 \001(\004\022" +
+      "\020\n\010end_time\030\020 \001(\004\022\023\n\013sample_step\030\021 \001(\r\022\025" +
+      "\n\rmap_available\030\022 \001(\010\022\023\n\013map_message\030\023 \001" +
+      "(\t\022\023\n\013map_version\030\024 \001(\r\022\030\n\020map_source_wi" +
+      "dth\030\025 \001(\r\022\031\n\021map_source_height\030\026 \001(\r\022\026\n\016" +
+      "map_resolution\030\027 \001(\002\022#\n\nmap_origin\030\030 \001(\013" +
+      "2\017.sl_link.Pose2D\022\024\n\014map_frame_id\030\031 \001(\t\022" +
+      "\030\n\020map_image_format\030\032 \001(\t\022\027\n\017map_image_w" +
+      "idth\030\033 \001(\r\022\030\n\020map_image_height\030\034 \001(\r\022\033\n\023" +
+      "map_preview_scale_x\030\035 \001(\002\022\033\n\023map_preview" +
+      "_scale_y\030\036 \001(\002\022\026\n\016map_image_data\030\037 \001(\014\022\035" +
+      "\n\025map_image_chunk_index\030  \001(\r\022\036\n\026map_ima" +
+      "ge_total_chunks\030! \001(\r\022\031\n\021alignment_yaw_d" +
+      "eg\030\" \001(\002\022\030\n\020app_rotation_deg\030# \001(\002\022$\n\034ro" +
+      "tation_alignment_delta_deg\030$ \001(\002\"\032\n\030Live" +
+      "MapCacheClearRequest\"Q\n\031LiveMapCacheClea" +
+      "rResponse\022#\n\006result\030\001 \001(\0162\023.sl_link.Resu" +
+      "ltCode\022\017\n\007message\030\002 \001(\t\"\033\n\031RadarMapCache" +
+      "ClearRequest\"R\n\032RadarMapCacheClearRespon" +
+      "se\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022" +
+      "\017\n\007message\030\002 \001(\t\"\032\n\030RadarSystemStatusReq" +
+      "uest\"\212\001\n\031RadarSystemStatusResponse\022#\n\006re" +
+      "sult\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007messa" +
+      "ge\030\002 \001(\t\022\021\n\tavailable\030\003 \001(\010\022\016\n\006status\030\004 " +
+      "\001(\t\022\024\n\014timestamp_ns\030\005 \001(\004\"\025\n\023RadarMapSyn" +
+      "cRequest\"Z\n\024RadarMapSyncResponse\022#\n\006resu" +
+      "lt\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007message" +
+      "\030\002 \001(\t\022\014\n\004sent\030\003 \001(\010\"\034\n\032RadarRelocalizat" +
+      "ionRequest\"u\n\033RadarRelocalizationRespons" +
+      "e\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017" +
+      "\n\007message\030\002 \001(\t\022\020\n\010accepted\030\003 \001(\010\022\016\n\006sta" +
+      "tus\030\004 \001(\t\"\"\n RadarRelocalizationStatusRe" +
+      "quest\"\361\001\n!RadarRelocalizationStatusRespo" +
+      "nse\022\022\n\nraw_status\030\005 \001(\t\022\024\n\014timestamp_ns\030" +
+      "\n \001(\004J\004\010\001\020\002J\004\010\002\020\003J\004\010\003\020\004J\004\010\004\020\005J\004\010\006\020\007J\004\010\007\020" +
+      "\010J\004\010\010\020\tJ\004\010\t\020\nR\006resultR\007messageR\tavailabl" +
+      "eR\006statusR\rsystem_statusR\016odom_available" +
+      "R\025odom_linear_speed_mpsR\030odom_angular_sp" +
+      "eed_radps\"<\n\017DiscLiftControl\022)\n\007command\030" +
+      "\001 \001(\0162\030.sl_link.DiscLiftCommand\"\"\n\017Light" +
+      "ingControl\022\017\n\007enabled\030\001 \001(\010\"&\n\023ChassisPo" +
+      "werControl\022\017\n\007enabled\030\001 \001(\010\"1\n\013DiscContr" +
+      "ol\022\017\n\007enabled\030\001 \001(\010\022\021\n\tspeed_rpm\030\002 \001(\r\"\'" +
+      "\n\024EmergencyStopControl\022\017\n\007enabled\030\001 \001(\010\"" +
+      "\260\001\n\022ManualDriveControl\022,\n\006motion\030\001 \001(\0162\034" +
+      ".sl_link.ManualMotionCommand\022\023\n\013speed_ra" +
+      "tio\030\002 \001(\002\022\020\n\010remote_x\030\003 \001(\002\022\020\n\010remote_y\030" +
+      "\004 \001(\002\022\025\n\rmax_speed_mps\030\005 \001(\002\022\034\n\024max_turn" +
+      "_speed_ratio\030\006 \001(\002\"\313\002\n\016ControlCommand\022-\n" +
+      "\tdisc_lift\030\001 \001(\0132\030.sl_link.DiscLiftContr" +
+      "olH\000\022,\n\010lighting\030\002 \001(\0132\030.sl_link.Lightin" +
+      "gControlH\000\0223\n\014manual_drive\030\003 \001(\0132\033.sl_li" +
+      "nk.ManualDriveControlH\000\0225\n\rchassis_power" +
+      "\030\004 \001(\0132\034.sl_link.ChassisPowerControlH\000\022," +
+      "\n\014disc_control\030\005 \001(\0132\024.sl_link.DiscContr" +
+      "olH\000\0227\n\016emergency_stop\030\006 \001(\0132\035.sl_link.E" +
+      "mergencyStopControlH\000B\t\n\007command\"\200\001\n\026Con" +
+      "trolCommandResponse\022#\n\006result\030\001 \001(\0162\023.sl" +
+      "_link.ResultCode\022\017\n\007message\030\002 \001(\t\0220\n\017app" +
+      "lied_command\030\003 \001(\0132\027.sl_link.ControlComm" +
+      "and*\232\022\n\tMessageId\022\022\n\016MSG_ID_UNKNOWN\020\000\022\027\n" +
+      "\022MSG_ID_WIFI_CONFIG\020\201\004\022\036\n\031MSG_ID_WIFI_ST" +
+      "ATUS_REPORT\020\202\004\022!\n\034MSG_ID_SETTINGS_READ_R" +
+      "EQUEST\020\203\004\022\"\n\035MSG_ID_SETTINGS_READ_RESPON" +
+      "SE\020\204\004\022\"\n\035MSG_ID_SETTINGS_WRITE_REQUEST\020\205" +
+      "\004\022#\n\036MSG_ID_SETTINGS_WRITE_RESPONSE\020\206\004\022 " +
+      "\n\033MSG_ID_DEVICE_STATUS_REPORT\020\201\006\022 \n\033MSG_" +
+      "ID_CAMERA_FRAME_REQUEST\020\202\006\022\036\n\031MSG_ID_CAM" +
+      "ERA_FRAME_CHUNK\020\203\006\022\027\n\022MSG_ID_MAP_REQUEST" +
+      "\020\204\006\022\025\n\020MSG_ID_MAP_CHUNK\020\205\006\022\033\n\026MSG_ID_CON" +
+      "TROL_COMMAND\020\201\010\022$\n\037MSG_ID_CONTROL_COMMAN" +
+      "D_RESPONSE\020\202\010\022\027\n\022MSG_ID_TASK_CONFIG\020\200\n\022 " +
+      "\n\033MSG_ID_TASK_CONFIG_RESPONSE\020\201\n\022\030\n\023MSG_",
+      "ID_TASK_COMMAND\020\202\n\022!\n\034MSG_ID_TASK_COMMAN" +
+      "D_RESPONSE\020\203\n\022\036\n\031MSG_ID_TASK_STATUS_REPO" +
+      "RT\020\204\n\022#\n\036MSG_ID_PATH_POINT_PLAN_REQUEST\020" +
+      "\205\n\022$\n\037MSG_ID_PATH_POINT_PLAN_RESPONSE\020\206\n" +
+      "\022\037\n\032MSG_ID_MAP_PREVIEW_REQUEST\020\207\n\022 \n\033MSG" +
+      "_ID_MAP_PREVIEW_RESPONSE\020\210\n\022\034\n\027MSG_ID_MA" +
+      "P_EDIT_COMMAND\020\211\n\022\035\n\030MSG_ID_MAP_EDIT_RES" +
+      "PONSE\020\212\n\022\"\n\035MSG_ID_MAP_EDIT_STATUS_REPOR" +
+      "T\020\213\n\022%\n MSG_ID_VIDEO_STREAM_INFO_REQUEST" +
+      "\020\214\n\022&\n!MSG_ID_VIDEO_STREAM_INFO_RESPONSE" +
+      "\020\215\n\022\035\n\030MSG_ID_PATH_PLAN_REQUEST\020\216\n\022\036\n\031MS" +
+      "G_ID_PATH_PLAN_RESPONSE\020\217\n\022\034\n\027MSG_ID_MAP" +
+      "_SYNC_REQUEST\020\220\n\022\035\n\030MSG_ID_MAP_SYNC_RESP" +
+      "ONSE\020\221\n\022\034\n\027MSG_ID_MAP_MODE_REQUEST\020\222\n\022\035\n" +
+      "\030MSG_ID_MAP_MODE_RESPONSE\020\223\n\022\037\n\032MSG_ID_M" +
+      "AP_CATALOG_REQUEST\020\224\n\022 \n\033MSG_ID_MAP_CATA" +
+      "LOG_RESPONSE\020\225\n\022\036\n\031MSG_ID_MAP_DELETE_REQ" +
+      "UEST\020\226\n\022\037\n\032MSG_ID_MAP_DELETE_RESPONSE\020\227\n" +
+      "\022\034\n\027MSG_ID_MAP_SAVE_REQUEST\020\230\n\022\035\n\030MSG_ID" +
+      "_MAP_SAVE_RESPONSE\020\231\n\022\037\n\032MSG_ID_MAP_METR" +
+      "ICS_REQUEST\020\232\n\022 \n\033MSG_ID_MAP_METRICS_RES" +
+      "PONSE\020\233\n\022\037\n\032MSG_ID_TASK_RESULT_REQUEST\020\234" +
+      "\n\022 \n\033MSG_ID_TASK_RESULT_RESPONSE\020\235\n\022(\n#M" +
+      "SG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST\020\236\n\022)\n" +
+      "$MSG_ID_LIVE_MAP_CACHE_CLEAR_RESPONSE\020\237\n" +
+      "\022)\n$MSG_ID_RADAR_MAP_CACHE_CLEAR_REQUEST" +
+      "\020\240\n\022*\n%MSG_ID_RADAR_MAP_CACHE_CLEAR_RESP" +
+      "ONSE\020\241\n\022\'\n\"MSG_ID_MAP_IMPORT_TO_RADAR_RE" +
+      "QUEST\020\242\n\022(\n#MSG_ID_MAP_IMPORT_TO_RADAR_R" +
+      "ESPONSE\020\243\n\022!\n\034MSG_ID_MAP_ALIGNMENT_REQUE" +
+      "ST\020\244\n\022\"\n\035MSG_ID_MAP_ALIGNMENT_RESPONSE\020\245" +
+      "\n\022\'\n\"MSG_ID_RADAR_SYSTEM_STATUS_REQUEST\020" +
+      "\246\n\022(\n#MSG_ID_RADAR_SYSTEM_STATUS_RESPONS" +
+      "E\020\247\n\022\"\n\035MSG_ID_RADAR_MAP_SYNC_REQUEST\020\250\n" +
+      "\022#\n\036MSG_ID_RADAR_MAP_SYNC_RESPONSE\020\251\n\022(\n" +
+      "#MSG_ID_RADAR_RELOCALIZATION_REQUEST\020\252\n\022" +
+      ")\n$MSG_ID_RADAR_RELOCALIZATION_RESPONSE\020" +
+      "\253\n\022/\n*MSG_ID_RADAR_RELOCALIZATION_STATUS" +
+      "_REQUEST\020\254\n\0220\n+MSG_ID_RADAR_RELOCALIZATI" +
+      "ON_STATUS_RESPONSE\020\255\n\022$\n\037MSG_ID_MAP_REGI" +
+      "ON_POINT_REQUEST\020\256\n\022%\n MSG_ID_MAP_REGION" +
+      "_POINT_RESPONSE\020\257\n\022*\n%MSG_ID_TASK_EXECUT" +
+      "ION_HISTORY_REQUEST\020\260\n\022(\n#MSG_ID_TASK_EX" +
+      "ECUTION_HISTORY_CHUNK\020\261\n\022#\n\036MSG_ID_TASK_" +
+      "TRAJECTORY_REQUEST\020\262\n\022!\n\034MSG_ID_TASK_TRA" +
+      "JECTORY_CHUNK\020\263\n*X\n\010DeviceId\022\023\n\017DEVICE_R" +
+      "ESERVED\020\000\022\016\n\nDEVICE_APP\020\001\022\020\n\014DEVICE_LOWE" +
+      "R\020\020\022\025\n\020DEVICE_BROADCAST\020\377\001*v\n\013ComponentI" +
+      "d\022\017\n\013COMP_SYSTEM\020\000\022\r\n\tCOMP_WIFI\020\004\022\021\n\rCOM" +
+      "P_SETTINGS\020\005\022\016\n\nCOMP_MEDIA\020\006\022\020\n\014COMP_CON" +
+      "TROL\020\007\022\022\n\016COMP_SCHEDULER\020\010*v\n\nResultCode" +
+      "\022\022\n\016RESULT_SUCCESS\020\000\022\030\n\024RESULT_INVALID_P" +
+      "ARAM\020\001\022\026\n\022RESULT_UNSUPPORTED\020\002\022\017\n\013RESULT" +
+      "_BUSY\020\003\022\021\n\rRESULT_FAILED\020\004*;\n\014SystemStat" +
+      "us\022\025\n\021SYS_STATUS_NORMAL\020\000\022\024\n\020SYS_STATUS_" +
+      "ERROR\020\001*Q\n\nWifiResult\022\020\n\014WIFI_PENDING\020\000\022" +
+      "\020\n\014WIFI_SUCCESS\020\001\022\r\n\tWIFI_FAIL\020\002\022\020\n\014WIFI" +
+      "_TIMEOUT\020\003*s\n\010WorkMode\022\025\n\021WORK_MODE_UNKN" +
+      "OWN\020\000\022\024\n\020WORK_MODE_MANUAL\020\001\022\022\n\016WORK_MODE" +
+      "_AUTO\020\002\022\022\n\016WORK_MODE_EDGE\020\003\022\022\n\016WORK_MODE" +
+      "_DOCK\020\004*z\n\rDiscLiftState\022\033\n\027DISC_LIFT_ST" +
+      "ATE_UNKNOWN\020\000\022\026\n\022DISC_LIFT_STATE_UP\020\001\022\030\n" +
+      "\024DISC_LIFT_STATE_DOWN\020\002\022\032\n\026DISC_LIFT_STA" +
+      "TE_MOVING\020\003*W\n\017DiscLiftCommand\022\026\n\022DISC_L" +
+      "IFT_CMD_STOP\020\000\022\024\n\020DISC_LIFT_CMD_UP\020\001\022\026\n\022" +
+      "DISC_LIFT_CMD_DOWN\020\002*\350\001\n\023ManualMotionCom" +
+      "mand\022\026\n\022MANUAL_MOTION_STOP\020\000\022\031\n\025MANUAL_M" +
+      "OTION_FORWARD\020\001\022\032\n\026MANUAL_MOTION_BACKWAR" +
+      "D\020\002\022\036\n\032MANUAL_MOTION_FORWARD_LEFT\020\003\022\037\n\033M" +
+      "ANUAL_MOTION_FORWARD_RIGHT\020\004\022\037\n\033MANUAL_M" +
+      "OTION_BACKWARD_LEFT\020\005\022 \n\034MANUAL_MOTION_B" +
+      "ACKWARD_RIGHT\020\006*;\n\013CameraCodec\022\025\n\021CAMERA" +
+      "_CODEC_JPEG\020\000\022\025\n\021CAMERA_CODEC_H264\020\001*[\n\013" +
+      "MapEncoding\022\037\n\033MAP_ENCODING_OCCUPANCY_GR" +
+      "ID\020\000\022\024\n\020MAP_ENCODING_PNG\020\001\022\025\n\021MAP_ENCODI" +
+      "NG_JSON\020\002*\202\001\n\nRegionType\022\027\n\023REGION_TYPE_" +
+      "UNKNOWN\020\000\022\024\n\020REGION_TYPE_WORK\020\001\022\030\n\024REGIO" +
+      "N_TYPE_OBSTACLE\020\002\022\025\n\021REGION_TYPE_ERASE\020\003" +
+      "\022\024\n\020REGION_TYPE_CROP\020\004*\306\001\n\tTaskState\022\023\n\017" +
+      "TASK_STATE_IDLE\020\000\022\024\n\020TASK_STATE_READY\020\001\022" +
+      "\027\n\023TASK_STATE_PLANNING\020\002\022\026\n\022TASK_STATE_R" +
+      "UNNING\020\003\022\025\n\021TASK_STATE_PAUSED\020\004\022\030\n\024TASK_" +
+      "STATE_COMPLETED\020\005\022\026\n\022TASK_STATE_STOPPED\020" +
+      "\006\022\024\n\020TASK_STATE_ERROR\020\007*a\n\017TaskCommandTy" +
+      "pe\022\022\n\016TASK_CMD_START\020\000\022\022\n\016TASK_CMD_PAUSE" +
+      "\020\001\022\023\n\017TASK_CMD_RESUME\020\002\022\021\n\rTASK_CMD_STOP" +
+      "\020\003*\337\002\n\020MapEditOperation\022\027\n\023MAP_EDIT_OP_U" +
+      "NKNOWN\020\000\022\"\n\036MAP_EDIT_OP_UPSERT_WORK_REGI" +
+      "ON\020\001\022&\n\"MAP_EDIT_OP_UPSERT_OBSTACLE_REGI" +
+      "ON\020\002\022\035\n\031MAP_EDIT_OP_DELETE_REGION\020\003\022\032\n\026M" +
+      "AP_EDIT_OP_PAINT_FREE\020\004\022\036\n\032MAP_EDIT_OP_P" +
+      "AINT_OCCUPIED\020\005\022\035\n\031MAP_EDIT_OP_PAINT_UNK" +
+      "NOWN\020\006\022#\n\037MAP_EDIT_OP_CLEAR_OVERLAY_PATC" +
+      "H\020\007\022#\n\037MAP_EDIT_OP_UPSERT_ERASE_REGION\020\010" +
+      "\022\"\n\036MAP_EDIT_OP_UPSERT_CROP_REGION\020\t*s\n\020" +
+      "MapSyncOperation\022\027\n\023MAP_SYNC_OP_UNKNOWN\020" +
+      "\000\022$\n MAP_SYNC_OP_DOWNLOAD_FROM_AURORA\020\001\022" +
+      " \n\034MAP_SYNC_OP_UPLOAD_TO_AURORA\020\002*T\n\013Map" +
+      "ModeType\022\024\n\020MAP_MODE_UNKNOWN\020\000\022\024\n\020MAP_MO" +
+      "DE_MAPPING\020\001\022\031\n\025MAP_MODE_LOCALIZATION\020\002:" +
+      "-\n\004unit\022\035.google.protobuf.FieldOptions\030\321" +
+      "\206\003 \001(\t:.\n\005scale\022\035.google.protobuf.FieldO" +
+      "ptions\030\322\206\003 \001(\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -75974,7 +92534,7 @@ public final class SlLink {
     internal_static_sl_link_MapChunk_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapChunk_descriptor,
-        new java.lang.String[] { "MapId", "UtcTime", "Encoding", "Width", "Height", "Resolution", "ChunkIndex", "TotalChunks", "Data", "Origin", "FrameId", "PreviewScaleX", "PreviewScaleY", "LocalizationCovariance", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", });
+        new java.lang.String[] { "MapId", "UtcTime", "Encoding", "Width", "Height", "Resolution", "ChunkIndex", "TotalChunks", "Data", "Origin", "FrameId", "PreviewScaleX", "PreviewScaleY", "LocalizationCovariance", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", "MapVersion", });
     internal_static_sl_link_PathPoint2D_descriptor =
       getDescriptor().getMessageTypes().get(17);
     internal_static_sl_link_PathPoint2D_fieldAccessorTable = new
@@ -76017,18 +92577,18 @@ public final class SlLink {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskStatusReport_descriptor,
         new java.lang.String[] { "TaskId", "State", "Progress", "MapVersion", "Message", "Position", "ReplanRequested", "PathPointCount", "PathVersion", "TotalWorkAreaM2", "RemainingWorkAreaM2", "RemainingTimeS", "CurrentRegionId", "CurrentRegionRepeatIndex", "CurrentRegionRepeatTotal", "AlignmentYawDeg", "LocalizationCovariance", });
-    internal_static_sl_link_TaskPathRequest_descriptor =
+    internal_static_sl_link_PathPointPlanRequest_descriptor =
       getDescriptor().getMessageTypes().get(24);
-    internal_static_sl_link_TaskPathRequest_fieldAccessorTable = new
+    internal_static_sl_link_PathPointPlanRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_sl_link_TaskPathRequest_descriptor,
-        new java.lang.String[] { "TaskId", "MaxChunkSize", });
-    internal_static_sl_link_TaskPathChunk_descriptor =
+        internal_static_sl_link_PathPointPlanRequest_descriptor,
+        new java.lang.String[] { "TaskId", "MaxChunkSize", "RequestId", "ForceReplan", "StartPose", "EndPose", "GlobalDirection", "MapId", });
+    internal_static_sl_link_PathPointPlanResponse_descriptor =
       getDescriptor().getMessageTypes().get(25);
-    internal_static_sl_link_TaskPathChunk_fieldAccessorTable = new
+    internal_static_sl_link_PathPointPlanResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_sl_link_TaskPathChunk_descriptor,
-        new java.lang.String[] { "TaskId", "ChunkIndex", "TotalChunks", "PathVersion", "Data", });
+        internal_static_sl_link_PathPointPlanResponse_descriptor,
+        new java.lang.String[] { "TaskId", "ChunkIndex", "TotalChunks", "PathVersion", "Data", "RequestId", "MapId", "Result", "Message", "Planned", "MapVersion", "PathPointCount", "PathLengthM", "TotalWorkAreaM2", "EstimatedTimeS", "FrameId", });
     internal_static_sl_link_MapPreviewRequest_descriptor =
       getDescriptor().getMessageTypes().get(26);
     internal_static_sl_link_MapPreviewRequest_fieldAccessorTable = new
@@ -76041,290 +92601,344 @@ public final class SlLink {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapPreviewResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapVersion", "Width", "Height", "Resolution", "Origin", "FrameId", "ImageData", "OverlayJson", "PreviewScaleX", "PreviewScaleY", "LocalizationCovariance", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", });
-    internal_static_sl_link_MapEditCommand_descriptor =
+    internal_static_sl_link_MapRegionPointRequest_descriptor =
       getDescriptor().getMessageTypes().get(28);
+    internal_static_sl_link_MapRegionPointRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_MapRegionPointRequest_descriptor,
+        new java.lang.String[] { "MapId", });
+    internal_static_sl_link_WorkRegionPointInfo_descriptor =
+      getDescriptor().getMessageTypes().get(29);
+    internal_static_sl_link_WorkRegionPointInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_WorkRegionPointInfo_descriptor,
+        new java.lang.String[] { "Region", "StartPoseAvailable", "StartPose", "EndPoseAvailable", "EndPose", });
+    internal_static_sl_link_MapRegionPointResponse_descriptor =
+      getDescriptor().getMessageTypes().get(30);
+    internal_static_sl_link_MapRegionPointResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_MapRegionPointResponse_descriptor,
+        new java.lang.String[] { "Result", "Message", "MapId", "MapVersion", "WorkRegions", "ObstacleRegions", "EraseRegions", "CropRegionAvailable", "CropRegion", });
+    internal_static_sl_link_MapEditCommand_descriptor =
+      getDescriptor().getMessageTypes().get(31);
     internal_static_sl_link_MapEditCommand_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapEditCommand_descriptor,
         new java.lang.String[] { "EditId", "Operation", "RegionName", "Region", "Polygon", "BrushRadius", "PaintValue", "TargetRegionId", "TargetRegionType", "ExpectedMapVersion", "DryRun", "StartPose", "EndPose", "MapId", });
     internal_static_sl_link_MapEditResponse_descriptor =
-      getDescriptor().getMessageTypes().get(29);
+      getDescriptor().getMessageTypes().get(32);
     internal_static_sl_link_MapEditResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapEditResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapVersion", });
     internal_static_sl_link_MapEditStatusReport_descriptor =
-      getDescriptor().getMessageTypes().get(30);
+      getDescriptor().getMessageTypes().get(33);
     internal_static_sl_link_MapEditStatusReport_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapEditStatusReport_descriptor,
         new java.lang.String[] { "MapVersion", "AppliedToPlanner", "Message", });
     internal_static_sl_link_VideoStreamInfoRequest_descriptor =
-      getDescriptor().getMessageTypes().get(31);
+      getDescriptor().getMessageTypes().get(34);
     internal_static_sl_link_VideoStreamInfoRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_VideoStreamInfoRequest_descriptor,
         new java.lang.String[] { "IncludeDebug", });
     internal_static_sl_link_VideoStreamInfoResponse_descriptor =
-      getDescriptor().getMessageTypes().get(32);
+      getDescriptor().getMessageTypes().get(35);
     internal_static_sl_link_VideoStreamInfoResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_VideoStreamInfoResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "StreamUrl", "Codec", "Width", "Height", "Online", "UtcTime", });
     internal_static_sl_link_PathPlanRequest_descriptor =
-      getDescriptor().getMessageTypes().get(33);
+      getDescriptor().getMessageTypes().get(36);
     internal_static_sl_link_PathPlanRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_PathPlanRequest_descriptor,
         new java.lang.String[] { "RequestId", "TaskId", "ForceReplan", "ReturnPathChunks", "MaxChunkSize", "StartPose", "EndPose", "GlobalDirection", "MapId", });
     internal_static_sl_link_PathPlanResponse_descriptor =
-      getDescriptor().getMessageTypes().get(34);
+      getDescriptor().getMessageTypes().get(37);
     internal_static_sl_link_PathPlanResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_PathPlanResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "RequestId", "TaskId", "MapVersion", "PathVersion", "PathPointCount", "PathLengthM", "Planned", "PathChunked", "PreviewImage", "PreviewFormat", "Width", "Height", "Resolution", "Origin", "FrameId", "PreviewScaleX", "PreviewScaleY", "TotalWorkAreaM2", "EstimatedTimeS", "LocalizationCovariance", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", });
     internal_static_sl_link_MapSyncRequest_descriptor =
-      getDescriptor().getMessageTypes().get(35);
+      getDescriptor().getMessageTypes().get(38);
     internal_static_sl_link_MapSyncRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapSyncRequest_descriptor,
         new java.lang.String[] { "Operation", "MapId", "UpdateNavigationMap", });
     internal_static_sl_link_MapSyncResponse_descriptor =
-      getDescriptor().getMessageTypes().get(36);
+      getDescriptor().getMessageTypes().get(39);
     internal_static_sl_link_MapSyncResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapSyncResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Operation", "MapId", "MapName", "MapYamlPath", "MapImagePath", "NavigationMapReloaded", });
     internal_static_sl_link_MapImportToRadarRequest_descriptor =
-      getDescriptor().getMessageTypes().get(37);
+      getDescriptor().getMessageTypes().get(40);
     internal_static_sl_link_MapImportToRadarRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapImportToRadarRequest_descriptor,
         new java.lang.String[] { "MapId", });
     internal_static_sl_link_MapImportToRadarResponse_descriptor =
-      getDescriptor().getMessageTypes().get(38);
+      getDescriptor().getMessageTypes().get(41);
     internal_static_sl_link_MapImportToRadarResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapImportToRadarResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapId", "MapName", "Imported", });
     internal_static_sl_link_MapModeRequest_descriptor =
-      getDescriptor().getMessageTypes().get(39);
+      getDescriptor().getMessageTypes().get(42);
     internal_static_sl_link_MapModeRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapModeRequest_descriptor,
         new java.lang.String[] { "Mode", "Enabled", "MapKind", });
     internal_static_sl_link_MapModeResponse_descriptor =
-      getDescriptor().getMessageTypes().get(40);
+      getDescriptor().getMessageTypes().get(43);
     internal_static_sl_link_MapModeResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapModeResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Mode", "Enabled", "MapKind", });
     internal_static_sl_link_MapAlignmentRequest_descriptor =
-      getDescriptor().getMessageTypes().get(41);
+      getDescriptor().getMessageTypes().get(44);
     internal_static_sl_link_MapAlignmentRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapAlignmentRequest_descriptor,
         new java.lang.String[] { "MapId", "RotationDeg", });
     internal_static_sl_link_MapAlignmentResponse_descriptor =
-      getDescriptor().getMessageTypes().get(42);
+      getDescriptor().getMessageTypes().get(45);
     internal_static_sl_link_MapAlignmentResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapAlignmentResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapId", "RotationDeg", "RotationRad", "AlignmentYawDeg", "RotationAlignmentDeltaDeg", });
     internal_static_sl_link_MapCatalogRequest_descriptor =
-      getDescriptor().getMessageTypes().get(43);
+      getDescriptor().getMessageTypes().get(46);
     internal_static_sl_link_MapCatalogRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapCatalogRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_MapCatalogItem_descriptor =
-      getDescriptor().getMessageTypes().get(44);
+      getDescriptor().getMessageTypes().get(47);
     internal_static_sl_link_MapCatalogItem_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapCatalogItem_descriptor,
         new java.lang.String[] { "MapId", "Name", "SizeBytes", "SavedAt", "TotalWorkAreaM2", "EstimatedTimeS", "ThumbnailFormat", "ThumbnailWidth", "ThumbnailHeight", "ThumbnailImageB64", "CreatedAt", });
     internal_static_sl_link_MapCatalogResponse_descriptor =
-      getDescriptor().getMessageTypes().get(45);
+      getDescriptor().getMessageTypes().get(48);
     internal_static_sl_link_MapCatalogResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapCatalogResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "TotalCount", "Items", });
     internal_static_sl_link_MapDeleteRequest_descriptor =
-      getDescriptor().getMessageTypes().get(46);
+      getDescriptor().getMessageTypes().get(49);
     internal_static_sl_link_MapDeleteRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapDeleteRequest_descriptor,
         new java.lang.String[] { "MapId", });
     internal_static_sl_link_MapDeleteResponse_descriptor =
-      getDescriptor().getMessageTypes().get(47);
+      getDescriptor().getMessageTypes().get(50);
     internal_static_sl_link_MapDeleteResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapDeleteResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapId", "MapName", "Deleted", });
     internal_static_sl_link_MapSaveRequest_descriptor =
-      getDescriptor().getMessageTypes().get(48);
+      getDescriptor().getMessageTypes().get(51);
     internal_static_sl_link_MapSaveRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapSaveRequest_descriptor,
         new java.lang.String[] { "MapName", "MapId", "HasRotationDeg", "RotationDeg", });
     internal_static_sl_link_MapSaveResponse_descriptor =
-      getDescriptor().getMessageTypes().get(49);
+      getDescriptor().getMessageTypes().get(52);
     internal_static_sl_link_MapSaveResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapSaveResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapId", "MapName", "MapYamlPath", "MapImagePath", "NavigationMapReloaded", "TotalWorkAreaM2", "EstimatedTimeS", "CreatedAt", });
     internal_static_sl_link_MapMetricsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(50);
+      getDescriptor().getMessageTypes().get(53);
     internal_static_sl_link_MapMetricsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapMetricsRequest_descriptor,
         new java.lang.String[] { "MapId", });
     internal_static_sl_link_RegionMetricsItem_descriptor =
-      getDescriptor().getMessageTypes().get(51);
+      getDescriptor().getMessageTypes().get(54);
     internal_static_sl_link_RegionMetricsItem_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RegionMetricsItem_descriptor,
         new java.lang.String[] { "RegionId", "RegionName", "Repeat", "AreaM2", "EstimatedTimeH", });
     internal_static_sl_link_MapMetricsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(52);
+      getDescriptor().getMessageTypes().get(55);
     internal_static_sl_link_MapMetricsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_MapMetricsResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "MapId", "MapName", "RegionMetrics", });
     internal_static_sl_link_TaskResultRequest_descriptor =
-      getDescriptor().getMessageTypes().get(53);
+      getDescriptor().getMessageTypes().get(56);
     internal_static_sl_link_TaskResultRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskResultRequest_descriptor,
-        new java.lang.String[] { "MapId", "TaskId", });
+        new java.lang.String[] { "MapId", "TaskId", "MaxExecutionRecords", });
     internal_static_sl_link_TaskResultRegionItem_descriptor =
-      getDescriptor().getMessageTypes().get(54);
+      getDescriptor().getMessageTypes().get(57);
     internal_static_sl_link_TaskResultRegionItem_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskResultRegionItem_descriptor,
         new java.lang.String[] { "RegionId", "RegionName", "TargetRepeat", "ExecutedRepeat", "Completed", "UnfinishedReason", });
+    internal_static_sl_link_TaskExecutionRecord_descriptor =
+      getDescriptor().getMessageTypes().get(58);
+    internal_static_sl_link_TaskExecutionRecord_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskExecutionRecord_descriptor,
+        new java.lang.String[] { "ExecutionId", "MapId", "TaskId", "FinalState", "StopReason", "StartedAt", "FinishedAt", "PlannedAreaM2", "ExecutedAreaM2", "Progress", "PathVersion", "AllCompleted", });
     internal_static_sl_link_TaskResultResponse_descriptor =
-      getDescriptor().getMessageTypes().get(55);
+      getDescriptor().getMessageTypes().get(59);
     internal_static_sl_link_TaskResultResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskResultResponse_descriptor,
-        new java.lang.String[] { "Result", "Message", "MapId", "TaskId", "FinalState", "AllCompleted", "StopReason", "PathVersion", "ImageFormat", "ImageData", "ImageWidth", "ImageHeight", "FinishedAt", "SelectedWorkRegionIds", "RegionResults", "LocalizationCovariance", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", });
+        new java.lang.String[] { "Result", "Message", "MapId", "TaskId", "FinalState", "AllCompleted", "StopReason", "PathVersion", "ImageFormat", "ImageData", "ImageWidth", "ImageHeight", "FinishedAt", "SelectedWorkRegionIds", "RegionResults", "LocalizationCovariance", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", "ExecutionId", "StartedAt", "PlannedAreaM2", "ExecutedAreaM2", "ExecutionProgress", "ExecutionRecords", });
+    internal_static_sl_link_TaskExecutionHistoryRequest_descriptor =
+      getDescriptor().getMessageTypes().get(60);
+    internal_static_sl_link_TaskExecutionHistoryRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskExecutionHistoryRequest_descriptor,
+        new java.lang.String[] { "MapId", "TaskId", "StartTime", "EndTime", "MaxChunkSize", });
+    internal_static_sl_link_TaskExecutionHistoryChunk_descriptor =
+      getDescriptor().getMessageTypes().get(61);
+    internal_static_sl_link_TaskExecutionHistoryChunk_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskExecutionHistoryChunk_descriptor,
+        new java.lang.String[] { "Result", "Message", "ChunkIndex", "TotalChunks", "TotalRecordCount", "Data", "StartTime", "EndTime", });
+    internal_static_sl_link_TaskTrajectoryRequest_descriptor =
+      getDescriptor().getMessageTypes().get(62);
+    internal_static_sl_link_TaskTrajectoryRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskTrajectoryRequest_descriptor,
+        new java.lang.String[] { "ExecutionId", "TaskId", "StartTime", "EndTime", "StartIndex", "MaxPoints", "SampleStep", "MaxChunkSize", });
+    internal_static_sl_link_TaskTrajectoryPoint_descriptor =
+      getDescriptor().getMessageTypes().get(63);
+    internal_static_sl_link_TaskTrajectoryPoint_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskTrajectoryPoint_descriptor,
+        new java.lang.String[] { "Index", "OffsetMs", "XMm", "YMm", "HeadingMdeg", "LinearSpeedMmps", "AngularSpeedMradps", "DiscSpeedRpm", "SpeedAvailable", "DiscEnabled", "TaskState", });
+    internal_static_sl_link_TaskTrajectoryChunk_descriptor =
+      getDescriptor().getMessageTypes().get(64);
+    internal_static_sl_link_TaskTrajectoryChunk_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskTrajectoryChunk_descriptor,
+        new java.lang.String[] { "Result", "Message", "ExecutionId", "ChunkIndex", "TotalChunks", "TotalPointCount", "ReturnedPointCount", "StartIndex", "NextIndex", "HasMore", "StartedAtMs", "Points", "TaskId", "MapId", "StartTime", "EndTime", "SampleStep", "MapAvailable", "MapMessage", "MapVersion", "MapSourceWidth", "MapSourceHeight", "MapResolution", "MapOrigin", "MapFrameId", "MapImageFormat", "MapImageWidth", "MapImageHeight", "MapPreviewScaleX", "MapPreviewScaleY", "MapImageData", "MapImageChunkIndex", "MapImageTotalChunks", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", });
     internal_static_sl_link_LiveMapCacheClearRequest_descriptor =
-      getDescriptor().getMessageTypes().get(56);
+      getDescriptor().getMessageTypes().get(65);
     internal_static_sl_link_LiveMapCacheClearRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_LiveMapCacheClearRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_LiveMapCacheClearResponse_descriptor =
-      getDescriptor().getMessageTypes().get(57);
+      getDescriptor().getMessageTypes().get(66);
     internal_static_sl_link_LiveMapCacheClearResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_LiveMapCacheClearResponse_descriptor,
         new java.lang.String[] { "Result", "Message", });
     internal_static_sl_link_RadarMapCacheClearRequest_descriptor =
-      getDescriptor().getMessageTypes().get(58);
+      getDescriptor().getMessageTypes().get(67);
     internal_static_sl_link_RadarMapCacheClearRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapCacheClearRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarMapCacheClearResponse_descriptor =
-      getDescriptor().getMessageTypes().get(59);
+      getDescriptor().getMessageTypes().get(68);
     internal_static_sl_link_RadarMapCacheClearResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapCacheClearResponse_descriptor,
         new java.lang.String[] { "Result", "Message", });
     internal_static_sl_link_RadarSystemStatusRequest_descriptor =
-      getDescriptor().getMessageTypes().get(60);
+      getDescriptor().getMessageTypes().get(69);
     internal_static_sl_link_RadarSystemStatusRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarSystemStatusRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarSystemStatusResponse_descriptor =
-      getDescriptor().getMessageTypes().get(61);
+      getDescriptor().getMessageTypes().get(70);
     internal_static_sl_link_RadarSystemStatusResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarSystemStatusResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Available", "Status", "TimestampNs", });
     internal_static_sl_link_RadarMapSyncRequest_descriptor =
-      getDescriptor().getMessageTypes().get(62);
+      getDescriptor().getMessageTypes().get(71);
     internal_static_sl_link_RadarMapSyncRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapSyncRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarMapSyncResponse_descriptor =
-      getDescriptor().getMessageTypes().get(63);
+      getDescriptor().getMessageTypes().get(72);
     internal_static_sl_link_RadarMapSyncResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapSyncResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Sent", });
     internal_static_sl_link_RadarRelocalizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(64);
+      getDescriptor().getMessageTypes().get(73);
     internal_static_sl_link_RadarRelocalizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarRelocalizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(65);
+      getDescriptor().getMessageTypes().get(74);
     internal_static_sl_link_RadarRelocalizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Accepted", "Status", });
     internal_static_sl_link_RadarRelocalizationStatusRequest_descriptor =
-      getDescriptor().getMessageTypes().get(66);
+      getDescriptor().getMessageTypes().get(75);
     internal_static_sl_link_RadarRelocalizationStatusRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationStatusRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarRelocalizationStatusResponse_descriptor =
-      getDescriptor().getMessageTypes().get(67);
+      getDescriptor().getMessageTypes().get(76);
     internal_static_sl_link_RadarRelocalizationStatusResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationStatusResponse_descriptor,
         new java.lang.String[] { "RawStatus", "TimestampNs", });
     internal_static_sl_link_DiscLiftControl_descriptor =
-      getDescriptor().getMessageTypes().get(68);
+      getDescriptor().getMessageTypes().get(77);
     internal_static_sl_link_DiscLiftControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_DiscLiftControl_descriptor,
         new java.lang.String[] { "Command", });
     internal_static_sl_link_LightingControl_descriptor =
-      getDescriptor().getMessageTypes().get(69);
+      getDescriptor().getMessageTypes().get(78);
     internal_static_sl_link_LightingControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_LightingControl_descriptor,
         new java.lang.String[] { "Enabled", });
     internal_static_sl_link_ChassisPowerControl_descriptor =
-      getDescriptor().getMessageTypes().get(70);
+      getDescriptor().getMessageTypes().get(79);
     internal_static_sl_link_ChassisPowerControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ChassisPowerControl_descriptor,
         new java.lang.String[] { "Enabled", });
     internal_static_sl_link_DiscControl_descriptor =
-      getDescriptor().getMessageTypes().get(71);
+      getDescriptor().getMessageTypes().get(80);
     internal_static_sl_link_DiscControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_DiscControl_descriptor,
         new java.lang.String[] { "Enabled", "SpeedRpm", });
     internal_static_sl_link_EmergencyStopControl_descriptor =
-      getDescriptor().getMessageTypes().get(72);
+      getDescriptor().getMessageTypes().get(81);
     internal_static_sl_link_EmergencyStopControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_EmergencyStopControl_descriptor,
         new java.lang.String[] { "Enabled", });
     internal_static_sl_link_ManualDriveControl_descriptor =
-      getDescriptor().getMessageTypes().get(73);
+      getDescriptor().getMessageTypes().get(82);
     internal_static_sl_link_ManualDriveControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ManualDriveControl_descriptor,
         new java.lang.String[] { "Motion", "SpeedRatio", "RemoteX", "RemoteY", "MaxSpeedMps", "MaxTurnSpeedRatio", });
     internal_static_sl_link_ControlCommand_descriptor =
-      getDescriptor().getMessageTypes().get(74);
+      getDescriptor().getMessageTypes().get(83);
     internal_static_sl_link_ControlCommand_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ControlCommand_descriptor,
         new java.lang.String[] { "DiscLift", "Lighting", "ManualDrive", "ChassisPower", "DiscControl", "EmergencyStop", "Command", });
     internal_static_sl_link_ControlCommandResponse_descriptor =
-      getDescriptor().getMessageTypes().get(75);
+      getDescriptor().getMessageTypes().get(84);
     internal_static_sl_link_ControlCommandResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ControlCommandResponse_descriptor,

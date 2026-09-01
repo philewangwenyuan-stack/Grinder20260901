@@ -106,10 +106,11 @@ class SlLinkAServer:
             ("MSG_ID_CONTROL_COMMAND", "ControlCommand"),
             ("MSG_ID_TASK_CONFIG", "TaskConfig"),
             ("MSG_ID_TASK_COMMAND", "TaskCommand"),
-            ("MSG_ID_TASK_PATH_REQUEST", "TaskPathRequest"),
+            ("MSG_ID_PATH_POINT_PLAN_REQUEST", "PathPointPlanRequest"),
             ("MSG_ID_CAMERA_FRAME_REQUEST", "CameraFrameRequest"),
             ("MSG_ID_MAP_REQUEST", "MapRequest"),
             ("MSG_ID_MAP_PREVIEW_REQUEST", "MapPreviewRequest"),
+            ("MSG_ID_MAP_REGION_POINT_REQUEST", "MapRegionPointRequest"),
             ("MSG_ID_MAP_EDIT_COMMAND", "MapEditCommand"),
             ("MSG_ID_VIDEO_STREAM_INFO_REQUEST", "VideoStreamInfoRequest"),
             ("MSG_ID_MAP_SYNC_REQUEST", "MapSyncRequest"),
@@ -120,6 +121,8 @@ class SlLinkAServer:
             ("MSG_ID_MAP_SAVE_REQUEST", "MapSaveRequest"),
             ("MSG_ID_MAP_METRICS_REQUEST", "MapMetricsRequest"),
             ("MSG_ID_TASK_RESULT_REQUEST", "TaskResultRequest"),
+            ("MSG_ID_TASK_EXECUTION_HISTORY_REQUEST", "TaskExecutionHistoryRequest"),
+            ("MSG_ID_TASK_TRAJECTORY_REQUEST", "TaskTrajectoryRequest"),
             ("MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST", "LiveMapCacheClearRequest"),
             ("MSG_ID_RADAR_MAP_CACHE_CLEAR_REQUEST", "RadarMapCacheClearRequest"),
             ("MSG_ID_MAP_ALIGNMENT_REQUEST", "MapAlignmentRequest"),
@@ -171,6 +174,12 @@ class SlLinkAServer:
                 self.parser = outer.SlFrameParser()
                 self.running = True
                 self.send_lock = threading.Lock()
+                try:
+                    self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
+                except OSError as exc:
+                    if rospy is not None:
+                        rospy.logwarn("SL-LinkA TCP send tuning failed: %s", exc)
                 # Keep slow map/planning operations ordered without blocking
                 # the socket reader. Control commands always bypass this queue.
                 self.dispatch_executor = ThreadPoolExecutor(
@@ -182,6 +191,14 @@ class SlLinkAServer:
                     thread_name_prefix="sl_linka_control_tx",
                 )
                 self.control_response_slots = threading.BoundedSemaphore(8)
+                # Large path responses must not hold the ordered request worker
+                # while TCP applies backpressure. One worker preserves response
+                # ordering; two slots bound queued path memory.
+                self.bulk_response_executor = ThreadPoolExecutor(
+                    max_workers=1,
+                    thread_name_prefix="sl_linka_bulk_tx",
+                )
+                self.bulk_response_slots = threading.BoundedSemaphore(2)
                 self.status_thread = threading.Thread(target=self._periodic_reports, daemon=True)
                 self.status_thread.start()
 
@@ -235,6 +252,7 @@ class SlLinkAServer:
                 self.running = False
                 self.dispatch_executor.shutdown(wait=False)
                 self.control_response_executor.shutdown(wait=False)
+                self.bulk_response_executor.shutdown(wait=False)
 
             def _dispatch_ordered(self, frame, received_at):
                 queue_delay_ms = (time.monotonic() - float(received_at)) * 1000.0
@@ -289,6 +307,79 @@ class SlLinkAServer:
                         rospy.logwarn("SL-LinkA control response send failed: %s", exc)
                 finally:
                     self.control_response_slots.release()
+
+            def _send_bulk_response(self, outputs, ack_seq):
+                started = time.monotonic()
+                frame_count = 0
+                payload_bytes = 0
+                wire_bytes = 0
+                send_ms = 0.0
+                try:
+                    index = 0
+                    # Coalesce adjacent protocol frames into about 128 KiB TCP
+                    # writes. Frames remain individually parseable by SL-LinkA.
+                    while self.running and index < len(outputs):
+                        batch = bytearray()
+                        with self.send_lock:
+                            while index < len(outputs) and (not batch or len(batch) < 128 * 1024):
+                                payload, msg_id, comp_id = outputs[index]
+                                frame = outer.SlFrame(
+                                    version=outer.SL_PROTOCOL_VERSION,
+                                    flags=0,
+                                    seq=outer._next_seq(),
+                                    ack_seq=ack_seq,
+                                    src_id=outer.pb.DEVICE_LOWER,
+                                    dst_id=outer.pb.DEVICE_APP,
+                                    comp_id=comp_id if comp_id is not None else outer.pb.COMP_SYSTEM,
+                                    msg_id=msg_id,
+                                    payload=payload,
+                                )
+                                packed = frame.pack()
+                                batch.extend(packed)
+                                frame_count += 1
+                                payload_bytes += len(payload or b"")
+                                wire_bytes += len(packed)
+                                index += 1
+                            send_started = time.monotonic()
+                            self.request.sendall(batch)
+                            send_ms += (time.monotonic() - send_started) * 1000.0
+                    if rospy is not None:
+                        rospy.loginfo(
+                            "SL-LinkA bulk response sent: ack=%d frames=%d payload_bytes=%d wire_bytes=%d total_ms=%.1f send_ms=%.1f",
+                            int(ack_seq),
+                            frame_count,
+                            payload_bytes,
+                            wire_bytes,
+                            (time.monotonic() - started) * 1000.0,
+                            send_ms,
+                        )
+                except Exception as exc:
+                    if rospy is not None and self.running:
+                        rospy.logwarn(
+                            "SL-LinkA bulk response send failed: ack=%d sent_frames=%d total_frames=%d err=%s",
+                            int(ack_seq),
+                            frame_count,
+                            len(outputs),
+                            exc,
+                        )
+                finally:
+                    self.bulk_response_slots.release()
+
+            def _queue_bulk_response(self, outputs, ack_seq):
+                if not outputs:
+                    return True
+                if not self.bulk_response_slots.acquire(blocking=False):
+                    return False
+                try:
+                    self.bulk_response_executor.submit(
+                        self._send_bulk_response,
+                        outputs,
+                        int(ack_seq),
+                    )
+                    return True
+                except Exception:
+                    self.bulk_response_slots.release()
+                    raise
 
             def _send_payload(self, payload, msg_id, comp_id=None, ack_seq=0):
                 if payload is None or msg_id is None:
@@ -371,8 +462,22 @@ class SlLinkAServer:
             payload, msg_id, comp_id = self._handler.handle_task_command(frame.payload)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
-        if frame.msg_id == pb.MSG_ID_TASK_PATH_REQUEST:
-            chunks = self._handler.build_task_path_chunks(frame.payload)
+        if frame.msg_id == pb.MSG_ID_PATH_POINT_PLAN_REQUEST:
+            chunks = self._handler.build_path_point_plan_chunks(frame.payload)
+            if request_handler._queue_bulk_response(chunks, frame.seq):
+                if rospy is not None:
+                    rospy.loginfo(
+                        "SL-LinkA path response queued for bulk TX: ack=%d chunks=%d",
+                        int(frame.seq),
+                        len(chunks),
+                    )
+                return
+            if rospy is not None:
+                rospy.logwarn(
+                    "SL-LinkA bulk TX queue full; sending path response synchronously: ack=%d chunks=%d",
+                    int(frame.seq),
+                    len(chunks),
+                )
             for payload, msg_id, comp_id in chunks:
                 request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
@@ -388,6 +493,15 @@ class SlLinkAServer:
             return
         if frame.msg_id == pb.MSG_ID_MAP_PREVIEW_REQUEST:
             payload, msg_id, comp_id = self._handler.handle_map_preview_request(frame.payload)
+            request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if (
+            hasattr(pb, "MSG_ID_MAP_REGION_POINT_REQUEST")
+            and frame.msg_id == pb.MSG_ID_MAP_REGION_POINT_REQUEST
+        ):
+            payload, msg_id, comp_id = self._handler.handle_map_region_point_request(
+                frame.payload
+            )
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_MAP_EDIT_COMMAND:
@@ -445,6 +559,22 @@ class SlLinkAServer:
         if hasattr(pb, "MSG_ID_TASK_RESULT_REQUEST") and frame.msg_id == pb.MSG_ID_TASK_RESULT_REQUEST:
             payload, msg_id, comp_id = self._handler.handle_task_result_request(frame.payload)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if (
+            hasattr(pb, "MSG_ID_TASK_EXECUTION_HISTORY_REQUEST")
+            and frame.msg_id == pb.MSG_ID_TASK_EXECUTION_HISTORY_REQUEST
+        ):
+            chunks = self._handler.build_task_execution_history_chunks(frame.payload)
+            for payload, msg_id, comp_id in chunks:
+                request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if (
+            hasattr(pb, "MSG_ID_TASK_TRAJECTORY_REQUEST")
+            and frame.msg_id == pb.MSG_ID_TASK_TRAJECTORY_REQUEST
+        ):
+            chunks = self._handler.build_task_trajectory_chunks(frame.payload)
+            for payload, msg_id, comp_id in chunks:
+                request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if hasattr(pb, "MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST") and frame.msg_id == pb.MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST:
             payload, msg_id, comp_id = self._handler.handle_live_map_cache_clear_request(frame.payload)

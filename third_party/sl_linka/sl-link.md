@@ -158,7 +158,7 @@ message PolygonRegion {
 字段包括：
 - 左轮速度 `left_wheel_speed`
 - 右轮速度 `right_wheel_speed`
-- 整车速度 `vehicle_speed`
+- 整车速度 `vehicle_speed`，来源底盘驱动 `/odom_wheel.twist.twist.linear.x`
 - 磨盘设置转速 `disc_speed_rpm`
 - 磨盘开关 `disc_enabled`
 - 工作模式 `work_mode`
@@ -199,10 +199,11 @@ message PolygonRegion {
 - 当前按“快照 + 分片回传”定义
 - `MapRequest.map_id` 可选；空值或 `LIVE_MAP` 表示请求实时原始地图，非空历史地图 ID 表示读取该地图保存的离线原始栅格并分片返回
 - `MapRequest.snapshot` 表示请求当前地图快照；`max_chunk_size` 控制单个分片大小；`map_id` 为字符串地图 ID
-- `MapRequest` 返回原始 `map` 坐标系栅格，不应用 `alignment_yaw`、APP 旋转角或二者差值
+- `MapRequest` 返回原始 `map` 坐标系栅格，不应用 `alignment_yaw`、APP 旋转角或二者差值；PNG 按 `preview_max_edge_cap` 等比例缩小，默认最大边为 `640px`，小图不放大
 - `MapPreviewRequest` 同样基于原始 `map` 坐标生成图片，可按请求叠加区域，但不应用三个旋转角；三个角度字段仅作为元数据返回给 APP
 - 支持 `OCCUPANCY_GRID / PNG / JSON` 三种编码标识
-- `MapChunk` 统一携带地图信息：`width/height/resolution/origin/frame_id/preview_scale_x/preview_scale_y`
+- `MapChunk` 的基本信息与 `MapPreviewResponse` 保持一致：`map_version/width/height/resolution/origin/frame_id/preview_scale_x/preview_scale_y`
+- `width/height` 为原始栅格尺寸；PNG 图片尺寸为 `width * preview_scale_x`、`height * preview_scale_y`（取整），原点通过 `origin.x/origin.y/origin.heading_deg` 返回
 
 ## 5. 控制指令
 
@@ -218,9 +219,12 @@ message PolygonRegion {
 - 手动控制 `ManualDriveControl`
   - 兼容旧模式：`motion + speed_ratio`
   - 摇杆模式：`remote_x + remote_y + speed_ratio`
-  - 可选 `max_speed_mps`：本次指令的最大直行速度，单位 m/s；程序限制在 `0～max_chassis_run_speed`
+  - 可选 `max_speed_mps`：本次手动遥控的最大速度，单位 m/s；大于 `0` 时以该值为准，不受调度程序 `max_chassis_run_speed` 限制
   - 可选 `max_turn_speed_ratio`：最大转弯差速比例，范围 `(0,1]`；例如 70% 传 `0.7`
-  - `max_speed_mps` 和 `max_turn_speed_ratio` 未传或传 `0` 时保持原有速度计算逻辑
+  - `max_speed_mps` 未传或传 `0` 时使用 `SettingsWriteRequest.chassis.run_speed` 保存的速度上限
+  - 手动遥控最终基础速度为：本次有效速度上限 × `speed_ratio`；底盘写入时仍受 `manual_drive_max_wheel_speed` 最终安全限速
+  - `max_speed_mps` 不会保存，也不影响任务使用的 `run_speed`
+  - `max_turn_speed_ratio` 未传或传 `0` 时使用已保存的最大转弯速度比例
   - 坐标约定：
     - 上：`(0.00, -1.00)`
     - 下：`(0.00, 1.00)`
@@ -251,8 +255,8 @@ message PolygonRegion {
 | `0x0502` | `TaskCommand` | `APP -> LOWER` | 开始/暂停/继续/停止 |
 | `0x0503` | `TaskCommandResponse` | `LOWER -> APP` | 返回任务控制结果 |
 | `0x0504` | `TaskStatusReport` | `LOWER -> APP` | 周期上报任务状态 |
-| `0x0505` | `TaskPathRequest` | `APP -> LOWER` | 请求规划路径 |
-| `0x0506` | `TaskPathChunk` | `LOWER -> APP` | 返回路径分片 |
+| `0x0505` | `PathPointPlanRequest` | `APP -> LOWER` | 请求路径规划并返回完整路径点，不生成预览图 |
+| `0x0506` | `PathPointPlanResponse` | `LOWER -> APP` | 返回路径规划点位，数据过大时分片 |
 | `0x0507` | `MapPreviewRequest` | `APP -> LOWER` | 请求地图缩略图 |
 | `0x0508` | `MapPreviewResponse` | `LOWER -> APP` | 返回地图缩略图与编辑层 |
 | `0x0509` | `MapEditCommand` | `APP -> LOWER` | 下发地图编辑 |
@@ -292,6 +296,12 @@ message PolygonRegion {
 | `0x052B` | `RadarRelocalizationResponse` | `LOWER -> APP` | 返回雷达是否受理异步重定位请求及当前聚合状态 |
 | `0x052C` | `RadarRelocalizationStatusRequest` | `APP -> LOWER` | 查询雷达地图重定位聚合状态 |
 | `0x052D` | `RadarRelocalizationStatusResponse` | `LOWER -> APP` | 返回 `/relocalization_status` 原始状态 |
+| `0x052E` | `MapRegionPointRequest` | `APP -> LOWER` | 按地图查询区域及点位，不生成预览图 |
+| `0x052F` | `MapRegionPointResponse` | `LOWER -> APP` | 返回区域多边形顶点及工作区起终点 |
+| `0x0530` | `TaskExecutionHistoryRequest` | `APP -> LOWER` | 按地图、任务和开始时间范围查询任务执行记录 |
+| `0x0531` | `TaskExecutionHistoryChunk` | `LOWER -> APP` | 分块返回任务执行记录及每次执行的预览图 |
+| `0x0532` | `TaskTrajectoryRequest` | `APP -> LOWER` | 按执行记录查询任务过程中的位置和速度轨迹 |
+| `0x0533` | `TaskTrajectoryChunk` | `LOWER -> APP` | 分块、分页返回任务轨迹点 |
 
 #### 5.1.1 新增协议速查（建议优先对接）
 
@@ -304,6 +314,9 @@ message PolygonRegion {
 - `MapImportToRadarRequest/Response`：`0x0522/0x0523`
 - `RadarRelocalizationRequest/Response`：`0x052A/0x052B`
 - `RadarRelocalizationStatusRequest/Response`：`0x052C/0x052D`
+- `MapRegionPointRequest/Response`：`0x052E/0x052F`
+- `TaskExecutionHistoryRequest/Chunk`：`0x0530/0x0531`
+- `TaskTrajectoryRequest/Chunk`：`0x0532/0x0533`
 
 `TaskConfig (0x0500)` 关键字段：
 
@@ -321,8 +334,12 @@ message PolygonRegion {
 |------|------|
 | `request_id` | 请求跟踪 ID |
 | `map_id` | 目标地图 ID；空值或 `LIVE_MAP` 表示使用实时地图路径规划，非空历史地图 ID 表示使用该地图保存的离线栅格与区域状态进行路径规划 |
-| `global_direction` | 覆盖方向 `x`/`y`，非法或缺省默认 `x` |
+| `global_direction` | 规划方向 `x`/`-x`/`y`/`-y`；正负号控制首条作业线行进方向，非法或缺省默认 `x` |
 | `start_pose` / `end_pose` | 可选起终点（不传由 LOWER 自动选取） |
+
+`task_id` 为空时，LOWER 仅使用当前地图的工作区和公共区域信息规划，不继承上一个
+任务的工作区选择、重复次数、起终点或临时障碍区。`task_id` 非空时，按已下发的
+`TaskConfig` 任务信息进行规划。
 
 `TaskConfig.obstacle_regions` 仅表示该任务绑定的临时障碍区，不会写入地图公共 overlay，也不会影响
 其他任务。处理 `PathPlanRequest` 时，LOWER 按 `map_id + task_id` 读取这些临时障碍区，在地图公共
@@ -351,6 +368,131 @@ message PolygonRegion {
 }
 ```
 
+`TaskTrajectoryRequest (0x0532)` 用于读取某一次任务执行期间以固定 `1Hz` 保存的运行轨迹。
+无论车辆静止还是移动都会记录，不根据速度判断是否跳过采样。单次任务最长按 `4` 小时
+保存，最多约 `14400` 个轨迹点。
+每次执行的轨迹独立保存为：
+
+```text
+temp/grinder_scheduler_state/task_executions/<execution_id>/trajectory.pbstream
+```
+
+文件中每个点采用“`2` 字节小端长度 + `TaskTrajectoryPoint` Protobuf”格式连续存储，
+不使用 JSON 文本。
+
+请求示例：
+
+```json
+{
+  "execution_id": "task_001_1780000000123",
+  "task_id": "",
+  "start_time": 0,
+  "end_time": 0,
+  "start_index": 0,
+  "max_points": 3600,
+  "sample_step": 1,
+  "max_chunk_size": 2048
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `execution_id` | 推荐填写，精确指定某一次任务执行 |
+| `task_id` | `execution_id` 为空时，可按任务 ID 选择其最新一次执行；两者都空时选择全局最新执行 |
+| `start_time` / `end_time` | 可选，epoch 秒闭区间；`0` 表示不限制 |
+| `start_index` | 分页起点，从 `0` 开始 |
+| `max_points` | 本次最多返回点数，默认 `3600`（约 1 小时），当前上限 `14400`（4 小时） |
+| `sample_step` | 降采样步长；`1` 返回每个采样点，`5` 表示每 5 个点取 1 个 |
+| `max_chunk_size` | 每个分块的目标数据字节数，默认 `2048`，有效范围 `256~4096` |
+
+返回消息为 `TaskTrajectoryChunk (0x0533)`。每个分块直接携带 `points`，APP 按
+`chunk_index` 顺序遍历各分块即可，不需要拼接或解析 JSON：
+
+```json
+{
+  "result": "RESULT_SUCCESS",
+  "message": "task_trajectory_ready",
+  "executionId": "task_001_1780000000123",
+  "chunkIndex": 0,
+  "totalChunks": 48,
+  "totalPointCount": 7200,
+  "returnedPointCount": 3600,
+  "startIndex": 0,
+  "nextIndex": 3600,
+  "hasMore": true,
+  "startedAtMs": "1780000000123",
+  "taskId": "task_001",
+  "mapId": "map_001",
+  "sampleStep": 1,
+  "mapAvailable": true,
+  "mapMessage": "ok_saved_raw_map",
+  "mapVersion": 12,
+  "mapSourceWidth": 643,
+  "mapSourceHeight": 464,
+  "mapResolution": 0.05,
+  "mapOrigin": {"x": -21.45, "y": -14.1, "headingDeg": 0},
+  "mapFrameId": "map",
+  "mapImageFormat": "jpg",
+  "mapImageWidth": 640,
+  "mapImageHeight": 462,
+  "mapPreviewScaleX": 0.995334,
+  "mapPreviewScaleY": 0.99569,
+  "mapImageData": "<bytes，仅地图图片分块携带>",
+  "mapImageChunkIndex": 0,
+  "mapImageTotalChunks": 9,
+  "alignmentYawDeg": 91.8732,
+  "appRotationDeg": 0,
+  "rotationAlignmentDeltaDeg": -91.8732,
+  "points": [
+    {
+      "index": 0,
+      "offsetMs": 0,
+      "xMm": 1250,
+      "yMm": 3680,
+      "headingMdeg": 92500,
+      "linearSpeedMmps": 150,
+      "angularSpeedMradps": 20,
+      "discSpeedRpm": 1200,
+      "speedAvailable": true,
+      "discEnabled": true,
+      "taskState": "TASK_STATE_RUNNING"
+    }
+  ]
+}
+```
+
+缩放还原公式如下：
+
+```text
+timestamp_ms        = started_at_ms + offset_ms
+x_m                 = x_mm / 1000.0
+y_m                 = y_mm / 1000.0
+heading_deg         = heading_mdeg / 1000.0
+linear_speed_mps    = linear_speed_mmps / 1000.0
+angular_speed_radps = angular_speed_mradps / 1000.0
+```
+
+`speed_available` 表示底盘速度反馈是否新鲜；线速度和角速度来自底盘驱动发布的
+`/odom_wheel`，不是导航目标速度。`disc_speed_rpm` 为当前设置的研磨转速，
+`disc_enabled` 为底盘反馈的磨盘启停状态。若 `has_more=true`，下一次请求将
+`start_index` 设置为本次返回的 `next_index`。
+
+任务开始创建执行记录时，会立即把当时 `map_id` 对应的原始地图和基础信息保存到：
+
+```text
+temp/grinder_scheduler_state/task_executions/<execution_id>/raw_map.jpg
+temp/grinder_scheduler_state/task_executions/<execution_id>/raw_map_metadata.json
+```
+
+保存地图直接读取 `raw_grid`，实时地图直接读取雷达原始 OccupancyGrid；不会使用组合覆盖
+栅格，也不绘制车辆、区域、点位和路径。轨迹查询只读取本次执行开始时保存的文件，
+不会根据查询时的当前地图实时生成。地图基础信息在每个响应分块中重复携带；
+图片字节只出现在地图图片分块中。APP 按 `map_image_chunk_index` 顺序拼接
+所有非空的 `map_image_data`，共 `map_image_total_chunks` 块。轨迹点分块和地图图片分块
+共用外层 `chunk_index/total_chunks`，一个外层分块只承载轨迹点或地图图片，避免单包超限。
+若任务开始时地图快照保存失败，或者查询旧任务没有快照，`map_available=false` 且
+`map_message` 给出原因，已保存的轨迹点仍正常返回。
+
 删除部分障碍区时，重新下发 `TaskConfig` 并只保留仍需使用的 `obstacleRegions`。清空当前任务全部
 临时障碍区时传空列表：
 
@@ -375,6 +517,7 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 |------|------|
 | `map_id` | 查询目标地图 ID（可空；不传时可根据 `task_id` 从任务绑定中反查对应地图） |
 | `task_id` | 查询目标任务 ID（可空；仅传 `task_id` 时按任务绑定的 `map_id` 查询；两者都空时返回最近任务结果） |
+| `max_execution_records` | 最多返回的执行历史数，默认 `100`，最大 `500` |
 
 `TaskResultResponse (0x051D)` 关键字段：
 
@@ -382,11 +525,124 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 |------|------|
 | `map_id` / `task_id` | 返回结果对应地图与任务 |
 | `final_state` / `all_completed` / `stop_reason` | 任务结束状态 |
+| `execution_id` / `started_at` / `finished_at` | 最新一次执行的唯一 ID、开始时间和结束时间（epoch 秒） |
+| `planned_area_m2` / `executed_area_m2` | 最新一次执行的计划面积和已执行面积（平方米） |
+| `execution_progress` | 最新一次执行进度，范围 `0~1` |
 | `image_data` / `image_format` / `image_width` / `image_height` | 任务结果图（二进制） |
 | `selected_work_region_ids[]` | 本次任务实际执行区域 |
 | `region_results[]` | 每区域目标遍数、执行遍数、是否完成、未完成原因 |
+| `execution_records[]` | 符合 `map_id/task_id` 过滤条件的多次执行历史，按开始时间倒序 |
+
+为避免超过 SLINK 单帧约 `65000` 字节的安全上限，每条 `execution_records[]` 不携带结果图，
+响应顶层只返回最新一次结果图。默认最多返回最近 `100` 条历史，请求最大 `500`
+条；序列化后仍超限时，LOWER 会先从最旧记录开始裁剪并在 `message` 追加
+`execution_records_truncated_oversize`。若仅结果图已导致超限，则省略图片并追加
+`result_image_omitted_oversize`。
+
+```json
+{
+  "map_id": "map_001",
+  "task_id": "task_001",
+  "max_execution_records": 100
+}
+```
+
+`execution_records[]` 元素示例：
+
+```json
+{
+  "execution_id": "task_001_1780000000123",
+  "map_id": "map_001",
+  "task_id": "task_001",
+  "final_state": "TASK_STATE_COMPLETED",
+  "stop_reason": "completed",
+  "started_at": 1780000000,
+  "finished_at": 1780000463,
+  "planned_area_m2": 75.0,
+  "executed_area_m2": 75.0,
+  "progress": 1.0,
+  "path_version": 6,
+  "all_completed": true
+}
+```
 
 说明：如果指定 `map_id` 但该地图尚无任务执行结果，LOWER 会返回 `RESULT_SUCCESS`，`message` 为 `fallback_to_map_thumbnail: ...`，并在 `image_data` 中返回该 `map_id` 对应的地图缩略图；此时 `all_completed=false`、`stop_reason=no_task_result`、`region_results[]` 为空。
+
+`TaskExecutionHistoryRequest (0x0530)` 用于查询多次任务执行记录，并通过多个
+`TaskExecutionHistoryChunk (0x0531)` 返回，避免任务数量增加后超过单帧长度限制。
+
+```json
+{
+  "map_id": "map_001",
+  "task_id": "task_001",
+  "start_time": 1780000000,
+  "end_time": 1780086400,
+  "max_chunk_size": 2048
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `map_id` | 可选；空值表示不按地图过滤 |
+| `task_id` | 可选；空值表示不按任务过滤 |
+| `start_time` | 可选，epoch 秒；筛选 `started_at >= start_time`，`0` 表示不限制开始时间 |
+| `end_time` | 可选，epoch 秒；筛选 `started_at <= end_time`，`0` 表示不限制结束时间 |
+| `max_chunk_size` | 每块 `data` 的目标字节数，默认 `2048`，有效范围 `256~4096` |
+
+不填写时间范围时返回全部符合 `map_id/task_id` 条件的历史记录；四个过滤字段都不填时返回全部任务记录：
+
+```json
+{
+  "map_id": "",
+  "task_id": "",
+  "start_time": 0,
+  "end_time": 0,
+  "max_chunk_size": 2048
+}
+```
+
+每个返回块包含：
+
+```json
+{
+  "result": "RESULT_SUCCESS",
+  "message": "task_execution_history_ready",
+  "chunk_index": 0,
+  "total_chunks": 3,
+  "total_record_count": 125,
+  "data": "<完整 JSON 的部分 UTF-8 字节>",
+  "start_time": 1780000000,
+  "end_time": 1780086400
+}
+```
+
+APP 必须按 `chunk_index` 从小到大排列全部返回块，直接拼接每块的 `data` 字节，再按
+UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新到旧排列。每条
+记录除 `TaskResultResponse.execution_records[]` 的执行信息外，还包含该次执行独立保存的
+`image_format`、`image_width`、`image_height` 和 `image_base64`。图片数据较大时会自然拆成
+更多 `TaskExecutionHistoryChunk`，不会按记录数量或单张图片大小截断；若
+`start_time > end_time`，返回 `RESULT_INVALID_PARAM`。
+
+```json
+{
+  "execution_id": "task_001_1780000000123",
+  "map_id": "map_001",
+  "task_id": "task_001",
+  "final_state": "COMPLETED",
+  "stop_reason": "completed",
+  "started_at": 1780000000,
+  "finished_at": 1780000463,
+  "planned_area_m2": 75.0,
+  "executed_area_m2": 75.0,
+  "progress": 1.0,
+  "path_version": 6,
+  "all_completed": true,
+  "image_format": "jpg",
+  "image_width": 640,
+  "image_height": 480,
+  "image_base64": "\/9j\/4AAQSk..."
+}
+```
 
 `LiveMapCacheClearRequest (0x051E)` 关键字段：
 
@@ -416,7 +672,7 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 
 | 字段 | 说明 |
 |------|------|
-| `map_id` | 必填；本地地图列表中的地图 ID，LOWER 根据该 ID 查找 `.stcm` 文件，先清除雷达地图缓存，再导入雷达，导入成功后下发进入纯定位模式 |
+| `map_id` | 必填；本地地图列表中的地图 ID。若与当前活动地图 ID 相同，则直接成功返回并跳过清图、STCM 导入、模式切换和重定位；否则先清除雷达地图缓存，再导入雷达，成功后进入纯定位模式 |
 
 `MapImportToRadarResponse (0x0523)` 关键字段：
 
@@ -424,7 +680,7 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 |------|------|
 | `result` / `message` | 导入结果 |
 | `map_id` / `map_name` | 实际导入的地图 ID 与名称 |
-| `imported` | 是否已成功调用雷达 SDK 导入服务 |
+| `imported` | 是否实际调用雷达 SDK 完成导入；地图已是当前活动地图而跳过导入时为 `false`，同时 `result=RESULT_SUCCESS`、`message=map_already_active_import_skipped` |
 
 `MapEditOperation` 推荐使用（独立操作，不混用）：
 
@@ -448,6 +704,8 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 - `MapDeleteRequest/Response`：按 `map_id` 删除地图
 - `MapMetricsRequest/Response`：按 `map_id` 查询地图区域指标，返回 `map_name` 与区域明细
 - `TaskResultRequest/Response`：按 `map_id/task_id` 查询任务执行结果（结果图 + 区域遍数完成情况）
+- `TaskExecutionHistoryRequest/Chunk`：按 `map_id/task_id` 和可选开始时间范围分块查询全部任务执行记录及每次执行的预览图
+- `TaskTrajectoryRequest/Chunk`：按 `execution_id` 分块、分页查询任务过程中的位置、底盘反馈速度和研磨转速
 - `MapMetricsResponse.region_metrics[]`：工作区域明细（`region_id`、`region_name`、`repeat`、`area_m2`、`estimated_time_h`）
 - `LiveMapCacheClearRequest/Response`：清除 LIVE_MAP 缓存（区域状态 + live_map 目录缓存）
 - `RadarMapCacheClearRequest/Response`：清除雷达侧地图缓存/地图数据（调度程序转发到 `/slamware_ros_sdk_server_node/clear_map`，随后向 `/slamware_ros_sdk_server_node/set_map_update` 下发建图模式）
@@ -519,10 +777,109 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 3. APP 发送 `TaskCommand`
 4. LOWER 返回 `TaskCommandResponse`
 5. LOWER 周期性发送 `TaskStatusReport`
-6. APP 如需全路径则发送 `TaskPathRequest`
-7. LOWER 按 `TaskPathChunk` 分片返回
+6. APP 发送 `PathPointPlanRequest` 后，LOWER 使用与 `PathPlanRequest` 相同的规划逻辑，但不生成预览图
+7. LOWER 按 `PathPointPlanResponse` 返回完整路径，数据过大时分片；路径点和分段区分区域内作业路径与区域间连接路径
 8. APP 可发送 `TaskResultRequest`
-9. LOWER 返回 `TaskResultResponse`（任务结果图 + 区域明细）
+9. LOWER 返回 `TaskResultResponse`（最新任务结果图 + 区域明细 + 同一任务的多次执行记录）
+10. APP 需要查询大量历史记录时发送 `TaskExecutionHistoryRequest`，LOWER 通过多个 `TaskExecutionHistoryChunk` 返回
+11. APP 按某次执行回溯运行轨迹时发送 `TaskTrajectoryRequest`，LOWER 通过多个 `TaskTrajectoryChunk` 分页返回
+
+`PathPointPlanRequest (0x0505)` 是不生成预览图的通用路径规划点位请求：
+
+```json
+{
+  "request_id": "plan_points_001",
+  "task_id": "task_001",
+  "map_id": "map_001",
+  "force_replan": true,
+  "start_pose": {"x": 1.0, "y": 2.0, "heading_deg": 0.0},
+  "end_pose": {"x": 8.0, "y": 5.0, "heading_deg": 90.0},
+  "global_direction": "x",
+  "max_chunk_size": 2048
+}
+```
+
+规划能力与 `PathPlanRequest (0x050E)` 一致，具体规则如下：
+
+- `task_id` 非空：根据对应任务配置规划，并合并地图公共障碍区和任务临时障碍区。
+- `task_id` 为空：只根据当前地图工作区和公共障碍区规划，不继承上一次任务的区域选择、重复次数和临时障碍区。
+- 支持通过 `map_id` 指定地图；未指定时按当前实时地图处理。
+- 支持可选起点 `start_pose`、终点 `end_pose`、规划方向 `global_direction` 和 `force_replan`。
+
+此接口不会生成路径预览图，只把完整 JSON 按
+`PathPointPlanResponse.data` 分片返回；APP 按 `chunk_index` 排序、拼接全部 `data` 后再解析 JSON：
+
+每个 `PathPointPlanResponse` 还直接携带 `request_id`、`map_id`、`result`、`message`、
+`planned`、`map_version`、`path_version`、`path_point_count`、`path_length_m`、
+`total_work_area_m2`、`estimated_time_s` 和 `frame_id`，无需等待 JSON 拼接即可判断
+规划是否成功。协议中没有任何预览图字段。
+
+```json
+{
+  "result": "success",
+  "message": "task_path_planned",
+  "planned": true,
+  "task_id": "task_001",
+  "path_version": 6,
+  "frame_id": "map",
+  "alignment_yaw": 0.0,
+  "path_point_count": 320,
+  "path_length_m": 48.6,
+  "total_work_area_m2": 75.0,
+  "estimated_time_s": 486.0,
+  "segments": [
+    {
+      "segment_index": 0,
+      "path_scope": "between_regions",
+      "path_category": "connection",
+      "region_id": "",
+      "lap_index": 0,
+      "from_region_id": "",
+      "to_region_id": "work_001",
+      "start_point_index": 0,
+      "end_point_index": 15,
+      "point_count": 16
+    },
+    {
+      "segment_index": 1,
+      "path_scope": "within_region",
+      "path_category": "coverage",
+      "region_id": "work_001",
+      "lap_index": 1,
+      "from_region_id": "",
+      "to_region_id": "",
+      "start_point_index": 16,
+      "end_point_index": 180,
+      "point_count": 165
+    }
+  ],
+  "points": [
+    {
+      "index": 0,
+      "x": 1.2,
+      "y": 2.3
+    },
+    {
+      "index": 16,
+      "x": 2.0,
+      "y": 3.0
+    }
+  ]
+}
+```
+
+- `points` 使用紧凑格式，每个点仅返回 `index`、`x`、`y`，坐标单位为米；
+  行列坐标、方向、时间戳和四元数不重复发送。
+- 点所属区域、覆盖/连接类型及重复轮次由外层 `segments` 的
+  `start_point_index/end_point_index` 区间确定。
+- `within_region`：区域内部的研磨覆盖路径。
+- `between_regions`：机器人到首个区域或两个区域之间的连接路径。
+- `total_work_area_m2`：本次规划工作区总面积，单位平方米，与 `PathPlanResponse`
+  的同名字段保持一致。
+- `estimated_time_s`：根据路径长度和 `SettingsWriteRequest.chassis.run_speed` 保存的
+  最大速度上限估算，有效巡航速度按上限的 `70%` 计算；规划失败或速度上限为 `0`
+  时返回 `-1`，单位秒。
+- 规划失败时仍返回一个分片，`planned=false`、`result=failed`、`points=[]`，失败原因在 `message`。
 
 `TaskConfig` 地图绑定字段：
 
@@ -553,7 +910,7 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 
 | 字段 | 含义 |
 |------|------|
-| `global_direction` | 全局覆盖方向，支持 `x` / `y`。未传或非法值时默认按 `x`。 |
+| `global_direction` | 全局覆盖方向，支持 `x` / `-x` / `y` / `-y`；正负号控制首条作业线行进方向。未传或非法值时默认按 `x`。 |
 
 `PathPlanResponse` 关键字段（新增关注）：
 
@@ -635,6 +992,64 @@ temp/grinder_scheduler_state/task_obstacle_regions.json
 | `alignment_yaw_deg` | 当前预览图实际使用的地图对齐旋转角，单位度 |
 | `app_rotation_deg` | APP 最后明确设置并随地图保存的旋转角，单位度 |
 | `rotation_alignment_delta_deg` | `app_rotation_deg - alignment_yaw_deg` 的原始有符号差值，不做角度范围规范化 |
+
+### 6.8.1 区域与点位查询
+
+`MapRegionPointRequest (0x052E)` 用于只读取区域及点位数据，不生成地图预览图，也不返回图片、Base64 或掩膜数据。
+
+请求字段：
+
+| 字段 | 含义 |
+|------|------|
+| `map_id` | 目标地图 ID；空值表示当前活动地图，`LIVE_MAP` 表示实时地图 |
+
+`MapRegionPointResponse (0x052F)` 返回：
+
+| 字段 | 含义 |
+|------|------|
+| `result` / `message` | 查询结果 |
+| `map_id` | 实际读取的地图 ID |
+| `map_version` | 区域编辑版本号 |
+| `work_regions[]` | 工作区；`region.points[]` 为多边形顶点，并包含 `start_pose_available/start_pose`、`end_pose_available/end_pose` |
+| `obstacle_regions[]` | 公共障碍区及其多边形顶点 |
+| `erase_regions[]` | 擦除区及其多边形顶点 |
+| `crop_region_available` / `crop_region` | 是否存在裁剪区及其多边形顶点 |
+
+示例：
+
+```json
+{
+  "result": "RESULT_SUCCESS",
+  "message": "region_point_info_ready",
+  "mapId": "map_001",
+  "mapVersion": 12,
+  "workRegions": [
+    {
+      "region": {
+        "regionId": "work_001",
+        "name": "一号工作区",
+        "enabled": true,
+        "closed": true,
+        "regionType": "REGION_TYPE_WORK",
+        "globalDirection": "x",
+        "points": [
+          {"x": 0.0, "y": 0.0},
+          {"x": 8.0, "y": 0.0},
+          {"x": 8.0, "y": 5.0},
+          {"x": 0.0, "y": 5.0}
+        ]
+      },
+      "startPoseAvailable": true,
+      "startPose": {"x": 0.0, "y": 5.0, "headingDeg": 0.0},
+      "endPoseAvailable": true,
+      "endPose": {"x": 8.0, "y": 0.0, "headingDeg": 0.0}
+    }
+  ],
+  "obstacleRegions": [],
+  "eraseRegions": [],
+  "cropRegionAvailable": false
+}
+```
 
 ### 6.9 视频流信息
 

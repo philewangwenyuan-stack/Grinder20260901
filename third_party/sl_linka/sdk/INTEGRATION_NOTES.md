@@ -26,8 +26,8 @@ Messages:
 - `TaskCommand`
 - `TaskCommandResponse`
 - `TaskStatusReport`
-- `TaskPathRequest`
-- `TaskPathChunk`
+- `PathPointPlanRequest`
+- `PathPointPlanResponse`
 - `MapPreviewRequest`
 - `MapPreviewResponse`
 - `MapEditCommand`
@@ -48,7 +48,7 @@ Android 侧现在分成两层：
 已经补充了这些 builder 方法：
 - `buildTaskConfigRaw`
 - `buildTaskCommandRaw`
-- `buildTaskPathRequestRaw`
+- `buildPathPointPlanRequestRaw`
 - `buildMapPreviewRequestRaw`
 - `buildMapEditCommandRaw`
 - `buildVideoStreamInfoRequestRaw`
@@ -62,7 +62,7 @@ Embedded 侧已经有新的 `pb.c/.h`，但示例逻辑需要按业务补路由�
 建议至少增加对以下消息的处理：
 - `TaskConfig`
 - `TaskCommand`
-- `TaskPathRequest`
+- `PathPointPlanRequest`
 - `MapPreviewRequest`
 - `MapEditCommand`
 - `VideoStreamInfoRequest`

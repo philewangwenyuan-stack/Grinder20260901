@@ -30,8 +30,8 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_TASK_COMMAND = 1282,
     sl_link_MessageId_MSG_ID_TASK_COMMAND_RESPONSE = 1283,
     sl_link_MessageId_MSG_ID_TASK_STATUS_REPORT = 1284,
-    sl_link_MessageId_MSG_ID_TASK_PATH_REQUEST = 1285,
-    sl_link_MessageId_MSG_ID_TASK_PATH_CHUNK = 1286,
+    sl_link_MessageId_MSG_ID_PATH_POINT_PLAN_REQUEST = 1285,
+    sl_link_MessageId_MSG_ID_PATH_POINT_PLAN_RESPONSE = 1286,
     sl_link_MessageId_MSG_ID_MAP_PREVIEW_REQUEST = 1287,
     sl_link_MessageId_MSG_ID_MAP_PREVIEW_RESPONSE = 1288,
     sl_link_MessageId_MSG_ID_MAP_EDIT_COMMAND = 1289,
@@ -70,7 +70,13 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_REQUEST = 1322,
     sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_RESPONSE = 1323,
     sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_STATUS_REQUEST = 1324,
-    sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE = 1325
+    sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE = 1325,
+    sl_link_MessageId_MSG_ID_MAP_REGION_POINT_REQUEST = 1326,
+    sl_link_MessageId_MSG_ID_MAP_REGION_POINT_RESPONSE = 1327,
+    sl_link_MessageId_MSG_ID_TASK_EXECUTION_HISTORY_REQUEST = 1328,
+    sl_link_MessageId_MSG_ID_TASK_EXECUTION_HISTORY_CHUNK = 1329,
+    sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_REQUEST = 1330,
+    sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK = 1331
 } sl_link_MessageId;
 
 typedef enum _sl_link_DeviceId {
@@ -235,7 +241,8 @@ typedef struct _sl_link_PolygonRegion {
 } sl_link_PolygonRegion;
 
 typedef struct _sl_link_ChassisSettings {
-    /* Maximum vehicle speed in m/s. Zero disables both task and manual motion. */
+    /* Requested speed in m/s for task/navigation and manual command generation.
+ Manual output is additionally capped by the chassis manual speed limit. */
     float run_speed;
     uint32_t disc_speed_rpm;
     bool disc_enabled;
@@ -377,6 +384,8 @@ typedef struct _sl_link_MapChunk {
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
+    /* Same region/edit version semantics as MapPreviewResponse.map_version. */
+    uint32_t map_version;
 } sl_link_MapChunk;
 
 typedef struct _sl_link_PathPoint2D {
@@ -442,18 +451,42 @@ typedef struct _sl_link_TaskStatusReport {
     sl_link_LocalizationCovariance localization_covariance;
 } sl_link_TaskStatusReport;
 
-typedef struct _sl_link_TaskPathRequest {
+typedef struct _sl_link_PathPointPlanRequest {
+    /* Non-empty: plan with the matching task configuration and its temporary
+ obstacles. Empty: plan only with current-map work/public obstacle regions. */
     pb_callback_t task_id;
     uint32_t max_chunk_size;
-} sl_link_TaskPathRequest;
+    pb_callback_t request_id;
+    bool force_replan;
+    /* Optional planning endpoints. Omitted endpoints use planner defaults. */
+    bool has_start_pose;
+    sl_link_Pose2D start_pose;
+    bool has_end_pose;
+    sl_link_Pose2D end_pose;
+    /* Optional x/y planning direction. */
+    pb_callback_t global_direction;
+    /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
+    pb_callback_t map_id;
+} sl_link_PathPointPlanRequest;
 
-typedef struct _sl_link_TaskPathChunk {
+typedef struct _sl_link_PathPointPlanResponse {
     pb_callback_t task_id;
     uint32_t chunk_index;
     uint32_t total_chunks;
     uint32_t path_version;
     pb_callback_t data;
-} sl_link_TaskPathChunk;
+    pb_callback_t request_id;
+    pb_callback_t map_id;
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    bool planned;
+    uint32_t map_version;
+    uint32_t path_point_count;
+    float path_length_m;
+    float total_work_area_m2;
+    float estimated_time_s;
+    pb_callback_t frame_id;
+} sl_link_PathPointPlanResponse;
 
 typedef struct _sl_link_MapPreviewRequest {
     uint32_t max_edge;
@@ -483,6 +516,36 @@ typedef struct _sl_link_MapPreviewResponse {
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
 } sl_link_MapPreviewResponse;
+
+/* Lightweight map annotation query. It does not render or return an image. */
+typedef struct _sl_link_MapRegionPointRequest {
+    /* Empty means the currently active map; LIVE_MAP means the realtime map. */
+    pb_callback_t map_id;
+} sl_link_MapRegionPointRequest;
+
+typedef struct _sl_link_WorkRegionPointInfo {
+    bool has_region;
+    sl_link_PolygonRegion region;
+    bool start_pose_available;
+    bool has_start_pose;
+    sl_link_Pose2D start_pose;
+    bool end_pose_available;
+    bool has_end_pose;
+    sl_link_Pose2D end_pose;
+} sl_link_WorkRegionPointInfo;
+
+typedef struct _sl_link_MapRegionPointResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    pb_callback_t map_id;
+    uint32_t map_version;
+    pb_callback_t work_regions;
+    pb_callback_t obstacle_regions;
+    pb_callback_t erase_regions;
+    bool crop_region_available;
+    bool has_crop_region;
+    sl_link_PolygonRegion crop_region;
+} sl_link_MapRegionPointResponse;
 
 typedef struct _sl_link_MapEditCommand {
     pb_callback_t edit_id;
@@ -724,6 +787,7 @@ typedef struct _sl_link_MapMetricsResponse {
 typedef struct _sl_link_TaskResultRequest {
     pb_callback_t map_id;
     pb_callback_t task_id;
+    uint32_t max_execution_records;
 } sl_link_TaskResultRequest;
 
 typedef struct _sl_link_TaskResultRegionItem {
@@ -734,6 +798,21 @@ typedef struct _sl_link_TaskResultRegionItem {
     bool completed;
     pb_callback_t unfinished_reason;
 } sl_link_TaskResultRegionItem;
+
+typedef struct _sl_link_TaskExecutionRecord {
+    pb_callback_t execution_id;
+    pb_callback_t map_id;
+    pb_callback_t task_id;
+    sl_link_TaskState final_state;
+    pb_callback_t stop_reason;
+    uint64_t started_at;
+    uint64_t finished_at;
+    float planned_area_m2;
+    float executed_area_m2;
+    float progress;
+    uint32_t path_version;
+    bool all_completed;
+} sl_link_TaskExecutionRecord;
 
 typedef struct _sl_link_TaskResultResponse {
     sl_link_ResultCode result;
@@ -757,7 +836,103 @@ typedef struct _sl_link_TaskResultResponse {
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
+    pb_callback_t execution_id;
+    uint64_t started_at;
+    float planned_area_m2;
+    float executed_area_m2;
+    float execution_progress;
+    pb_callback_t execution_records;
 } sl_link_TaskResultResponse;
+
+typedef struct _sl_link_TaskExecutionHistoryRequest {
+    pb_callback_t map_id;
+    pb_callback_t task_id;
+    /* Inclusive execution start-time range, epoch seconds. Zero means unbounded. */
+    uint64_t start_time;
+    uint64_t end_time;
+    uint32_t max_chunk_size;
+} sl_link_TaskExecutionHistoryRequest;
+
+typedef struct _sl_link_TaskExecutionHistoryChunk {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    uint32_t chunk_index;
+    uint32_t total_chunks;
+    uint32_t total_record_count;
+    pb_callback_t data;
+    uint64_t start_time;
+    uint64_t end_time;
+} sl_link_TaskExecutionHistoryChunk;
+
+typedef struct _sl_link_TaskTrajectoryRequest {
+    /* Prefer execution_id. If empty, task_id selects its latest execution. */
+    pb_callback_t execution_id;
+    pb_callback_t task_id;
+    /* Inclusive point timestamp range, epoch seconds. Zero means unbounded. */
+    uint64_t start_time;
+    uint64_t end_time;
+    uint32_t start_index;
+    uint32_t max_points;
+    uint32_t sample_step;
+    uint32_t max_chunk_size;
+} sl_link_TaskTrajectoryRequest;
+
+typedef struct _sl_link_TaskTrajectoryPoint {
+    uint32_t index;
+    /* Milliseconds relative to TaskTrajectoryChunk.started_at_ms. */
+    uint32_t offset_ms;
+    int32_t x_mm;
+    int32_t y_mm;
+    int32_t heading_mdeg;
+    int32_t linear_speed_mmps;
+    int32_t angular_speed_mradps;
+    uint32_t disc_speed_rpm;
+    bool speed_available;
+    bool disc_enabled;
+    sl_link_TaskState task_state;
+} sl_link_TaskTrajectoryPoint;
+
+typedef struct _sl_link_TaskTrajectoryChunk {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    pb_callback_t execution_id;
+    uint32_t chunk_index;
+    uint32_t total_chunks;
+    uint32_t total_point_count;
+    uint32_t returned_point_count;
+    uint32_t start_index;
+    uint32_t next_index;
+    bool has_more;
+    uint64_t started_at_ms;
+    pb_callback_t points;
+    pb_callback_t task_id;
+    pb_callback_t map_id;
+    uint64_t start_time;
+    uint64_t end_time;
+    uint32_t sample_step;
+    bool map_available;
+    pb_callback_t map_message;
+    uint32_t map_version;
+    /* Source occupancy-grid dimensions before preview scaling. */
+    uint32_t map_source_width;
+    uint32_t map_source_height;
+    float map_resolution;
+    bool has_map_origin;
+    sl_link_Pose2D map_origin;
+    pb_callback_t map_frame_id;
+    pb_callback_t map_image_format;
+    uint32_t map_image_width;
+    uint32_t map_image_height;
+    float map_preview_scale_x;
+    float map_preview_scale_y;
+    /* Raw map preview without region/point/path overlays. */
+    pb_callback_t map_image_data;
+    uint32_t map_image_chunk_index;
+    uint32_t map_image_total_chunks;
+    float alignment_yaw_deg;
+    float app_rotation_deg;
+    float rotation_alignment_delta_deg;
+} sl_link_TaskTrajectoryChunk;
 
 typedef struct _sl_link_LiveMapCacheClearRequest {
     char dummy_field;
@@ -884,8 +1059,8 @@ extern "C" {
 
 /* Helper constants for enums */
 #define _sl_link_MessageId_MIN sl_link_MessageId_MSG_ID_UNKNOWN
-#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE
-#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_RADAR_RELOCALIZATION_STATUS_RESPONSE+1))
+#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK
+#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK+1))
 
 #define _sl_link_DeviceId_MIN sl_link_DeviceId_DEVICE_RESERVED
 #define _sl_link_DeviceId_MAX sl_link_DeviceId_DEVICE_BROADCAST
@@ -995,9 +1170,14 @@ extern "C" {
 #define sl_link_TaskStatusReport_state_ENUMTYPE sl_link_TaskState
 
 
+#define sl_link_PathPointPlanResponse_result_ENUMTYPE sl_link_ResultCode
 
 
 #define sl_link_MapPreviewResponse_result_ENUMTYPE sl_link_ResultCode
+
+
+
+#define sl_link_MapRegionPointResponse_result_ENUMTYPE sl_link_ResultCode
 
 #define sl_link_MapEditCommand_operation_ENUMTYPE sl_link_MapEditOperation
 #define sl_link_MapEditCommand_target_region_type_ENUMTYPE sl_link_RegionType
@@ -1043,8 +1223,18 @@ extern "C" {
 
 
 
+#define sl_link_TaskExecutionRecord_final_state_ENUMTYPE sl_link_TaskState
+
 #define sl_link_TaskResultResponse_result_ENUMTYPE sl_link_ResultCode
 #define sl_link_TaskResultResponse_final_state_ENUMTYPE sl_link_TaskState
+
+
+#define sl_link_TaskExecutionHistoryChunk_result_ENUMTYPE sl_link_ResultCode
+
+
+#define sl_link_TaskTrajectoryPoint_task_state_ENUMTYPE sl_link_TaskState
+
+#define sl_link_TaskTrajectoryChunk_result_ENUMTYPE sl_link_ResultCode
 
 
 #define sl_link_LiveMapCacheClearResponse_result_ENUMTYPE sl_link_ResultCode
@@ -1092,7 +1282,7 @@ extern "C" {
 #define sl_link_CameraFrameRequest_init_default  {0, 0}
 #define sl_link_CameraFrameChunk_init_default    {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}}
-#define sl_link_MapChunk_init_default            {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0}
+#define sl_link_MapChunk_init_default            {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0}
 #define sl_link_PathPoint2D_init_default         {0, 0, {{NULL}, NULL}}
 #define sl_link_RegionRepeatItem_init_default    {{{NULL}, NULL}, 0}
 #define sl_link_TaskConfig_init_default          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1100,10 +1290,13 @@ extern "C" {
 #define sl_link_TaskCommand_init_default         {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskStatusReport_init_default    {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default}
-#define sl_link_TaskPathRequest_init_default     {{{NULL}, NULL}, 0}
-#define sl_link_TaskPathChunk_init_default       {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewRequest_init_default   {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0}
+#define sl_link_MapRegionPointRequest_init_default {{{NULL}, NULL}}
+#define sl_link_WorkRegionPointInfo_init_default {false, sl_link_PolygonRegion_init_default, 0, false, sl_link_Pose2D_init_default, 0, false, sl_link_Pose2D_init_default}
+#define sl_link_MapRegionPointResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_default}
 #define sl_link_MapEditCommand_init_default      {{{NULL}, NULL}, _sl_link_MapEditOperation_MIN, {{NULL}, NULL}, false, sl_link_PolygonRegion_init_default, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, _sl_link_RegionType_MIN, 0, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}}
 #define sl_link_MapEditResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapEditStatusReport_init_default {0, 0, {{NULL}, NULL}}
@@ -1129,9 +1322,15 @@ extern "C" {
 #define sl_link_MapMetricsRequest_init_default   {{{NULL}, NULL}}
 #define sl_link_RegionMetricsItem_init_default   {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_MapMetricsResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_TaskResultRequest_init_default   {{{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_TaskResultRequest_init_default   {{{NULL}, NULL}, {{NULL}, NULL}, 0}
 #define sl_link_TaskResultRegionItem_init_default {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
-#define sl_link_TaskResultResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0}
+#define sl_link_TaskExecutionRecord_init_default {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0}
+#define sl_link_TaskResultResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_TaskExecutionHistoryRequest_init_default {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
+#define sl_link_TaskExecutionHistoryChunk_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, 0, 0}
+#define sl_link_TaskTrajectoryRequest_init_default {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0}
+#define sl_link_TaskTrajectoryPoint_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _sl_link_TaskState_MIN}
+#define sl_link_TaskTrajectoryChunk_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, 0}
 #define sl_link_LiveMapCacheClearRequest_init_default {0}
 #define sl_link_LiveMapCacheClearResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}}
 #define sl_link_RadarMapCacheClearRequest_init_default {0}
@@ -1168,7 +1367,7 @@ extern "C" {
 #define sl_link_CameraFrameRequest_init_zero     {0, 0}
 #define sl_link_CameraFrameChunk_init_zero       {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}}
-#define sl_link_MapChunk_init_zero               {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0}
+#define sl_link_MapChunk_init_zero               {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0}
 #define sl_link_PathPoint2D_init_zero            {0, 0, {{NULL}, NULL}}
 #define sl_link_RegionRepeatItem_init_zero       {{{NULL}, NULL}, 0}
 #define sl_link_TaskConfig_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1176,10 +1375,13 @@ extern "C" {
 #define sl_link_TaskCommand_init_zero            {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskStatusReport_init_zero       {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero}
-#define sl_link_TaskPathRequest_init_zero        {{{NULL}, NULL}, 0}
-#define sl_link_TaskPathChunk_init_zero          {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewRequest_init_zero      {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0}
+#define sl_link_MapRegionPointRequest_init_zero  {{{NULL}, NULL}}
+#define sl_link_WorkRegionPointInfo_init_zero    {false, sl_link_PolygonRegion_init_zero, 0, false, sl_link_Pose2D_init_zero, 0, false, sl_link_Pose2D_init_zero}
+#define sl_link_MapRegionPointResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_zero}
 #define sl_link_MapEditCommand_init_zero         {{{NULL}, NULL}, _sl_link_MapEditOperation_MIN, {{NULL}, NULL}, false, sl_link_PolygonRegion_init_zero, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, _sl_link_RegionType_MIN, 0, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}}
 #define sl_link_MapEditResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapEditStatusReport_init_zero    {0, 0, {{NULL}, NULL}}
@@ -1205,9 +1407,15 @@ extern "C" {
 #define sl_link_MapMetricsRequest_init_zero      {{{NULL}, NULL}}
 #define sl_link_RegionMetricsItem_init_zero      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_MapMetricsResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_TaskResultRequest_init_zero      {{{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_TaskResultRequest_init_zero      {{{NULL}, NULL}, {{NULL}, NULL}, 0}
 #define sl_link_TaskResultRegionItem_init_zero   {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
-#define sl_link_TaskResultResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0}
+#define sl_link_TaskExecutionRecord_init_zero    {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0}
+#define sl_link_TaskResultResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_TaskExecutionHistoryRequest_init_zero {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
+#define sl_link_TaskExecutionHistoryChunk_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, 0, 0}
+#define sl_link_TaskTrajectoryRequest_init_zero  {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0}
+#define sl_link_TaskTrajectoryPoint_init_zero    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _sl_link_TaskState_MIN}
+#define sl_link_TaskTrajectoryChunk_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, 0}
 #define sl_link_LiveMapCacheClearRequest_init_zero {0}
 #define sl_link_LiveMapCacheClearResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}}
 #define sl_link_RadarMapCacheClearRequest_init_zero {0}
@@ -1330,6 +1538,7 @@ extern "C" {
 #define sl_link_MapChunk_alignment_yaw_deg_tag   15
 #define sl_link_MapChunk_app_rotation_deg_tag    16
 #define sl_link_MapChunk_rotation_alignment_delta_deg_tag 17
+#define sl_link_MapChunk_map_version_tag         18
 #define sl_link_PathPoint2D_x_tag                1
 #define sl_link_PathPoint2D_y_tag                2
 #define sl_link_PathPoint2D_path_type_tag        3
@@ -1370,13 +1579,30 @@ extern "C" {
 #define sl_link_TaskStatusReport_current_region_repeat_total_tag 15
 #define sl_link_TaskStatusReport_alignment_yaw_deg_tag 16
 #define sl_link_TaskStatusReport_localization_covariance_tag 17
-#define sl_link_TaskPathRequest_task_id_tag      1
-#define sl_link_TaskPathRequest_max_chunk_size_tag 2
-#define sl_link_TaskPathChunk_task_id_tag        1
-#define sl_link_TaskPathChunk_chunk_index_tag    2
-#define sl_link_TaskPathChunk_total_chunks_tag   3
-#define sl_link_TaskPathChunk_path_version_tag   4
-#define sl_link_TaskPathChunk_data_tag           5
+#define sl_link_PathPointPlanRequest_task_id_tag 1
+#define sl_link_PathPointPlanRequest_max_chunk_size_tag 2
+#define sl_link_PathPointPlanRequest_request_id_tag 3
+#define sl_link_PathPointPlanRequest_force_replan_tag 4
+#define sl_link_PathPointPlanRequest_start_pose_tag 5
+#define sl_link_PathPointPlanRequest_end_pose_tag 6
+#define sl_link_PathPointPlanRequest_global_direction_tag 7
+#define sl_link_PathPointPlanRequest_map_id_tag  8
+#define sl_link_PathPointPlanResponse_task_id_tag 1
+#define sl_link_PathPointPlanResponse_chunk_index_tag 2
+#define sl_link_PathPointPlanResponse_total_chunks_tag 3
+#define sl_link_PathPointPlanResponse_path_version_tag 4
+#define sl_link_PathPointPlanResponse_data_tag   5
+#define sl_link_PathPointPlanResponse_request_id_tag 6
+#define sl_link_PathPointPlanResponse_map_id_tag 7
+#define sl_link_PathPointPlanResponse_result_tag 8
+#define sl_link_PathPointPlanResponse_message_tag 9
+#define sl_link_PathPointPlanResponse_planned_tag 10
+#define sl_link_PathPointPlanResponse_map_version_tag 11
+#define sl_link_PathPointPlanResponse_path_point_count_tag 12
+#define sl_link_PathPointPlanResponse_path_length_m_tag 13
+#define sl_link_PathPointPlanResponse_total_work_area_m2_tag 14
+#define sl_link_PathPointPlanResponse_estimated_time_s_tag 15
+#define sl_link_PathPointPlanResponse_frame_id_tag 16
 #define sl_link_MapPreviewRequest_max_edge_tag   1
 #define sl_link_MapPreviewRequest_image_format_tag 2
 #define sl_link_MapPreviewRequest_include_overlay_tag 3
@@ -1397,6 +1623,21 @@ extern "C" {
 #define sl_link_MapPreviewResponse_alignment_yaw_deg_tag 14
 #define sl_link_MapPreviewResponse_app_rotation_deg_tag 15
 #define sl_link_MapPreviewResponse_rotation_alignment_delta_deg_tag 16
+#define sl_link_MapRegionPointRequest_map_id_tag 1
+#define sl_link_WorkRegionPointInfo_region_tag   1
+#define sl_link_WorkRegionPointInfo_start_pose_available_tag 2
+#define sl_link_WorkRegionPointInfo_start_pose_tag 3
+#define sl_link_WorkRegionPointInfo_end_pose_available_tag 4
+#define sl_link_WorkRegionPointInfo_end_pose_tag 5
+#define sl_link_MapRegionPointResponse_result_tag 1
+#define sl_link_MapRegionPointResponse_message_tag 2
+#define sl_link_MapRegionPointResponse_map_id_tag 3
+#define sl_link_MapRegionPointResponse_map_version_tag 4
+#define sl_link_MapRegionPointResponse_work_regions_tag 5
+#define sl_link_MapRegionPointResponse_obstacle_regions_tag 6
+#define sl_link_MapRegionPointResponse_erase_regions_tag 7
+#define sl_link_MapRegionPointResponse_crop_region_available_tag 8
+#define sl_link_MapRegionPointResponse_crop_region_tag 9
 #define sl_link_MapEditCommand_edit_id_tag       1
 #define sl_link_MapEditCommand_operation_tag     2
 #define sl_link_MapEditCommand_region_name_tag   3
@@ -1542,12 +1783,25 @@ extern "C" {
 #define sl_link_MapMetricsResponse_region_metrics_tag 5
 #define sl_link_TaskResultRequest_map_id_tag     1
 #define sl_link_TaskResultRequest_task_id_tag    2
+#define sl_link_TaskResultRequest_max_execution_records_tag 3
 #define sl_link_TaskResultRegionItem_region_id_tag 1
 #define sl_link_TaskResultRegionItem_region_name_tag 2
 #define sl_link_TaskResultRegionItem_target_repeat_tag 3
 #define sl_link_TaskResultRegionItem_executed_repeat_tag 4
 #define sl_link_TaskResultRegionItem_completed_tag 5
 #define sl_link_TaskResultRegionItem_unfinished_reason_tag 6
+#define sl_link_TaskExecutionRecord_execution_id_tag 1
+#define sl_link_TaskExecutionRecord_map_id_tag   2
+#define sl_link_TaskExecutionRecord_task_id_tag  3
+#define sl_link_TaskExecutionRecord_final_state_tag 4
+#define sl_link_TaskExecutionRecord_stop_reason_tag 5
+#define sl_link_TaskExecutionRecord_started_at_tag 6
+#define sl_link_TaskExecutionRecord_finished_at_tag 7
+#define sl_link_TaskExecutionRecord_planned_area_m2_tag 8
+#define sl_link_TaskExecutionRecord_executed_area_m2_tag 9
+#define sl_link_TaskExecutionRecord_progress_tag 10
+#define sl_link_TaskExecutionRecord_path_version_tag 11
+#define sl_link_TaskExecutionRecord_all_completed_tag 12
 #define sl_link_TaskResultResponse_result_tag    1
 #define sl_link_TaskResultResponse_message_tag   2
 #define sl_link_TaskResultResponse_map_id_tag    3
@@ -1567,6 +1821,80 @@ extern "C" {
 #define sl_link_TaskResultResponse_alignment_yaw_deg_tag 17
 #define sl_link_TaskResultResponse_app_rotation_deg_tag 18
 #define sl_link_TaskResultResponse_rotation_alignment_delta_deg_tag 19
+#define sl_link_TaskResultResponse_execution_id_tag 20
+#define sl_link_TaskResultResponse_started_at_tag 21
+#define sl_link_TaskResultResponse_planned_area_m2_tag 22
+#define sl_link_TaskResultResponse_executed_area_m2_tag 23
+#define sl_link_TaskResultResponse_execution_progress_tag 24
+#define sl_link_TaskResultResponse_execution_records_tag 25
+#define sl_link_TaskExecutionHistoryRequest_map_id_tag 1
+#define sl_link_TaskExecutionHistoryRequest_task_id_tag 2
+#define sl_link_TaskExecutionHistoryRequest_start_time_tag 3
+#define sl_link_TaskExecutionHistoryRequest_end_time_tag 4
+#define sl_link_TaskExecutionHistoryRequest_max_chunk_size_tag 5
+#define sl_link_TaskExecutionHistoryChunk_result_tag 1
+#define sl_link_TaskExecutionHistoryChunk_message_tag 2
+#define sl_link_TaskExecutionHistoryChunk_chunk_index_tag 3
+#define sl_link_TaskExecutionHistoryChunk_total_chunks_tag 4
+#define sl_link_TaskExecutionHistoryChunk_total_record_count_tag 5
+#define sl_link_TaskExecutionHistoryChunk_data_tag 6
+#define sl_link_TaskExecutionHistoryChunk_start_time_tag 7
+#define sl_link_TaskExecutionHistoryChunk_end_time_tag 8
+#define sl_link_TaskTrajectoryRequest_execution_id_tag 1
+#define sl_link_TaskTrajectoryRequest_task_id_tag 2
+#define sl_link_TaskTrajectoryRequest_start_time_tag 3
+#define sl_link_TaskTrajectoryRequest_end_time_tag 4
+#define sl_link_TaskTrajectoryRequest_start_index_tag 5
+#define sl_link_TaskTrajectoryRequest_max_points_tag 6
+#define sl_link_TaskTrajectoryRequest_sample_step_tag 7
+#define sl_link_TaskTrajectoryRequest_max_chunk_size_tag 8
+#define sl_link_TaskTrajectoryPoint_index_tag    1
+#define sl_link_TaskTrajectoryPoint_offset_ms_tag 2
+#define sl_link_TaskTrajectoryPoint_x_mm_tag     3
+#define sl_link_TaskTrajectoryPoint_y_mm_tag     4
+#define sl_link_TaskTrajectoryPoint_heading_mdeg_tag 5
+#define sl_link_TaskTrajectoryPoint_linear_speed_mmps_tag 6
+#define sl_link_TaskTrajectoryPoint_angular_speed_mradps_tag 7
+#define sl_link_TaskTrajectoryPoint_disc_speed_rpm_tag 8
+#define sl_link_TaskTrajectoryPoint_speed_available_tag 9
+#define sl_link_TaskTrajectoryPoint_disc_enabled_tag 10
+#define sl_link_TaskTrajectoryPoint_task_state_tag 11
+#define sl_link_TaskTrajectoryChunk_result_tag   1
+#define sl_link_TaskTrajectoryChunk_message_tag  2
+#define sl_link_TaskTrajectoryChunk_execution_id_tag 3
+#define sl_link_TaskTrajectoryChunk_chunk_index_tag 4
+#define sl_link_TaskTrajectoryChunk_total_chunks_tag 5
+#define sl_link_TaskTrajectoryChunk_total_point_count_tag 6
+#define sl_link_TaskTrajectoryChunk_returned_point_count_tag 7
+#define sl_link_TaskTrajectoryChunk_start_index_tag 8
+#define sl_link_TaskTrajectoryChunk_next_index_tag 9
+#define sl_link_TaskTrajectoryChunk_has_more_tag 10
+#define sl_link_TaskTrajectoryChunk_started_at_ms_tag 11
+#define sl_link_TaskTrajectoryChunk_points_tag   12
+#define sl_link_TaskTrajectoryChunk_task_id_tag  13
+#define sl_link_TaskTrajectoryChunk_map_id_tag   14
+#define sl_link_TaskTrajectoryChunk_start_time_tag 15
+#define sl_link_TaskTrajectoryChunk_end_time_tag 16
+#define sl_link_TaskTrajectoryChunk_sample_step_tag 17
+#define sl_link_TaskTrajectoryChunk_map_available_tag 18
+#define sl_link_TaskTrajectoryChunk_map_message_tag 19
+#define sl_link_TaskTrajectoryChunk_map_version_tag 20
+#define sl_link_TaskTrajectoryChunk_map_source_width_tag 21
+#define sl_link_TaskTrajectoryChunk_map_source_height_tag 22
+#define sl_link_TaskTrajectoryChunk_map_resolution_tag 23
+#define sl_link_TaskTrajectoryChunk_map_origin_tag 24
+#define sl_link_TaskTrajectoryChunk_map_frame_id_tag 25
+#define sl_link_TaskTrajectoryChunk_map_image_format_tag 26
+#define sl_link_TaskTrajectoryChunk_map_image_width_tag 27
+#define sl_link_TaskTrajectoryChunk_map_image_height_tag 28
+#define sl_link_TaskTrajectoryChunk_map_preview_scale_x_tag 29
+#define sl_link_TaskTrajectoryChunk_map_preview_scale_y_tag 30
+#define sl_link_TaskTrajectoryChunk_map_image_data_tag 31
+#define sl_link_TaskTrajectoryChunk_map_image_chunk_index_tag 32
+#define sl_link_TaskTrajectoryChunk_map_image_total_chunks_tag 33
+#define sl_link_TaskTrajectoryChunk_alignment_yaw_deg_tag 34
+#define sl_link_TaskTrajectoryChunk_app_rotation_deg_tag 35
+#define sl_link_TaskTrajectoryChunk_rotation_alignment_delta_deg_tag 36
 #define sl_link_LiveMapCacheClearResponse_result_tag 1
 #define sl_link_LiveMapCacheClearResponse_message_tag 2
 #define sl_link_RadarMapCacheClearResponse_result_tag 1
@@ -1785,7 +2113,8 @@ X(a, STATIC,   SINGULAR, FLOAT,    preview_scale_y,  13) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  localization_covariance,  14) \
 X(a, STATIC,   SINGULAR, FLOAT,    alignment_yaw_deg,  15) \
 X(a, STATIC,   SINGULAR, FLOAT,    app_rotation_deg,  16) \
-X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  17)
+X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  17) \
+X(a, STATIC,   SINGULAR, UINT32,   map_version,      18)
 #define sl_link_MapChunk_CALLBACK pb_default_field_callback
 #define sl_link_MapChunk_DEFAULT NULL
 #define sl_link_MapChunk_origin_MSGTYPE sl_link_Pose2D
@@ -1864,20 +2193,39 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  localization_covariance,  17)
 #define sl_link_TaskStatusReport_position_MSGTYPE sl_link_Pose2D
 #define sl_link_TaskStatusReport_localization_covariance_MSGTYPE sl_link_LocalizationCovariance
 
-#define sl_link_TaskPathRequest_FIELDLIST(X, a) \
+#define sl_link_PathPointPlanRequest_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           1) \
-X(a, STATIC,   SINGULAR, UINT32,   max_chunk_size,    2)
-#define sl_link_TaskPathRequest_CALLBACK pb_default_field_callback
-#define sl_link_TaskPathRequest_DEFAULT NULL
+X(a, STATIC,   SINGULAR, UINT32,   max_chunk_size,    2) \
+X(a, CALLBACK, SINGULAR, STRING,   request_id,        3) \
+X(a, STATIC,   SINGULAR, BOOL,     force_replan,      4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  start_pose,        5) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  end_pose,          6) \
+X(a, CALLBACK, SINGULAR, STRING,   global_direction,   7) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            8)
+#define sl_link_PathPointPlanRequest_CALLBACK pb_default_field_callback
+#define sl_link_PathPointPlanRequest_DEFAULT NULL
+#define sl_link_PathPointPlanRequest_start_pose_MSGTYPE sl_link_Pose2D
+#define sl_link_PathPointPlanRequest_end_pose_MSGTYPE sl_link_Pose2D
 
-#define sl_link_TaskPathChunk_FIELDLIST(X, a) \
+#define sl_link_PathPointPlanResponse_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           1) \
 X(a, STATIC,   SINGULAR, UINT32,   chunk_index,       2) \
 X(a, STATIC,   SINGULAR, UINT32,   total_chunks,      3) \
 X(a, STATIC,   SINGULAR, UINT32,   path_version,      4) \
-X(a, CALLBACK, SINGULAR, BYTES,    data,              5)
-#define sl_link_TaskPathChunk_CALLBACK pb_default_field_callback
-#define sl_link_TaskPathChunk_DEFAULT NULL
+X(a, CALLBACK, SINGULAR, BYTES,    data,              5) \
+X(a, CALLBACK, SINGULAR, STRING,   request_id,        6) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            7) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            8) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           9) \
+X(a, STATIC,   SINGULAR, BOOL,     planned,          10) \
+X(a, STATIC,   SINGULAR, UINT32,   map_version,      11) \
+X(a, STATIC,   SINGULAR, UINT32,   path_point_count,  12) \
+X(a, STATIC,   SINGULAR, FLOAT,    path_length_m,    13) \
+X(a, STATIC,   SINGULAR, FLOAT,    total_work_area_m2,  14) \
+X(a, STATIC,   SINGULAR, FLOAT,    estimated_time_s,  15) \
+X(a, CALLBACK, SINGULAR, STRING,   frame_id,         16)
+#define sl_link_PathPointPlanResponse_CALLBACK pb_default_field_callback
+#define sl_link_PathPointPlanResponse_DEFAULT NULL
 
 #define sl_link_MapPreviewRequest_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UINT32,   max_edge,          1) \
@@ -1908,6 +2256,40 @@ X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  16)
 #define sl_link_MapPreviewResponse_DEFAULT NULL
 #define sl_link_MapPreviewResponse_origin_MSGTYPE sl_link_Pose2D
 #define sl_link_MapPreviewResponse_localization_covariance_MSGTYPE sl_link_LocalizationCovariance
+
+#define sl_link_MapRegionPointRequest_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            1)
+#define sl_link_MapRegionPointRequest_CALLBACK pb_default_field_callback
+#define sl_link_MapRegionPointRequest_DEFAULT NULL
+
+#define sl_link_WorkRegionPointInfo_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  region,            1) \
+X(a, STATIC,   SINGULAR, BOOL,     start_pose_available,   2) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  start_pose,        3) \
+X(a, STATIC,   SINGULAR, BOOL,     end_pose_available,   4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  end_pose,          5)
+#define sl_link_WorkRegionPointInfo_CALLBACK NULL
+#define sl_link_WorkRegionPointInfo_DEFAULT NULL
+#define sl_link_WorkRegionPointInfo_region_MSGTYPE sl_link_PolygonRegion
+#define sl_link_WorkRegionPointInfo_start_pose_MSGTYPE sl_link_Pose2D
+#define sl_link_WorkRegionPointInfo_end_pose_MSGTYPE sl_link_Pose2D
+
+#define sl_link_MapRegionPointResponse_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            3) \
+X(a, STATIC,   SINGULAR, UINT32,   map_version,       4) \
+X(a, CALLBACK, REPEATED, MESSAGE,  work_regions,      5) \
+X(a, CALLBACK, REPEATED, MESSAGE,  obstacle_regions,   6) \
+X(a, CALLBACK, REPEATED, MESSAGE,  erase_regions,     7) \
+X(a, STATIC,   SINGULAR, BOOL,     crop_region_available,   8) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  crop_region,       9)
+#define sl_link_MapRegionPointResponse_CALLBACK pb_default_field_callback
+#define sl_link_MapRegionPointResponse_DEFAULT NULL
+#define sl_link_MapRegionPointResponse_work_regions_MSGTYPE sl_link_WorkRegionPointInfo
+#define sl_link_MapRegionPointResponse_obstacle_regions_MSGTYPE sl_link_PolygonRegion
+#define sl_link_MapRegionPointResponse_erase_regions_MSGTYPE sl_link_PolygonRegion
+#define sl_link_MapRegionPointResponse_crop_region_MSGTYPE sl_link_PolygonRegion
 
 #define sl_link_MapEditCommand_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   edit_id,           1) \
@@ -2165,7 +2547,8 @@ X(a, CALLBACK, REPEATED, MESSAGE,  region_metrics,    5)
 
 #define sl_link_TaskResultRequest_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   map_id,            1) \
-X(a, CALLBACK, SINGULAR, STRING,   task_id,           2)
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           2) \
+X(a, STATIC,   SINGULAR, UINT32,   max_execution_records,   3)
 #define sl_link_TaskResultRequest_CALLBACK pb_default_field_callback
 #define sl_link_TaskResultRequest_DEFAULT NULL
 
@@ -2178,6 +2561,22 @@ X(a, STATIC,   SINGULAR, BOOL,     completed,         5) \
 X(a, CALLBACK, SINGULAR, STRING,   unfinished_reason,   6)
 #define sl_link_TaskResultRegionItem_CALLBACK pb_default_field_callback
 #define sl_link_TaskResultRegionItem_DEFAULT NULL
+
+#define sl_link_TaskExecutionRecord_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   execution_id,      1) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            2) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           3) \
+X(a, STATIC,   SINGULAR, UENUM,    final_state,       4) \
+X(a, CALLBACK, SINGULAR, STRING,   stop_reason,       5) \
+X(a, STATIC,   SINGULAR, UINT64,   started_at,        6) \
+X(a, STATIC,   SINGULAR, UINT64,   finished_at,       7) \
+X(a, STATIC,   SINGULAR, FLOAT,    planned_area_m2,   8) \
+X(a, STATIC,   SINGULAR, FLOAT,    executed_area_m2,   9) \
+X(a, STATIC,   SINGULAR, FLOAT,    progress,         10) \
+X(a, STATIC,   SINGULAR, UINT32,   path_version,     11) \
+X(a, STATIC,   SINGULAR, BOOL,     all_completed,    12)
+#define sl_link_TaskExecutionRecord_CALLBACK pb_default_field_callback
+#define sl_link_TaskExecutionRecord_DEFAULT NULL
 
 #define sl_link_TaskResultResponse_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
@@ -2198,11 +2597,108 @@ X(a, CALLBACK, REPEATED, MESSAGE,  region_results,   15) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  localization_covariance,  16) \
 X(a, STATIC,   SINGULAR, FLOAT,    alignment_yaw_deg,  17) \
 X(a, STATIC,   SINGULAR, FLOAT,    app_rotation_deg,  18) \
-X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  19)
+X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  19) \
+X(a, CALLBACK, SINGULAR, STRING,   execution_id,     20) \
+X(a, STATIC,   SINGULAR, UINT64,   started_at,       21) \
+X(a, STATIC,   SINGULAR, FLOAT,    planned_area_m2,  22) \
+X(a, STATIC,   SINGULAR, FLOAT,    executed_area_m2,  23) \
+X(a, STATIC,   SINGULAR, FLOAT,    execution_progress,  24) \
+X(a, CALLBACK, REPEATED, MESSAGE,  execution_records,  25)
 #define sl_link_TaskResultResponse_CALLBACK pb_default_field_callback
 #define sl_link_TaskResultResponse_DEFAULT NULL
 #define sl_link_TaskResultResponse_region_results_MSGTYPE sl_link_TaskResultRegionItem
 #define sl_link_TaskResultResponse_localization_covariance_MSGTYPE sl_link_LocalizationCovariance
+#define sl_link_TaskResultResponse_execution_records_MSGTYPE sl_link_TaskExecutionRecord
+
+#define sl_link_TaskExecutionHistoryRequest_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           2) \
+X(a, STATIC,   SINGULAR, UINT64,   start_time,        3) \
+X(a, STATIC,   SINGULAR, UINT64,   end_time,          4) \
+X(a, STATIC,   SINGULAR, UINT32,   max_chunk_size,    5)
+#define sl_link_TaskExecutionHistoryRequest_CALLBACK pb_default_field_callback
+#define sl_link_TaskExecutionHistoryRequest_DEFAULT NULL
+
+#define sl_link_TaskExecutionHistoryChunk_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, STATIC,   SINGULAR, UINT32,   chunk_index,       3) \
+X(a, STATIC,   SINGULAR, UINT32,   total_chunks,      4) \
+X(a, STATIC,   SINGULAR, UINT32,   total_record_count,   5) \
+X(a, CALLBACK, SINGULAR, BYTES,    data,              6) \
+X(a, STATIC,   SINGULAR, UINT64,   start_time,        7) \
+X(a, STATIC,   SINGULAR, UINT64,   end_time,          8)
+#define sl_link_TaskExecutionHistoryChunk_CALLBACK pb_default_field_callback
+#define sl_link_TaskExecutionHistoryChunk_DEFAULT NULL
+
+#define sl_link_TaskTrajectoryRequest_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   execution_id,      1) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           2) \
+X(a, STATIC,   SINGULAR, UINT64,   start_time,        3) \
+X(a, STATIC,   SINGULAR, UINT64,   end_time,          4) \
+X(a, STATIC,   SINGULAR, UINT32,   start_index,       5) \
+X(a, STATIC,   SINGULAR, UINT32,   max_points,        6) \
+X(a, STATIC,   SINGULAR, UINT32,   sample_step,       7) \
+X(a, STATIC,   SINGULAR, UINT32,   max_chunk_size,    8)
+#define sl_link_TaskTrajectoryRequest_CALLBACK pb_default_field_callback
+#define sl_link_TaskTrajectoryRequest_DEFAULT NULL
+
+#define sl_link_TaskTrajectoryPoint_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   index,             1) \
+X(a, STATIC,   SINGULAR, UINT32,   offset_ms,         2) \
+X(a, STATIC,   SINGULAR, SINT32,   x_mm,              3) \
+X(a, STATIC,   SINGULAR, SINT32,   y_mm,              4) \
+X(a, STATIC,   SINGULAR, SINT32,   heading_mdeg,      5) \
+X(a, STATIC,   SINGULAR, SINT32,   linear_speed_mmps,   6) \
+X(a, STATIC,   SINGULAR, SINT32,   angular_speed_mradps,   7) \
+X(a, STATIC,   SINGULAR, UINT32,   disc_speed_rpm,    8) \
+X(a, STATIC,   SINGULAR, BOOL,     speed_available,   9) \
+X(a, STATIC,   SINGULAR, BOOL,     disc_enabled,     10) \
+X(a, STATIC,   SINGULAR, UENUM,    task_state,       11)
+#define sl_link_TaskTrajectoryPoint_CALLBACK NULL
+#define sl_link_TaskTrajectoryPoint_DEFAULT NULL
+
+#define sl_link_TaskTrajectoryChunk_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, CALLBACK, SINGULAR, STRING,   execution_id,      3) \
+X(a, STATIC,   SINGULAR, UINT32,   chunk_index,       4) \
+X(a, STATIC,   SINGULAR, UINT32,   total_chunks,      5) \
+X(a, STATIC,   SINGULAR, UINT32,   total_point_count,   6) \
+X(a, STATIC,   SINGULAR, UINT32,   returned_point_count,   7) \
+X(a, STATIC,   SINGULAR, UINT32,   start_index,       8) \
+X(a, STATIC,   SINGULAR, UINT32,   next_index,        9) \
+X(a, STATIC,   SINGULAR, BOOL,     has_more,         10) \
+X(a, STATIC,   SINGULAR, UINT64,   started_at_ms,    11) \
+X(a, CALLBACK, REPEATED, MESSAGE,  points,           12) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,          13) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,           14) \
+X(a, STATIC,   SINGULAR, UINT64,   start_time,       15) \
+X(a, STATIC,   SINGULAR, UINT64,   end_time,         16) \
+X(a, STATIC,   SINGULAR, UINT32,   sample_step,      17) \
+X(a, STATIC,   SINGULAR, BOOL,     map_available,    18) \
+X(a, CALLBACK, SINGULAR, STRING,   map_message,      19) \
+X(a, STATIC,   SINGULAR, UINT32,   map_version,      20) \
+X(a, STATIC,   SINGULAR, UINT32,   map_source_width,  21) \
+X(a, STATIC,   SINGULAR, UINT32,   map_source_height,  22) \
+X(a, STATIC,   SINGULAR, FLOAT,    map_resolution,   23) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  map_origin,       24) \
+X(a, CALLBACK, SINGULAR, STRING,   map_frame_id,     25) \
+X(a, CALLBACK, SINGULAR, STRING,   map_image_format,  26) \
+X(a, STATIC,   SINGULAR, UINT32,   map_image_width,  27) \
+X(a, STATIC,   SINGULAR, UINT32,   map_image_height,  28) \
+X(a, STATIC,   SINGULAR, FLOAT,    map_preview_scale_x,  29) \
+X(a, STATIC,   SINGULAR, FLOAT,    map_preview_scale_y,  30) \
+X(a, CALLBACK, SINGULAR, BYTES,    map_image_data,   31) \
+X(a, STATIC,   SINGULAR, UINT32,   map_image_chunk_index,  32) \
+X(a, STATIC,   SINGULAR, UINT32,   map_image_total_chunks,  33) \
+X(a, STATIC,   SINGULAR, FLOAT,    alignment_yaw_deg,  34) \
+X(a, STATIC,   SINGULAR, FLOAT,    app_rotation_deg,  35) \
+X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  36)
+#define sl_link_TaskTrajectoryChunk_CALLBACK pb_default_field_callback
+#define sl_link_TaskTrajectoryChunk_DEFAULT NULL
+#define sl_link_TaskTrajectoryChunk_points_MSGTYPE sl_link_TaskTrajectoryPoint
+#define sl_link_TaskTrajectoryChunk_map_origin_MSGTYPE sl_link_Pose2D
 
 #define sl_link_LiveMapCacheClearRequest_FIELDLIST(X, a) \
 
@@ -2360,10 +2856,13 @@ extern const pb_msgdesc_t sl_link_TaskConfigResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskCommand_msg;
 extern const pb_msgdesc_t sl_link_TaskCommandResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskStatusReport_msg;
-extern const pb_msgdesc_t sl_link_TaskPathRequest_msg;
-extern const pb_msgdesc_t sl_link_TaskPathChunk_msg;
+extern const pb_msgdesc_t sl_link_PathPointPlanRequest_msg;
+extern const pb_msgdesc_t sl_link_PathPointPlanResponse_msg;
 extern const pb_msgdesc_t sl_link_MapPreviewRequest_msg;
 extern const pb_msgdesc_t sl_link_MapPreviewResponse_msg;
+extern const pb_msgdesc_t sl_link_MapRegionPointRequest_msg;
+extern const pb_msgdesc_t sl_link_WorkRegionPointInfo_msg;
+extern const pb_msgdesc_t sl_link_MapRegionPointResponse_msg;
 extern const pb_msgdesc_t sl_link_MapEditCommand_msg;
 extern const pb_msgdesc_t sl_link_MapEditResponse_msg;
 extern const pb_msgdesc_t sl_link_MapEditStatusReport_msg;
@@ -2391,7 +2890,13 @@ extern const pb_msgdesc_t sl_link_RegionMetricsItem_msg;
 extern const pb_msgdesc_t sl_link_MapMetricsResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskResultRequest_msg;
 extern const pb_msgdesc_t sl_link_TaskResultRegionItem_msg;
+extern const pb_msgdesc_t sl_link_TaskExecutionRecord_msg;
 extern const pb_msgdesc_t sl_link_TaskResultResponse_msg;
+extern const pb_msgdesc_t sl_link_TaskExecutionHistoryRequest_msg;
+extern const pb_msgdesc_t sl_link_TaskExecutionHistoryChunk_msg;
+extern const pb_msgdesc_t sl_link_TaskTrajectoryRequest_msg;
+extern const pb_msgdesc_t sl_link_TaskTrajectoryPoint_msg;
+extern const pb_msgdesc_t sl_link_TaskTrajectoryChunk_msg;
 extern const pb_msgdesc_t sl_link_LiveMapCacheClearRequest_msg;
 extern const pb_msgdesc_t sl_link_LiveMapCacheClearResponse_msg;
 extern const pb_msgdesc_t sl_link_RadarMapCacheClearRequest_msg;
@@ -2438,10 +2943,13 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_TaskCommand_fields &sl_link_TaskCommand_msg
 #define sl_link_TaskCommandResponse_fields &sl_link_TaskCommandResponse_msg
 #define sl_link_TaskStatusReport_fields &sl_link_TaskStatusReport_msg
-#define sl_link_TaskPathRequest_fields &sl_link_TaskPathRequest_msg
-#define sl_link_TaskPathChunk_fields &sl_link_TaskPathChunk_msg
+#define sl_link_PathPointPlanRequest_fields &sl_link_PathPointPlanRequest_msg
+#define sl_link_PathPointPlanResponse_fields &sl_link_PathPointPlanResponse_msg
 #define sl_link_MapPreviewRequest_fields &sl_link_MapPreviewRequest_msg
 #define sl_link_MapPreviewResponse_fields &sl_link_MapPreviewResponse_msg
+#define sl_link_MapRegionPointRequest_fields &sl_link_MapRegionPointRequest_msg
+#define sl_link_WorkRegionPointInfo_fields &sl_link_WorkRegionPointInfo_msg
+#define sl_link_MapRegionPointResponse_fields &sl_link_MapRegionPointResponse_msg
 #define sl_link_MapEditCommand_fields &sl_link_MapEditCommand_msg
 #define sl_link_MapEditResponse_fields &sl_link_MapEditResponse_msg
 #define sl_link_MapEditStatusReport_fields &sl_link_MapEditStatusReport_msg
@@ -2469,7 +2977,13 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_MapMetricsResponse_fields &sl_link_MapMetricsResponse_msg
 #define sl_link_TaskResultRequest_fields &sl_link_TaskResultRequest_msg
 #define sl_link_TaskResultRegionItem_fields &sl_link_TaskResultRegionItem_msg
+#define sl_link_TaskExecutionRecord_fields &sl_link_TaskExecutionRecord_msg
 #define sl_link_TaskResultResponse_fields &sl_link_TaskResultResponse_msg
+#define sl_link_TaskExecutionHistoryRequest_fields &sl_link_TaskExecutionHistoryRequest_msg
+#define sl_link_TaskExecutionHistoryChunk_fields &sl_link_TaskExecutionHistoryChunk_msg
+#define sl_link_TaskTrajectoryRequest_fields &sl_link_TaskTrajectoryRequest_msg
+#define sl_link_TaskTrajectoryPoint_fields &sl_link_TaskTrajectoryPoint_msg
+#define sl_link_TaskTrajectoryChunk_fields &sl_link_TaskTrajectoryChunk_msg
 #define sl_link_LiveMapCacheClearRequest_fields &sl_link_LiveMapCacheClearRequest_msg
 #define sl_link_LiveMapCacheClearResponse_fields &sl_link_LiveMapCacheClearResponse_msg
 #define sl_link_RadarMapCacheClearRequest_fields &sl_link_RadarMapCacheClearRequest_msg
@@ -2510,10 +3024,13 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_TaskCommand_size depends on runtime parameters */
 /* sl_link_TaskCommandResponse_size depends on runtime parameters */
 /* sl_link_TaskStatusReport_size depends on runtime parameters */
-/* sl_link_TaskPathRequest_size depends on runtime parameters */
-/* sl_link_TaskPathChunk_size depends on runtime parameters */
+/* sl_link_PathPointPlanRequest_size depends on runtime parameters */
+/* sl_link_PathPointPlanResponse_size depends on runtime parameters */
 /* sl_link_MapPreviewRequest_size depends on runtime parameters */
 /* sl_link_MapPreviewResponse_size depends on runtime parameters */
+/* sl_link_MapRegionPointRequest_size depends on runtime parameters */
+/* sl_link_WorkRegionPointInfo_size depends on runtime parameters */
+/* sl_link_MapRegionPointResponse_size depends on runtime parameters */
 /* sl_link_MapEditCommand_size depends on runtime parameters */
 /* sl_link_MapEditResponse_size depends on runtime parameters */
 /* sl_link_MapEditStatusReport_size depends on runtime parameters */
@@ -2538,7 +3055,12 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_MapMetricsResponse_size depends on runtime parameters */
 /* sl_link_TaskResultRequest_size depends on runtime parameters */
 /* sl_link_TaskResultRegionItem_size depends on runtime parameters */
+/* sl_link_TaskExecutionRecord_size depends on runtime parameters */
 /* sl_link_TaskResultResponse_size depends on runtime parameters */
+/* sl_link_TaskExecutionHistoryRequest_size depends on runtime parameters */
+/* sl_link_TaskExecutionHistoryChunk_size depends on runtime parameters */
+/* sl_link_TaskTrajectoryRequest_size depends on runtime parameters */
+/* sl_link_TaskTrajectoryChunk_size depends on runtime parameters */
 /* sl_link_LiveMapCacheClearResponse_size depends on runtime parameters */
 /* sl_link_RadarMapCacheClearResponse_size depends on runtime parameters */
 /* sl_link_RadarSystemStatusResponse_size depends on runtime parameters */
@@ -2546,7 +3068,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_RadarRelocalizationResponse_size depends on runtime parameters */
 /* sl_link_RadarRelocalizationStatusResponse_size depends on runtime parameters */
 /* sl_link_ControlCommandResponse_size depends on runtime parameters */
-#define SL_LINK_SL_LINK_PB_H_MAX_SIZE            sl_link_LocalizationCovariance_size
+#define SL_LINK_SL_LINK_PB_H_MAX_SIZE            sl_link_TaskTrajectoryPoint_size
 #define sl_link_CameraFrameRequest_size          8
 #define sl_link_ChassisPowerControl_size         2
 #define sl_link_ChassisSettings_size             20
@@ -2568,6 +3090,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_RadarRelocalizationStatusRequest_size 0
 #define sl_link_RadarSystemStatusRequest_size    0
 #define sl_link_SettingsReadRequest_size         4
+#define sl_link_TaskTrajectoryPoint_size         54
 #define sl_link_VideoStreamInfoRequest_size      2
 
 #ifdef __cplusplus

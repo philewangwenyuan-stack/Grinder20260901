@@ -12,7 +12,7 @@ try:
 except Exception:
     rospy = None
 
-from grinder_scheduler.models import MapSnapshot
+from grinder_scheduler.models import MapSnapshot, normalize_planning_direction
 
 
 UNKNOWN_MASK_VALUE = 32767
@@ -141,9 +141,10 @@ class MapService:
             "closed": bool(region.get("closed", existing.get("closed", True))),
             "region_type": int(region.get("region_type", existing.get("region_type", default_type))),
         }
-        region_direction = str(region.get("global_direction", existing.get("global_direction", "x")) or "x").strip().lower()
-        if region_direction not in ("x", "-x", "y", "-y"):
-            region_direction = "x"
+        region_direction = normalize_planning_direction(
+            region.get("global_direction", ""),
+            existing.get("global_direction", "x"),
+        )
         normalized["global_direction"] = region_direction
         default_start, default_end = self._default_region_start_end(points)
         start_pose = region.get("start_pose", existing.get("start_pose", {})) or {}
@@ -205,6 +206,21 @@ class MapService:
         return removed_regions
 
     def set_raw_map(self, map_msg):
+        width = int(getattr(map_msg.info, "width", 0) or 0)
+        height = int(getattr(map_msg.info, "height", 0) or 0)
+        expected_cells = width * height
+        actual_cells = len(getattr(map_msg, "data", []) or [])
+        if width <= 0 or height <= 0 or actual_cells != expected_cells:
+            if rospy is not None:
+                rospy.logwarn_throttle(
+                    1.0,
+                    "MapService rejected incomplete raw map: size=%dx%d expected_cells=%d actual_cells=%d",
+                    width,
+                    height,
+                    expected_cells,
+                    actual_cells,
+                )
+            return False
         with self._lock:
             self._raw_msg = map_msg
             shape = (map_msg.info.height, map_msg.info.width)
@@ -214,6 +230,7 @@ class MapService:
                     self._pending_overlay = None
                 else:
                     self._overlay = np.full(shape, UNKNOWN_MASK_VALUE, dtype=np.int16)
+        return True
 
     def has_map(self):
         with self._lock:
@@ -222,6 +239,10 @@ class MapService:
     def get_overlay_regions(self):
         with self._lock:
             return self._serialize_regions()
+
+    def get_map_version(self):
+        with self._lock:
+            return int(self._map_version)
 
     def get_map_info(self):
         with self._lock:

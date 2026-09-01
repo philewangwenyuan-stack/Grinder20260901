@@ -76,8 +76,8 @@
 | `0x0502` | `TaskCommand` | `APP -> LOWER` | `COMP_SCHEDULER` | 下发开始、暂停、继续、停止 |
 | `0x0503` | `TaskCommandResponse` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回任务控制结果 |
 | `0x0504` | `TaskStatusReport` | `LOWER -> APP` | `COMP_SCHEDULER` | 上报任务状态、进度与当前位置 |
-| `0x0505` | `TaskPathRequest` | `APP -> LOWER` | `COMP_SCHEDULER` | 请求完整规划路径 |
-| `0x0506` | `TaskPathChunk` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回路径分片 |
+| `0x0505` | `PathPointPlanRequest` | `APP -> LOWER` | `COMP_SCHEDULER` | 请求规划并返回完整路径点，不生成预览图 |
+| `0x0506` | `PathPointPlanResponse` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回路径规划点位，数据过大时分片 |
 | `0x0507` | `MapPreviewRequest` | `APP -> LOWER` | `COMP_SCHEDULER` | 请求地图缩略图、元数据和编辑层 |
 | `0x0508` | `MapPreviewResponse` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回地图缩略图与编辑层 |
 | `0x0509` | `MapEditCommand` | `APP -> LOWER` | `COMP_SCHEDULER` | 下发地图编辑操作 |
@@ -182,8 +182,8 @@
 | `TaskCommand` | 下发任务控制 | `START`、`PAUSE`、`RESUME`、`STOP` |
 | `TaskCommandResponse` | 返回任务控制结果 | `result`、`message`、`task_id` |
 | `TaskStatusReport` | 周期上报任务状态 | `state`、`progress`、`position`、`path_version` |
-| `TaskPathRequest` | 请求完整路径 | 支持设置分片大小 |
-| `TaskPathChunk` | 回传路径数据 | 当前由 UTF-8 JSON 分片组成 |
+| `PathPointPlanRequest` | 请求规划并返回完整路径点 | 与 PathPlanRequest 同规划参数，不生成预览图 |
+| `PathPointPlanResponse` | 回传路径规划点位 | 当前由 UTF-8 JSON 分片组成 |
 | `PathPlanRequest` | 请求立即规划 | 可带 `force_replan` 和 `return_path_chunks` |
 | `PathPlanResponse` | 返回规划结果 | `result`、`path_version`、`path_point_count`、`path_length_m` |
 
