@@ -4,10 +4,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WS_DIR="${WS_DIR:-${SCRIPT_DIR}}"
 
-PROFILE="${PROFILE:-full}"                # full|runtime|nav|aurora|scheduler|chassis|sim
+PROFILE="${PROFILE:-full}"                # full|runtime|nav|aurora|scheduler|chassis|sim|mapping
 CLEAN_ON_ARCH_CHANGE="${CLEAN_ON_ARCH_CHANGE:-1}"
 CLEAN_ON_PATH_CHANGE="${CLEAN_ON_PATH_CHANGE:-1}"
 SKIP_G2O="${SKIP_G2O:-0}"
+CATKIN_EXTRA_CMAKE_ARGS=()
 
 WS_DIR="$(cd "${WS_DIR}" && pwd -P)"
 
@@ -101,7 +102,8 @@ run_catkin_pkg() {
     set +u
     source /opt/ros/noetic/setup.bash
     set -u
-    catkin_make -j"${CATKIN_JOBS}" -l"${CATKIN_LOAD}" -DCATKIN_WHITELIST_PACKAGES="${pkg}"
+    catkin_make -j"${CATKIN_JOBS}" -l"${CATKIN_LOAD}" \
+      -DCATKIN_WHITELIST_PACKAGES="${pkg}" "${CATKIN_EXTRA_CMAKE_ARGS[@]}"
   )
 }
 
@@ -113,7 +115,8 @@ run_catkin_with_deps() {
     set +u
     source /opt/ros/noetic/setup.bash
     set -u
-    catkin_make --only-pkg-with-deps "$@" -j"${CATKIN_JOBS}" -l"${CATKIN_LOAD}"
+    catkin_make --only-pkg-with-deps "$@" -j"${CATKIN_JOBS}" -l"${CATKIN_LOAD}" \
+      "${CATKIN_EXTRA_CMAKE_ARGS[@]}"
   )
 }
 
@@ -186,9 +189,13 @@ case "${PROFILE}" in
       carrot_planner \
       regulated_pure_pursuit_controller
     ;;
+  mapping)
+    CATKIN_EXTRA_CMAKE_ARGS=(-DSUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON)
+    run_catkin_with_deps super_lio super_lio_loop cloud_to_occupancy_grid
+    ;;
   *)
     echo "[ERROR] unknown PROFILE=${PROFILE}"
-    echo "[ERROR] valid values: full|runtime|nav|aurora|scheduler|chassis|sim"
+    echo "[ERROR] valid values: full|runtime|nav|aurora|scheduler|chassis|sim|mapping"
     exit 1
     ;;
 esac

@@ -8,6 +8,7 @@
   <arg name="odom_topic" default="/slamware_ros_sdk_server_node/odom" />
   <arg name="left_image_topic" default="/slamware_ros_sdk_server_node/left_image_raw" />
   <arg name="right_image_topic" default="/slamware_ros_sdk_server_node/right_image_raw" />
+  <arg name="super_lio_mode" default="false" />
 
   <node pkg="grinder_scheduler"
         type="scheduler_node.py"
@@ -23,5 +24,8 @@
     <param name="odom_topic" value="$(arg odom_topic)" />
     <param name="left_image_topic" value="$(arg left_image_topic)" />
     <param name="right_image_topic" value="$(arg right_image_topic)" />
+    <!-- Super-LIO mode has no Slamware map-alignment or mapping-mode topics. -->
+    <param if="$(arg super_lio_mode)" name="live_map_align_to_initial_yaw" value="false" />
+    <param if="$(arg super_lio_mode)" name="radar_mapping_mode_default_on_startup" value="false" />
   </node>
 </launch>

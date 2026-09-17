@@ -1,0 +1,24 @@
+<launch>
+  <arg name="config" default="$(find cloud_to_occupancy_grid)/config/mid360.yaml"/>
+  <arg name="cloud_topic" default="/lio/loop_cloud"/>
+  <arg name="map_topic" default="/map"/>
+  <arg name="sensor_frame" default="base_laser_link"/>
+  <arg name="reprojection_enabled" default="true"/>
+  <arg name="map_directory" default="/data/maps/current"/>
+  <arg name="map_name" default="grinder_map"/>
+  <arg name="autosave" default="false"/>
+
+  <rosparam command="load" file="$(arg config)"/>
+  <node pkg="cloud_to_occupancy_grid"
+        type="cloud_to_occupancy_grid_node"
+        name="cloud_to_occupancy_grid"
+        output="screen">
+    <param name="cloud_topic" value="$(arg cloud_topic)"/>
+    <param name="map_topic" value="$(arg map_topic)"/>
+    <param name="sensor_frame" value="$(arg sensor_frame)"/>
+    <param name="reprojection_enabled" value="$(arg reprojection_enabled)"/>
+    <param name="map_directory" value="$(arg map_directory)"/>
+    <param name="map_name" value="$(arg map_name)"/>
+    <param name="autosave" value="$(arg autosave)"/>
+  </node>
+</launch>

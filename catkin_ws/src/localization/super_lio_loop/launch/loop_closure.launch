@@ -1,0 +1,12 @@
+<launch>
+  <arg name="config" default="$(find super_lio_loop)/config/mid360_loop.yaml"/>
+  <arg name="enabled" default="true"/>
+  <arg name="backend" default="industrial" doc="industrial or lightweight"/>
+  <rosparam command="load" file="$(arg config)"/>
+  <group if="$(arg enabled)">
+    <node if="$(eval arg('backend') == 'industrial')" pkg="super_lio_loop"
+          type="super_lio_graph_backend_node" name="super_lio_loop" output="screen" required="true"/>
+    <node if="$(eval arg('backend') == 'lightweight')" pkg="super_lio_loop"
+          type="super_lio_loop_node" name="super_lio_loop" output="screen"/>
+  </group>
+</launch>

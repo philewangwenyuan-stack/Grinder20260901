@@ -80,6 +80,10 @@ enum MessageId {
   MSG_ID_TASK_EXECUTION_HISTORY_CHUNK = 0x0531;
   MSG_ID_TASK_TRAJECTORY_REQUEST = 0x0532;
   MSG_ID_TASK_TRAJECTORY_CHUNK = 0x0533;
+  MSG_ID_TASK_EXECUTION_DELETE_REQUEST = 0x0534;
+  MSG_ID_TASK_EXECUTION_DELETE_RESPONSE = 0x0535;
+  MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 0x0536;
+  MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 0x0537;
 }
 
 enum DeviceId {
@@ -838,6 +842,21 @@ message TaskExecutionHistoryChunk {
   uint64 end_time = 8;
 }
 
+message TaskExecutionDeleteRequest {
+  // Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+  string execution_id = 1;
+}
+
+message TaskExecutionDeleteResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string execution_id = 3;
+  string task_id = 4;
+  string map_id = 5;
+  bool deleted = 6;
+  bool execution_files_deleted = 7;
+}
+
 message TaskTrajectoryRequest {
   // Prefer execution_id. If empty, task_id selects its latest execution.
   string execution_id = 1;
@@ -913,6 +932,24 @@ message LiveMapCacheClearRequest {
 message LiveMapCacheClearResponse {
   ResultCode result = 1;
   string message = 2;
+}
+
+message SystemCacheClearRequest {
+  bool clear_memory_cache = 1;
+  bool clear_temporary_files = 2;
+  // Includes catkin_ws/logs and ~/.ros/log.
+  bool clear_logs = 3;
+}
+
+message SystemCacheClearResponse {
+  ResultCode result = 1;
+  string message = 2;
+  bool memory_cache_cleared = 3;
+  uint32 temporary_files_cleared = 4;
+  uint64 temporary_bytes_released = 5;
+  uint32 log_files_cleared = 6;
+  uint64 log_bytes_released = 7;
+  uint32 failed_items = 8;
 }
 
 message RadarMapCacheClearRequest {

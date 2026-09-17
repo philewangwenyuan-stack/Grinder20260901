@@ -16,7 +16,7 @@
 - 驱动轮半径：`0.1475 m`。
 - 减速比：`60.0`。
 - 简化物理碰撞体：`1.30 x 0.94 x 0.30 m`，与仿真代价地图 footprint `[-0.3, 1.0] x [-0.47, 0.47]` 一致；真实导航参数不改。
-- 环境：`53m x 53m` 单层平面，边界墙高 `3m`；`0.9m x 0.9m` 柱子仍按 `6m` 柱心间距布置，共 `8 x 8 = 64` 根，最外侧柱子与墙中心线间距为 `5.5m`。
+- 环境：`50m x 50m` 单层平面，边界墙高 `3m`，`0.9m x 0.9m` 柱子按 `6m` 柱心间距布置，共 `8 x 8 = 64` 根。
 
 默认不加载 STEP，Gazebo collision 和 inertia 使用简化几何，以保证姿态稳定和实时性。仿真启动会用 `navigation_sim_overrides.yaml` 将 global/local costmap footprint 对齐到上述方盒尺寸；真实导航参数保持不改。需要查看 CAD 外观时运行 `./start_grinder_sim.sh visual_mesh:=true`。
 
@@ -39,6 +39,21 @@ PROFILE=sim ./build_grinder_platform.sh
 ```bash
 ./start_grinder_sim.sh gui:=false visual_mesh:=false start_navigation:=false local_rtsp_enabled:=false
 ```
+正常测试：
+```bash
+cd /mnt/e/CODE/C++/Grinder/catkin_ws
+source /opt/ros/noetic/setup.bash
+source devel/setup.bash
+./start_grinder_sim.sh gui:=false
+```
+```bash
+cd /mnt/e/CODE/C++/Grinder/catkin_ws
+source /opt/ros/noetic/setup.bash
+source devel/setup.bash
+./start_grinder_sim.sh gui:=false 2>&1 | \
+grep --line-buffered -v -E \
+'makePlan is called|CarrotPlanner external active segment unavailable or unmatched|External active segment plan is stale'
+```
 
 常用参数：
 
@@ -52,6 +67,7 @@ PROFILE=sim ./build_grinder_platform.sh
 ## APP 连接
 
 - Windows 本机 APP：`127.0.0.1:8002`。
+- 模拟器 本机 APP：`10.0.2.2:8002。
 - 局域网手机 APP：连接 Windows 电脑局域网 IP 的 `8002` 端口。
 - 左右 RTSP：`rtsp://<Windows-IP>:8554/left` 和 `/right`。
 

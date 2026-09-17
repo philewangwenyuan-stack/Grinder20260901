@@ -32,7 +32,7 @@ RegulatedPurePursuitController:
   # 根据转弯曲率、障碍物代价和目标距离自动降低线速度
   use_regulated_linear_velocity_scaling: true  # 是否根据曲率降低线速度
   regulated_linear_scaling_min_radius: 1.2     # 转弯半径小于该值时开始减速，单位：m
-  regulated_linear_scaling_min_speed: 0.00      # 曲率减速后的最低线速度，单位：m/s
+  regulated_linear_scaling_min_speed: 0.01      # 曲率减速后的最低线速度，单位：m/s
   use_cost_regulated_linear_velocity_scaling: false  # 是否根据障碍物膨胀代价减速
   cost_scaling_dist: 0.5           # 估算障碍距离小于该值时开始减速，单位：m
   cost_scaling_gain: 1.0            # 障碍距离减速增益，越大减速越明显
@@ -40,7 +40,7 @@ RegulatedPurePursuitController:
   min_approach_linear_velocity: 0.01     # 接近最终目标时允许的最低线速度，单位：m/s
   # 调度器下发的是连续路径的中间分段；关闭后不会在每个分段终点前误减速。
   # 普通“单目标导航”应设为 true，使机器人在真正终点前平滑减速。
-  use_approach_velocity_scaling: true
+  use_approach_velocity_scaling: false
   approach_velocity_scaling_dist: 0.2    # 距离最终目标多远开始逐渐减速，单位：m
 
   # 碰撞预测

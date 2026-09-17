@@ -1,0 +1,9 @@
+uint64 revision
+uint32 index
+---
+bool success
+uint64 current_revision
+uint32 total
+geometry_msgs/Pose pose
+sensor_msgs/PointCloud2 cloud
+string message

@@ -3,6 +3,7 @@ import socket
 import socketserver
 import threading
 import time
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
 from grinder_scheduler.sl_link_loader import ensure_sl_linka_sdk_on_path
@@ -10,6 +11,100 @@ try:
     import rospy  # type: ignore
 except Exception:
     rospy = None
+
+
+class _BoundedLatestWorker:
+    """Single worker with bounded pending jobs; newest jobs replace the oldest."""
+
+    def __init__(self, max_pending, name):
+        self._max_pending = max(1, int(max_pending))
+        self._jobs = deque()
+        self._condition = threading.Condition()
+        self._running = True
+        self._thread = threading.Thread(target=self._run, name=name, daemon=True)
+        self._thread.start()
+
+    def submit(self, callback, *args):
+        dropped = None
+        with self._condition:
+            if not self._running:
+                raise RuntimeError("worker is shut down")
+            if len(self._jobs) >= self._max_pending:
+                dropped = self._jobs.popleft()
+            self._jobs.append((callback, args))
+            self._condition.notify()
+        return dropped
+
+    def shutdown(self, wait=False):
+        with self._condition:
+            self._running = False
+            self._jobs.clear()
+            self._condition.notify_all()
+        if wait and threading.current_thread() is not self._thread:
+            self._thread.join()
+
+    def _run(self):
+        while True:
+            with self._condition:
+                while self._running and not self._jobs:
+                    self._condition.wait()
+                if not self._running:
+                    return
+                callback, args = self._jobs.popleft()
+            try:
+                callback(*args)
+            except Exception as exc:
+                if rospy is not None:
+                    rospy.logerr("SL-LinkA bounded worker failed: %s", exc)
+
+
+class _DropIfBusyWorker:
+    """Run one job at a time and reject arrivals while the job is active."""
+
+    def __init__(self, name):
+        self._condition = threading.Condition()
+        self._job = None
+        self._busy = False
+        self._running = True
+        self._thread = threading.Thread(target=self._run, name=name, daemon=True)
+        self._thread.start()
+
+    def submit(self, callback, *args):
+        with self._condition:
+            if not self._running:
+                raise RuntimeError("worker is shut down")
+            if self._busy or self._job is not None:
+                return False
+            self._job = (callback, args)
+            self._condition.notify()
+            return True
+
+    def shutdown(self, wait=False):
+        with self._condition:
+            self._running = False
+            self._job = None
+            self._condition.notify_all()
+        if wait and threading.current_thread() is not self._thread:
+            self._thread.join()
+
+    def _run(self):
+        while True:
+            with self._condition:
+                while self._running and self._job is None:
+                    self._condition.wait()
+                if not self._running:
+                    return
+                callback, args = self._job
+                self._job = None
+                self._busy = True
+            try:
+                callback(*args)
+            except Exception as exc:
+                if rospy is not None:
+                    rospy.logerr("SL-LinkA drop-if-busy worker failed: %s", exc)
+            finally:
+                with self._condition:
+                    self._busy = False
 
 
 class SlLinkAServer:
@@ -122,7 +217,9 @@ class SlLinkAServer:
             ("MSG_ID_MAP_METRICS_REQUEST", "MapMetricsRequest"),
             ("MSG_ID_TASK_RESULT_REQUEST", "TaskResultRequest"),
             ("MSG_ID_TASK_EXECUTION_HISTORY_REQUEST", "TaskExecutionHistoryRequest"),
+            ("MSG_ID_TASK_EXECUTION_DELETE_REQUEST", "TaskExecutionDeleteRequest"),
             ("MSG_ID_TASK_TRAJECTORY_REQUEST", "TaskTrajectoryRequest"),
+            ("MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST", "SystemCacheClearRequest"),
             ("MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST", "LiveMapCacheClearRequest"),
             ("MSG_ID_RADAR_MAP_CACHE_CLEAR_REQUEST", "RadarMapCacheClearRequest"),
             ("MSG_ID_MAP_ALIGNMENT_REQUEST", "MapAlignmentRequest"),
@@ -180,11 +277,21 @@ class SlLinkAServer:
                 except OSError as exc:
                     if rospy is not None:
                         rospy.logwarn("SL-LinkA TCP send tuning failed: %s", exc)
-                # Keep slow map/planning operations ordered without blocking
-                # the socket reader. Control commands always bypass this queue.
-                self.dispatch_executor = ThreadPoolExecutor(
-                    max_workers=1,
-                    thread_name_prefix="sl_linka_ordered",
+                # Keep command queues bounded. When producers outrun consumers,
+                # stale pending requests are discarded in favor of newer input.
+                self.dispatch_executor = _BoundedLatestWorker(
+                    max_pending=32,
+                    name="sl_linka_ordered",
+                )
+                self.map_dispatch_executor = _BoundedLatestWorker(
+                    max_pending=4,
+                    name="sl_linka_map",
+                )
+                self.manual_control_executor = _DropIfBusyWorker(
+                    name="sl_linka_manual",
+                )
+                self.manual_response_executor = _DropIfBusyWorker(
+                    name="sl_linka_manual_tx",
                 )
                 self.control_response_executor = ThreadPoolExecutor(
                     max_workers=1,
@@ -232,13 +339,36 @@ class SlLinkAServer:
                         outer._log_rx_frame(frame)
                         try:
                             if int(frame.msg_id) == int(outer.pb.MSG_ID_CONTROL_COMMAND):
-                                self._dispatch_control_immediately(frame)
-                            else:
-                                self.dispatch_executor.submit(
+                                if self._is_manual_control(frame):
+                                    accepted = self.manual_control_executor.submit(
+                                        self._dispatch_control_immediately,
+                                        frame,
+                                        True,
+                                    )
+                                    if not accepted and rospy is not None:
+                                        rospy.logwarn_throttle(
+                                            1.0,
+                                            "Drop incoming SL-LinkA manual control while previous command is running: seq=%d",
+                                            int(frame.seq),
+                                        )
+                                else:
+                                    self._dispatch_control_immediately(frame, False)
+                            elif self._is_map_background_request(frame.msg_id):
+                                dropped = self.map_dispatch_executor.submit(
                                     self._dispatch_ordered,
                                     frame,
                                     received_at,
+                                    "map",
                                 )
+                                self._log_dropped_job("map request", dropped)
+                            else:
+                                dropped = self.dispatch_executor.submit(
+                                    self._dispatch_ordered,
+                                    frame,
+                                    received_at,
+                                    "ordered",
+                                )
+                                self._log_dropped_job("ordered request", dropped)
                         except Exception as exc:
                             if rospy is not None:
                                 rospy.logerr(
@@ -251,14 +381,53 @@ class SlLinkAServer:
             def finish(self):
                 self.running = False
                 self.dispatch_executor.shutdown(wait=False)
+                self.map_dispatch_executor.shutdown(wait=False)
+                self.manual_control_executor.shutdown(wait=False)
+                self.manual_response_executor.shutdown(wait=False)
                 self.control_response_executor.shutdown(wait=False)
                 self.bulk_response_executor.shutdown(wait=False)
 
-            def _dispatch_ordered(self, frame, received_at):
+            def _is_manual_control(self, frame):
+                try:
+                    request = outer.pb.ControlCommand()
+                    request.ParseFromString(frame.payload or b"")
+                    return request.HasField("manual_drive")
+                except Exception:
+                    return False
+
+            def _is_map_background_request(self, msg_id):
+                names = (
+                    "MSG_ID_MAP_REQUEST",
+                    "MSG_ID_MAP_PREVIEW_REQUEST",
+                    "MSG_ID_MAP_CATALOG_REQUEST",
+                    "MSG_ID_MAP_METRICS_REQUEST",
+                    "MSG_ID_MAP_REGION_POINT_REQUEST",
+                )
+                return int(msg_id) in {
+                    int(getattr(outer.pb, name))
+                    for name in names
+                    if hasattr(outer.pb, name)
+                }
+
+            def _log_dropped_job(self, queue_name, dropped):
+                if dropped is None or rospy is None:
+                    return
+                _, args = dropped
+                frame = args[0] if args else None
+                rospy.logwarn_throttle(
+                    1.0,
+                    "SL-LinkA %s queue full; dropped stale msg_id=0x%04X seq=%d and kept newest request.",
+                    queue_name,
+                    int(getattr(frame, "msg_id", 0)),
+                    int(getattr(frame, "seq", 0)),
+                )
+
+            def _dispatch_ordered(self, frame, received_at, queue_name="ordered"):
                 queue_delay_ms = (time.monotonic() - float(received_at)) * 1000.0
                 if rospy is not None and queue_delay_ms >= 100.0:
                     rospy.logwarn(
-                        "SL-LinkA ordered request queue delay: msg_id=0x%04X seq=%d delay_ms=%.1f",
+                        "SL-LinkA %s request queue delay: msg_id=0x%04X seq=%d delay_ms=%.1f",
+                        queue_name,
                         int(frame.msg_id),
                         int(frame.seq),
                         queue_delay_ms,
@@ -274,7 +443,7 @@ class SlLinkAServer:
                             exc,
                         )
 
-            def _dispatch_control_immediately(self, frame):
+            def _dispatch_control_immediately(self, frame, latest_response=False):
                 started = time.monotonic()
                 payload, msg_id, comp_id = outer._handler.handle_control_command(frame.payload)
                 applied_ms = (time.monotonic() - started) * 1000.0
@@ -284,6 +453,22 @@ class SlLinkAServer:
                         int(frame.seq),
                         applied_ms,
                     )
+                if latest_response:
+                    accepted = self.manual_response_executor.submit(
+                        self._send_control_response,
+                        payload,
+                        msg_id,
+                        comp_id,
+                        int(frame.seq),
+                        False,
+                    )
+                    if not accepted and rospy is not None:
+                        rospy.logwarn_throttle(
+                            1.0,
+                            "Drop incoming SL-LinkA manual response while previous response is sending: ack=%d",
+                            int(frame.seq),
+                        )
+                    return
                 if not self.control_response_slots.acquire(blocking=False):
                     if rospy is not None:
                         rospy.logwarn_throttle(
@@ -297,16 +482,18 @@ class SlLinkAServer:
                     msg_id,
                     comp_id,
                     int(frame.seq),
+                    True,
                 )
 
-            def _send_control_response(self, payload, msg_id, comp_id, ack_seq):
+            def _send_control_response(self, payload, msg_id, comp_id, ack_seq, release_slot):
                 try:
                     self._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=ack_seq)
                 except Exception as exc:
                     if rospy is not None and self.running:
                         rospy.logwarn("SL-LinkA control response send failed: %s", exc)
                 finally:
-                    self.control_response_slots.release()
+                    if release_slot:
+                        self.control_response_slots.release()
 
             def _send_bulk_response(self, outputs, ack_seq):
                 started = time.monotonic()
@@ -575,6 +762,24 @@ class SlLinkAServer:
             chunks = self._handler.build_task_trajectory_chunks(frame.payload)
             for payload, msg_id, comp_id in chunks:
                 request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if (
+            hasattr(pb, "MSG_ID_TASK_EXECUTION_DELETE_REQUEST")
+            and frame.msg_id == pb.MSG_ID_TASK_EXECUTION_DELETE_REQUEST
+        ):
+            payload, msg_id, comp_id = self._handler.handle_task_execution_delete_request(
+                frame.payload
+            )
+            request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if (
+            hasattr(pb, "MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST")
+            and frame.msg_id == pb.MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST
+        ):
+            payload, msg_id, comp_id = self._handler.handle_system_cache_clear_request(
+                frame.payload
+            )
+            request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if hasattr(pb, "MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST") and frame.msg_id == pb.MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST:
             payload, msg_id, comp_id = self._handler.handle_live_map_cache_clear_request(frame.payload)

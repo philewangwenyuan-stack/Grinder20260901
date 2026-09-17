@@ -1,0 +1,56 @@
+cloud_to_occupancy_grid:
+  # Super-LIO publishes the current scan registered in map, despite the legacy
+  # topic name. Do not connect this node to a cumulative point-cloud map.
+  cloud_topic: /lio/loop_cloud
+  map_topic: /map
+  tablet_map_topic: /tablet/map
+
+  global_frame: map
+  # The loop backend publishes map -> odom and Super-LIO publishes
+  # odom -> base_laser_link.
+  sensor_frame: base_laser_link
+  tf_timeout: 0.1
+  reprojection_enabled: true
+  loop_revision_topic: /super_lio_loop/revision
+  keyframe_service: /super_lio_loop/get_keyframe
+
+  resolution: 0.05
+  map_width: 150.0
+  map_height: 150.0
+  origin_x: -75.0
+  origin_y: -75.0
+
+  min_range: 0.5
+  max_range: 30.0
+  voxel_size: 0.10
+
+  # Z values are evaluated in global_frame after cloud transformation.
+  min_obstacle_height: 0.08
+  max_obstacle_height: 1.20
+
+  # Degrees. The nearest return in each angular bin is ray-traced.
+  angular_resolution: 0.5
+
+  occupied_prob: 0.70
+  free_prob: 0.30
+  occupied_threshold: 0.65
+  free_threshold: 0.35
+  # Threshold written to map_server YAML. Keep 205-valued unknown pixels
+  # unknown instead of classifying them as free space.
+  map_server_free_threshold: 0.196
+  min_log_odds: -4.0
+  max_log_odds: 4.0
+
+  processing_frequency: 5.0
+  map_publish_frequency: 1.0
+  tablet_publish_frequency: 0.2
+
+  autosave: true
+  autosave_interval: 30.0
+  save_only_when_changed: true
+  # Keep the live navigation map stable; crop only the saved PGM/YAML.
+  publish_cropped_map: false
+  save_cropped_map: true
+  crop_padding: 1.0
+  map_directory: /data/maps/current
+  map_name: grinder_map

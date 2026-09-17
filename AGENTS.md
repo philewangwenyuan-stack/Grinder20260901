@@ -43,6 +43,8 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | ROS 消息/服务 | 两个自研包各自的 `msg/`、`srv/` | 对应 `CMakeLists.txt`、`package.xml` |
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |
 | 激光里程计与 EKF | `catkin_ws/src/rf2o_laser_odometry/` | `launch/`、`config/ekf.yaml` |
+| MID-360S + Super-LIO 实时二维栅格建图 | `catkin_ws/src/cloud_to_occupancy_grid/` | `config/mid360.yaml`、`launch/mid360_mapping.launch` |
+| Super-LIO 回环检测、位姿图和协方差 | `catkin_ws/src/super_lio_loop/` | `config/mid360_loop.yaml`、`launch/loop_closure.launch` |
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh` | `catkin_ws/PLATFORM_BUILD_RUN.md` |
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |
 

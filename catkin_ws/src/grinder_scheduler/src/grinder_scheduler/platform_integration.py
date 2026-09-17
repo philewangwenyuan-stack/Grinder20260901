@@ -38,6 +38,11 @@ def _response_ok(payload):
         return False
     if "success" in payload:
         return bool(payload.get("success"))
+    if "successful" in payload:
+        value = payload.get("successful")
+        if isinstance(value, str):
+            return value.strip().lower() == "true"
+        return bool(value)
     code = payload.get("code", 0)
     return str(code).strip().lower() in ("0", "200", "sucess", "success", "ccflowsucess")
 
@@ -76,6 +81,8 @@ class PlatformFileSync:
         self._stop_event = threading.Event()
         self._thread = None
         self._lock = threading.Lock()
+        self._operation_lock = threading.Lock()
+        self._map_job_generations = {}
 
     def start(self):
         if not self.enabled:
@@ -99,11 +106,16 @@ class PlatformFileSync:
     def enqueue_map(self, map_id, map_name, local_map_dir, stcm_path):
         if not self.enabled:
             return False
+        target_map_id = str(map_id or "").strip()
+        with self._lock:
+            generation = self._map_job_generations.get(target_map_id, 0) + 1
+            self._map_job_generations[target_map_id] = generation
         job = {
-            "map_id": str(map_id or "").strip(),
+            "map_id": target_map_id,
             "map_name": str(map_name or "").strip(),
             "local_map_dir": str(local_map_dir or "").strip(),
             "stcm_path": str(stcm_path or "").strip(),
+            "generation": generation,
         }
         if not job["map_id"]:
             rospy.logwarn("Map file upload skipped: map_id is empty")
@@ -119,6 +131,35 @@ class PlatformFileSync:
     def get_project_id(self):
         with self._lock:
             return self.project_id
+
+    def delete_map(self, map_id):
+        target_map_id = str(map_id or "").strip()
+        if not target_map_id:
+            return False, "map_id is empty"
+        if not self.enabled:
+            return False, "platform file sync is disabled"
+        try:
+            with self._lock:
+                self._map_job_generations[target_map_id] = (
+                    self._map_job_generations.get(target_map_id, 0) + 1
+                )
+            with self._operation_lock:
+                if not self.get_project_id() or not self._file_token:
+                    self._authenticate()
+                deleted_files, deleted_folders = self._delete_remote_map(target_map_id)
+            rospy.loginfo(
+                "Remote map files deleted: project_id=%s map_id=%s files=%d folders=%d",
+                self.project_id,
+                target_map_id,
+                deleted_files,
+                deleted_folders,
+            )
+            return True, "remote map deleted: files={} folders={}".format(
+                deleted_files, deleted_folders
+            )
+        except Exception as exc:
+            rospy.logerr("Remote map delete failed: map_id=%s error=%s", target_map_id, exc)
+            return False, str(exc)
 
     def _request_json(self, base_url, path, method="GET", body=None, headers=None):
         url = base_url + path
@@ -211,15 +252,22 @@ class PlatformFileSync:
     def _flatten_nodes(value):
         output = []
 
-        def visit(item):
+        def visit(item, inherited_parent_id=""):
             if isinstance(item, list):
                 for child in item:
-                    visit(child)
+                    visit(child, inherited_parent_id)
             elif isinstance(item, dict):
-                output.append(item)
+                normalized = dict(item)
+                node_id = str(normalized.get("id", normalized.get("Id", "")) or "").strip()
+                parent_id = str(
+                    normalized.get("parentId", normalized.get("ParentId", "")) or ""
+                ).strip()
+                if inherited_parent_id and not parent_id:
+                    normalized["parentId"] = inherited_parent_id
+                output.append(normalized)
                 for key in ("children", "childList", "items"):
                     if isinstance(item.get(key), list):
-                        visit(item[key])
+                        visit(item[key], node_id or inherited_parent_id)
 
         visit(value)
         return output
@@ -297,6 +345,160 @@ class PlatformFileSync:
             parent_id = created_id
         return parent_id
 
+    def _files_by_folder(self, folder_id):
+        files = []
+        page_index = 1
+        page_size = 200
+        while True:
+            result = self._request_json(
+                self.file_base_url,
+                "/api/app/GetFileListByFloder",
+                method="POST",
+                body={
+                    "projectId": self.project_id,
+                    "regionId": folder_id,
+                    "pageIndex": page_index,
+                    "pageSize": page_size,
+                    "totalCount": 0,
+                    "fileFullName": None,
+                },
+                headers=self._file_headers(),
+            )
+            if not _response_ok(result):
+                raise RuntimeError(
+                    "list remote map folder {} failed: {}".format(
+                        folder_id, _response_message(result)
+                    )
+                )
+            data = _response_data(result)
+            if not isinstance(data, dict):
+                break
+            rows = data.get("dataList", data.get("items", data.get("list", [])))
+            if not isinstance(rows, list):
+                rows = []
+            files.extend(item for item in rows if isinstance(item, dict))
+            total_rows = int(data.get("totalRows", data.get("totalCount", len(files))) or 0)
+            if not rows or len(files) >= total_rows or len(rows) < page_size:
+                break
+            page_index += 1
+        return files
+
+    def _delete_file_ids(self, file_ids):
+        unique_ids = sorted({str(item or "").strip() for item in file_ids if str(item or "").strip()})
+        if not unique_ids:
+            return 0
+        result = self._request_json(
+            self.file_base_url,
+            "/api/app/BatchDeleteFileMain",
+            method="POST",
+            body={"ids": unique_ids},
+            headers=self._file_headers(),
+        )
+        if not _response_ok(result):
+            raise RuntimeError("batch delete remote map files failed: {}".format(_response_message(result)))
+        return len(unique_ids)
+
+    def _delete_folder(self, folder_id):
+        result = self._request_json(
+            self.file_base_url,
+            "/api/app/DeleteFileFolder",
+            method="POST",
+            body={"id": folder_id},
+            headers=self._file_headers(),
+        )
+        if not _response_ok(result):
+            raise RuntimeError(
+                "delete remote map folder {} failed: {}".format(
+                    folder_id, _response_message(result)
+                )
+            )
+
+    def _delete_remote_map(self, map_id):
+        nodes = self._document_tree()
+        folder_nodes = []
+        by_parent = {}
+        by_id = {}
+        for item in nodes:
+            node_id = str(item.get("id", item.get("Id", "")) or "").strip()
+            if not node_id:
+                continue
+            parent_id = str(item.get("parentId", item.get("ParentId", "")) or "").strip()
+            name = str(item.get("name", item.get("Name", "")) or "").strip()
+            try:
+                node_type = int(item.get("type", item.get("Type", 3)) or 3)
+            except (TypeError, ValueError):
+                node_type = 3
+            normalized = {
+                "id": node_id,
+                "parent_id": parent_id,
+                "name": name,
+                "type": node_type,
+            }
+            by_id[node_id] = normalized
+            by_parent.setdefault(parent_id, []).append(normalized)
+            if node_type == 3:
+                folder_nodes.append(normalized)
+
+        def ancestor_names(node):
+            names = []
+            seen = set()
+            parent_id = node["parent_id"]
+            while parent_id and parent_id not in seen:
+                seen.add(parent_id)
+                parent = by_id.get(parent_id)
+                if parent is None:
+                    break
+                names.append(parent["name"])
+                parent_id = parent["parent_id"]
+            return names
+
+        map_roots = []
+        for node in folder_nodes:
+            if node["name"] != map_id:
+                continue
+            names = ancestor_names(node)
+            if "maps" in names and self.remote_root_name in names:
+                map_roots.append(node)
+
+        # A missing server directory is an idempotent success.
+        if not map_roots:
+            rospy.loginfo(
+                "Remote map delete skipped because folder does not exist: project_id=%s map_id=%s",
+                self.project_id,
+                map_id,
+            )
+            return 0, 0
+
+        folder_depths = {}
+        pending = [(root["id"], 0) for root in map_roots]
+        while pending:
+            folder_id, depth = pending.pop()
+            if folder_id in folder_depths and folder_depths[folder_id] >= depth:
+                continue
+            folder_depths[folder_id] = depth
+            for child in by_parent.get(folder_id, []):
+                if child["type"] == 3:
+                    pending.append((child["id"], depth + 1))
+
+        file_ids = set()
+        for folder_id in folder_depths:
+            for node in by_parent.get(folder_id, []):
+                if node["type"] != 3:
+                    file_ids.add(node["id"])
+            for item in self._files_by_folder(folder_id):
+                file_id = str(item.get("id", item.get("Id", "")) or "").strip()
+                if file_id:
+                    file_ids.add(file_id)
+
+        deleted_files = self._delete_file_ids(file_ids)
+        deleted_folders = 0
+        for folder_id, _depth in sorted(
+            folder_depths.items(), key=lambda item: item[1], reverse=True
+        ):
+            self._delete_folder(folder_id)
+            deleted_folders += 1
+        return deleted_files, deleted_folders
+
     def _multipart_upload(self, file_path, folder_id):
         boundary = "----GrinderBoundary{}".format(uuid.uuid4().hex)
         filename = os.path.basename(file_path)
@@ -335,7 +537,7 @@ class PlatformFileSync:
                 parts.extend(relative.split(os.sep))
             folder_id = self._ensure_folder_path(parts)
             for filename in files:
-                if filename.endswith(".tmp"):
+                if filename.endswith(".tmp") or filename.lower().endswith(".stcm"):
                     continue
                 self._multipart_upload(os.path.join(root, filename), folder_id)
                 uploaded += 1
@@ -344,15 +546,10 @@ class PlatformFileSync:
     def _upload_map(self, job):
         map_parts = [self.remote_root_name, "maps", job["map_id"]]
         uploaded = self._upload_directory(job["local_map_dir"], map_parts)
-        stcm_path = job["stcm_path"]
-        if stcm_path and os.path.isfile(stcm_path):
-            folder_id = self._ensure_folder_path(map_parts)
-            self._multipart_upload(stcm_path, folder_id)
-            uploaded += 1
         if uploaded <= 0:
             raise RuntimeError("no local map files found")
         rospy.loginfo(
-            "Map files uploaded: project_id=%s remote=%s/maps/%s files=%d",
+            "Map files uploaded without STCM: project_id=%s remote=%s/maps/%s files=%d",
             self.project_id,
             self.remote_root_name,
             job["map_id"],
@@ -372,9 +569,18 @@ class PlatformFileSync:
             if job is None:
                 break
             try:
-                if not self.get_project_id() or not self._file_token:
-                    self._authenticate()
-                self._upload_map(job)
+                with self._operation_lock:
+                    with self._lock:
+                        current_generation = self._map_job_generations.get(job.get("map_id", ""), 0)
+                    if int(job.get("generation", 0)) != current_generation:
+                        rospy.loginfo(
+                            "Map file upload skipped because job was superseded: map_id=%s",
+                            job.get("map_id", ""),
+                        )
+                        continue
+                    if not self.get_project_id() or not self._file_token:
+                        self._authenticate()
+                    self._upload_map(job)
             except Exception as exc:
                 rospy.logerr("Map file upload failed: map_id=%s error=%s", job.get("map_id", ""), exc)
             finally:

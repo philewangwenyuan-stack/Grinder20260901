@@ -76,7 +76,11 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_TASK_EXECUTION_HISTORY_REQUEST = 1328,
     sl_link_MessageId_MSG_ID_TASK_EXECUTION_HISTORY_CHUNK = 1329,
     sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_REQUEST = 1330,
-    sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK = 1331
+    sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK = 1331,
+    sl_link_MessageId_MSG_ID_TASK_EXECUTION_DELETE_REQUEST = 1332,
+    sl_link_MessageId_MSG_ID_TASK_EXECUTION_DELETE_RESPONSE = 1333,
+    sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 1334,
+    sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335
 } sl_link_MessageId;
 
 typedef enum _sl_link_DeviceId {
@@ -235,7 +239,7 @@ typedef struct _sl_link_PolygonRegion {
     uint32_t color_argb;
     bool closed;
     sl_link_RegionType region_type;
-    /* Region-specific planning direction: "x" or "y".
+    /* Region-specific planning direction: "x", "-x", "y", or "-y".
  Empty means LOWER-side default policy. */
     pb_callback_t global_direction;
 } sl_link_PolygonRegion;
@@ -463,7 +467,7 @@ typedef struct _sl_link_PathPointPlanRequest {
     sl_link_Pose2D start_pose;
     bool has_end_pose;
     sl_link_Pose2D end_pose;
-    /* Optional x/y planning direction. */
+    /* Optional planning direction: x, -x, y, or -y. */
     pb_callback_t global_direction;
     /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
@@ -604,6 +608,7 @@ typedef struct _sl_link_PathPlanRequest {
     sl_link_Pose2D start_pose;
     bool has_end_pose;
     sl_link_Pose2D end_pose;
+    /* Optional planning direction: x, -x, y, or -y. */
     pb_callback_t global_direction;
     /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
@@ -864,6 +869,21 @@ typedef struct _sl_link_TaskExecutionHistoryChunk {
     uint64_t end_time;
 } sl_link_TaskExecutionHistoryChunk;
 
+typedef struct _sl_link_TaskExecutionDeleteRequest {
+    /* Unique ID returned by TaskExecutionHistoryChunk records[].execution_id. */
+    pb_callback_t execution_id;
+} sl_link_TaskExecutionDeleteRequest;
+
+typedef struct _sl_link_TaskExecutionDeleteResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    pb_callback_t execution_id;
+    pb_callback_t task_id;
+    pb_callback_t map_id;
+    bool deleted;
+    bool execution_files_deleted;
+} sl_link_TaskExecutionDeleteResponse;
+
 typedef struct _sl_link_TaskTrajectoryRequest {
     /* Prefer execution_id. If empty, task_id selects its latest execution. */
     pb_callback_t execution_id;
@@ -942,6 +962,24 @@ typedef struct _sl_link_LiveMapCacheClearResponse {
     sl_link_ResultCode result;
     pb_callback_t message;
 } sl_link_LiveMapCacheClearResponse;
+
+typedef struct _sl_link_SystemCacheClearRequest {
+    bool clear_memory_cache;
+    bool clear_temporary_files;
+    /* Includes catkin_ws/logs and ~/.ros/log. */
+    bool clear_logs;
+} sl_link_SystemCacheClearRequest;
+
+typedef struct _sl_link_SystemCacheClearResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    bool memory_cache_cleared;
+    uint32_t temporary_files_cleared;
+    uint64_t temporary_bytes_released;
+    uint32_t log_files_cleared;
+    uint64_t log_bytes_released;
+    uint32_t failed_items;
+} sl_link_SystemCacheClearResponse;
 
 typedef struct _sl_link_RadarMapCacheClearRequest {
     char dummy_field;
@@ -1059,8 +1097,8 @@ extern "C" {
 
 /* Helper constants for enums */
 #define _sl_link_MessageId_MIN sl_link_MessageId_MSG_ID_UNKNOWN
-#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK
-#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_TASK_TRAJECTORY_CHUNK+1))
+#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE
+#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE+1))
 
 #define _sl_link_DeviceId_MIN sl_link_DeviceId_DEVICE_RESERVED
 #define _sl_link_DeviceId_MAX sl_link_DeviceId_DEVICE_BROADCAST
@@ -1232,12 +1270,18 @@ extern "C" {
 #define sl_link_TaskExecutionHistoryChunk_result_ENUMTYPE sl_link_ResultCode
 
 
+#define sl_link_TaskExecutionDeleteResponse_result_ENUMTYPE sl_link_ResultCode
+
+
 #define sl_link_TaskTrajectoryPoint_task_state_ENUMTYPE sl_link_TaskState
 
 #define sl_link_TaskTrajectoryChunk_result_ENUMTYPE sl_link_ResultCode
 
 
 #define sl_link_LiveMapCacheClearResponse_result_ENUMTYPE sl_link_ResultCode
+
+
+#define sl_link_SystemCacheClearResponse_result_ENUMTYPE sl_link_ResultCode
 
 
 #define sl_link_RadarMapCacheClearResponse_result_ENUMTYPE sl_link_ResultCode
@@ -1328,11 +1372,15 @@ extern "C" {
 #define sl_link_TaskResultResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_TaskExecutionHistoryRequest_init_default {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_TaskExecutionHistoryChunk_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, 0, 0}
+#define sl_link_TaskExecutionDeleteRequest_init_default {{{NULL}, NULL}}
+#define sl_link_TaskExecutionDeleteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
 #define sl_link_TaskTrajectoryRequest_init_default {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0}
 #define sl_link_TaskTrajectoryPoint_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _sl_link_TaskState_MIN}
 #define sl_link_TaskTrajectoryChunk_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, 0}
 #define sl_link_LiveMapCacheClearRequest_init_default {0}
 #define sl_link_LiveMapCacheClearResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}}
+#define sl_link_SystemCacheClearRequest_init_default {0, 0, 0}
+#define sl_link_SystemCacheClearResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0}
 #define sl_link_RadarMapCacheClearRequest_init_default {0}
 #define sl_link_RadarMapCacheClearResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}}
 #define sl_link_RadarSystemStatusRequest_init_default {0}
@@ -1413,11 +1461,15 @@ extern "C" {
 #define sl_link_TaskResultResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_TaskState_MIN, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_TaskExecutionHistoryRequest_init_zero {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_TaskExecutionHistoryChunk_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, 0, 0}
+#define sl_link_TaskExecutionDeleteRequest_init_zero {{{NULL}, NULL}}
+#define sl_link_TaskExecutionDeleteResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
 #define sl_link_TaskTrajectoryRequest_init_zero  {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0}
 #define sl_link_TaskTrajectoryPoint_init_zero    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _sl_link_TaskState_MIN}
 #define sl_link_TaskTrajectoryChunk_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, 0, 0}
 #define sl_link_LiveMapCacheClearRequest_init_zero {0}
 #define sl_link_LiveMapCacheClearResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}}
+#define sl_link_SystemCacheClearRequest_init_zero {0, 0, 0}
+#define sl_link_SystemCacheClearResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0}
 #define sl_link_RadarMapCacheClearRequest_init_zero {0}
 #define sl_link_RadarMapCacheClearResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}}
 #define sl_link_RadarSystemStatusRequest_init_zero {0}
@@ -1840,6 +1892,14 @@ extern "C" {
 #define sl_link_TaskExecutionHistoryChunk_data_tag 6
 #define sl_link_TaskExecutionHistoryChunk_start_time_tag 7
 #define sl_link_TaskExecutionHistoryChunk_end_time_tag 8
+#define sl_link_TaskExecutionDeleteRequest_execution_id_tag 1
+#define sl_link_TaskExecutionDeleteResponse_result_tag 1
+#define sl_link_TaskExecutionDeleteResponse_message_tag 2
+#define sl_link_TaskExecutionDeleteResponse_execution_id_tag 3
+#define sl_link_TaskExecutionDeleteResponse_task_id_tag 4
+#define sl_link_TaskExecutionDeleteResponse_map_id_tag 5
+#define sl_link_TaskExecutionDeleteResponse_deleted_tag 6
+#define sl_link_TaskExecutionDeleteResponse_execution_files_deleted_tag 7
 #define sl_link_TaskTrajectoryRequest_execution_id_tag 1
 #define sl_link_TaskTrajectoryRequest_task_id_tag 2
 #define sl_link_TaskTrajectoryRequest_start_time_tag 3
@@ -1897,6 +1957,17 @@ extern "C" {
 #define sl_link_TaskTrajectoryChunk_rotation_alignment_delta_deg_tag 36
 #define sl_link_LiveMapCacheClearResponse_result_tag 1
 #define sl_link_LiveMapCacheClearResponse_message_tag 2
+#define sl_link_SystemCacheClearRequest_clear_memory_cache_tag 1
+#define sl_link_SystemCacheClearRequest_clear_temporary_files_tag 2
+#define sl_link_SystemCacheClearRequest_clear_logs_tag 3
+#define sl_link_SystemCacheClearResponse_result_tag 1
+#define sl_link_SystemCacheClearResponse_message_tag 2
+#define sl_link_SystemCacheClearResponse_memory_cache_cleared_tag 3
+#define sl_link_SystemCacheClearResponse_temporary_files_cleared_tag 4
+#define sl_link_SystemCacheClearResponse_temporary_bytes_released_tag 5
+#define sl_link_SystemCacheClearResponse_log_files_cleared_tag 6
+#define sl_link_SystemCacheClearResponse_log_bytes_released_tag 7
+#define sl_link_SystemCacheClearResponse_failed_items_tag 8
 #define sl_link_RadarMapCacheClearResponse_result_tag 1
 #define sl_link_RadarMapCacheClearResponse_message_tag 2
 #define sl_link_RadarSystemStatusResponse_result_tag 1
@@ -2631,6 +2702,22 @@ X(a, STATIC,   SINGULAR, UINT64,   end_time,          8)
 #define sl_link_TaskExecutionHistoryChunk_CALLBACK pb_default_field_callback
 #define sl_link_TaskExecutionHistoryChunk_DEFAULT NULL
 
+#define sl_link_TaskExecutionDeleteRequest_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   execution_id,      1)
+#define sl_link_TaskExecutionDeleteRequest_CALLBACK pb_default_field_callback
+#define sl_link_TaskExecutionDeleteRequest_DEFAULT NULL
+
+#define sl_link_TaskExecutionDeleteResponse_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, CALLBACK, SINGULAR, STRING,   execution_id,      3) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           4) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            5) \
+X(a, STATIC,   SINGULAR, BOOL,     deleted,           6) \
+X(a, STATIC,   SINGULAR, BOOL,     execution_files_deleted,   7)
+#define sl_link_TaskExecutionDeleteResponse_CALLBACK pb_default_field_callback
+#define sl_link_TaskExecutionDeleteResponse_DEFAULT NULL
+
 #define sl_link_TaskTrajectoryRequest_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   execution_id,      1) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           2) \
@@ -2710,6 +2797,25 @@ X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2)
 #define sl_link_LiveMapCacheClearResponse_CALLBACK pb_default_field_callback
 #define sl_link_LiveMapCacheClearResponse_DEFAULT NULL
+
+#define sl_link_SystemCacheClearRequest_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     clear_memory_cache,   1) \
+X(a, STATIC,   SINGULAR, BOOL,     clear_temporary_files,   2) \
+X(a, STATIC,   SINGULAR, BOOL,     clear_logs,        3)
+#define sl_link_SystemCacheClearRequest_CALLBACK NULL
+#define sl_link_SystemCacheClearRequest_DEFAULT NULL
+
+#define sl_link_SystemCacheClearResponse_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, STATIC,   SINGULAR, BOOL,     memory_cache_cleared,   3) \
+X(a, STATIC,   SINGULAR, UINT32,   temporary_files_cleared,   4) \
+X(a, STATIC,   SINGULAR, UINT64,   temporary_bytes_released,   5) \
+X(a, STATIC,   SINGULAR, UINT32,   log_files_cleared,   6) \
+X(a, STATIC,   SINGULAR, UINT64,   log_bytes_released,   7) \
+X(a, STATIC,   SINGULAR, UINT32,   failed_items,      8)
+#define sl_link_SystemCacheClearResponse_CALLBACK pb_default_field_callback
+#define sl_link_SystemCacheClearResponse_DEFAULT NULL
 
 #define sl_link_RadarMapCacheClearRequest_FIELDLIST(X, a) \
 
@@ -2894,11 +3000,15 @@ extern const pb_msgdesc_t sl_link_TaskExecutionRecord_msg;
 extern const pb_msgdesc_t sl_link_TaskResultResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskExecutionHistoryRequest_msg;
 extern const pb_msgdesc_t sl_link_TaskExecutionHistoryChunk_msg;
+extern const pb_msgdesc_t sl_link_TaskExecutionDeleteRequest_msg;
+extern const pb_msgdesc_t sl_link_TaskExecutionDeleteResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskTrajectoryRequest_msg;
 extern const pb_msgdesc_t sl_link_TaskTrajectoryPoint_msg;
 extern const pb_msgdesc_t sl_link_TaskTrajectoryChunk_msg;
 extern const pb_msgdesc_t sl_link_LiveMapCacheClearRequest_msg;
 extern const pb_msgdesc_t sl_link_LiveMapCacheClearResponse_msg;
+extern const pb_msgdesc_t sl_link_SystemCacheClearRequest_msg;
+extern const pb_msgdesc_t sl_link_SystemCacheClearResponse_msg;
 extern const pb_msgdesc_t sl_link_RadarMapCacheClearRequest_msg;
 extern const pb_msgdesc_t sl_link_RadarMapCacheClearResponse_msg;
 extern const pb_msgdesc_t sl_link_RadarSystemStatusRequest_msg;
@@ -2981,11 +3091,15 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_TaskResultResponse_fields &sl_link_TaskResultResponse_msg
 #define sl_link_TaskExecutionHistoryRequest_fields &sl_link_TaskExecutionHistoryRequest_msg
 #define sl_link_TaskExecutionHistoryChunk_fields &sl_link_TaskExecutionHistoryChunk_msg
+#define sl_link_TaskExecutionDeleteRequest_fields &sl_link_TaskExecutionDeleteRequest_msg
+#define sl_link_TaskExecutionDeleteResponse_fields &sl_link_TaskExecutionDeleteResponse_msg
 #define sl_link_TaskTrajectoryRequest_fields &sl_link_TaskTrajectoryRequest_msg
 #define sl_link_TaskTrajectoryPoint_fields &sl_link_TaskTrajectoryPoint_msg
 #define sl_link_TaskTrajectoryChunk_fields &sl_link_TaskTrajectoryChunk_msg
 #define sl_link_LiveMapCacheClearRequest_fields &sl_link_LiveMapCacheClearRequest_msg
 #define sl_link_LiveMapCacheClearResponse_fields &sl_link_LiveMapCacheClearResponse_msg
+#define sl_link_SystemCacheClearRequest_fields &sl_link_SystemCacheClearRequest_msg
+#define sl_link_SystemCacheClearResponse_fields &sl_link_SystemCacheClearResponse_msg
 #define sl_link_RadarMapCacheClearRequest_fields &sl_link_RadarMapCacheClearRequest_msg
 #define sl_link_RadarMapCacheClearResponse_fields &sl_link_RadarMapCacheClearResponse_msg
 #define sl_link_RadarSystemStatusRequest_fields &sl_link_RadarSystemStatusRequest_msg
@@ -3059,9 +3173,12 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_TaskResultResponse_size depends on runtime parameters */
 /* sl_link_TaskExecutionHistoryRequest_size depends on runtime parameters */
 /* sl_link_TaskExecutionHistoryChunk_size depends on runtime parameters */
+/* sl_link_TaskExecutionDeleteRequest_size depends on runtime parameters */
+/* sl_link_TaskExecutionDeleteResponse_size depends on runtime parameters */
 /* sl_link_TaskTrajectoryRequest_size depends on runtime parameters */
 /* sl_link_TaskTrajectoryChunk_size depends on runtime parameters */
 /* sl_link_LiveMapCacheClearResponse_size depends on runtime parameters */
+/* sl_link_SystemCacheClearResponse_size depends on runtime parameters */
 /* sl_link_RadarMapCacheClearResponse_size depends on runtime parameters */
 /* sl_link_RadarSystemStatusResponse_size depends on runtime parameters */
 /* sl_link_RadarMapSyncResponse_size depends on runtime parameters */
@@ -3090,6 +3207,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_RadarRelocalizationStatusRequest_size 0
 #define sl_link_RadarSystemStatusRequest_size    0
 #define sl_link_SettingsReadRequest_size         4
+#define sl_link_SystemCacheClearRequest_size     6
 #define sl_link_TaskTrajectoryPoint_size         54
 #define sl_link_VideoStreamInfoRequest_size      2
 

@@ -1,0 +1,51 @@
+super_lio_loop:
+  enabled: true
+  odom_topic: /lio/odom
+  cloud_topic: /lio/map_cloud
+  corrected_odom_topic: /lio/loop_odom
+  corrected_cloud_topic: /lio/loop_cloud
+  corrected_path_topic: /lio/loop_path
+  map_frame: map
+  odom_frame: odom
+  base_frame: base_link
+  publish_tf: true
+  registration_backend: fast_vgicp
+  registration_threads: 3
+
+  sync_tolerance: 0.03
+  keyframe_distance: 0.8
+  keyframe_angle_deg: 10.0
+  keyframe_voxel_size: 0.25
+  max_points_per_keyframe: 8000
+  max_keyframes: 2000
+
+  exclude_recent_keyframes: 30
+  candidate_search_radius: 8.0
+  descriptor_rings: 20
+  descriptor_sectors: 60
+  descriptor_max_radius: 40.0
+  descriptor_distance_threshold: 0.18
+  descriptor_candidate_count: 10
+  history_submap_size: 10
+  loop_check_interval: 3
+
+  icp_max_iterations: 60
+  icp_max_correspondence_distance: 1.0
+  icp_fitness_threshold: 0.35
+  min_overlap_ratio: 0.45
+  max_registration_condition_number: 1000000.0
+  icp_min_source_points: 100
+  icp_min_target_points: 500
+  max_loop_correction_translation: 5.0
+  max_loop_correction_yaw_deg: 45.0
+
+  odom_translation_stddev: 0.05
+  odom_yaw_stddev_deg: 1.0
+  loop_translation_stddev: 0.10
+  loop_yaw_stddev_deg: 2.0
+  loop_huber_delta: 3.0
+  loop_consistency_translation: 3.0
+  loop_consistency_yaw_deg: 30.0
+  loop_confirmation_count: 2
+  optimizer_iterations: 10
+  optimizer_damping: 1.0e-6

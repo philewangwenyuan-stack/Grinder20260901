@@ -285,6 +285,22 @@ public final class SlLink {
      * <code>MSG_ID_TASK_TRAJECTORY_CHUNK = 1331;</code>
      */
     MSG_ID_TASK_TRAJECTORY_CHUNK(1331),
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_DELETE_REQUEST = 1332;</code>
+     */
+    MSG_ID_TASK_EXECUTION_DELETE_REQUEST(1332),
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_DELETE_RESPONSE = 1333;</code>
+     */
+    MSG_ID_TASK_EXECUTION_DELETE_RESPONSE(1333),
+    /**
+     * <code>MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 1334;</code>
+     */
+    MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST(1334),
+    /**
+     * <code>MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335;</code>
+     */
+    MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE(1335),
     UNRECOGNIZED(-1),
     ;
 
@@ -552,6 +568,22 @@ public final class SlLink {
      * <code>MSG_ID_TASK_TRAJECTORY_CHUNK = 1331;</code>
      */
     public static final int MSG_ID_TASK_TRAJECTORY_CHUNK_VALUE = 1331;
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_DELETE_REQUEST = 1332;</code>
+     */
+    public static final int MSG_ID_TASK_EXECUTION_DELETE_REQUEST_VALUE = 1332;
+    /**
+     * <code>MSG_ID_TASK_EXECUTION_DELETE_RESPONSE = 1333;</code>
+     */
+    public static final int MSG_ID_TASK_EXECUTION_DELETE_RESPONSE_VALUE = 1333;
+    /**
+     * <code>MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 1334;</code>
+     */
+    public static final int MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST_VALUE = 1334;
+    /**
+     * <code>MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335;</code>
+     */
+    public static final int MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE_VALUE = 1335;
 
 
     public final int getNumber() {
@@ -638,6 +670,10 @@ public final class SlLink {
         case 1329: return MSG_ID_TASK_EXECUTION_HISTORY_CHUNK;
         case 1330: return MSG_ID_TASK_TRAJECTORY_REQUEST;
         case 1331: return MSG_ID_TASK_TRAJECTORY_CHUNK;
+        case 1332: return MSG_ID_TASK_EXECUTION_DELETE_REQUEST;
+        case 1333: return MSG_ID_TASK_EXECUTION_DELETE_RESPONSE;
+        case 1334: return MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST;
+        case 1335: return MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE;
         default: return null;
       }
     }
@@ -4723,7 +4759,7 @@ public final class SlLink {
 
     /**
      * <pre>
-     * Region-specific planning direction: "x" or "y".
+     * Region-specific planning direction: "x", "-x", "y", or "-y".
      * Empty means LOWER-side default policy.
      * </pre>
      *
@@ -4732,7 +4768,7 @@ public final class SlLink {
     java.lang.String getGlobalDirection();
     /**
      * <pre>
-     * Region-specific planning direction: "x" or "y".
+     * Region-specific planning direction: "x", "-x", "y", or "-y".
      * Empty means LOWER-side default policy.
      * </pre>
      *
@@ -5038,7 +5074,7 @@ public final class SlLink {
     private volatile java.lang.Object globalDirection_;
     /**
      * <pre>
-     * Region-specific planning direction: "x" or "y".
+     * Region-specific planning direction: "x", "-x", "y", or "-y".
      * Empty means LOWER-side default policy.
      * </pre>
      *
@@ -5058,7 +5094,7 @@ public final class SlLink {
     }
     /**
      * <pre>
-     * Region-specific planning direction: "x" or "y".
+     * Region-specific planning direction: "x", "-x", "y", or "-y".
      * Empty means LOWER-side default policy.
      * </pre>
      *
@@ -6090,7 +6126,7 @@ public final class SlLink {
       private java.lang.Object globalDirection_ = "";
       /**
        * <pre>
-       * Region-specific planning direction: "x" or "y".
+       * Region-specific planning direction: "x", "-x", "y", or "-y".
        * Empty means LOWER-side default policy.
        * </pre>
        *
@@ -6110,7 +6146,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Region-specific planning direction: "x" or "y".
+       * Region-specific planning direction: "x", "-x", "y", or "-y".
        * Empty means LOWER-side default policy.
        * </pre>
        *
@@ -6131,7 +6167,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Region-specific planning direction: "x" or "y".
+       * Region-specific planning direction: "x", "-x", "y", or "-y".
        * Empty means LOWER-side default policy.
        * </pre>
        *
@@ -6149,7 +6185,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Region-specific planning direction: "x" or "y".
+       * Region-specific planning direction: "x", "-x", "y", or "-y".
        * Empty means LOWER-side default policy.
        * </pre>
        *
@@ -6163,7 +6199,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Region-specific planning direction: "x" or "y".
+       * Region-specific planning direction: "x", "-x", "y", or "-y".
        * Empty means LOWER-side default policy.
        * </pre>
        *
@@ -27772,7 +27808,7 @@ public final class SlLink {
 
     /**
      * <pre>
-     * Optional x/y planning direction.
+     * Optional planning direction: x, -x, y, or -y.
      * </pre>
      *
      * <code>string global_direction = 7;</code>
@@ -27780,7 +27816,7 @@ public final class SlLink {
     java.lang.String getGlobalDirection();
     /**
      * <pre>
-     * Optional x/y planning direction.
+     * Optional planning direction: x, -x, y, or -y.
      * </pre>
      *
      * <code>string global_direction = 7;</code>
@@ -28097,7 +28133,7 @@ public final class SlLink {
     private volatile java.lang.Object globalDirection_;
     /**
      * <pre>
-     * Optional x/y planning direction.
+     * Optional planning direction: x, -x, y, or -y.
      * </pre>
      *
      * <code>string global_direction = 7;</code>
@@ -28116,7 +28152,7 @@ public final class SlLink {
     }
     /**
      * <pre>
-     * Optional x/y planning direction.
+     * Optional planning direction: x, -x, y, or -y.
      * </pre>
      *
      * <code>string global_direction = 7;</code>
@@ -29114,7 +29150,7 @@ public final class SlLink {
       private java.lang.Object globalDirection_ = "";
       /**
        * <pre>
-       * Optional x/y planning direction.
+       * Optional planning direction: x, -x, y, or -y.
        * </pre>
        *
        * <code>string global_direction = 7;</code>
@@ -29133,7 +29169,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Optional x/y planning direction.
+       * Optional planning direction: x, -x, y, or -y.
        * </pre>
        *
        * <code>string global_direction = 7;</code>
@@ -29153,7 +29189,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Optional x/y planning direction.
+       * Optional planning direction: x, -x, y, or -y.
        * </pre>
        *
        * <code>string global_direction = 7;</code>
@@ -29170,7 +29206,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Optional x/y planning direction.
+       * Optional planning direction: x, -x, y, or -y.
        * </pre>
        *
        * <code>string global_direction = 7;</code>
@@ -29183,7 +29219,7 @@ public final class SlLink {
       }
       /**
        * <pre>
-       * Optional x/y planning direction.
+       * Optional planning direction: x, -x, y, or -y.
        * </pre>
        *
        * <code>string global_direction = 7;</code>
@@ -43349,10 +43385,18 @@ public final class SlLink {
     sl_link.SlLink.Pose2DOrBuilder getEndPoseOrBuilder();
 
     /**
+     * <pre>
+     * Optional planning direction: x, -x, y, or -y.
+     * </pre>
+     *
      * <code>string global_direction = 8;</code>
      */
     java.lang.String getGlobalDirection();
     /**
+     * <pre>
+     * Optional planning direction: x, -x, y, or -y.
+     * </pre>
+     *
      * <code>string global_direction = 8;</code>
      */
     com.google.protobuf.ByteString
@@ -43659,6 +43703,10 @@ public final class SlLink {
     public static final int GLOBAL_DIRECTION_FIELD_NUMBER = 8;
     private volatile java.lang.Object globalDirection_;
     /**
+     * <pre>
+     * Optional planning direction: x, -x, y, or -y.
+     * </pre>
+     *
      * <code>string global_direction = 8;</code>
      */
     public java.lang.String getGlobalDirection() {
@@ -43674,6 +43722,10 @@ public final class SlLink {
       }
     }
     /**
+     * <pre>
+     * Optional planning direction: x, -x, y, or -y.
+     * </pre>
+     *
      * <code>string global_direction = 8;</code>
      */
     public com.google.protobuf.ByteString
@@ -44651,6 +44703,10 @@ public final class SlLink {
 
       private java.lang.Object globalDirection_ = "";
       /**
+       * <pre>
+       * Optional planning direction: x, -x, y, or -y.
+       * </pre>
+       *
        * <code>string global_direction = 8;</code>
        */
       public java.lang.String getGlobalDirection() {
@@ -44666,6 +44722,10 @@ public final class SlLink {
         }
       }
       /**
+       * <pre>
+       * Optional planning direction: x, -x, y, or -y.
+       * </pre>
+       *
        * <code>string global_direction = 8;</code>
        */
       public com.google.protobuf.ByteString
@@ -44682,6 +44742,10 @@ public final class SlLink {
         }
       }
       /**
+       * <pre>
+       * Optional planning direction: x, -x, y, or -y.
+       * </pre>
+       *
        * <code>string global_direction = 8;</code>
        */
       public Builder setGlobalDirection(
@@ -44695,6 +44759,10 @@ public final class SlLink {
         return this;
       }
       /**
+       * <pre>
+       * Optional planning direction: x, -x, y, or -y.
+       * </pre>
+       *
        * <code>string global_direction = 8;</code>
        */
       public Builder clearGlobalDirection() {
@@ -44704,6 +44772,10 @@ public final class SlLink {
         return this;
       }
       /**
+       * <pre>
+       * Optional planning direction: x, -x, y, or -y.
+       * </pre>
+       *
        * <code>string global_direction = 8;</code>
        */
       public Builder setGlobalDirectionBytes(
@@ -72602,6 +72674,1775 @@ public final class SlLink {
 
   }
 
+  public interface TaskExecutionDeleteRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskExecutionDeleteRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    java.lang.String getExecutionId();
+    /**
+     * <pre>
+     * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getExecutionIdBytes();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskExecutionDeleteRequest}
+   */
+  public  static final class TaskExecutionDeleteRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskExecutionDeleteRequest)
+      TaskExecutionDeleteRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskExecutionDeleteRequest.newBuilder() to construct.
+    private TaskExecutionDeleteRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskExecutionDeleteRequest() {
+      executionId_ = "";
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskExecutionDeleteRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              executionId_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskExecutionDeleteRequest.class, sl_link.SlLink.TaskExecutionDeleteRequest.Builder.class);
+    }
+
+    public static final int EXECUTION_ID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object executionId_;
+    /**
+     * <pre>
+     * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    public java.lang.String getExecutionId() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        executionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+     * </pre>
+     *
+     * <code>string execution_id = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getExecutionIdBytes() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        executionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getExecutionIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, executionId_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getExecutionIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, executionId_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskExecutionDeleteRequest)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskExecutionDeleteRequest other = (sl_link.SlLink.TaskExecutionDeleteRequest) obj;
+
+      boolean result = true;
+      result = result && getExecutionId()
+          .equals(other.getExecutionId());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + EXECUTION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getExecutionId().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskExecutionDeleteRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskExecutionDeleteRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskExecutionDeleteRequest)
+        sl_link.SlLink.TaskExecutionDeleteRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskExecutionDeleteRequest.class, sl_link.SlLink.TaskExecutionDeleteRequest.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskExecutionDeleteRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        executionId_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionDeleteRequest getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskExecutionDeleteRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionDeleteRequest build() {
+        sl_link.SlLink.TaskExecutionDeleteRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionDeleteRequest buildPartial() {
+        sl_link.SlLink.TaskExecutionDeleteRequest result = new sl_link.SlLink.TaskExecutionDeleteRequest(this);
+        result.executionId_ = executionId_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskExecutionDeleteRequest) {
+          return mergeFrom((sl_link.SlLink.TaskExecutionDeleteRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskExecutionDeleteRequest other) {
+        if (other == sl_link.SlLink.TaskExecutionDeleteRequest.getDefaultInstance()) return this;
+        if (!other.getExecutionId().isEmpty()) {
+          executionId_ = other.executionId_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskExecutionDeleteRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskExecutionDeleteRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object executionId_ = "";
+      /**
+       * <pre>
+       * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public java.lang.String getExecutionId() {
+        java.lang.Object ref = executionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          executionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getExecutionIdBytes() {
+        java.lang.Object ref = executionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          executionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder setExecutionId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder clearExecutionId() {
+        
+        executionId_ = getDefaultInstance().getExecutionId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Unique ID returned by TaskExecutionHistoryChunk records[].execution_id.
+       * </pre>
+       *
+       * <code>string execution_id = 1;</code>
+       */
+      public Builder setExecutionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskExecutionDeleteRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskExecutionDeleteRequest)
+    private static final sl_link.SlLink.TaskExecutionDeleteRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskExecutionDeleteRequest();
+    }
+
+    public static sl_link.SlLink.TaskExecutionDeleteRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskExecutionDeleteRequest>
+        PARSER = new com.google.protobuf.AbstractParser<TaskExecutionDeleteRequest>() {
+      @java.lang.Override
+      public TaskExecutionDeleteRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskExecutionDeleteRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskExecutionDeleteRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskExecutionDeleteRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskExecutionDeleteRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TaskExecutionDeleteResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskExecutionDeleteResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    java.lang.String getExecutionId();
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getExecutionIdBytes();
+
+    /**
+     * <code>string task_id = 4;</code>
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 4;</code>
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>string map_id = 5;</code>
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 5;</code>
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>bool deleted = 6;</code>
+     */
+    boolean getDeleted();
+
+    /**
+     * <code>bool execution_files_deleted = 7;</code>
+     */
+    boolean getExecutionFilesDeleted();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskExecutionDeleteResponse}
+   */
+  public  static final class TaskExecutionDeleteResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskExecutionDeleteResponse)
+      TaskExecutionDeleteResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TaskExecutionDeleteResponse.newBuilder() to construct.
+    private TaskExecutionDeleteResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TaskExecutionDeleteResponse() {
+      result_ = 0;
+      message_ = "";
+      executionId_ = "";
+      taskId_ = "";
+      mapId_ = "";
+      deleted_ = false;
+      executionFilesDeleted_ = false;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TaskExecutionDeleteResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              result_ = rawValue;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              executionId_ = s;
+              break;
+            }
+            case 34: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              taskId_ = s;
+              break;
+            }
+            case 42: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              mapId_ = s;
+              break;
+            }
+            case 48: {
+
+              deleted_ = input.readBool();
+              break;
+            }
+            case 56: {
+
+              executionFilesDeleted_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.TaskExecutionDeleteResponse.class, sl_link.SlLink.TaskExecutionDeleteResponse.Builder.class);
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public sl_link.SlLink.ResultCode getResult() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object message_;
+    /**
+     * <code>string message = 2;</code>
+     */
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int EXECUTION_ID_FIELD_NUMBER = 3;
+    private volatile java.lang.Object executionId_;
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    public java.lang.String getExecutionId() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        executionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string execution_id = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getExecutionIdBytes() {
+      java.lang.Object ref = executionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        executionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 4;
+    private volatile java.lang.Object taskId_;
+    /**
+     * <code>string task_id = 4;</code>
+     */
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 4;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 5;
+    private volatile java.lang.Object mapId_;
+    /**
+     * <code>string map_id = 5;</code>
+     */
+    public java.lang.String getMapId() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        mapId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string map_id = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      java.lang.Object ref = mapId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mapId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int DELETED_FIELD_NUMBER = 6;
+    private boolean deleted_;
+    /**
+     * <code>bool deleted = 6;</code>
+     */
+    public boolean getDeleted() {
+      return deleted_;
+    }
+
+    public static final int EXECUTION_FILES_DELETED_FIELD_NUMBER = 7;
+    private boolean executionFilesDeleted_;
+    /**
+     * <code>bool execution_files_deleted = 7;</code>
+     */
+    public boolean getExecutionFilesDeleted() {
+      return executionFilesDeleted_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        output.writeEnum(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      }
+      if (!getExecutionIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, executionId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, taskId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, mapId_);
+      }
+      if (deleted_ != false) {
+        output.writeBool(6, deleted_);
+      }
+      if (executionFilesDeleted_ != false) {
+        output.writeBool(7, executionFilesDeleted_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      }
+      if (!getExecutionIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, executionId_);
+      }
+      if (!getTaskIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, taskId_);
+      }
+      if (!getMapIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, mapId_);
+      }
+      if (deleted_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(6, deleted_);
+      }
+      if (executionFilesDeleted_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(7, executionFilesDeleted_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.TaskExecutionDeleteResponse)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.TaskExecutionDeleteResponse other = (sl_link.SlLink.TaskExecutionDeleteResponse) obj;
+
+      boolean result = true;
+      result = result && result_ == other.result_;
+      result = result && getMessage()
+          .equals(other.getMessage());
+      result = result && getExecutionId()
+          .equals(other.getExecutionId());
+      result = result && getTaskId()
+          .equals(other.getTaskId());
+      result = result && getMapId()
+          .equals(other.getMapId());
+      result = result && (getDeleted()
+          == other.getDeleted());
+      result = result && (getExecutionFilesDeleted()
+          == other.getExecutionFilesDeleted());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + result_;
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + EXECUTION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getExecutionId().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + MAP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMapId().hashCode();
+      hash = (37 * hash) + DELETED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getDeleted());
+      hash = (37 * hash) + EXECUTION_FILES_DELETED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getExecutionFilesDeleted());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.TaskExecutionDeleteResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskExecutionDeleteResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.TaskExecutionDeleteResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskExecutionDeleteResponse)
+        sl_link.SlLink.TaskExecutionDeleteResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.TaskExecutionDeleteResponse.class, sl_link.SlLink.TaskExecutionDeleteResponse.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.TaskExecutionDeleteResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        result_ = 0;
+
+        message_ = "";
+
+        executionId_ = "";
+
+        taskId_ = "";
+
+        mapId_ = "";
+
+        deleted_ = false;
+
+        executionFilesDeleted_ = false;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_TaskExecutionDeleteResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionDeleteResponse getDefaultInstanceForType() {
+        return sl_link.SlLink.TaskExecutionDeleteResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionDeleteResponse build() {
+        sl_link.SlLink.TaskExecutionDeleteResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.TaskExecutionDeleteResponse buildPartial() {
+        sl_link.SlLink.TaskExecutionDeleteResponse result = new sl_link.SlLink.TaskExecutionDeleteResponse(this);
+        result.result_ = result_;
+        result.message_ = message_;
+        result.executionId_ = executionId_;
+        result.taskId_ = taskId_;
+        result.mapId_ = mapId_;
+        result.deleted_ = deleted_;
+        result.executionFilesDeleted_ = executionFilesDeleted_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.TaskExecutionDeleteResponse) {
+          return mergeFrom((sl_link.SlLink.TaskExecutionDeleteResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.TaskExecutionDeleteResponse other) {
+        if (other == sl_link.SlLink.TaskExecutionDeleteResponse.getDefaultInstance()) return this;
+        if (other.result_ != 0) {
+          setResultValue(other.getResultValue());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          onChanged();
+        }
+        if (!other.getExecutionId().isEmpty()) {
+          executionId_ = other.executionId_;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          onChanged();
+        }
+        if (!other.getMapId().isEmpty()) {
+          mapId_ = other.mapId_;
+          onChanged();
+        }
+        if (other.getDeleted() != false) {
+          setDeleted(other.getDeleted());
+        }
+        if (other.getExecutionFilesDeleted() != false) {
+          setExecutionFilesDeleted(other.getExecutionFilesDeleted());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.TaskExecutionDeleteResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.TaskExecutionDeleteResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private int result_ = 0;
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public int getResultValue() {
+        return result_;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResultValue(int value) {
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public sl_link.SlLink.ResultCode getResult() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+        return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        result_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 2;</code>
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        message_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder clearMessage() {
+        
+        message_ = getDefaultInstance().getMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        message_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object executionId_ = "";
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public java.lang.String getExecutionId() {
+        java.lang.Object ref = executionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          executionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getExecutionIdBytes() {
+        java.lang.Object ref = executionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          executionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public Builder setExecutionId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public Builder clearExecutionId() {
+        
+        executionId_ = getDefaultInstance().getExecutionId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string execution_id = 3;</code>
+       */
+      public Builder setExecutionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        executionId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 4;</code>
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 4;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 4;</code>
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 4;</code>
+       */
+      public Builder clearTaskId() {
+        
+        taskId_ = getDefaultInstance().getTaskId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 4;</code>
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mapId_ = "";
+      /**
+       * <code>string map_id = 5;</code>
+       */
+      public java.lang.String getMapId() {
+        java.lang.Object ref = mapId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          mapId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 5;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        java.lang.Object ref = mapId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mapId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string map_id = 5;</code>
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 5;</code>
+       */
+      public Builder clearMapId() {
+        
+        mapId_ = getDefaultInstance().getMapId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string map_id = 5;</code>
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        mapId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private boolean deleted_ ;
+      /**
+       * <code>bool deleted = 6;</code>
+       */
+      public boolean getDeleted() {
+        return deleted_;
+      }
+      /**
+       * <code>bool deleted = 6;</code>
+       */
+      public Builder setDeleted(boolean value) {
+        
+        deleted_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool deleted = 6;</code>
+       */
+      public Builder clearDeleted() {
+        
+        deleted_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean executionFilesDeleted_ ;
+      /**
+       * <code>bool execution_files_deleted = 7;</code>
+       */
+      public boolean getExecutionFilesDeleted() {
+        return executionFilesDeleted_;
+      }
+      /**
+       * <code>bool execution_files_deleted = 7;</code>
+       */
+      public Builder setExecutionFilesDeleted(boolean value) {
+        
+        executionFilesDeleted_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool execution_files_deleted = 7;</code>
+       */
+      public Builder clearExecutionFilesDeleted() {
+        
+        executionFilesDeleted_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskExecutionDeleteResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskExecutionDeleteResponse)
+    private static final sl_link.SlLink.TaskExecutionDeleteResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.TaskExecutionDeleteResponse();
+    }
+
+    public static sl_link.SlLink.TaskExecutionDeleteResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TaskExecutionDeleteResponse>
+        PARSER = new com.google.protobuf.AbstractParser<TaskExecutionDeleteResponse>() {
+      @java.lang.Override
+      public TaskExecutionDeleteResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TaskExecutionDeleteResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TaskExecutionDeleteResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TaskExecutionDeleteResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.TaskExecutionDeleteResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface TaskTrajectoryRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:sl_link.TaskTrajectoryRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -79677,6 +81518,1656 @@ public final class SlLink {
 
     @java.lang.Override
     public sl_link.SlLink.LiveMapCacheClearResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SystemCacheClearRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.SystemCacheClearRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool clear_memory_cache = 1;</code>
+     */
+    boolean getClearMemoryCache();
+
+    /**
+     * <code>bool clear_temporary_files = 2;</code>
+     */
+    boolean getClearTemporaryFiles();
+
+    /**
+     * <pre>
+     * Includes catkin_ws/logs and ~/.ros/log.
+     * </pre>
+     *
+     * <code>bool clear_logs = 3;</code>
+     */
+    boolean getClearLogs();
+  }
+  /**
+   * Protobuf type {@code sl_link.SystemCacheClearRequest}
+   */
+  public  static final class SystemCacheClearRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.SystemCacheClearRequest)
+      SystemCacheClearRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SystemCacheClearRequest.newBuilder() to construct.
+    private SystemCacheClearRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SystemCacheClearRequest() {
+      clearMemoryCache_ = false;
+      clearTemporaryFiles_ = false;
+      clearLogs_ = false;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private SystemCacheClearRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              clearMemoryCache_ = input.readBool();
+              break;
+            }
+            case 16: {
+
+              clearTemporaryFiles_ = input.readBool();
+              break;
+            }
+            case 24: {
+
+              clearLogs_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_SystemCacheClearRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_SystemCacheClearRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.SystemCacheClearRequest.class, sl_link.SlLink.SystemCacheClearRequest.Builder.class);
+    }
+
+    public static final int CLEAR_MEMORY_CACHE_FIELD_NUMBER = 1;
+    private boolean clearMemoryCache_;
+    /**
+     * <code>bool clear_memory_cache = 1;</code>
+     */
+    public boolean getClearMemoryCache() {
+      return clearMemoryCache_;
+    }
+
+    public static final int CLEAR_TEMPORARY_FILES_FIELD_NUMBER = 2;
+    private boolean clearTemporaryFiles_;
+    /**
+     * <code>bool clear_temporary_files = 2;</code>
+     */
+    public boolean getClearTemporaryFiles() {
+      return clearTemporaryFiles_;
+    }
+
+    public static final int CLEAR_LOGS_FIELD_NUMBER = 3;
+    private boolean clearLogs_;
+    /**
+     * <pre>
+     * Includes catkin_ws/logs and ~/.ros/log.
+     * </pre>
+     *
+     * <code>bool clear_logs = 3;</code>
+     */
+    public boolean getClearLogs() {
+      return clearLogs_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (clearMemoryCache_ != false) {
+        output.writeBool(1, clearMemoryCache_);
+      }
+      if (clearTemporaryFiles_ != false) {
+        output.writeBool(2, clearTemporaryFiles_);
+      }
+      if (clearLogs_ != false) {
+        output.writeBool(3, clearLogs_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (clearMemoryCache_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, clearMemoryCache_);
+      }
+      if (clearTemporaryFiles_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, clearTemporaryFiles_);
+      }
+      if (clearLogs_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, clearLogs_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.SystemCacheClearRequest)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.SystemCacheClearRequest other = (sl_link.SlLink.SystemCacheClearRequest) obj;
+
+      boolean result = true;
+      result = result && (getClearMemoryCache()
+          == other.getClearMemoryCache());
+      result = result && (getClearTemporaryFiles()
+          == other.getClearTemporaryFiles());
+      result = result && (getClearLogs()
+          == other.getClearLogs());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + CLEAR_MEMORY_CACHE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getClearMemoryCache());
+      hash = (37 * hash) + CLEAR_TEMPORARY_FILES_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getClearTemporaryFiles());
+      hash = (37 * hash) + CLEAR_LOGS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getClearLogs());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.SystemCacheClearRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.SystemCacheClearRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.SystemCacheClearRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.SystemCacheClearRequest)
+        sl_link.SlLink.SystemCacheClearRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_SystemCacheClearRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_SystemCacheClearRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.SystemCacheClearRequest.class, sl_link.SlLink.SystemCacheClearRequest.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.SystemCacheClearRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        clearMemoryCache_ = false;
+
+        clearTemporaryFiles_ = false;
+
+        clearLogs_ = false;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_SystemCacheClearRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.SystemCacheClearRequest getDefaultInstanceForType() {
+        return sl_link.SlLink.SystemCacheClearRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.SystemCacheClearRequest build() {
+        sl_link.SlLink.SystemCacheClearRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.SystemCacheClearRequest buildPartial() {
+        sl_link.SlLink.SystemCacheClearRequest result = new sl_link.SlLink.SystemCacheClearRequest(this);
+        result.clearMemoryCache_ = clearMemoryCache_;
+        result.clearTemporaryFiles_ = clearTemporaryFiles_;
+        result.clearLogs_ = clearLogs_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.SystemCacheClearRequest) {
+          return mergeFrom((sl_link.SlLink.SystemCacheClearRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.SystemCacheClearRequest other) {
+        if (other == sl_link.SlLink.SystemCacheClearRequest.getDefaultInstance()) return this;
+        if (other.getClearMemoryCache() != false) {
+          setClearMemoryCache(other.getClearMemoryCache());
+        }
+        if (other.getClearTemporaryFiles() != false) {
+          setClearTemporaryFiles(other.getClearTemporaryFiles());
+        }
+        if (other.getClearLogs() != false) {
+          setClearLogs(other.getClearLogs());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.SystemCacheClearRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.SystemCacheClearRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private boolean clearMemoryCache_ ;
+      /**
+       * <code>bool clear_memory_cache = 1;</code>
+       */
+      public boolean getClearMemoryCache() {
+        return clearMemoryCache_;
+      }
+      /**
+       * <code>bool clear_memory_cache = 1;</code>
+       */
+      public Builder setClearMemoryCache(boolean value) {
+        
+        clearMemoryCache_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool clear_memory_cache = 1;</code>
+       */
+      public Builder clearClearMemoryCache() {
+        
+        clearMemoryCache_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean clearTemporaryFiles_ ;
+      /**
+       * <code>bool clear_temporary_files = 2;</code>
+       */
+      public boolean getClearTemporaryFiles() {
+        return clearTemporaryFiles_;
+      }
+      /**
+       * <code>bool clear_temporary_files = 2;</code>
+       */
+      public Builder setClearTemporaryFiles(boolean value) {
+        
+        clearTemporaryFiles_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool clear_temporary_files = 2;</code>
+       */
+      public Builder clearClearTemporaryFiles() {
+        
+        clearTemporaryFiles_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean clearLogs_ ;
+      /**
+       * <pre>
+       * Includes catkin_ws/logs and ~/.ros/log.
+       * </pre>
+       *
+       * <code>bool clear_logs = 3;</code>
+       */
+      public boolean getClearLogs() {
+        return clearLogs_;
+      }
+      /**
+       * <pre>
+       * Includes catkin_ws/logs and ~/.ros/log.
+       * </pre>
+       *
+       * <code>bool clear_logs = 3;</code>
+       */
+      public Builder setClearLogs(boolean value) {
+        
+        clearLogs_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Includes catkin_ws/logs and ~/.ros/log.
+       * </pre>
+       *
+       * <code>bool clear_logs = 3;</code>
+       */
+      public Builder clearClearLogs() {
+        
+        clearLogs_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.SystemCacheClearRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.SystemCacheClearRequest)
+    private static final sl_link.SlLink.SystemCacheClearRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.SystemCacheClearRequest();
+    }
+
+    public static sl_link.SlLink.SystemCacheClearRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SystemCacheClearRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SystemCacheClearRequest>() {
+      @java.lang.Override
+      public SystemCacheClearRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new SystemCacheClearRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<SystemCacheClearRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SystemCacheClearRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.SystemCacheClearRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SystemCacheClearResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.SystemCacheClearResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>bool memory_cache_cleared = 3;</code>
+     */
+    boolean getMemoryCacheCleared();
+
+    /**
+     * <code>uint32 temporary_files_cleared = 4;</code>
+     */
+    int getTemporaryFilesCleared();
+
+    /**
+     * <code>uint64 temporary_bytes_released = 5;</code>
+     */
+    long getTemporaryBytesReleased();
+
+    /**
+     * <code>uint32 log_files_cleared = 6;</code>
+     */
+    int getLogFilesCleared();
+
+    /**
+     * <code>uint64 log_bytes_released = 7;</code>
+     */
+    long getLogBytesReleased();
+
+    /**
+     * <code>uint32 failed_items = 8;</code>
+     */
+    int getFailedItems();
+  }
+  /**
+   * Protobuf type {@code sl_link.SystemCacheClearResponse}
+   */
+  public  static final class SystemCacheClearResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sl_link.SystemCacheClearResponse)
+      SystemCacheClearResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SystemCacheClearResponse.newBuilder() to construct.
+    private SystemCacheClearResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SystemCacheClearResponse() {
+      result_ = 0;
+      message_ = "";
+      memoryCacheCleared_ = false;
+      temporaryFilesCleared_ = 0;
+      temporaryBytesReleased_ = 0L;
+      logFilesCleared_ = 0;
+      logBytesReleased_ = 0L;
+      failedItems_ = 0;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private SystemCacheClearResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              result_ = rawValue;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            case 24: {
+
+              memoryCacheCleared_ = input.readBool();
+              break;
+            }
+            case 32: {
+
+              temporaryFilesCleared_ = input.readUInt32();
+              break;
+            }
+            case 40: {
+
+              temporaryBytesReleased_ = input.readUInt64();
+              break;
+            }
+            case 48: {
+
+              logFilesCleared_ = input.readUInt32();
+              break;
+            }
+            case 56: {
+
+              logBytesReleased_ = input.readUInt64();
+              break;
+            }
+            case 64: {
+
+              failedItems_ = input.readUInt32();
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return sl_link.SlLink.internal_static_sl_link_SystemCacheClearResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return sl_link.SlLink.internal_static_sl_link_SystemCacheClearResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              sl_link.SlLink.SystemCacheClearResponse.class, sl_link.SlLink.SystemCacheClearResponse.Builder.class);
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    public sl_link.SlLink.ResultCode getResult() {
+      @SuppressWarnings("deprecation")
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object message_;
+    /**
+     * <code>string message = 2;</code>
+     */
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MEMORY_CACHE_CLEARED_FIELD_NUMBER = 3;
+    private boolean memoryCacheCleared_;
+    /**
+     * <code>bool memory_cache_cleared = 3;</code>
+     */
+    public boolean getMemoryCacheCleared() {
+      return memoryCacheCleared_;
+    }
+
+    public static final int TEMPORARY_FILES_CLEARED_FIELD_NUMBER = 4;
+    private int temporaryFilesCleared_;
+    /**
+     * <code>uint32 temporary_files_cleared = 4;</code>
+     */
+    public int getTemporaryFilesCleared() {
+      return temporaryFilesCleared_;
+    }
+
+    public static final int TEMPORARY_BYTES_RELEASED_FIELD_NUMBER = 5;
+    private long temporaryBytesReleased_;
+    /**
+     * <code>uint64 temporary_bytes_released = 5;</code>
+     */
+    public long getTemporaryBytesReleased() {
+      return temporaryBytesReleased_;
+    }
+
+    public static final int LOG_FILES_CLEARED_FIELD_NUMBER = 6;
+    private int logFilesCleared_;
+    /**
+     * <code>uint32 log_files_cleared = 6;</code>
+     */
+    public int getLogFilesCleared() {
+      return logFilesCleared_;
+    }
+
+    public static final int LOG_BYTES_RELEASED_FIELD_NUMBER = 7;
+    private long logBytesReleased_;
+    /**
+     * <code>uint64 log_bytes_released = 7;</code>
+     */
+    public long getLogBytesReleased() {
+      return logBytesReleased_;
+    }
+
+    public static final int FAILED_ITEMS_FIELD_NUMBER = 8;
+    private int failedItems_;
+    /**
+     * <code>uint32 failed_items = 8;</code>
+     */
+    public int getFailedItems() {
+      return failedItems_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        output.writeEnum(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      }
+      if (memoryCacheCleared_ != false) {
+        output.writeBool(3, memoryCacheCleared_);
+      }
+      if (temporaryFilesCleared_ != 0) {
+        output.writeUInt32(4, temporaryFilesCleared_);
+      }
+      if (temporaryBytesReleased_ != 0L) {
+        output.writeUInt64(5, temporaryBytesReleased_);
+      }
+      if (logFilesCleared_ != 0) {
+        output.writeUInt32(6, logFilesCleared_);
+      }
+      if (logBytesReleased_ != 0L) {
+        output.writeUInt64(7, logBytesReleased_);
+      }
+      if (failedItems_ != 0) {
+        output.writeUInt32(8, failedItems_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (result_ != sl_link.SlLink.ResultCode.RESULT_SUCCESS.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, result_);
+      }
+      if (!getMessageBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      }
+      if (memoryCacheCleared_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, memoryCacheCleared_);
+      }
+      if (temporaryFilesCleared_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(4, temporaryFilesCleared_);
+      }
+      if (temporaryBytesReleased_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(5, temporaryBytesReleased_);
+      }
+      if (logFilesCleared_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(6, logFilesCleared_);
+      }
+      if (logBytesReleased_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(7, logBytesReleased_);
+      }
+      if (failedItems_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(8, failedItems_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof sl_link.SlLink.SystemCacheClearResponse)) {
+        return super.equals(obj);
+      }
+      sl_link.SlLink.SystemCacheClearResponse other = (sl_link.SlLink.SystemCacheClearResponse) obj;
+
+      boolean result = true;
+      result = result && result_ == other.result_;
+      result = result && getMessage()
+          .equals(other.getMessage());
+      result = result && (getMemoryCacheCleared()
+          == other.getMemoryCacheCleared());
+      result = result && (getTemporaryFilesCleared()
+          == other.getTemporaryFilesCleared());
+      result = result && (getTemporaryBytesReleased()
+          == other.getTemporaryBytesReleased());
+      result = result && (getLogFilesCleared()
+          == other.getLogFilesCleared());
+      result = result && (getLogBytesReleased()
+          == other.getLogBytesReleased());
+      result = result && (getFailedItems()
+          == other.getFailedItems());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + result_;
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + MEMORY_CACHE_CLEARED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getMemoryCacheCleared());
+      hash = (37 * hash) + TEMPORARY_FILES_CLEARED_FIELD_NUMBER;
+      hash = (53 * hash) + getTemporaryFilesCleared();
+      hash = (37 * hash) + TEMPORARY_BYTES_RELEASED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTemporaryBytesReleased());
+      hash = (37 * hash) + LOG_FILES_CLEARED_FIELD_NUMBER;
+      hash = (53 * hash) + getLogFilesCleared();
+      hash = (37 * hash) + LOG_BYTES_RELEASED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getLogBytesReleased());
+      hash = (37 * hash) + FAILED_ITEMS_FIELD_NUMBER;
+      hash = (53 * hash) + getFailedItems();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static sl_link.SlLink.SystemCacheClearResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.SystemCacheClearResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sl_link.SystemCacheClearResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.SystemCacheClearResponse)
+        sl_link.SlLink.SystemCacheClearResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return sl_link.SlLink.internal_static_sl_link_SystemCacheClearResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return sl_link.SlLink.internal_static_sl_link_SystemCacheClearResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                sl_link.SlLink.SystemCacheClearResponse.class, sl_link.SlLink.SystemCacheClearResponse.Builder.class);
+      }
+
+      // Construct using sl_link.SlLink.SystemCacheClearResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        result_ = 0;
+
+        message_ = "";
+
+        memoryCacheCleared_ = false;
+
+        temporaryFilesCleared_ = 0;
+
+        temporaryBytesReleased_ = 0L;
+
+        logFilesCleared_ = 0;
+
+        logBytesReleased_ = 0L;
+
+        failedItems_ = 0;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return sl_link.SlLink.internal_static_sl_link_SystemCacheClearResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.SystemCacheClearResponse getDefaultInstanceForType() {
+        return sl_link.SlLink.SystemCacheClearResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.SystemCacheClearResponse build() {
+        sl_link.SlLink.SystemCacheClearResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public sl_link.SlLink.SystemCacheClearResponse buildPartial() {
+        sl_link.SlLink.SystemCacheClearResponse result = new sl_link.SlLink.SystemCacheClearResponse(this);
+        result.result_ = result_;
+        result.message_ = message_;
+        result.memoryCacheCleared_ = memoryCacheCleared_;
+        result.temporaryFilesCleared_ = temporaryFilesCleared_;
+        result.temporaryBytesReleased_ = temporaryBytesReleased_;
+        result.logFilesCleared_ = logFilesCleared_;
+        result.logBytesReleased_ = logBytesReleased_;
+        result.failedItems_ = failedItems_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof sl_link.SlLink.SystemCacheClearResponse) {
+          return mergeFrom((sl_link.SlLink.SystemCacheClearResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(sl_link.SlLink.SystemCacheClearResponse other) {
+        if (other == sl_link.SlLink.SystemCacheClearResponse.getDefaultInstance()) return this;
+        if (other.result_ != 0) {
+          setResultValue(other.getResultValue());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          onChanged();
+        }
+        if (other.getMemoryCacheCleared() != false) {
+          setMemoryCacheCleared(other.getMemoryCacheCleared());
+        }
+        if (other.getTemporaryFilesCleared() != 0) {
+          setTemporaryFilesCleared(other.getTemporaryFilesCleared());
+        }
+        if (other.getTemporaryBytesReleased() != 0L) {
+          setTemporaryBytesReleased(other.getTemporaryBytesReleased());
+        }
+        if (other.getLogFilesCleared() != 0) {
+          setLogFilesCleared(other.getLogFilesCleared());
+        }
+        if (other.getLogBytesReleased() != 0L) {
+          setLogBytesReleased(other.getLogBytesReleased());
+        }
+        if (other.getFailedItems() != 0) {
+          setFailedItems(other.getFailedItems());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        sl_link.SlLink.SystemCacheClearResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (sl_link.SlLink.SystemCacheClearResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private int result_ = 0;
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public int getResultValue() {
+        return result_;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResultValue(int value) {
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public sl_link.SlLink.ResultCode getResult() {
+        @SuppressWarnings("deprecation")
+        sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.valueOf(result_);
+        return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        result_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 2;</code>
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        message_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder clearMessage() {
+        
+        message_ = getDefaultInstance().getMessage();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        message_ = value;
+        onChanged();
+        return this;
+      }
+
+      private boolean memoryCacheCleared_ ;
+      /**
+       * <code>bool memory_cache_cleared = 3;</code>
+       */
+      public boolean getMemoryCacheCleared() {
+        return memoryCacheCleared_;
+      }
+      /**
+       * <code>bool memory_cache_cleared = 3;</code>
+       */
+      public Builder setMemoryCacheCleared(boolean value) {
+        
+        memoryCacheCleared_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool memory_cache_cleared = 3;</code>
+       */
+      public Builder clearMemoryCacheCleared() {
+        
+        memoryCacheCleared_ = false;
+        onChanged();
+        return this;
+      }
+
+      private int temporaryFilesCleared_ ;
+      /**
+       * <code>uint32 temporary_files_cleared = 4;</code>
+       */
+      public int getTemporaryFilesCleared() {
+        return temporaryFilesCleared_;
+      }
+      /**
+       * <code>uint32 temporary_files_cleared = 4;</code>
+       */
+      public Builder setTemporaryFilesCleared(int value) {
+        
+        temporaryFilesCleared_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 temporary_files_cleared = 4;</code>
+       */
+      public Builder clearTemporaryFilesCleared() {
+        
+        temporaryFilesCleared_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long temporaryBytesReleased_ ;
+      /**
+       * <code>uint64 temporary_bytes_released = 5;</code>
+       */
+      public long getTemporaryBytesReleased() {
+        return temporaryBytesReleased_;
+      }
+      /**
+       * <code>uint64 temporary_bytes_released = 5;</code>
+       */
+      public Builder setTemporaryBytesReleased(long value) {
+        
+        temporaryBytesReleased_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 temporary_bytes_released = 5;</code>
+       */
+      public Builder clearTemporaryBytesReleased() {
+        
+        temporaryBytesReleased_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int logFilesCleared_ ;
+      /**
+       * <code>uint32 log_files_cleared = 6;</code>
+       */
+      public int getLogFilesCleared() {
+        return logFilesCleared_;
+      }
+      /**
+       * <code>uint32 log_files_cleared = 6;</code>
+       */
+      public Builder setLogFilesCleared(int value) {
+        
+        logFilesCleared_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 log_files_cleared = 6;</code>
+       */
+      public Builder clearLogFilesCleared() {
+        
+        logFilesCleared_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long logBytesReleased_ ;
+      /**
+       * <code>uint64 log_bytes_released = 7;</code>
+       */
+      public long getLogBytesReleased() {
+        return logBytesReleased_;
+      }
+      /**
+       * <code>uint64 log_bytes_released = 7;</code>
+       */
+      public Builder setLogBytesReleased(long value) {
+        
+        logBytesReleased_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 log_bytes_released = 7;</code>
+       */
+      public Builder clearLogBytesReleased() {
+        
+        logBytesReleased_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int failedItems_ ;
+      /**
+       * <code>uint32 failed_items = 8;</code>
+       */
+      public int getFailedItems() {
+        return failedItems_;
+      }
+      /**
+       * <code>uint32 failed_items = 8;</code>
+       */
+      public Builder setFailedItems(int value) {
+        
+        failedItems_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 failed_items = 8;</code>
+       */
+      public Builder clearFailedItems() {
+        
+        failedItems_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sl_link.SystemCacheClearResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:sl_link.SystemCacheClearResponse)
+    private static final sl_link.SlLink.SystemCacheClearResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new sl_link.SlLink.SystemCacheClearResponse();
+    }
+
+    public static sl_link.SlLink.SystemCacheClearResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SystemCacheClearResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SystemCacheClearResponse>() {
+      @java.lang.Override
+      public SystemCacheClearResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new SystemCacheClearResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<SystemCacheClearResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SystemCacheClearResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public sl_link.SlLink.SystemCacheClearResponse getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -91793,6 +95284,16 @@ public final class SlLink {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sl_link_TaskExecutionHistoryChunk_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskExecutionDeleteRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskExecutionDeleteRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_TaskExecutionDeleteResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_TaskExecutionDeleteResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sl_link_TaskTrajectoryRequest_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -91817,6 +95318,16 @@ public final class SlLink {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sl_link_LiveMapCacheClearResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_SystemCacheClearRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_SystemCacheClearRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sl_link_SystemCacheClearResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sl_link_SystemCacheClearResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sl_link_RadarMapCacheClearRequest_descriptor;
   private static final 
@@ -92222,203 +95733,222 @@ public final class SlLink {
       "nk.ResultCode\022\017\n\007message\030\002 \001(\t\022\023\n\013chunk_" +
       "index\030\003 \001(\r\022\024\n\014total_chunks\030\004 \001(\r\022\032\n\022tot" +
       "al_record_count\030\005 \001(\r\022\014\n\004data\030\006 \001(\014\022\022\n\ns" +
-      "tart_time\030\007 \001(\004\022\020\n\010end_time\030\010 \001(\004\"\272\001\n\025Ta" +
-      "skTrajectoryRequest\022\024\n\014execution_id\030\001 \001(" +
-      "\t\022\017\n\007task_id\030\002 \001(\t\022\022\n\nstart_time\030\003 \001(\004\022\020" +
-      "\n\010end_time\030\004 \001(\004\022\023\n\013start_index\030\005 \001(\r\022\022\n" +
-      "\nmax_points\030\006 \001(\r\022\023\n\013sample_step\030\007 \001(\r\022\026" +
-      "\n\016max_chunk_size\030\010 \001(\r\"\221\002\n\023TaskTrajector" +
-      "yPoint\022\r\n\005index\030\001 \001(\r\022\021\n\toffset_ms\030\002 \001(\r" +
-      "\022\014\n\004x_mm\030\003 \001(\021\022\014\n\004y_mm\030\004 \001(\021\022\024\n\014heading_" +
-      "mdeg\030\005 \001(\021\022\031\n\021linear_speed_mmps\030\006 \001(\021\022\034\n" +
-      "\024angular_speed_mradps\030\007 \001(\021\022\026\n\016disc_spee" +
-      "d_rpm\030\010 \001(\r\022\027\n\017speed_available\030\t \001(\010\022\024\n\014" +
-      "disc_enabled\030\n \001(\010\022&\n\ntask_state\030\013 \001(\0162\022" +
-      ".sl_link.TaskState\"\243\007\n\023TaskTrajectoryChu" +
-      "nk\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022" +
-      "\017\n\007message\030\002 \001(\t\022\024\n\014execution_id\030\003 \001(\t\022\023" +
-      "\n\013chunk_index\030\004 \001(\r\022\024\n\014total_chunks\030\005 \001(" +
-      "\r\022\031\n\021total_point_count\030\006 \001(\r\022\034\n\024returned" +
-      "_point_count\030\007 \001(\r\022\023\n\013start_index\030\010 \001(\r\022" +
-      "\022\n\nnext_index\030\t \001(\r\022\020\n\010has_more\030\n \001(\010\022\025\n" +
-      "\rstarted_at_ms\030\013 \001(\004\022,\n\006points\030\014 \003(\0132\034.s" +
-      "l_link.TaskTrajectoryPoint\022\017\n\007task_id\030\r " +
-      "\001(\t\022\016\n\006map_id\030\016 \001(\t\022\022\n\nstart_time\030\017 \001(\004\022" +
-      "\020\n\010end_time\030\020 \001(\004\022\023\n\013sample_step\030\021 \001(\r\022\025" +
-      "\n\rmap_available\030\022 \001(\010\022\023\n\013map_message\030\023 \001" +
-      "(\t\022\023\n\013map_version\030\024 \001(\r\022\030\n\020map_source_wi" +
-      "dth\030\025 \001(\r\022\031\n\021map_source_height\030\026 \001(\r\022\026\n\016" +
-      "map_resolution\030\027 \001(\002\022#\n\nmap_origin\030\030 \001(\013" +
-      "2\017.sl_link.Pose2D\022\024\n\014map_frame_id\030\031 \001(\t\022" +
-      "\030\n\020map_image_format\030\032 \001(\t\022\027\n\017map_image_w" +
-      "idth\030\033 \001(\r\022\030\n\020map_image_height\030\034 \001(\r\022\033\n\023" +
-      "map_preview_scale_x\030\035 \001(\002\022\033\n\023map_preview" +
-      "_scale_y\030\036 \001(\002\022\026\n\016map_image_data\030\037 \001(\014\022\035" +
-      "\n\025map_image_chunk_index\030  \001(\r\022\036\n\026map_ima" +
-      "ge_total_chunks\030! \001(\r\022\031\n\021alignment_yaw_d" +
-      "eg\030\" \001(\002\022\030\n\020app_rotation_deg\030# \001(\002\022$\n\034ro" +
-      "tation_alignment_delta_deg\030$ \001(\002\"\032\n\030Live" +
-      "MapCacheClearRequest\"Q\n\031LiveMapCacheClea" +
-      "rResponse\022#\n\006result\030\001 \001(\0162\023.sl_link.Resu" +
-      "ltCode\022\017\n\007message\030\002 \001(\t\"\033\n\031RadarMapCache" +
-      "ClearRequest\"R\n\032RadarMapCacheClearRespon" +
-      "se\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022" +
-      "\017\n\007message\030\002 \001(\t\"\032\n\030RadarSystemStatusReq" +
-      "uest\"\212\001\n\031RadarSystemStatusResponse\022#\n\006re" +
-      "sult\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007messa" +
-      "ge\030\002 \001(\t\022\021\n\tavailable\030\003 \001(\010\022\016\n\006status\030\004 " +
-      "\001(\t\022\024\n\014timestamp_ns\030\005 \001(\004\"\025\n\023RadarMapSyn" +
-      "cRequest\"Z\n\024RadarMapSyncResponse\022#\n\006resu" +
-      "lt\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007message" +
-      "\030\002 \001(\t\022\014\n\004sent\030\003 \001(\010\"\034\n\032RadarRelocalizat" +
-      "ionRequest\"u\n\033RadarRelocalizationRespons" +
+      "tart_time\030\007 \001(\004\022\020\n\010end_time\030\010 \001(\004\"2\n\032Tas" +
+      "kExecutionDeleteRequest\022\024\n\014execution_id\030" +
+      "\001 \001(\t\"\274\001\n\033TaskExecutionDeleteResponse\022#\n" +
+      "\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007me" +
+      "ssage\030\002 \001(\t\022\024\n\014execution_id\030\003 \001(\t\022\017\n\007tas" +
+      "k_id\030\004 \001(\t\022\016\n\006map_id\030\005 \001(\t\022\017\n\007deleted\030\006 " +
+      "\001(\010\022\037\n\027execution_files_deleted\030\007 \001(\010\"\272\001\n" +
+      "\025TaskTrajectoryRequest\022\024\n\014execution_id\030\001" +
+      " \001(\t\022\017\n\007task_id\030\002 \001(\t\022\022\n\nstart_time\030\003 \001(" +
+      "\004\022\020\n\010end_time\030\004 \001(\004\022\023\n\013start_index\030\005 \001(\r" +
+      "\022\022\n\nmax_points\030\006 \001(\r\022\023\n\013sample_step\030\007 \001(" +
+      "\r\022\026\n\016max_chunk_size\030\010 \001(\r\"\221\002\n\023TaskTrajec" +
+      "toryPoint\022\r\n\005index\030\001 \001(\r\022\021\n\toffset_ms\030\002 " +
+      "\001(\r\022\014\n\004x_mm\030\003 \001(\021\022\014\n\004y_mm\030\004 \001(\021\022\024\n\014headi" +
+      "ng_mdeg\030\005 \001(\021\022\031\n\021linear_speed_mmps\030\006 \001(\021" +
+      "\022\034\n\024angular_speed_mradps\030\007 \001(\021\022\026\n\016disc_s" +
+      "peed_rpm\030\010 \001(\r\022\027\n\017speed_available\030\t \001(\010\022" +
+      "\024\n\014disc_enabled\030\n \001(\010\022&\n\ntask_state\030\013 \001(" +
+      "\0162\022.sl_link.TaskState\"\243\007\n\023TaskTrajectory" +
+      "Chunk\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCo" +
+      "de\022\017\n\007message\030\002 \001(\t\022\024\n\014execution_id\030\003 \001(" +
+      "\t\022\023\n\013chunk_index\030\004 \001(\r\022\024\n\014total_chunks\030\005" +
+      " \001(\r\022\031\n\021total_point_count\030\006 \001(\r\022\034\n\024retur" +
+      "ned_point_count\030\007 \001(\r\022\023\n\013start_index\030\010 \001" +
+      "(\r\022\022\n\nnext_index\030\t \001(\r\022\020\n\010has_more\030\n \001(\010" +
+      "\022\025\n\rstarted_at_ms\030\013 \001(\004\022,\n\006points\030\014 \003(\0132" +
+      "\034.sl_link.TaskTrajectoryPoint\022\017\n\007task_id" +
+      "\030\r \001(\t\022\016\n\006map_id\030\016 \001(\t\022\022\n\nstart_time\030\017 \001" +
+      "(\004\022\020\n\010end_time\030\020 \001(\004\022\023\n\013sample_step\030\021 \001(" +
+      "\r\022\025\n\rmap_available\030\022 \001(\010\022\023\n\013map_message\030" +
+      "\023 \001(\t\022\023\n\013map_version\030\024 \001(\r\022\030\n\020map_source" +
+      "_width\030\025 \001(\r\022\031\n\021map_source_height\030\026 \001(\r\022" +
+      "\026\n\016map_resolution\030\027 \001(\002\022#\n\nmap_origin\030\030 " +
+      "\001(\0132\017.sl_link.Pose2D\022\024\n\014map_frame_id\030\031 \001" +
+      "(\t\022\030\n\020map_image_format\030\032 \001(\t\022\027\n\017map_imag" +
+      "e_width\030\033 \001(\r\022\030\n\020map_image_height\030\034 \001(\r\022" +
+      "\033\n\023map_preview_scale_x\030\035 \001(\002\022\033\n\023map_prev" +
+      "iew_scale_y\030\036 \001(\002\022\026\n\016map_image_data\030\037 \001(" +
+      "\014\022\035\n\025map_image_chunk_index\030  \001(\r\022\036\n\026map_" +
+      "image_total_chunks\030! \001(\r\022\031\n\021alignment_ya" +
+      "w_deg\030\" \001(\002\022\030\n\020app_rotation_deg\030# \001(\002\022$\n" +
+      "\034rotation_alignment_delta_deg\030$ \001(\002\"\032\n\030L" +
+      "iveMapCacheClearRequest\"Q\n\031LiveMapCacheC" +
+      "learResponse\022#\n\006result\030\001 \001(\0162\023.sl_link.R" +
+      "esultCode\022\017\n\007message\030\002 \001(\t\"h\n\027SystemCach" +
+      "eClearRequest\022\032\n\022clear_memory_cache\030\001 \001(" +
+      "\010\022\035\n\025clear_temporary_files\030\002 \001(\010\022\022\n\nclea" +
+      "r_logs\030\003 \001(\010\"\376\001\n\030SystemCacheClearRespons" +
       "e\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017" +
-      "\n\007message\030\002 \001(\t\022\020\n\010accepted\030\003 \001(\010\022\016\n\006sta" +
-      "tus\030\004 \001(\t\"\"\n RadarRelocalizationStatusRe" +
-      "quest\"\361\001\n!RadarRelocalizationStatusRespo" +
-      "nse\022\022\n\nraw_status\030\005 \001(\t\022\024\n\014timestamp_ns\030" +
-      "\n \001(\004J\004\010\001\020\002J\004\010\002\020\003J\004\010\003\020\004J\004\010\004\020\005J\004\010\006\020\007J\004\010\007\020" +
-      "\010J\004\010\010\020\tJ\004\010\t\020\nR\006resultR\007messageR\tavailabl" +
-      "eR\006statusR\rsystem_statusR\016odom_available" +
-      "R\025odom_linear_speed_mpsR\030odom_angular_sp" +
-      "eed_radps\"<\n\017DiscLiftControl\022)\n\007command\030" +
-      "\001 \001(\0162\030.sl_link.DiscLiftCommand\"\"\n\017Light" +
-      "ingControl\022\017\n\007enabled\030\001 \001(\010\"&\n\023ChassisPo" +
-      "werControl\022\017\n\007enabled\030\001 \001(\010\"1\n\013DiscContr" +
-      "ol\022\017\n\007enabled\030\001 \001(\010\022\021\n\tspeed_rpm\030\002 \001(\r\"\'" +
-      "\n\024EmergencyStopControl\022\017\n\007enabled\030\001 \001(\010\"" +
-      "\260\001\n\022ManualDriveControl\022,\n\006motion\030\001 \001(\0162\034" +
-      ".sl_link.ManualMotionCommand\022\023\n\013speed_ra" +
-      "tio\030\002 \001(\002\022\020\n\010remote_x\030\003 \001(\002\022\020\n\010remote_y\030" +
-      "\004 \001(\002\022\025\n\rmax_speed_mps\030\005 \001(\002\022\034\n\024max_turn" +
-      "_speed_ratio\030\006 \001(\002\"\313\002\n\016ControlCommand\022-\n" +
-      "\tdisc_lift\030\001 \001(\0132\030.sl_link.DiscLiftContr" +
-      "olH\000\022,\n\010lighting\030\002 \001(\0132\030.sl_link.Lightin" +
-      "gControlH\000\0223\n\014manual_drive\030\003 \001(\0132\033.sl_li" +
-      "nk.ManualDriveControlH\000\0225\n\rchassis_power" +
-      "\030\004 \001(\0132\034.sl_link.ChassisPowerControlH\000\022," +
-      "\n\014disc_control\030\005 \001(\0132\024.sl_link.DiscContr" +
-      "olH\000\0227\n\016emergency_stop\030\006 \001(\0132\035.sl_link.E" +
-      "mergencyStopControlH\000B\t\n\007command\"\200\001\n\026Con" +
-      "trolCommandResponse\022#\n\006result\030\001 \001(\0162\023.sl" +
-      "_link.ResultCode\022\017\n\007message\030\002 \001(\t\0220\n\017app" +
-      "lied_command\030\003 \001(\0132\027.sl_link.ControlComm" +
-      "and*\232\022\n\tMessageId\022\022\n\016MSG_ID_UNKNOWN\020\000\022\027\n" +
-      "\022MSG_ID_WIFI_CONFIG\020\201\004\022\036\n\031MSG_ID_WIFI_ST" +
-      "ATUS_REPORT\020\202\004\022!\n\034MSG_ID_SETTINGS_READ_R" +
-      "EQUEST\020\203\004\022\"\n\035MSG_ID_SETTINGS_READ_RESPON" +
-      "SE\020\204\004\022\"\n\035MSG_ID_SETTINGS_WRITE_REQUEST\020\205" +
-      "\004\022#\n\036MSG_ID_SETTINGS_WRITE_RESPONSE\020\206\004\022 " +
-      "\n\033MSG_ID_DEVICE_STATUS_REPORT\020\201\006\022 \n\033MSG_" +
-      "ID_CAMERA_FRAME_REQUEST\020\202\006\022\036\n\031MSG_ID_CAM" +
-      "ERA_FRAME_CHUNK\020\203\006\022\027\n\022MSG_ID_MAP_REQUEST" +
-      "\020\204\006\022\025\n\020MSG_ID_MAP_CHUNK\020\205\006\022\033\n\026MSG_ID_CON" +
-      "TROL_COMMAND\020\201\010\022$\n\037MSG_ID_CONTROL_COMMAN" +
-      "D_RESPONSE\020\202\010\022\027\n\022MSG_ID_TASK_CONFIG\020\200\n\022 " +
-      "\n\033MSG_ID_TASK_CONFIG_RESPONSE\020\201\n\022\030\n\023MSG_",
-      "ID_TASK_COMMAND\020\202\n\022!\n\034MSG_ID_TASK_COMMAN" +
-      "D_RESPONSE\020\203\n\022\036\n\031MSG_ID_TASK_STATUS_REPO" +
-      "RT\020\204\n\022#\n\036MSG_ID_PATH_POINT_PLAN_REQUEST\020" +
-      "\205\n\022$\n\037MSG_ID_PATH_POINT_PLAN_RESPONSE\020\206\n" +
-      "\022\037\n\032MSG_ID_MAP_PREVIEW_REQUEST\020\207\n\022 \n\033MSG" +
-      "_ID_MAP_PREVIEW_RESPONSE\020\210\n\022\034\n\027MSG_ID_MA" +
-      "P_EDIT_COMMAND\020\211\n\022\035\n\030MSG_ID_MAP_EDIT_RES" +
-      "PONSE\020\212\n\022\"\n\035MSG_ID_MAP_EDIT_STATUS_REPOR" +
-      "T\020\213\n\022%\n MSG_ID_VIDEO_STREAM_INFO_REQUEST" +
-      "\020\214\n\022&\n!MSG_ID_VIDEO_STREAM_INFO_RESPONSE" +
-      "\020\215\n\022\035\n\030MSG_ID_PATH_PLAN_REQUEST\020\216\n\022\036\n\031MS" +
-      "G_ID_PATH_PLAN_RESPONSE\020\217\n\022\034\n\027MSG_ID_MAP" +
-      "_SYNC_REQUEST\020\220\n\022\035\n\030MSG_ID_MAP_SYNC_RESP" +
-      "ONSE\020\221\n\022\034\n\027MSG_ID_MAP_MODE_REQUEST\020\222\n\022\035\n" +
-      "\030MSG_ID_MAP_MODE_RESPONSE\020\223\n\022\037\n\032MSG_ID_M" +
-      "AP_CATALOG_REQUEST\020\224\n\022 \n\033MSG_ID_MAP_CATA" +
-      "LOG_RESPONSE\020\225\n\022\036\n\031MSG_ID_MAP_DELETE_REQ" +
-      "UEST\020\226\n\022\037\n\032MSG_ID_MAP_DELETE_RESPONSE\020\227\n" +
-      "\022\034\n\027MSG_ID_MAP_SAVE_REQUEST\020\230\n\022\035\n\030MSG_ID" +
-      "_MAP_SAVE_RESPONSE\020\231\n\022\037\n\032MSG_ID_MAP_METR" +
-      "ICS_REQUEST\020\232\n\022 \n\033MSG_ID_MAP_METRICS_RES" +
-      "PONSE\020\233\n\022\037\n\032MSG_ID_TASK_RESULT_REQUEST\020\234" +
-      "\n\022 \n\033MSG_ID_TASK_RESULT_RESPONSE\020\235\n\022(\n#M" +
-      "SG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST\020\236\n\022)\n" +
-      "$MSG_ID_LIVE_MAP_CACHE_CLEAR_RESPONSE\020\237\n" +
-      "\022)\n$MSG_ID_RADAR_MAP_CACHE_CLEAR_REQUEST" +
-      "\020\240\n\022*\n%MSG_ID_RADAR_MAP_CACHE_CLEAR_RESP" +
-      "ONSE\020\241\n\022\'\n\"MSG_ID_MAP_IMPORT_TO_RADAR_RE" +
-      "QUEST\020\242\n\022(\n#MSG_ID_MAP_IMPORT_TO_RADAR_R" +
-      "ESPONSE\020\243\n\022!\n\034MSG_ID_MAP_ALIGNMENT_REQUE" +
-      "ST\020\244\n\022\"\n\035MSG_ID_MAP_ALIGNMENT_RESPONSE\020\245" +
-      "\n\022\'\n\"MSG_ID_RADAR_SYSTEM_STATUS_REQUEST\020" +
-      "\246\n\022(\n#MSG_ID_RADAR_SYSTEM_STATUS_RESPONS" +
-      "E\020\247\n\022\"\n\035MSG_ID_RADAR_MAP_SYNC_REQUEST\020\250\n" +
-      "\022#\n\036MSG_ID_RADAR_MAP_SYNC_RESPONSE\020\251\n\022(\n" +
-      "#MSG_ID_RADAR_RELOCALIZATION_REQUEST\020\252\n\022" +
-      ")\n$MSG_ID_RADAR_RELOCALIZATION_RESPONSE\020" +
-      "\253\n\022/\n*MSG_ID_RADAR_RELOCALIZATION_STATUS" +
-      "_REQUEST\020\254\n\0220\n+MSG_ID_RADAR_RELOCALIZATI" +
-      "ON_STATUS_RESPONSE\020\255\n\022$\n\037MSG_ID_MAP_REGI" +
-      "ON_POINT_REQUEST\020\256\n\022%\n MSG_ID_MAP_REGION" +
-      "_POINT_RESPONSE\020\257\n\022*\n%MSG_ID_TASK_EXECUT" +
-      "ION_HISTORY_REQUEST\020\260\n\022(\n#MSG_ID_TASK_EX" +
-      "ECUTION_HISTORY_CHUNK\020\261\n\022#\n\036MSG_ID_TASK_" +
-      "TRAJECTORY_REQUEST\020\262\n\022!\n\034MSG_ID_TASK_TRA" +
-      "JECTORY_CHUNK\020\263\n*X\n\010DeviceId\022\023\n\017DEVICE_R" +
-      "ESERVED\020\000\022\016\n\nDEVICE_APP\020\001\022\020\n\014DEVICE_LOWE" +
-      "R\020\020\022\025\n\020DEVICE_BROADCAST\020\377\001*v\n\013ComponentI" +
-      "d\022\017\n\013COMP_SYSTEM\020\000\022\r\n\tCOMP_WIFI\020\004\022\021\n\rCOM" +
-      "P_SETTINGS\020\005\022\016\n\nCOMP_MEDIA\020\006\022\020\n\014COMP_CON" +
-      "TROL\020\007\022\022\n\016COMP_SCHEDULER\020\010*v\n\nResultCode" +
-      "\022\022\n\016RESULT_SUCCESS\020\000\022\030\n\024RESULT_INVALID_P" +
-      "ARAM\020\001\022\026\n\022RESULT_UNSUPPORTED\020\002\022\017\n\013RESULT" +
-      "_BUSY\020\003\022\021\n\rRESULT_FAILED\020\004*;\n\014SystemStat" +
-      "us\022\025\n\021SYS_STATUS_NORMAL\020\000\022\024\n\020SYS_STATUS_" +
-      "ERROR\020\001*Q\n\nWifiResult\022\020\n\014WIFI_PENDING\020\000\022" +
-      "\020\n\014WIFI_SUCCESS\020\001\022\r\n\tWIFI_FAIL\020\002\022\020\n\014WIFI" +
-      "_TIMEOUT\020\003*s\n\010WorkMode\022\025\n\021WORK_MODE_UNKN" +
-      "OWN\020\000\022\024\n\020WORK_MODE_MANUAL\020\001\022\022\n\016WORK_MODE" +
-      "_AUTO\020\002\022\022\n\016WORK_MODE_EDGE\020\003\022\022\n\016WORK_MODE" +
-      "_DOCK\020\004*z\n\rDiscLiftState\022\033\n\027DISC_LIFT_ST" +
-      "ATE_UNKNOWN\020\000\022\026\n\022DISC_LIFT_STATE_UP\020\001\022\030\n" +
-      "\024DISC_LIFT_STATE_DOWN\020\002\022\032\n\026DISC_LIFT_STA" +
-      "TE_MOVING\020\003*W\n\017DiscLiftCommand\022\026\n\022DISC_L" +
-      "IFT_CMD_STOP\020\000\022\024\n\020DISC_LIFT_CMD_UP\020\001\022\026\n\022" +
-      "DISC_LIFT_CMD_DOWN\020\002*\350\001\n\023ManualMotionCom" +
-      "mand\022\026\n\022MANUAL_MOTION_STOP\020\000\022\031\n\025MANUAL_M" +
-      "OTION_FORWARD\020\001\022\032\n\026MANUAL_MOTION_BACKWAR" +
-      "D\020\002\022\036\n\032MANUAL_MOTION_FORWARD_LEFT\020\003\022\037\n\033M" +
-      "ANUAL_MOTION_FORWARD_RIGHT\020\004\022\037\n\033MANUAL_M" +
-      "OTION_BACKWARD_LEFT\020\005\022 \n\034MANUAL_MOTION_B" +
-      "ACKWARD_RIGHT\020\006*;\n\013CameraCodec\022\025\n\021CAMERA" +
-      "_CODEC_JPEG\020\000\022\025\n\021CAMERA_CODEC_H264\020\001*[\n\013" +
-      "MapEncoding\022\037\n\033MAP_ENCODING_OCCUPANCY_GR" +
-      "ID\020\000\022\024\n\020MAP_ENCODING_PNG\020\001\022\025\n\021MAP_ENCODI" +
-      "NG_JSON\020\002*\202\001\n\nRegionType\022\027\n\023REGION_TYPE_" +
-      "UNKNOWN\020\000\022\024\n\020REGION_TYPE_WORK\020\001\022\030\n\024REGIO" +
-      "N_TYPE_OBSTACLE\020\002\022\025\n\021REGION_TYPE_ERASE\020\003" +
-      "\022\024\n\020REGION_TYPE_CROP\020\004*\306\001\n\tTaskState\022\023\n\017" +
-      "TASK_STATE_IDLE\020\000\022\024\n\020TASK_STATE_READY\020\001\022" +
-      "\027\n\023TASK_STATE_PLANNING\020\002\022\026\n\022TASK_STATE_R" +
-      "UNNING\020\003\022\025\n\021TASK_STATE_PAUSED\020\004\022\030\n\024TASK_" +
-      "STATE_COMPLETED\020\005\022\026\n\022TASK_STATE_STOPPED\020" +
-      "\006\022\024\n\020TASK_STATE_ERROR\020\007*a\n\017TaskCommandTy" +
-      "pe\022\022\n\016TASK_CMD_START\020\000\022\022\n\016TASK_CMD_PAUSE" +
-      "\020\001\022\023\n\017TASK_CMD_RESUME\020\002\022\021\n\rTASK_CMD_STOP" +
-      "\020\003*\337\002\n\020MapEditOperation\022\027\n\023MAP_EDIT_OP_U" +
-      "NKNOWN\020\000\022\"\n\036MAP_EDIT_OP_UPSERT_WORK_REGI" +
-      "ON\020\001\022&\n\"MAP_EDIT_OP_UPSERT_OBSTACLE_REGI" +
-      "ON\020\002\022\035\n\031MAP_EDIT_OP_DELETE_REGION\020\003\022\032\n\026M" +
-      "AP_EDIT_OP_PAINT_FREE\020\004\022\036\n\032MAP_EDIT_OP_P" +
-      "AINT_OCCUPIED\020\005\022\035\n\031MAP_EDIT_OP_PAINT_UNK" +
-      "NOWN\020\006\022#\n\037MAP_EDIT_OP_CLEAR_OVERLAY_PATC" +
-      "H\020\007\022#\n\037MAP_EDIT_OP_UPSERT_ERASE_REGION\020\010" +
-      "\022\"\n\036MAP_EDIT_OP_UPSERT_CROP_REGION\020\t*s\n\020" +
-      "MapSyncOperation\022\027\n\023MAP_SYNC_OP_UNKNOWN\020" +
-      "\000\022$\n MAP_SYNC_OP_DOWNLOAD_FROM_AURORA\020\001\022" +
-      " \n\034MAP_SYNC_OP_UPLOAD_TO_AURORA\020\002*T\n\013Map" +
-      "ModeType\022\024\n\020MAP_MODE_UNKNOWN\020\000\022\024\n\020MAP_MO" +
-      "DE_MAPPING\020\001\022\031\n\025MAP_MODE_LOCALIZATION\020\002:" +
-      "-\n\004unit\022\035.google.protobuf.FieldOptions\030\321" +
-      "\206\003 \001(\t:.\n\005scale\022\035.google.protobuf.FieldO" +
-      "ptions\030\322\206\003 \001(\001b\006proto3"
+      "\n\007message\030\002 \001(\t\022\034\n\024memory_cache_cleared\030" +
+      "\003 \001(\010\022\037\n\027temporary_files_cleared\030\004 \001(\r\022 " +
+      "\n\030temporary_bytes_released\030\005 \001(\004\022\031\n\021log_" +
+      "files_cleared\030\006 \001(\r\022\032\n\022log_bytes_release" +
+      "d\030\007 \001(\004\022\024\n\014failed_items\030\010 \001(\r\"\033\n\031RadarMa" +
+      "pCacheClearRequest\"R\n\032RadarMapCacheClear" +
+      "Response\022#\n\006result\030\001 \001(\0162\023.sl_link.Resul" +
+      "tCode\022\017\n\007message\030\002 \001(\t\"\032\n\030RadarSystemSta" +
+      "tusRequest\"\212\001\n\031RadarSystemStatusResponse" +
+      "\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n" +
+      "\007message\030\002 \001(\t\022\021\n\tavailable\030\003 \001(\010\022\016\n\006sta" +
+      "tus\030\004 \001(\t\022\024\n\014timestamp_ns\030\005 \001(\004\"\025\n\023Radar" +
+      "MapSyncRequest\"Z\n\024RadarMapSyncResponse\022#" +
+      "\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007m" +
+      "essage\030\002 \001(\t\022\014\n\004sent\030\003 \001(\010\"\034\n\032RadarReloc" +
+      "alizationRequest\"u\n\033RadarRelocalizationR" +
+      "esponse\022#\n\006result\030\001 \001(\0162\023.sl_link.Result" +
+      "Code\022\017\n\007message\030\002 \001(\t\022\020\n\010accepted\030\003 \001(\010\022" +
+      "\016\n\006status\030\004 \001(\t\"\"\n RadarRelocalizationSt" +
+      "atusRequest\"\361\001\n!RadarRelocalizationStatu" +
+      "sResponse\022\022\n\nraw_status\030\005 \001(\t\022\024\n\014timesta" +
+      "mp_ns\030\n \001(\004J\004\010\001\020\002J\004\010\002\020\003J\004\010\003\020\004J\004\010\004\020\005J\004\010\006\020" +
+      "\007J\004\010\007\020\010J\004\010\010\020\tJ\004\010\t\020\nR\006resultR\007messageR\tav" +
+      "ailableR\006statusR\rsystem_statusR\016odom_ava" +
+      "ilableR\025odom_linear_speed_mpsR\030odom_angu" +
+      "lar_speed_radps\"<\n\017DiscLiftControl\022)\n\007co" +
+      "mmand\030\001 \001(\0162\030.sl_link.DiscLiftCommand\"\"\n" +
+      "\017LightingControl\022\017\n\007enabled\030\001 \001(\010\"&\n\023Cha" +
+      "ssisPowerControl\022\017\n\007enabled\030\001 \001(\010\"1\n\013Dis" +
+      "cControl\022\017\n\007enabled\030\001 \001(\010\022\021\n\tspeed_rpm\030\002" +
+      " \001(\r\"\'\n\024EmergencyStopControl\022\017\n\007enabled\030" +
+      "\001 \001(\010\"\260\001\n\022ManualDriveControl\022,\n\006motion\030\001" +
+      " \001(\0162\034.sl_link.ManualMotionCommand\022\023\n\013sp" +
+      "eed_ratio\030\002 \001(\002\022\020\n\010remote_x\030\003 \001(\002\022\020\n\010rem" +
+      "ote_y\030\004 \001(\002\022\025\n\rmax_speed_mps\030\005 \001(\002\022\034\n\024ma" +
+      "x_turn_speed_ratio\030\006 \001(\002\"\313\002\n\016ControlComm" +
+      "and\022-\n\tdisc_lift\030\001 \001(\0132\030.sl_link.DiscLif" +
+      "tControlH\000\022,\n\010lighting\030\002 \001(\0132\030.sl_link.L" +
+      "ightingControlH\000\0223\n\014manual_drive\030\003 \001(\0132\033" +
+      ".sl_link.ManualDriveControlH\000\0225\n\rchassis" +
+      "_power\030\004 \001(\0132\034.sl_link.ChassisPowerContr" +
+      "olH\000\022,\n\014disc_control\030\005 \001(\0132\024.sl_link.Dis" +
+      "cControlH\000\0227\n\016emergency_stop\030\006 \001(\0132\035.sl_" +
+      "link.EmergencyStopControlH\000B\t\n\007command\"\200" +
+      "\001\n\026ControlCommandResponse\022#\n\006result\030\001 \001(",
+      "\0162\023.sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022" +
+      "0\n\017applied_command\030\003 \001(\0132\027.sl_link.Contr" +
+      "olCommand*\302\023\n\tMessageId\022\022\n\016MSG_ID_UNKNOW" +
+      "N\020\000\022\027\n\022MSG_ID_WIFI_CONFIG\020\201\004\022\036\n\031MSG_ID_W" +
+      "IFI_STATUS_REPORT\020\202\004\022!\n\034MSG_ID_SETTINGS_" +
+      "READ_REQUEST\020\203\004\022\"\n\035MSG_ID_SETTINGS_READ_" +
+      "RESPONSE\020\204\004\022\"\n\035MSG_ID_SETTINGS_WRITE_REQ" +
+      "UEST\020\205\004\022#\n\036MSG_ID_SETTINGS_WRITE_RESPONS" +
+      "E\020\206\004\022 \n\033MSG_ID_DEVICE_STATUS_REPORT\020\201\006\022 " +
+      "\n\033MSG_ID_CAMERA_FRAME_REQUEST\020\202\006\022\036\n\031MSG_" +
+      "ID_CAMERA_FRAME_CHUNK\020\203\006\022\027\n\022MSG_ID_MAP_R" +
+      "EQUEST\020\204\006\022\025\n\020MSG_ID_MAP_CHUNK\020\205\006\022\033\n\026MSG_" +
+      "ID_CONTROL_COMMAND\020\201\010\022$\n\037MSG_ID_CONTROL_" +
+      "COMMAND_RESPONSE\020\202\010\022\027\n\022MSG_ID_TASK_CONFI" +
+      "G\020\200\n\022 \n\033MSG_ID_TASK_CONFIG_RESPONSE\020\201\n\022\030" +
+      "\n\023MSG_ID_TASK_COMMAND\020\202\n\022!\n\034MSG_ID_TASK_" +
+      "COMMAND_RESPONSE\020\203\n\022\036\n\031MSG_ID_TASK_STATU" +
+      "S_REPORT\020\204\n\022#\n\036MSG_ID_PATH_POINT_PLAN_RE" +
+      "QUEST\020\205\n\022$\n\037MSG_ID_PATH_POINT_PLAN_RESPO" +
+      "NSE\020\206\n\022\037\n\032MSG_ID_MAP_PREVIEW_REQUEST\020\207\n\022" +
+      " \n\033MSG_ID_MAP_PREVIEW_RESPONSE\020\210\n\022\034\n\027MSG" +
+      "_ID_MAP_EDIT_COMMAND\020\211\n\022\035\n\030MSG_ID_MAP_ED" +
+      "IT_RESPONSE\020\212\n\022\"\n\035MSG_ID_MAP_EDIT_STATUS" +
+      "_REPORT\020\213\n\022%\n MSG_ID_VIDEO_STREAM_INFO_R" +
+      "EQUEST\020\214\n\022&\n!MSG_ID_VIDEO_STREAM_INFO_RE" +
+      "SPONSE\020\215\n\022\035\n\030MSG_ID_PATH_PLAN_REQUEST\020\216\n" +
+      "\022\036\n\031MSG_ID_PATH_PLAN_RESPONSE\020\217\n\022\034\n\027MSG_" +
+      "ID_MAP_SYNC_REQUEST\020\220\n\022\035\n\030MSG_ID_MAP_SYN" +
+      "C_RESPONSE\020\221\n\022\034\n\027MSG_ID_MAP_MODE_REQUEST" +
+      "\020\222\n\022\035\n\030MSG_ID_MAP_MODE_RESPONSE\020\223\n\022\037\n\032MS" +
+      "G_ID_MAP_CATALOG_REQUEST\020\224\n\022 \n\033MSG_ID_MA" +
+      "P_CATALOG_RESPONSE\020\225\n\022\036\n\031MSG_ID_MAP_DELE" +
+      "TE_REQUEST\020\226\n\022\037\n\032MSG_ID_MAP_DELETE_RESPO" +
+      "NSE\020\227\n\022\034\n\027MSG_ID_MAP_SAVE_REQUEST\020\230\n\022\035\n\030" +
+      "MSG_ID_MAP_SAVE_RESPONSE\020\231\n\022\037\n\032MSG_ID_MA" +
+      "P_METRICS_REQUEST\020\232\n\022 \n\033MSG_ID_MAP_METRI" +
+      "CS_RESPONSE\020\233\n\022\037\n\032MSG_ID_TASK_RESULT_REQ" +
+      "UEST\020\234\n\022 \n\033MSG_ID_TASK_RESULT_RESPONSE\020\235" +
+      "\n\022(\n#MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST" +
+      "\020\236\n\022)\n$MSG_ID_LIVE_MAP_CACHE_CLEAR_RESPO" +
+      "NSE\020\237\n\022)\n$MSG_ID_RADAR_MAP_CACHE_CLEAR_R" +
+      "EQUEST\020\240\n\022*\n%MSG_ID_RADAR_MAP_CACHE_CLEA" +
+      "R_RESPONSE\020\241\n\022\'\n\"MSG_ID_MAP_IMPORT_TO_RA" +
+      "DAR_REQUEST\020\242\n\022(\n#MSG_ID_MAP_IMPORT_TO_R" +
+      "ADAR_RESPONSE\020\243\n\022!\n\034MSG_ID_MAP_ALIGNMENT" +
+      "_REQUEST\020\244\n\022\"\n\035MSG_ID_MAP_ALIGNMENT_RESP" +
+      "ONSE\020\245\n\022\'\n\"MSG_ID_RADAR_SYSTEM_STATUS_RE" +
+      "QUEST\020\246\n\022(\n#MSG_ID_RADAR_SYSTEM_STATUS_R" +
+      "ESPONSE\020\247\n\022\"\n\035MSG_ID_RADAR_MAP_SYNC_REQU" +
+      "EST\020\250\n\022#\n\036MSG_ID_RADAR_MAP_SYNC_RESPONSE" +
+      "\020\251\n\022(\n#MSG_ID_RADAR_RELOCALIZATION_REQUE" +
+      "ST\020\252\n\022)\n$MSG_ID_RADAR_RELOCALIZATION_RES" +
+      "PONSE\020\253\n\022/\n*MSG_ID_RADAR_RELOCALIZATION_" +
+      "STATUS_REQUEST\020\254\n\0220\n+MSG_ID_RADAR_RELOCA" +
+      "LIZATION_STATUS_RESPONSE\020\255\n\022$\n\037MSG_ID_MA" +
+      "P_REGION_POINT_REQUEST\020\256\n\022%\n MSG_ID_MAP_" +
+      "REGION_POINT_RESPONSE\020\257\n\022*\n%MSG_ID_TASK_" +
+      "EXECUTION_HISTORY_REQUEST\020\260\n\022(\n#MSG_ID_T" +
+      "ASK_EXECUTION_HISTORY_CHUNK\020\261\n\022#\n\036MSG_ID" +
+      "_TASK_TRAJECTORY_REQUEST\020\262\n\022!\n\034MSG_ID_TA" +
+      "SK_TRAJECTORY_CHUNK\020\263\n\022)\n$MSG_ID_TASK_EX" +
+      "ECUTION_DELETE_REQUEST\020\264\n\022*\n%MSG_ID_TASK" +
+      "_EXECUTION_DELETE_RESPONSE\020\265\n\022&\n!MSG_ID_" +
+      "SYSTEM_CACHE_CLEAR_REQUEST\020\266\n\022\'\n\"MSG_ID_" +
+      "SYSTEM_CACHE_CLEAR_RESPONSE\020\267\n*X\n\010Device" +
+      "Id\022\023\n\017DEVICE_RESERVED\020\000\022\016\n\nDEVICE_APP\020\001\022" +
+      "\020\n\014DEVICE_LOWER\020\020\022\025\n\020DEVICE_BROADCAST\020\377\001" +
+      "*v\n\013ComponentId\022\017\n\013COMP_SYSTEM\020\000\022\r\n\tCOMP" +
+      "_WIFI\020\004\022\021\n\rCOMP_SETTINGS\020\005\022\016\n\nCOMP_MEDIA" +
+      "\020\006\022\020\n\014COMP_CONTROL\020\007\022\022\n\016COMP_SCHEDULER\020\010" +
+      "*v\n\nResultCode\022\022\n\016RESULT_SUCCESS\020\000\022\030\n\024RE" +
+      "SULT_INVALID_PARAM\020\001\022\026\n\022RESULT_UNSUPPORT" +
+      "ED\020\002\022\017\n\013RESULT_BUSY\020\003\022\021\n\rRESULT_FAILED\020\004" +
+      "*;\n\014SystemStatus\022\025\n\021SYS_STATUS_NORMAL\020\000\022" +
+      "\024\n\020SYS_STATUS_ERROR\020\001*Q\n\nWifiResult\022\020\n\014W" +
+      "IFI_PENDING\020\000\022\020\n\014WIFI_SUCCESS\020\001\022\r\n\tWIFI_" +
+      "FAIL\020\002\022\020\n\014WIFI_TIMEOUT\020\003*s\n\010WorkMode\022\025\n\021" +
+      "WORK_MODE_UNKNOWN\020\000\022\024\n\020WORK_MODE_MANUAL\020" +
+      "\001\022\022\n\016WORK_MODE_AUTO\020\002\022\022\n\016WORK_MODE_EDGE\020" +
+      "\003\022\022\n\016WORK_MODE_DOCK\020\004*z\n\rDiscLiftState\022\033" +
+      "\n\027DISC_LIFT_STATE_UNKNOWN\020\000\022\026\n\022DISC_LIFT" +
+      "_STATE_UP\020\001\022\030\n\024DISC_LIFT_STATE_DOWN\020\002\022\032\n" +
+      "\026DISC_LIFT_STATE_MOVING\020\003*W\n\017DiscLiftCom" +
+      "mand\022\026\n\022DISC_LIFT_CMD_STOP\020\000\022\024\n\020DISC_LIF" +
+      "T_CMD_UP\020\001\022\026\n\022DISC_LIFT_CMD_DOWN\020\002*\350\001\n\023M" +
+      "anualMotionCommand\022\026\n\022MANUAL_MOTION_STOP" +
+      "\020\000\022\031\n\025MANUAL_MOTION_FORWARD\020\001\022\032\n\026MANUAL_" +
+      "MOTION_BACKWARD\020\002\022\036\n\032MANUAL_MOTION_FORWA" +
+      "RD_LEFT\020\003\022\037\n\033MANUAL_MOTION_FORWARD_RIGHT" +
+      "\020\004\022\037\n\033MANUAL_MOTION_BACKWARD_LEFT\020\005\022 \n\034M" +
+      "ANUAL_MOTION_BACKWARD_RIGHT\020\006*;\n\013CameraC" +
+      "odec\022\025\n\021CAMERA_CODEC_JPEG\020\000\022\025\n\021CAMERA_CO" +
+      "DEC_H264\020\001*[\n\013MapEncoding\022\037\n\033MAP_ENCODIN" +
+      "G_OCCUPANCY_GRID\020\000\022\024\n\020MAP_ENCODING_PNG\020\001" +
+      "\022\025\n\021MAP_ENCODING_JSON\020\002*\202\001\n\nRegionType\022\027" +
+      "\n\023REGION_TYPE_UNKNOWN\020\000\022\024\n\020REGION_TYPE_W" +
+      "ORK\020\001\022\030\n\024REGION_TYPE_OBSTACLE\020\002\022\025\n\021REGIO" +
+      "N_TYPE_ERASE\020\003\022\024\n\020REGION_TYPE_CROP\020\004*\306\001\n" +
+      "\tTaskState\022\023\n\017TASK_STATE_IDLE\020\000\022\024\n\020TASK_" +
+      "STATE_READY\020\001\022\027\n\023TASK_STATE_PLANNING\020\002\022\026" +
+      "\n\022TASK_STATE_RUNNING\020\003\022\025\n\021TASK_STATE_PAU" +
+      "SED\020\004\022\030\n\024TASK_STATE_COMPLETED\020\005\022\026\n\022TASK_" +
+      "STATE_STOPPED\020\006\022\024\n\020TASK_STATE_ERROR\020\007*a\n" +
+      "\017TaskCommandType\022\022\n\016TASK_CMD_START\020\000\022\022\n\016" +
+      "TASK_CMD_PAUSE\020\001\022\023\n\017TASK_CMD_RESUME\020\002\022\021\n" +
+      "\rTASK_CMD_STOP\020\003*\337\002\n\020MapEditOperation\022\027\n" +
+      "\023MAP_EDIT_OP_UNKNOWN\020\000\022\"\n\036MAP_EDIT_OP_UP" +
+      "SERT_WORK_REGION\020\001\022&\n\"MAP_EDIT_OP_UPSERT" +
+      "_OBSTACLE_REGION\020\002\022\035\n\031MAP_EDIT_OP_DELETE" +
+      "_REGION\020\003\022\032\n\026MAP_EDIT_OP_PAINT_FREE\020\004\022\036\n" +
+      "\032MAP_EDIT_OP_PAINT_OCCUPIED\020\005\022\035\n\031MAP_EDI" +
+      "T_OP_PAINT_UNKNOWN\020\006\022#\n\037MAP_EDIT_OP_CLEA" +
+      "R_OVERLAY_PATCH\020\007\022#\n\037MAP_EDIT_OP_UPSERT_" +
+      "ERASE_REGION\020\010\022\"\n\036MAP_EDIT_OP_UPSERT_CRO" +
+      "P_REGION\020\t*s\n\020MapSyncOperation\022\027\n\023MAP_SY" +
+      "NC_OP_UNKNOWN\020\000\022$\n MAP_SYNC_OP_DOWNLOAD_" +
+      "FROM_AURORA\020\001\022 \n\034MAP_SYNC_OP_UPLOAD_TO_A" +
+      "URORA\020\002*T\n\013MapModeType\022\024\n\020MAP_MODE_UNKNO" +
+      "WN\020\000\022\024\n\020MAP_MODE_MAPPING\020\001\022\031\n\025MAP_MODE_L" +
+      "OCALIZATION\020\002:-\n\004unit\022\035.google.protobuf." +
+      "FieldOptions\030\321\206\003 \001(\t:.\n\005scale\022\035.google.p" +
+      "rotobuf.FieldOptions\030\322\206\003 \001(\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -92805,140 +96335,164 @@ public final class SlLink {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskExecutionHistoryChunk_descriptor,
         new java.lang.String[] { "Result", "Message", "ChunkIndex", "TotalChunks", "TotalRecordCount", "Data", "StartTime", "EndTime", });
-    internal_static_sl_link_TaskTrajectoryRequest_descriptor =
+    internal_static_sl_link_TaskExecutionDeleteRequest_descriptor =
       getDescriptor().getMessageTypes().get(62);
+    internal_static_sl_link_TaskExecutionDeleteRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskExecutionDeleteRequest_descriptor,
+        new java.lang.String[] { "ExecutionId", });
+    internal_static_sl_link_TaskExecutionDeleteResponse_descriptor =
+      getDescriptor().getMessageTypes().get(63);
+    internal_static_sl_link_TaskExecutionDeleteResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_TaskExecutionDeleteResponse_descriptor,
+        new java.lang.String[] { "Result", "Message", "ExecutionId", "TaskId", "MapId", "Deleted", "ExecutionFilesDeleted", });
+    internal_static_sl_link_TaskTrajectoryRequest_descriptor =
+      getDescriptor().getMessageTypes().get(64);
     internal_static_sl_link_TaskTrajectoryRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskTrajectoryRequest_descriptor,
         new java.lang.String[] { "ExecutionId", "TaskId", "StartTime", "EndTime", "StartIndex", "MaxPoints", "SampleStep", "MaxChunkSize", });
     internal_static_sl_link_TaskTrajectoryPoint_descriptor =
-      getDescriptor().getMessageTypes().get(63);
+      getDescriptor().getMessageTypes().get(65);
     internal_static_sl_link_TaskTrajectoryPoint_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskTrajectoryPoint_descriptor,
         new java.lang.String[] { "Index", "OffsetMs", "XMm", "YMm", "HeadingMdeg", "LinearSpeedMmps", "AngularSpeedMradps", "DiscSpeedRpm", "SpeedAvailable", "DiscEnabled", "TaskState", });
     internal_static_sl_link_TaskTrajectoryChunk_descriptor =
-      getDescriptor().getMessageTypes().get(64);
+      getDescriptor().getMessageTypes().get(66);
     internal_static_sl_link_TaskTrajectoryChunk_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_TaskTrajectoryChunk_descriptor,
         new java.lang.String[] { "Result", "Message", "ExecutionId", "ChunkIndex", "TotalChunks", "TotalPointCount", "ReturnedPointCount", "StartIndex", "NextIndex", "HasMore", "StartedAtMs", "Points", "TaskId", "MapId", "StartTime", "EndTime", "SampleStep", "MapAvailable", "MapMessage", "MapVersion", "MapSourceWidth", "MapSourceHeight", "MapResolution", "MapOrigin", "MapFrameId", "MapImageFormat", "MapImageWidth", "MapImageHeight", "MapPreviewScaleX", "MapPreviewScaleY", "MapImageData", "MapImageChunkIndex", "MapImageTotalChunks", "AlignmentYawDeg", "AppRotationDeg", "RotationAlignmentDeltaDeg", });
     internal_static_sl_link_LiveMapCacheClearRequest_descriptor =
-      getDescriptor().getMessageTypes().get(65);
+      getDescriptor().getMessageTypes().get(67);
     internal_static_sl_link_LiveMapCacheClearRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_LiveMapCacheClearRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_LiveMapCacheClearResponse_descriptor =
-      getDescriptor().getMessageTypes().get(66);
+      getDescriptor().getMessageTypes().get(68);
     internal_static_sl_link_LiveMapCacheClearResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_LiveMapCacheClearResponse_descriptor,
         new java.lang.String[] { "Result", "Message", });
+    internal_static_sl_link_SystemCacheClearRequest_descriptor =
+      getDescriptor().getMessageTypes().get(69);
+    internal_static_sl_link_SystemCacheClearRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_SystemCacheClearRequest_descriptor,
+        new java.lang.String[] { "ClearMemoryCache", "ClearTemporaryFiles", "ClearLogs", });
+    internal_static_sl_link_SystemCacheClearResponse_descriptor =
+      getDescriptor().getMessageTypes().get(70);
+    internal_static_sl_link_SystemCacheClearResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sl_link_SystemCacheClearResponse_descriptor,
+        new java.lang.String[] { "Result", "Message", "MemoryCacheCleared", "TemporaryFilesCleared", "TemporaryBytesReleased", "LogFilesCleared", "LogBytesReleased", "FailedItems", });
     internal_static_sl_link_RadarMapCacheClearRequest_descriptor =
-      getDescriptor().getMessageTypes().get(67);
+      getDescriptor().getMessageTypes().get(71);
     internal_static_sl_link_RadarMapCacheClearRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapCacheClearRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarMapCacheClearResponse_descriptor =
-      getDescriptor().getMessageTypes().get(68);
+      getDescriptor().getMessageTypes().get(72);
     internal_static_sl_link_RadarMapCacheClearResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapCacheClearResponse_descriptor,
         new java.lang.String[] { "Result", "Message", });
     internal_static_sl_link_RadarSystemStatusRequest_descriptor =
-      getDescriptor().getMessageTypes().get(69);
+      getDescriptor().getMessageTypes().get(73);
     internal_static_sl_link_RadarSystemStatusRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarSystemStatusRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarSystemStatusResponse_descriptor =
-      getDescriptor().getMessageTypes().get(70);
+      getDescriptor().getMessageTypes().get(74);
     internal_static_sl_link_RadarSystemStatusResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarSystemStatusResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Available", "Status", "TimestampNs", });
     internal_static_sl_link_RadarMapSyncRequest_descriptor =
-      getDescriptor().getMessageTypes().get(71);
+      getDescriptor().getMessageTypes().get(75);
     internal_static_sl_link_RadarMapSyncRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapSyncRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarMapSyncResponse_descriptor =
-      getDescriptor().getMessageTypes().get(72);
+      getDescriptor().getMessageTypes().get(76);
     internal_static_sl_link_RadarMapSyncResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarMapSyncResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Sent", });
     internal_static_sl_link_RadarRelocalizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(73);
+      getDescriptor().getMessageTypes().get(77);
     internal_static_sl_link_RadarRelocalizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarRelocalizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(74);
+      getDescriptor().getMessageTypes().get(78);
     internal_static_sl_link_RadarRelocalizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationResponse_descriptor,
         new java.lang.String[] { "Result", "Message", "Accepted", "Status", });
     internal_static_sl_link_RadarRelocalizationStatusRequest_descriptor =
-      getDescriptor().getMessageTypes().get(75);
+      getDescriptor().getMessageTypes().get(79);
     internal_static_sl_link_RadarRelocalizationStatusRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationStatusRequest_descriptor,
         new java.lang.String[] { });
     internal_static_sl_link_RadarRelocalizationStatusResponse_descriptor =
-      getDescriptor().getMessageTypes().get(76);
+      getDescriptor().getMessageTypes().get(80);
     internal_static_sl_link_RadarRelocalizationStatusResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationStatusResponse_descriptor,
         new java.lang.String[] { "RawStatus", "TimestampNs", });
     internal_static_sl_link_DiscLiftControl_descriptor =
-      getDescriptor().getMessageTypes().get(77);
+      getDescriptor().getMessageTypes().get(81);
     internal_static_sl_link_DiscLiftControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_DiscLiftControl_descriptor,
         new java.lang.String[] { "Command", });
     internal_static_sl_link_LightingControl_descriptor =
-      getDescriptor().getMessageTypes().get(78);
+      getDescriptor().getMessageTypes().get(82);
     internal_static_sl_link_LightingControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_LightingControl_descriptor,
         new java.lang.String[] { "Enabled", });
     internal_static_sl_link_ChassisPowerControl_descriptor =
-      getDescriptor().getMessageTypes().get(79);
+      getDescriptor().getMessageTypes().get(83);
     internal_static_sl_link_ChassisPowerControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ChassisPowerControl_descriptor,
         new java.lang.String[] { "Enabled", });
     internal_static_sl_link_DiscControl_descriptor =
-      getDescriptor().getMessageTypes().get(80);
+      getDescriptor().getMessageTypes().get(84);
     internal_static_sl_link_DiscControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_DiscControl_descriptor,
         new java.lang.String[] { "Enabled", "SpeedRpm", });
     internal_static_sl_link_EmergencyStopControl_descriptor =
-      getDescriptor().getMessageTypes().get(81);
+      getDescriptor().getMessageTypes().get(85);
     internal_static_sl_link_EmergencyStopControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_EmergencyStopControl_descriptor,
         new java.lang.String[] { "Enabled", });
     internal_static_sl_link_ManualDriveControl_descriptor =
-      getDescriptor().getMessageTypes().get(82);
+      getDescriptor().getMessageTypes().get(86);
     internal_static_sl_link_ManualDriveControl_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ManualDriveControl_descriptor,
         new java.lang.String[] { "Motion", "SpeedRatio", "RemoteX", "RemoteY", "MaxSpeedMps", "MaxTurnSpeedRatio", });
     internal_static_sl_link_ControlCommand_descriptor =
-      getDescriptor().getMessageTypes().get(83);
+      getDescriptor().getMessageTypes().get(87);
     internal_static_sl_link_ControlCommand_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ControlCommand_descriptor,
         new java.lang.String[] { "DiscLift", "Lighting", "ManualDrive", "ChassisPower", "DiscControl", "EmergencyStop", "Command", });
     internal_static_sl_link_ControlCommandResponse_descriptor =
-      getDescriptor().getMessageTypes().get(84);
+      getDescriptor().getMessageTypes().get(88);
     internal_static_sl_link_ControlCommandResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_ControlCommandResponse_descriptor,

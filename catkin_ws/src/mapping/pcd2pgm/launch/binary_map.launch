@@ -1,0 +1,22 @@
+<launch>
+  <arg name="file_directory"/>
+  <arg name="file_name"/>
+  <arg name="map_topic_name" default="map"/>
+  <arg name="min_height" default="0.5"/>
+  <arg name="max_height" default="1.00"/>
+  <arg name="radius" default="0.5"/>
+  <arg name="neighbor_count" default="10"/>
+  <arg name="resolution" default="0.1"/>
+
+  <node pkg="pcd2pgm" name="pcd2pgm" type="pcd2pgm" output="screen">
+    <param name="file_directory" value="$(arg file_directory)"/>
+    <param name="file_name" value="$(arg file_name)"/>
+    <param name="thre_z_min" value="$(arg min_height)"/>
+    <param name="thre_z_max" value="$(arg max_height)"/>
+    <param name="flag_pass_through" value="0"/>
+    <param name="thre_radius" value="$(arg radius)"/>
+    <param name="thres_point_count" value="$(arg neighbor_count)"/>
+    <param name="map_resolution" value="$(arg resolution)"/>
+    <param name="map_topic_name" value="$(arg map_topic_name)"/>
+  </node>
+</launch>

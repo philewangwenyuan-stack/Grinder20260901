@@ -1,0 +1,11 @@
+Repository: https://github.com/Hinson-A/pcd2pgm_package
+Branch: develop
+Commit: 268655b1104099fac69e1b5aa82607e5e57ee930
+Retrieved: 2026-08-12
+
+Local adaptation:
+- Added generic launch/binary_map.launch only.
+- src/pcd2pgm.cpp and its occupancy projection algorithm are unchanged.
+- Upstream package.xml declares the license as TODO. This copy is used for
+  the user's non-commercial internal experiment and is not cleared for
+  redistribution.

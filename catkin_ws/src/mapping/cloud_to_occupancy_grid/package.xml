@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cloud_to_occupancy_grid</name>
+  <version>0.1.0</version>
+  <description>Fixed-memory incremental 2D occupancy mapping from registered point clouds.</description>
+
+  <maintainer email="maintainer@example.com">Grinder Team</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>super_lio_loop</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+
+  <export/>
+</package>

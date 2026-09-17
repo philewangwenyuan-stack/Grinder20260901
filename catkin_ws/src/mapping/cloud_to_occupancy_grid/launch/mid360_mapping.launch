@@ -1,0 +1,55 @@
+<launch>
+  <arg name="rviz" default="true"/>
+  <arg name="mapper_config" default="$(find cloud_to_occupancy_grid)/config/mid360.yaml"/>
+  <arg name="save_3d_map" default="false"/>
+  <arg name="loop_closure" default="true"/>
+  <arg name="loop_backend" default="industrial"/>
+  <arg name="map_directory" default="/data/maps/current"/>
+  <arg name="map_name" default="grinder_map"/>
+  <arg name="autosave" default="false"/>
+
+  <!-- Start the Livox driver separately before this launch file. -->
+  <include file="$(find super_lio)/launch/Livox_mid360.launch">
+    <arg name="rviz" value="false"/>
+  </include>
+
+  <!-- The 2D mapper owns persistent mapping in this mode. Disabling Super-LIO's
+       cumulative PCD buffer prevents memory from growing with run time. -->
+  <param name="/lio/map/save_map" value="$(arg save_3d_map)"/>
+  <param name="/lio/output/dense" value="false"/>
+  <param name="/lio/output/pub_step" value="2"/>
+
+  <group if="$(arg loop_closure)">
+    <include file="$(find super_lio_loop)/launch/loop_closure.launch">
+      <arg name="backend" value="$(arg loop_backend)"/>
+    </include>
+    <include file="$(find cloud_to_occupancy_grid)/launch/mapper.launch">
+      <arg name="config" value="$(arg mapper_config)"/>
+      <arg name="cloud_topic" value="/lio/loop_cloud"/>
+      <arg name="reprojection_enabled"
+           value="$(eval arg('loop_backend') == 'industrial')"/>
+      <arg name="map_directory" value="$(arg map_directory)"/>
+      <arg name="map_name" value="$(arg map_name)"/>
+      <arg name="autosave" value="$(arg autosave)"/>
+    </include>
+  </group>
+
+  <group unless="$(arg loop_closure)">
+    <node pkg="tf2_ros" type="static_transform_publisher"
+          name="map_to_odom_identity"
+          args="0 0 0 0 0 0 map odom"/>
+    <include file="$(find cloud_to_occupancy_grid)/launch/mapper.launch">
+      <arg name="config" value="$(arg mapper_config)"/>
+      <arg name="cloud_topic" value="/lio/map_cloud"/>
+      <arg name="reprojection_enabled" value="false"/>
+      <arg name="map_directory" value="$(arg map_directory)"/>
+      <arg name="map_name" value="$(arg map_name)"/>
+      <arg name="autosave" value="$(arg autosave)"/>
+    </include>
+  </group>
+
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="mid360_mapping_rviz"
+          args="-d $(find cloud_to_occupancy_grid)/rviz/mid360_mapping.rviz"/>
+  </group>
+</launch>

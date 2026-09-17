@@ -28,7 +28,7 @@ radar_relocalization_after_import_delay_sec: 0.1
 radar_relocalization_service_wait_sec: 1.0
 
 # Never contact production services from a simulation launch.
-file_upload_on_map_save: false
+file_upload_on_map_save: true
 mqtt_enabled: true
 stream_enabled: false
 

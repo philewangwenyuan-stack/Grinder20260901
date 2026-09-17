@@ -5278,7 +5278,8 @@ class SchedulerNode:
                 "schemaVersion": 1,
                 "mapId": target_map_id,
                 "mapName": str(map_name or ""),
-                "stcmFile": os.path.basename(str(stcm_path or "")),
+                "stcmFile": "",
+                "stcmUploaded": False,
                 "map": deepcopy(record) if isinstance(record, dict) else {},
                 "taskBindings": related_bindings,
                 "savedAt": int(time.time()),
@@ -9211,6 +9212,97 @@ class SchedulerNode:
         )
         return outputs
 
+    def handle_task_execution_delete_request(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.TaskExecutionDeleteRequest()
+        request.ParseFromString(payload)
+        response = pb.TaskExecutionDeleteResponse()
+        execution_id = str(request.execution_id or "").strip()
+        response.execution_id = execution_id
+
+        if not execution_id:
+            response.result = pb.RESULT_INVALID_PARAM
+            response.message = "execution_id is required"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_TASK_EXECUTION_DELETE_RESPONSE,
+                pb.COMP_SCHEDULER,
+            )
+
+        if execution_id == str(self._active_task_execution_id or "").strip():
+            response.result = pb.RESULT_BUSY
+            response.message = "task execution is active"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_TASK_EXECUTION_DELETE_RESPONSE,
+                pb.COMP_SCHEDULER,
+            )
+
+        matched_record = None
+        remaining_records = []
+        original_records = list(self._task_execution_records or [])
+        for record in original_records:
+            if (
+                matched_record is None
+                and isinstance(record, dict)
+                and str(record.get("execution_id", "") or "").strip() == execution_id
+            ):
+                matched_record = record
+                continue
+            remaining_records.append(record)
+
+        if matched_record is None:
+            response.result = pb.RESULT_FAILED
+            response.message = "execution_id not found"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_TASK_EXECUTION_DELETE_RESPONSE,
+                pb.COMP_SCHEDULER,
+            )
+
+        response.task_id = str(matched_record.get("task_id", "") or "")
+        response.map_id = str(matched_record.get("map_id", "") or "")
+        safe_execution_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", execution_id)
+        execution_root = os.path.abspath(
+            os.path.join(self._persist_state_dir, "task_executions")
+        )
+        execution_dir = os.path.abspath(
+            os.path.join(execution_root, safe_execution_id)
+        )
+
+        try:
+            if os.path.dirname(execution_dir) != execution_root:
+                raise ValueError("invalid execution_id")
+            if os.path.isdir(execution_dir):
+                shutil.rmtree(execution_dir)
+                response.execution_files_deleted = True
+            self._task_execution_records = remaining_records
+            self._save_task_registry_state()
+            response.result = pb.RESULT_SUCCESS
+            response.message = "task_execution_deleted"
+            response.deleted = True
+            rospy.loginfo(
+                "Task execution deleted: execution_id=%s task_id=%s map_id=%s files_deleted=%s",
+                execution_id,
+                response.task_id or "<empty>",
+                response.map_id or "<empty>",
+                str(bool(response.execution_files_deleted)).lower(),
+            )
+        except Exception as exc:
+            self._task_execution_records = original_records
+            response.result = pb.RESULT_FAILED
+            response.message = "task execution delete failed: {}".format(exc)
+            rospy.logwarn(
+                "Task execution delete failed: execution_id=%s error=%s",
+                execution_id,
+                exc,
+            )
+        return (
+            response.SerializeToString(),
+            pb.MSG_ID_TASK_EXECUTION_DELETE_RESPONSE,
+            pb.COMP_SCHEDULER,
+        )
+
     def build_task_trajectory_chunks(self, payload):
         pb = self.sl_link_server.pb
         request = pb.TaskTrajectoryRequest()
@@ -9639,6 +9731,25 @@ class SchedulerNode:
             )
             response.result = pb.RESULT_SUCCESS
             response.message = "ok"
+            max_payload_safe = 65000
+            response_payload = response.SerializeToString()
+            if len(response_payload) > max_payload_safe:
+                for item in reversed(response.items):
+                    if not str(item.thumbnail_image_b64 or ""):
+                        continue
+                    item.thumbnail_image_b64 = ""
+                    thumbs_attached = max(0, int(thumbs_attached) - 1)
+                    thumbs_dropped = int(thumbs_dropped) + 1
+                    response_payload = response.SerializeToString()
+                    if len(response_payload) <= max_payload_safe:
+                        break
+            if len(response_payload) > max_payload_safe:
+                raise RuntimeError(
+                    "map catalog metadata exceeds SL-Link payload limit: {} > {}".format(
+                        len(response_payload),
+                        max_payload_safe,
+                    )
+                )
             if bounded_count < len(entries):
                 rospy.logwarn(
                     "MapCatalog trimmed: total=%d returned=%d (max_items=%d)",
@@ -9661,6 +9772,15 @@ class SchedulerNode:
                     str(self._map_catalog_include_thumbnails).lower(),
                     self._map_catalog_max_thumbnail_b64_total,
                 )
+            rospy.loginfo(
+                "MapCatalog response prepared: total=%d returned=%d thumbnails=%d dropped=%d payload_bytes=%d limit=%d",
+                len(entries),
+                bounded_count,
+                thumbs_attached,
+                thumbs_dropped,
+                len(response_payload),
+                max_payload_safe,
+            )
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
@@ -9698,6 +9818,9 @@ class SchedulerNode:
                     if str(rec.get("name", "")).strip():
                         record_name = str(rec.get("name", "")).strip()
                     break
+            remote_deleted, remote_message = self.platform_file_sync.delete_map(requested_map_id)
+            if not remote_deleted:
+                raise RuntimeError("server map delete failed: {}".format(remote_message))
             os.remove(target_path)
             self._unregister_saved_map(target_path)
             target_map_id = str(record_id or requested_map_id or "").strip()
@@ -9734,7 +9857,7 @@ class SchedulerNode:
                 response.map_name = record_name
             response.deleted = True
             response.result = pb.RESULT_SUCCESS
-            response.message = "deleted"
+            response.message = "deleted locally and from server"
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
@@ -9768,6 +9891,242 @@ class SchedulerNode:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
         return response.SerializeToString(), pb.MSG_ID_LIVE_MAP_CACHE_CLEAR_RESPONSE, pb.COMP_SCHEDULER
+
+    @staticmethod
+    def _path_is_within(path, root):
+        try:
+            return os.path.commonpath(
+                [os.path.abspath(path), os.path.abspath(root)]
+            ) == os.path.abspath(root)
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
+    def _remove_cache_path(path):
+        """Remove one cache path and return its file count and apparent size."""
+        target = os.path.abspath(str(path or ""))
+        if not os.path.lexists(target):
+            return 0, 0
+        if os.path.isfile(target) or os.path.islink(target):
+            size = int(os.lstat(target).st_size)
+            os.unlink(target)
+            return 1, size
+
+        file_count = 0
+        byte_count = 0
+        for root, dirs, files in os.walk(target, topdown=False):
+            for filename in files:
+                full_path = os.path.join(root, filename)
+                try:
+                    byte_count += int(os.lstat(full_path).st_size)
+                except OSError:
+                    pass
+                file_count += 1
+            for dirname in dirs:
+                full_path = os.path.join(root, dirname)
+                if os.path.islink(full_path):
+                    try:
+                        byte_count += int(os.lstat(full_path).st_size)
+                    except OSError:
+                        pass
+                    file_count += 1
+        shutil.rmtree(target)
+        return file_count, byte_count
+
+    def _clear_temporary_cache_files(self):
+        temp_files = set()
+        temp_root = os.path.abspath(os.path.join(self._runtime_base_dir, "temp"))
+        temp_dirs = {
+            os.path.abspath(os.path.join(temp_root, "sl_linka_debugger")),
+        }
+        if self._planned_path_debug_dir:
+            temp_dirs.add(os.path.abspath(self._planned_path_debug_dir))
+
+        for directory, pattern in (
+            (self._initial_map_preview_dir, re.compile(r"^aurora_map_preview.*\.(jpg|jpeg|png)$", re.I)),
+            (self._planned_path_preview_dir, re.compile(r"^aurora_path_preview.*\.(jpg|jpeg|png)$", re.I)),
+        ):
+            if not directory or not os.path.isdir(directory):
+                continue
+            for filename in os.listdir(directory):
+                if pattern.match(filename):
+                    temp_files.add(os.path.abspath(os.path.join(directory, filename)))
+
+        if self._live_preview_file:
+            temp_files.add(os.path.abspath(self._live_preview_file))
+
+        # Remove abandoned atomic-write files, but never scan persistent state
+        # or LIVE_MAP because both contain data needed by normal operation.
+        protected_roots = {
+            os.path.abspath(self._persist_state_dir),
+            os.path.abspath(self._live_map_dir),
+        }
+        if os.path.isdir(temp_root):
+            for root, dirs, files in os.walk(temp_root):
+                dirs[:] = [
+                    name
+                    for name in dirs
+                    if not any(
+                        self._path_is_within(os.path.join(root, name), protected)
+                        for protected in protected_roots
+                    )
+                ]
+                for filename in files:
+                    if not filename.endswith(".tmp"):
+                        continue
+                    full_path = os.path.abspath(os.path.join(root, filename))
+                    try:
+                        # Atomic writers may currently be using a .tmp file.
+                        # Only remove leftovers that have clearly gone stale.
+                        if time.time() - os.path.getmtime(full_path) < 60.0:
+                            continue
+                    except OSError:
+                        continue
+                    temp_files.add(full_path)
+
+        cleared_files = 0
+        released_bytes = 0
+        failed_items = 0
+        for path in sorted(temp_dirs | temp_files):
+            if not self._path_is_within(path, temp_root):
+                rospy.logwarn("Skip temporary cache path outside temp root: %s", path)
+                continue
+            if any(self._path_is_within(path, protected) for protected in protected_roots):
+                continue
+            try:
+                count, size = self._remove_cache_path(path)
+                cleared_files += count
+                released_bytes += size
+            except Exception as exc:
+                failed_items += 1
+                rospy.logwarn("Temporary cache clear failed: path=%s error=%s", path, exc)
+        self._initial_map_preview_saved = False
+        return cleared_files, released_bytes, failed_items
+
+    @staticmethod
+    def _clear_log_tree(root_dir, active_dir=""):
+        root_dir = os.path.abspath(os.path.expanduser(str(root_dir or "")))
+        active_dir = os.path.abspath(os.path.expanduser(str(active_dir or ""))) if active_dir else ""
+        if root_dir in (os.path.abspath(os.sep), os.path.abspath(os.path.expanduser("~"))):
+            return 0, 0, 1
+        if not os.path.isdir(root_dir):
+            return 0, 0, 0
+
+        cleared_files = 0
+        released_bytes = 0
+        failed_items = 0
+        for root, dirs, files in os.walk(root_dir, topdown=False):
+            for filename in files:
+                full_path = os.path.join(root, filename)
+                try:
+                    size = int(os.lstat(full_path).st_size)
+                    if active_dir and SchedulerNode._path_is_within(full_path, active_dir):
+                        if os.path.islink(full_path):
+                            continue
+                        with open(full_path, "wb"):
+                            pass
+                    else:
+                        os.unlink(full_path)
+                    cleared_files += 1
+                    released_bytes += size
+                except Exception as exc:
+                    failed_items += 1
+                    rospy.logwarn("Log clear failed: path=%s error=%s", full_path, exc)
+            for dirname in dirs:
+                full_path = os.path.join(root, dirname)
+                if active_dir and (
+                    SchedulerNode._path_is_within(active_dir, full_path)
+                    or SchedulerNode._path_is_within(full_path, active_dir)
+                ):
+                    continue
+                try:
+                    if os.path.islink(full_path):
+                        os.unlink(full_path)
+                    else:
+                        os.rmdir(full_path)
+                except OSError:
+                    # A concurrent logger may recreate a file while cleanup runs.
+                    pass
+        return cleared_files, released_bytes, failed_items
+
+    def handle_system_cache_clear_request(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.SystemCacheClearRequest()
+        request.ParseFromString(payload)
+        response = pb.SystemCacheClearResponse()
+
+        clear_memory = bool(request.clear_memory_cache)
+        clear_temporary = bool(request.clear_temporary_files)
+        clear_logs = bool(request.clear_logs)
+        if not (clear_memory or clear_temporary or clear_logs):
+            response.result = pb.RESULT_INVALID_PARAM
+            response.message = "at least one cache category must be selected"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE,
+                pb.COMP_SYSTEM,
+            )
+
+        if clear_memory:
+            self._invalidate_preview_caches()
+            self._path_plan_request_cache_key = None
+            self._path_plan_request_cache_path_version = 0
+            self._path_preview_crop_cache_key = None
+            self._path_preview_crop_cache_bbox = None
+            self._live_map_last_rotated_version = None
+            self._live_map_last_rotated_yaw = None
+            self._live_map_last_rotated_grid = None
+            self._live_map_last_rotated_origin = None
+            response.memory_cache_cleared = True
+
+        temp_failed = 0
+        if clear_temporary:
+            temp_count, temp_bytes, temp_failed = self._clear_temporary_cache_files()
+            response.temporary_files_cleared = int(temp_count)
+            response.temporary_bytes_released = int(temp_bytes)
+
+        log_failed = 0
+        if clear_logs:
+            startup_logs = os.path.join(self._runtime_base_dir, "catkin_ws", "logs")
+            startup_active = os.path.join(startup_logs, "startup_latest")
+            log_count, log_bytes, log_failed = self._clear_log_tree(
+                startup_logs,
+                startup_active,
+            )
+
+            ros_log_root = os.path.expanduser(os.environ.get("ROS_LOG_DIR", "~/.ros/log"))
+            run_id = str(rospy.get_param("/run_id", "") or "").strip()
+            ros_active = os.path.join(ros_log_root, run_id) if run_id else ""
+            count, size, failed = self._clear_log_tree(ros_log_root, ros_active)
+            log_count += count
+            log_bytes += size
+            log_failed += failed
+            response.log_files_cleared = int(log_count)
+            response.log_bytes_released = int(log_bytes)
+        response.failed_items = int(temp_failed + log_failed)
+
+        if response.failed_items:
+            response.result = pb.RESULT_FAILED
+            response.message = "cache_clear_partially_failed"
+        else:
+            response.result = pb.RESULT_SUCCESS
+            response.message = "cache_cleared"
+        rospy.loginfo(
+            "System cache clear completed without LIVE_MAP/business data: memory=%s temporary=%s logs=%s temp_files=%d temp_bytes=%d log_files=%d log_bytes=%d failed=%d",
+            str(clear_memory).lower(),
+            str(clear_temporary).lower(),
+            str(clear_logs).lower(),
+            response.temporary_files_cleared,
+            response.temporary_bytes_released,
+            response.log_files_cleared,
+            response.log_bytes_released,
+            response.failed_items,
+        )
+        return (
+            response.SerializeToString(),
+            pb.MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE,
+            pb.COMP_SYSTEM,
+        )
 
     def _send_radar_map_cache_clear(self, wait_after_sec=0.0):
         if self._clear_map_pub is None or ClearMapRequest is None:

@@ -192,6 +192,12 @@ PB_BIND(sl_link_TaskExecutionHistoryRequest, sl_link_TaskExecutionHistoryRequest
 PB_BIND(sl_link_TaskExecutionHistoryChunk, sl_link_TaskExecutionHistoryChunk, AUTO)
 
 
+PB_BIND(sl_link_TaskExecutionDeleteRequest, sl_link_TaskExecutionDeleteRequest, AUTO)
+
+
+PB_BIND(sl_link_TaskExecutionDeleteResponse, sl_link_TaskExecutionDeleteResponse, AUTO)
+
+
 PB_BIND(sl_link_TaskTrajectoryRequest, sl_link_TaskTrajectoryRequest, AUTO)
 
 
@@ -205,6 +211,12 @@ PB_BIND(sl_link_LiveMapCacheClearRequest, sl_link_LiveMapCacheClearRequest, AUTO
 
 
 PB_BIND(sl_link_LiveMapCacheClearResponse, sl_link_LiveMapCacheClearResponse, AUTO)
+
+
+PB_BIND(sl_link_SystemCacheClearRequest, sl_link_SystemCacheClearRequest, AUTO)
+
+
+PB_BIND(sl_link_SystemCacheClearResponse, sl_link_SystemCacheClearResponse, AUTO)
 
 
 PB_BIND(sl_link_RadarMapCacheClearRequest, sl_link_RadarMapCacheClearRequest, AUTO)

@@ -272,7 +272,7 @@ message PolygonRegion {
 | `0x0513` | `MapModeResponse` | `LOWER -> APP` | 返回模式切换指令处理结果 |
 | `0x0514` | `MapCatalogRequest` | `APP -> LOWER` | 请求本地地图列表（名称/数量） |
 | `0x0515` | `MapCatalogResponse` | `LOWER -> APP` | 返回本地地图列表（含面积/预计耗时/缩略图） |
-| `0x0516` | `MapDeleteRequest` | `APP -> LOWER` | 按 map_id 删除本地地图 |
+| `0x0516` | `MapDeleteRequest` | `APP -> LOWER` | 按 map_id 删除本地地图及文件服务器对应目录 |
 | `0x0517` | `MapDeleteResponse` | `LOWER -> APP` | 返回删除结果 |
 | `0x0518` | `MapSaveRequest` | `APP -> LOWER` | 请求从雷达保存地图到本地 |
 | `0x0519` | `MapSaveResponse` | `LOWER -> APP` | 返回保存结果与 map_id（含面积/预计耗时/创建时间） |
@@ -302,6 +302,10 @@ message PolygonRegion {
 | `0x0531` | `TaskExecutionHistoryChunk` | `LOWER -> APP` | 分块返回任务执行记录及每次执行的预览图 |
 | `0x0532` | `TaskTrajectoryRequest` | `APP -> LOWER` | 按执行记录查询任务过程中的位置和速度轨迹 |
 | `0x0533` | `TaskTrajectoryChunk` | `LOWER -> APP` | 分块、分页返回任务轨迹点 |
+| `0x0534` | `TaskExecutionDeleteRequest` | `APP -> LOWER` | 按执行 ID 删除一条任务执行记录 |
+| `0x0535` | `TaskExecutionDeleteResponse` | `LOWER -> APP` | 返回任务执行记录删除结果 |
+| `0x0536` | `SystemCacheClearRequest` | `APP -> LOWER` | 清除安全缓存、临时文件及历史日志，不清除 LIVE_MAP 和业务数据 |
+| `0x0537` | `SystemCacheClearResponse` | `LOWER -> APP` | 返回缓存清理数量与释放空间 |
 
 #### 5.1.1 新增协议速查（建议优先对接）
 
@@ -317,6 +321,8 @@ message PolygonRegion {
 - `MapRegionPointRequest/Response`：`0x052E/0x052F`
 - `TaskExecutionHistoryRequest/Chunk`：`0x0530/0x0531`
 - `TaskTrajectoryRequest/Chunk`：`0x0532/0x0533`
+- `TaskExecutionDeleteRequest/Response`：`0x0534/0x0535`
+- `SystemCacheClearRequest/Response`：`0x0536/0x0537`
 
 `TaskConfig (0x0500)` 关键字段：
 
@@ -644,6 +650,79 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 }
 ```
 
+`TaskExecutionDeleteRequest (0x0534)` 使用历史查询返回的 `execution_id` 精确删除某一次
+任务执行记录。同一个 `task_id` 的其他执行记录不受影响。
+
+```json
+{
+  "execution_id": "task_001_1780000000123"
+}
+```
+
+返回 `TaskExecutionDeleteResponse (0x0535)`：
+
+```json
+{
+  "result": "RESULT_SUCCESS",
+  "message": "task_execution_deleted",
+  "execution_id": "task_001_1780000000123",
+  "task_id": "task_001",
+  "map_id": "map_001",
+  "deleted": true,
+  "execution_files_deleted": true
+}
+```
+
+删除成功后，LOWER 同时删除任务注册表中的该条记录，以及
+`temp/grinder_scheduler_state/task_executions/<execution_id>/` 下的轨迹、预览图和原始地图
+快照。正在执行的记录返回 `RESULT_BUSY`；`execution_id` 为空返回
+`RESULT_INVALID_PARAM`；记录不存在返回 `RESULT_FAILED`。
+
+`SystemCacheClearRequest (0x0536)` 支持选择清理范围：
+
+```json
+{
+  "clear_memory_cache": true,
+  "clear_temporary_files": true,
+  "clear_logs": false
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `clear_memory_cache` | 清除地图预览、路径预览、规划请求结果和实时地图旋转结果的内存缓存 |
+| `clear_temporary_files` | 清除路径调试、SL-Link 调试、临时预览图和超过 60 秒的遗留 `*.tmp` |
+| `clear_logs` | 清除 `catkin_ws/logs/` 与 `~/.ros/log/` 日志；当前运行日志清空内容但保留文件 |
+
+三个字段可以任意组合；如果全部为 `false`，返回 `RESULT_INVALID_PARAM` 且不执行清理。无论如何选择，该接口都不会清除 `temp/live_map/`、雷达地图或业务数据。
+
+清理只针对可重新生成的数据，不修改当前任务状态、当前执行路径、地图、区域、任务轨迹、参数和设备控制状态，因此任务运行中调用也不会中断业务流程。
+
+具体安全清理范围如下：
+
+- 清除地图预览、路径预览、规划请求结果和实时地图旋转结果的内存缓存；
+- 清除 `temp/path_debug/`、`temp/sl_linka_debugger/`、临时预览图和遗留 `*.tmp`；
+- 清除 `catkin_ws/logs/` 与 `~/.ros/log/` 的历史日志；当前运行日志只清空内容，保留文件；
+- 不清除 `temp/live_map/`、雷达地图、已保存地图、任务记录、任务轨迹和持久化配置。
+
+返回 `SystemCacheClearResponse (0x0537)`：
+
+```json
+{
+  "result": "RESULT_SUCCESS",
+  "message": "cache_cleared",
+  "memory_cache_cleared": true,
+  "temporary_files_cleared": 6,
+  "temporary_bytes_released": 1048576,
+  "log_files_cleared": 24,
+  "log_bytes_released": 8388608,
+  "failed_items": 0
+}
+```
+
+如果部分文件正在被其他进程占用或权限不足，已成功清理的内容不会回滚，返回
+`RESULT_FAILED`、`message=cache_clear_partially_failed`，并通过 `failed_items` 返回失败数量。
+
 `LiveMapCacheClearRequest (0x051E)` 关键字段：
 
 | 字段 | 说明 |
@@ -701,10 +780,11 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 - `MapSaveRequest/Response`：从雷达保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；`map_id` 强制唯一，同一 `map_id` 再次保存时会先删除旧地图文件、旧区域状态和旧任务绑定，再保存最新数据
 - `MapSaveResponse.created_at`：地图创建时间（`YYYY-MM-DD HH:MM:SS`，精确到秒）
 - `MapCatalogRequest/Response`：查询本地地图名称与数量，并返回地图元信息（面积/预计耗时/缩略图base64）
-- `MapDeleteRequest/Response`：按 `map_id` 删除地图
+- `MapDeleteRequest/Response`：按 `map_id` 删除本地地图，并递归删除文件服务器 `GrinderProject/maps/<map_id>` 下的文件及目录；服务器不存在该目录时按幂等成功处理
 - `MapMetricsRequest/Response`：按 `map_id` 查询地图区域指标，返回 `map_name` 与区域明细
 - `TaskResultRequest/Response`：按 `map_id/task_id` 查询任务执行结果（结果图 + 区域遍数完成情况）
 - `TaskExecutionHistoryRequest/Chunk`：按 `map_id/task_id` 和可选开始时间范围分块查询全部任务执行记录及每次执行的预览图
+- `TaskExecutionDeleteRequest/Response`：按 `execution_id` 删除单次任务执行记录及其轨迹、预览图和原始地图快照
 - `TaskTrajectoryRequest/Chunk`：按 `execution_id` 分块、分页查询任务过程中的位置、底盘反馈速度和研磨转速
 - `MapMetricsResponse.region_metrics[]`：工作区域明细（`region_id`、`region_name`、`repeat`、`area_m2`、`estimated_time_h`）
 - `LiveMapCacheClearRequest/Response`：清除 LIVE_MAP 缓存（区域状态 + live_map 目录缓存）
