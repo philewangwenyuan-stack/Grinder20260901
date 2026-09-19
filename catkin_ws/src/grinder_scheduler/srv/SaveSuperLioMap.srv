@@ -1,0 +1,13 @@
+string map_id
+string map_name
+---
+bool success
+bool localization_started
+string message
+string state
+string bundle_dir
+string loc_pcd_path
+string plan_pcd_path
+string yaml_path
+string image_path
+

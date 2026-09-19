@@ -24,13 +24,19 @@ try:
 except Exception:
     DynamicReconfigureClient = None
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from geometry_msgs.msg import Pose, PoseStamped, Twist
+from actionlib_msgs.msg import GoalID
+from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped, Twist
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
 from grinder_chassis_driver.srv import EnableChassis
 from nav_msgs.msg import OccupancyGrid, Odometry, Path
 from nav_msgs.srv import LoadMap
 from std_msgs.msg import Bool, Int16, UInt16
-from std_srvs.srv import Trigger, TriggerResponse
+from std_srvs.srv import Empty, Trigger, TriggerResponse
+from grinder_scheduler.srv import (
+    GetSuperLioStatus,
+    SaveSuperLioMap,
+    StartSuperLioLocalization,
+)
 
 try:
     import tf2_ros
@@ -58,29 +64,11 @@ from grinder_scheduler.platform_integration import MqttDeviceReporter, PlatformF
 from grinder_scheduler.sl_linka_adapter import SlLinkAServer
 
 try:
-    from slamware_ros_sdk.srv import (
-        RelocalizationRequest as RadarRelocalizationService,
-        SyncGetStcm,
-        SyncSetStcm,
-    )
     from slamware_ros_sdk.msg import (
-        ClearMapRequest,
-        MapKind,
-        SetMapLocalizationRequest,
-        SetMapUpdateRequest,
-        SyncMapRequest,
         RelocalizationStatus as RadarRelocalizationStatus,
         SystemStatus as RadarSystemStatus,
     )
 except Exception:
-    SyncGetStcm = None
-    SyncSetStcm = None
-    RadarRelocalizationService = None
-    ClearMapRequest = None
-    MapKind = None
-    SetMapLocalizationRequest = None
-    SetMapUpdateRequest = None
-    SyncMapRequest = None
     RadarRelocalizationStatus = None
     RadarSystemStatus = None
 
@@ -572,29 +560,35 @@ class SchedulerNode:
             ),
             self._runtime_base_dir,
         )
-        self._stcm_local_dir = _resolve_runtime_path(
-            rospy.get_param("~stcm_local_dir", "maps/raw"),
-            self._runtime_base_dir,
+        self._localization_backend = str(
+            rospy.get_param("~localization_backend", "super_lio")
+        ).strip().lower()
+        if self._localization_backend != "super_lio":
+            raise RuntimeError("only localization_backend=super_lio is supported")
+        self._super_lio_map_root = os.path.abspath(os.path.expanduser(
+            str(rospy.get_param("~super_lio_map_root", "/home/neardi/work/Grinder/maps"))
+        ))
+        self._super_lio_service_timeout_sec = max(
+            1.0, float(rospy.get_param("~super_lio_service_timeout_sec", 30.0))
         )
-        self._sync_get_stcm_service = rospy.get_param(
-            "~sync_get_stcm_service", "/slamware_ros_sdk_server_node/sync_get_stcm"
+        self._super_lio_start_mapping_service = "/super_lio_mode/start_mapping"
+        self._super_lio_save_map_service = "/super_lio_mode/save_map"
+        self._super_lio_start_localization_service = "/super_lio_mode/start_localization"
+        self._super_lio_stop_service = "/super_lio_mode/stop"
+        self._super_lio_status_service = "/super_lio_mode/get_status"
+        self._super_lio_start_mapping_proxy = None
+        self._super_lio_save_map_proxy = None
+        self._super_lio_start_localization_proxy = None
+        self._super_lio_stop_proxy = None
+        self._super_lio_status_proxy = None
+        self._initial_pose_position_variance = max(
+            0.0, float(rospy.get_param("~initial_pose_position_variance", 0.25))
         )
-        self._sync_set_stcm_service = rospy.get_param(
-            "~sync_set_stcm_service", "/slamware_ros_sdk_server_node/sync_set_stcm"
+        self._initial_pose_yaw_variance = max(
+            0.0, float(rospy.get_param("~initial_pose_yaw_variance", 0.06853891945200942))
         )
-        self._radar_relocalization_service = rospy.get_param(
-            "~radar_relocalization_service",
-            "/slamware_ros_sdk_server_node/relocalization",
-        )
+        self._clear_costmaps_proxy = None
         self._change_map_service = rospy.get_param("~change_map_service", "/change_map")
-        self._set_map_update_topic = rospy.get_param(
-            "~set_map_update_topic", "/slamware_ros_sdk_server_node/set_map_update"
-        )
-        self._set_map_localization_topic = rospy.get_param(
-            "~set_map_localization_topic", "/slamware_ros_sdk_server_node/set_map_localization"
-        )
-        self._clear_map_topic = rospy.get_param("~clear_map_topic", "/slamware_ros_sdk_server_node/clear_map")
-        self._sync_map_topic = rospy.get_param("~sync_map_topic", "/slamware_ros_sdk_server_node/sync_map")
         self._radar_system_status_topic = rospy.get_param(
             "~radar_system_status_topic",
             "/slamware_ros_sdk_server_node/system_status",
@@ -613,34 +607,6 @@ class SchedulerNode:
         self._radar_relocalization_raw_timestamp_ns = 0
         self._radar_relocalization_aggregate_status = "idle"
         self._radar_relocalization_aggregate_timestamp_ns = 0
-        self._radar_mapping_mode_default_on_startup = bool(
-            rospy.get_param("~radar_mapping_mode_default_on_startup", True)
-        )
-        self._radar_mapping_sync_period_sec = max(
-            0.5,
-            float(rospy.get_param("~radar_mapping_sync_period_sec", 3.0)),
-        )
-        self._radar_mapping_sync_burst_count = max(
-            0,
-            int(rospy.get_param("~radar_mapping_sync_burst_count", 3)),
-        )
-        self._radar_mapping_mode_active = False
-        self._radar_mapping_sync_remaining = 0
-        self._radar_clear_before_import_delay_sec = max(
-            0.0,
-            float(rospy.get_param("~radar_clear_before_import_delay_sec", 0.2)),
-        )
-        self._radar_relocalization_after_import_delay_sec = max(
-            0.0,
-            float(rospy.get_param("~radar_relocalization_after_import_delay_sec", 1.0)),
-        )
-        self._radar_relocalization_service_wait_sec = max(
-            0.1,
-            float(rospy.get_param("~radar_relocalization_service_wait_sec", 3.0)),
-        )
-        self._sync_get_proxy = None
-        self._sync_set_proxy = None
-        self._radar_relocalization_proxy = None
         self._change_map_proxy = None
 
         self.map_service = MapService()
@@ -653,7 +619,6 @@ class SchedulerNode:
             self._preview_rga_backend,
             self._preview_rga_available,
         )
-        self._load_local_state()
         self.aurora_bridge = AuroraBridge(
             map_topic=rospy.get_param("~map_topic", "/slamware_ros_sdk_server_node/map"),
             odom_topic=rospy.get_param("~odom_topic", "/slamware_ros_sdk_server_node/odom"),
@@ -676,6 +641,9 @@ class SchedulerNode:
                 "~localization_quality_unavailable_variance", 1.0e6
             ),
         )
+        # State loading may rebuild an offline MapService and query the bridge.
+        # The bridge must therefore exist before persisted state is restored.
+        self._load_local_state()
         self.planner = PlannerAdapter(
             _resolve_runtime_path(
                 rospy.get_param("~planner_script_path", "third_party/path_planner/mst27/mst27.py"),
@@ -725,26 +693,14 @@ class SchedulerNode:
             self._active_segment_plan_topic, Path, queue_size=1, latch=True
         )
         self.goal_pub = rospy.Publisher(self._exec_goal_topic, PoseStamped, queue_size=10)
+        self.move_base_cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=1)
         self.task_enable_pub = rospy.Publisher(self._task_enable_topic, Bool, queue_size=10, latch=True)
         self.status_pub = rospy.Publisher("/scheduler/status", SchedulerStatus, queue_size=10)
         self.preview_meta_pub = rospy.Publisher("/scheduler/map_preview_metadata", MapPreviewMetadata, queue_size=10, latch=True)
         self.diagnostics_pub = rospy.Publisher("/diagnostics", DiagnosticArray, queue_size=10)
-        self._set_map_update_pub = None
-        self._set_map_localization_pub = None
-        self._clear_map_pub = None
-        self._sync_map_pub = None
-        if SetMapUpdateRequest is not None:
-            self._set_map_update_pub = rospy.Publisher(
-                self._set_map_update_topic, SetMapUpdateRequest, queue_size=2
-            )
-        if SetMapLocalizationRequest is not None:
-            self._set_map_localization_pub = rospy.Publisher(
-                self._set_map_localization_topic, SetMapLocalizationRequest, queue_size=2
-            )
-        if ClearMapRequest is not None:
-            self._clear_map_pub = rospy.Publisher(self._clear_map_topic, ClearMapRequest, queue_size=2)
-        if SyncMapRequest is not None:
-            self._sync_map_pub = rospy.Publisher(self._sync_map_topic, SyncMapRequest, queue_size=2)
+        self.initial_pose_pub = rospy.Publisher(
+            "/initialpose", PoseWithCovarianceStamped, queue_size=1
+        )
 
         self.wheel_cmd_pub = rospy.Publisher("/chassis/wheel_speed_cmd", WheelSpeedCommand, queue_size=10)
         self.disc_speed_pub = rospy.Publisher("/chassis/disc_speed_cmd", Int16, queue_size=10)
@@ -856,16 +812,6 @@ class SchedulerNode:
             rospy.Duration(0.05),
             self._manual_drive_watchdog_tick,
         )
-        self._radar_mapping_sync_timer = rospy.Timer(
-            rospy.Duration(self._radar_mapping_sync_period_sec),
-            self._radar_mapping_sync_tick,
-        )
-        self._radar_mapping_startup_timer = None
-        if self._radar_mapping_mode_default_on_startup:
-            self._radar_mapping_startup_timer = rospy.Timer(
-                rospy.Duration(self._radar_mapping_sync_period_sec),
-                self._radar_mapping_startup_tick,
-            )
         # Default: do not allow chassis to consume /cmd_vel until task starts.
         self.task_enable_pub.publish(Bool(data=False))
 
@@ -927,44 +873,6 @@ class SchedulerNode:
         if self.state != SchedulerState.RUNNING or not self._exec_active:
             return
         self._publish_active_segment_plan(reason="timer")
-
-    def _radar_mapping_startup_tick(self, _event):
-        if self._radar_mapping_mode_active:
-            if self._radar_mapping_startup_timer is not None:
-                self._radar_mapping_startup_timer.shutdown()
-                self._radar_mapping_startup_timer = None
-            return
-        try:
-            conn, kind_value = self._switch_to_mapping_mode(set_live_map_active=True)
-            rospy.loginfo(
-                "Radar default startup mapping mode entered: subscribers=%d map_kind=%d",
-                conn,
-                kind_value,
-            )
-            if self._radar_mapping_startup_timer is not None:
-                self._radar_mapping_startup_timer.shutdown()
-                self._radar_mapping_startup_timer = None
-        except Exception as exc:
-            rospy.logwarn_throttle(
-                10.0,
-                "Radar default startup mapping mode pending: %s",
-                exc,
-            )
-
-    def _radar_mapping_sync_tick(self, _event):
-        if not self._radar_mapping_mode_active:
-            return
-        if self._radar_mapping_sync_remaining <= 0:
-            return
-        try:
-            if self._send_radar_map_sync():
-                self._radar_mapping_sync_remaining -= 1
-                rospy.loginfo(
-                    "Radar mapping sync burst progress: remaining=%d",
-                    self._radar_mapping_sync_remaining,
-                )
-        except Exception as exc:
-            rospy.logwarn_throttle(10.0, "Radar mapping sync failed: %s", exc)
 
     def _reset_active_segment_state(self):
         self._path_arc_lengths = []
@@ -2139,6 +2047,37 @@ class SchedulerNode:
         text = str(map_id or "").strip()
         return text in ("", self._live_map_id, DEFAULT_LIVE_MAP_ID)
 
+    def _allocate_saved_map_id(self):
+        base_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        candidate = base_id
+        suffix = 1
+        map_root_value = str(getattr(self, "_super_lio_map_root", "") or "").strip()
+        map_root = os.path.abspath(map_root_value) if map_root_value else ""
+        while self._find_recorded_map_by_id(candidate) is not None or (
+            map_root and os.path.exists(os.path.join(map_root, candidate))
+        ):
+            candidate = "{}_{:02d}".format(base_id, suffix)
+            suffix += 1
+        return candidate
+
+    def _saved_map_id_for_request(self, requested_map_id):
+        requested = str(requested_map_id or "").strip()
+        if self._is_live_map_id(requested):
+            return self._allocate_saved_map_id()
+        return requested
+
+    def _purge_live_map_registry_entries(self):
+        removed = []
+        for registry_key, record in list((self._map_registry or {}).items()):
+            key_text = str(registry_key or "").strip()
+            record_map_id = ""
+            if isinstance(record, dict):
+                record_map_id = str(record.get("map_id", key_text) or "").strip()
+            if self._is_live_map_id(key_text) or self._is_live_map_id(record_map_id):
+                self._map_registry.pop(registry_key, None)
+                removed.append(record_map_id or key_text or DEFAULT_LIVE_MAP_ID)
+        return removed
+
     def _saved_raw_grid_paths_for_map(self, map_id):
         target_map_id = str(map_id or "").strip()
         if not target_map_id:
@@ -2803,13 +2742,75 @@ class SchedulerNode:
             rospy.logwarn("Failed to reload navigation map via %s: %s", self._change_map_service, exc)
             return False, None
 
-    def _ensure_sync_proxies(self):
-        if SyncGetStcm is None or SyncSetStcm is None:
-            raise RuntimeError("slamware_ros_sdk python services are unavailable")
-        if self._sync_get_proxy is None:
-            self._sync_get_proxy = rospy.ServiceProxy(self._sync_get_stcm_service, SyncGetStcm)
-        if self._sync_set_proxy is None:
-            self._sync_set_proxy = rospy.ServiceProxy(self._sync_set_stcm_service, SyncSetStcm)
+    def _ensure_super_lio_proxies(self):
+        service_names = (
+            self._super_lio_start_mapping_service,
+            self._super_lio_save_map_service,
+            self._super_lio_start_localization_service,
+            self._super_lio_stop_service,
+            self._super_lio_status_service,
+        )
+        for service_name in service_names:
+            rospy.wait_for_service(service_name, timeout=self._super_lio_service_timeout_sec)
+        if self._super_lio_start_mapping_proxy is None:
+            self._super_lio_start_mapping_proxy = rospy.ServiceProxy(
+                self._super_lio_start_mapping_service, Trigger
+            )
+        if self._super_lio_save_map_proxy is None:
+            self._super_lio_save_map_proxy = rospy.ServiceProxy(
+                self._super_lio_save_map_service, SaveSuperLioMap
+            )
+        if self._super_lio_start_localization_proxy is None:
+            self._super_lio_start_localization_proxy = rospy.ServiceProxy(
+                self._super_lio_start_localization_service, StartSuperLioLocalization
+            )
+        if self._super_lio_stop_proxy is None:
+            self._super_lio_stop_proxy = rospy.ServiceProxy(
+                self._super_lio_stop_service, Trigger
+            )
+        if self._super_lio_status_proxy is None:
+            self._super_lio_status_proxy = rospy.ServiceProxy(
+                self._super_lio_status_service, GetSuperLioStatus
+            )
+
+    def _prepare_for_map_mode_switch(self, reason):
+        if self._exec_active or self.state in (SchedulerState.RUNNING, SchedulerState.PAUSED):
+            self._stop_execution()
+        else:
+            self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason=reason)
+            self._safe_stop_motion()
+            self.disc_enable_pub.publish(Bool(data=False))
+        self.move_base_cancel_pub.publish(GoalID())
+
+    def _clear_navigation_costmaps(self):
+        try:
+            rospy.wait_for_service("/move_base/clear_costmaps", timeout=3.0)
+            if self._clear_costmaps_proxy is None:
+                self._clear_costmaps_proxy = rospy.ServiceProxy(
+                    "/move_base/clear_costmaps", Empty
+                )
+            self._clear_costmaps_proxy()
+            return True
+        except Exception as exc:
+            rospy.logwarn("Failed to clear move_base costmaps after map switch: %s", exc)
+            self._clear_costmaps_proxy = None
+            return False
+
+    def _super_lio_bundle_paths(self, map_id):
+        safe_id = re.sub(r"[^0-9A-Za-z._-]", "_", str(map_id or "").strip()).strip("._")[:96]
+        if not safe_id:
+            raise RuntimeError("map_id is empty or invalid")
+        bundle_dir = os.path.abspath(os.path.join(self._super_lio_map_root, safe_id))
+        if os.path.commonpath([bundle_dir, self._super_lio_map_root]) != self._super_lio_map_root:
+            raise RuntimeError("map bundle escapes configured map root")
+        return {
+            "bundle_dir": bundle_dir,
+            "loc_pcd_path": os.path.join(bundle_dir, "loc_map.pcd"),
+            "plan_pcd_path": os.path.join(bundle_dir, "plan_map.pcd"),
+            "yaml_path": os.path.join(bundle_dir, "map.yaml"),
+            "image_path": os.path.join(bundle_dir, "map.pgm"),
+            "manifest_path": os.path.join(bundle_dir, "map_info.json"),
+        }
 
     def _map_state_dirname(self, map_id):
         text = str(map_id or "").strip() or self._live_map_id
@@ -2864,10 +2865,6 @@ class SchedulerNode:
                 record.get("map_id", ""),
                 record.get("name", ""),
             ]
-            path = str(record.get("path", "") or "").strip()
-            if path:
-                parsed_name, parsed_id = self._split_map_name_and_id_from_path(path)
-                aliases.extend([parsed_name, parsed_id])
             for alias in aliases:
                 text = str(alias or "").strip()
                 if text:
@@ -3157,9 +3154,10 @@ class SchedulerNode:
                 self._live_map_app_rotation_deg = None
                 self._live_map_rotation_alignment_delta_deg = None
             if (not self._map_registry) and isinstance(payload.get("map_registry", {}), dict):
-                # Backward compatibility: migrate old embedded map_registry.
-                self._map_registry = payload.get("map_registry", {})
-                self._save_map_registry_state()
+                # Legacy embedded registries contain STCM file records. They
+                # remain on disk but are not imported into the Super-LIO-only
+                # catalog.
+                rospy.loginfo("Ignored legacy embedded STCM map registry")
             loaded_chassis = payload.get("chassis_settings", {})
             if isinstance(loaded_chassis, dict):
                 self._chassis_settings["work_mode"] = int(loaded_chassis.get("work_mode", self._chassis_settings["work_mode"]))
@@ -3241,8 +3239,15 @@ class SchedulerNode:
         if not self._persist_state_enabled:
             return
         try:
+            removed_live_ids = self._purge_live_map_registry_entries()
+            if removed_live_ids:
+                rospy.logwarn(
+                    "Removed reserved live-map entries before saving map registry: entries=%s",
+                    ",".join(removed_live_ids),
+                )
             os.makedirs(self._persist_state_dir, exist_ok=True)
             payload = {
+                "schema_version": 2,
                 "map_registry": dict(self._map_registry),
                 "saved_at": int(time.time()),
             }
@@ -3412,8 +3417,23 @@ class SchedulerNode:
             if isinstance(payload, dict):
                 registry = payload.get("map_registry", {})
                 if isinstance(registry, dict):
-                    self._map_registry = registry
-            self._cleanup_orphan_map_overlay_states()
+                    # Schema v2 is keyed by map_id and points at a Super-LIO
+                    # asset bundle. Legacy STCM records are intentionally left
+                    # on disk but are not exposed by the new backend.
+                    for key, record in registry.items():
+                        if not isinstance(record, dict):
+                            continue
+                        map_id = str(record.get("map_id", key) or "").strip()
+                        bundle_dir = str(record.get("bundle_dir", "") or "").strip()
+                        if map_id and bundle_dir:
+                            self._map_registry[map_id] = record
+            removed_live_ids = self._purge_live_map_registry_entries()
+            if removed_live_ids:
+                rospy.logwarn(
+                    "Removed stale reserved live-map records from map registry: entries=%s",
+                    ",".join(removed_live_ids),
+                )
+                self._save_map_registry_state()
         except Exception as exc:
             rospy.logwarn("Failed to load map registry state: %s", exc)
 
@@ -5139,63 +5159,9 @@ class SchedulerNode:
         safe = "".join(ch if (ch.isalnum() or ch in ("_", "-")) else "_" for ch in str(text))
         return safe[:64] if safe else "task"
 
-    def _sanitize_map_filename_stem(self, text):
-        # Keep Chinese/Unicode letters and digits; drop path-unfriendly symbols.
-        # This allows Android-provided Chinese map names to be preserved on disk.
-        raw = str(text or "").strip()
-        if not raw:
-            return "地图"
-        # Remove extension if user already passed ".stcm".
-        if raw.lower().endswith(".stcm"):
-            raw = raw[:-5]
-        # Keep most printable filename chars, replace reserved separators.
-        safe_chars = []
-        for ch in raw:
-            if ch in ('\\', '/', ':', '*', '?', '"', '<', '>', '|'):
-                safe_chars.append("_")
-                continue
-            # avoid control characters
-            if ord(ch) < 32:
-                continue
-            safe_chars.append(ch)
-        safe = "".join(safe_chars).strip().strip(".")
-        if not safe:
-            safe = "地图"
-        return safe[:96]
-
-    def _build_stcm_download_path(self, requested_path, forced_map_id=""):
-        req = str(requested_path or "").strip()
-        if req:
-            req = os.path.expanduser(os.path.expandvars(req))
-        if req:
-            req_dir = os.path.dirname(req)
-            if req_dir:
-                save_dir = req_dir if os.path.isabs(req_dir) else os.path.join(self._stcm_local_dir, req_dir)
-            else:
-                save_dir = self._stcm_local_dir
-            base_name = os.path.basename(req)
-            stem = self._sanitize_map_filename_stem(base_name)
-        else:
-            save_dir = self._stcm_local_dir
-            stem = "地图"
-        map_id = str(forced_map_id or "").strip() or datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = "{}_{}.stcm".format(stem, map_id)
-        return os.path.normpath(os.path.join(save_dir, filename))
-
-    def _split_map_name_and_id_from_path(self, stcm_path):
-        base = os.path.splitext(os.path.basename(str(stcm_path or "")))[0]
-        # Expected generated filename: <map_name>_<YYYYMMDD_HHMMSS>.stcm
-        matched = re.match(r"^(.*)_(\d{8}_\d{6})$", base)
-        if matched:
-            raw_name = matched.group(1).strip("_").strip()
-            map_id = matched.group(2)
-            return (raw_name or "地图"), map_id
-        fallback_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return (base or "地图"), fallback_id
-
     def _register_saved_map(
         self,
-        stcm_path,
+        bundle_path,
         display_name="",
         explicit_map_id="",
         total_work_area_m2=0.0,
@@ -5207,19 +5173,23 @@ class SchedulerNode:
         thumb_height=0,
     ):
         try:
-            abs_path = os.path.abspath(str(stcm_path or "").strip())
-            if not abs_path:
+            bundle_dir = os.path.abspath(str(bundle_path or "").strip())
+            if not bundle_dir or not os.path.isdir(bundle_dir):
                 return "", ""
-            parsed_name, parsed_id = self._split_map_name_and_id_from_path(abs_path)
-            name = str(display_name or "").strip() or parsed_name
-            map_id = str(explicit_map_id or "").strip() or str(parsed_id)
-            size_bytes = 0
-            if os.path.isfile(abs_path):
-                try:
-                    size_bytes = int(os.path.getsize(abs_path))
-                except Exception:
-                    size_bytes = 0
-            old_record = self._map_registry.get(abs_path, {})
+            map_id = str(explicit_map_id or os.path.basename(bundle_dir)).strip()
+            name = str(display_name or "").strip() or map_id
+            paths = self._super_lio_bundle_paths(map_id)
+            required = (
+                paths["loc_pcd_path"], paths["plan_pcd_path"],
+                paths["yaml_path"], paths["image_path"],
+            )
+            if os.path.normpath(paths["bundle_dir"]) != os.path.normpath(bundle_dir):
+                raise RuntimeError("map bundle path does not match map_id")
+            for path in required:
+                if not os.path.isfile(path) or os.path.getsize(path) <= 0:
+                    raise RuntimeError("map asset missing or empty: {}".format(path))
+            size_bytes = sum(int(os.path.getsize(path)) for path in required)
+            old_record = self._map_registry.get(map_id, {})
             old_created_at = ""
             if isinstance(old_record, dict):
                 old_created_at = str(old_record.get("created_at", "") or "").strip()
@@ -5229,7 +5199,12 @@ class SchedulerNode:
             new_record = {
                 "map_id": map_id,
                 "name": name,
-                "path": abs_path,
+                "path": bundle_dir,
+                "bundle_dir": bundle_dir,
+                "loc_pcd_path": paths["loc_pcd_path"],
+                "plan_pcd_path": paths["plan_pcd_path"],
+                "yaml_path": paths["yaml_path"],
+                "image_path": paths["image_path"],
                 "size_bytes": size_bytes,
                 "created_at": str(created_at),
                 "saved_at": int(time.time()),
@@ -5254,20 +5229,22 @@ class SchedulerNode:
                 ):
                     if key in old_record:
                         new_record[key] = old_record[key]
-            self._map_registry[abs_path] = new_record
+            self._map_registry[map_id] = new_record
             return name, map_id
         except Exception as exc:
             rospy.logwarn("Failed to register saved map metadata: %s", exc)
             return "", ""
 
-    def _queue_saved_map_upload(self, map_id, map_name, stcm_path):
+    def _queue_saved_map_upload(self, map_id, map_name):
         target_map_id = str(map_id or "").strip()
         if not target_map_id:
             return False
-        map_dir = self._map_state_dir(target_map_id)
+        record = self._find_recorded_map_by_id(target_map_id)
+        map_dir = str(record.get("bundle_dir", "") if isinstance(record, dict) else "").strip()
+        if not map_dir or not os.path.isdir(map_dir):
+            rospy.logwarn("Map upload skipped because bundle is unavailable: map_id=%s", target_map_id)
+            return False
         try:
-            os.makedirs(map_dir, exist_ok=True)
-            record = self._find_recorded_map_by_id(target_map_id)
             related_bindings = {}
             for task_id, binding in (self._task_bindings or {}).items():
                 if not isinstance(binding, dict):
@@ -5275,11 +5252,9 @@ class SchedulerNode:
                 if str(binding.get("map_id", binding.get("mapId", "")) or "") == target_map_id:
                     related_bindings[str(task_id)] = deepcopy(binding)
             manifest = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "mapId": target_map_id,
                 "mapName": str(map_name or ""),
-                "stcmFile": "",
-                "stcmUploaded": False,
                 "map": deepcopy(record) if isinstance(record, dict) else {},
                 "taskBindings": related_bindings,
                 "savedAt": int(time.time()),
@@ -5300,13 +5275,19 @@ class SchedulerNode:
             target_map_id,
             map_name,
             map_dir,
-            stcm_path,
         )
 
     def _unregister_saved_map(self, target_path):
-        abs_path = os.path.abspath(str(target_path or "").strip())
-        if abs_path:
-            self._map_registry.pop(abs_path, None)
+        target = str(target_path or "").strip()
+        if target in self._map_registry:
+            self._map_registry.pop(target, None)
+            return
+        abs_path = os.path.abspath(target) if target else ""
+        for map_id, record in list(self._map_registry.items()):
+            if isinstance(record, dict) and os.path.abspath(
+                str(record.get("bundle_dir", "") or "")
+            ) == abs_path:
+                self._map_registry.pop(map_id, None)
 
     def _remove_task_bindings_for_map_id(self, map_id, reason=""):
         target_map_id = str(map_id or "").strip()
@@ -5390,27 +5371,24 @@ class SchedulerNode:
         removed_records = 0
         removed_files = 0
         overlay_aliases = {target_map_id}
-        for path, record in list((self._map_registry or {}).items()):
+        for registry_key, record in list((self._map_registry or {}).items()):
             if not isinstance(record, dict):
                 continue
             record_map_id = str(record.get("map_id", "") or "").strip()
             if record_map_id != target_map_id:
                 continue
-            abs_path = os.path.abspath(str(record.get("path", path) or path).strip())
+            abs_path = os.path.abspath(str(record.get("bundle_dir", record.get("path", "")) or "").strip())
             if keep_abs and abs_path == keep_abs:
                 continue
-            parsed_name, parsed_id = self._split_map_name_and_id_from_path(abs_path)
             overlay_aliases.update([
                 record_map_id,
                 str(record.get("name", "") or "").strip(),
-                parsed_name,
-                parsed_id,
             ])
-            self._map_registry.pop(path, None)
+            self._map_registry.pop(registry_key, None)
             removed_records += 1
             try:
-                if abs_path and os.path.isfile(abs_path):
-                    os.remove(abs_path)
+                if abs_path and os.path.isdir(abs_path):
+                    shutil.rmtree(abs_path)
                     removed_files += 1
             except Exception as exc:
                 rospy.logwarn("Failed to remove old map file for map_id=%s path=%s: %s", target_map_id, abs_path, exc)
@@ -5434,6 +5412,9 @@ class SchedulerNode:
         target = str(map_id or "").strip()
         if not target:
             return None
+        direct = (self._map_registry or {}).get(target)
+        if isinstance(direct, dict):
+            return direct
         for record in (self._map_registry or {}).values():
             if not isinstance(record, dict):
                 continue
@@ -5443,16 +5424,12 @@ class SchedulerNode:
 
     def _iter_recorded_maps(self, target_dir=""):
         target_dir = os.path.abspath(target_dir) if target_dir else ""
-        exts = {".stcm"}
         entries = []
         for record in (self._map_registry or {}).values():
             if not isinstance(record, dict):
                 continue
-            path = os.path.abspath(str(record.get("path", "")).strip())
-            if not path:
-                continue
-            ext = os.path.splitext(path)[1].lower()
-            if ext not in exts:
+            path = os.path.abspath(str(record.get("bundle_dir", "")).strip())
+            if not path or not os.path.isdir(path):
                 continue
             if target_dir:
                 try:
@@ -5460,15 +5437,17 @@ class SchedulerNode:
                         continue
                 except Exception:
                     continue
-            parsed_name, parsed_id = self._split_map_name_and_id_from_path(path)
-            name = str(record.get("name", "")).strip() or parsed_name
-            map_id = str(record.get("map_id", "")).strip() or parsed_id
+            map_id = str(record.get("map_id", "")).strip()
+            name = str(record.get("name", "")).strip() or map_id
             size_bytes = int(record.get("size_bytes", 0) or 0)
-            if os.path.isfile(path):
-                try:
-                    size_bytes = int(os.path.getsize(path))
-                except Exception:
-                    pass
+            try:
+                size_bytes = sum(
+                    os.path.getsize(os.path.join(root, filename))
+                    for root, _dirs, files in os.walk(path)
+                    for filename in files
+                )
+            except Exception:
+                pass
             total_work_area_m2 = float(record.get("total_work_area_m2", 0.0) or 0.0)
             estimated_time_s = float(record.get("estimated_time_s", -1.0) or -1.0)
             entries.append((name, map_id, path, size_bytes, total_work_area_m2, estimated_time_s))
@@ -5512,18 +5491,21 @@ class SchedulerNode:
             t_prev = now
 
         try:
-            self._switch_to_localization_mode_after_map_save(publish_count=6)
-            mark("switch_to_localization")
-            rospy.loginfo("Task start pre-check: radar switched to localization mode")
+            self._ensure_super_lio_proxies()
+            mode_status = self._super_lio_status_proxy()
+            if str(mode_status.state) != "LOCALIZING":
+                raise RuntimeError("Super-LIO localization is not active")
+            if not bool(mode_status.localization_ready):
+                raise RuntimeError("initial pose has not been received")
+            if self._tf_buffer is not None:
+                self._tf_buffer.lookup_transform(
+                    "map", "base_link", rospy.Time(0), rospy.Duration(1.0)
+                )
+            mark("validate_super_lio_localization")
         except Exception as exc:
-            mark("switch_to_localization_failed")
-            rospy.logwarn("Task start blocked: failed to switch radar to localization mode: %s", exc)
-            return False, "Failed to switch radar to localization mode: {}".format(exc)
-        if self._send_radar_map_sync():
-            rospy.loginfo("Task start radar map sync sent once")
-        else:
-            rospy.logwarn("Task start radar map sync was not sent; continue task startup")
-        mark("sync_radar_map")
+            mark("validate_super_lio_localization_failed")
+            rospy.logwarn("Task start blocked: Super-LIO localization is not ready: %s", exc)
+            return False, "Super-LIO localization is not ready: {}".format(exc)
         if self.current_path is None and not self._plan_current_task():
             mark("plan_current_task_failed")
             return False, "Failed to plan task"
@@ -8381,41 +8363,33 @@ class SchedulerNode:
         req_op = int(request.operation)
         response.operation = req_op
         response.navigation_map_reloaded = False
-        os.makedirs(self._stcm_local_dir, exist_ok=True)
         requested_map_id = str(getattr(request, "map_id", "")).strip()
-        stcm_path = ""
+        bundle_dir = ""
         saved_name = ""
         saved_map_id = ""
 
         try:
             if req_op == op_download:
-                # map_id-only mode: always create a fresh local file; request.map_id is optional hint.
-                stcm_path = self._build_stcm_download_path("")
-                self._ensure_sync_proxies()
-                result = self._sync_get_proxy(mapfile=stcm_path)
-                if not result.success:
-                    raise RuntimeError(result.message or "sync_get_stcm failed")
-                if (not os.path.exists(stcm_path)) or os.path.getsize(stcm_path) <= 0:
-                    raise RuntimeError("sync_get_stcm finished but file is empty: {}".format(stcm_path))
-                _saved_name, saved_map_id = self._register_saved_map(stcm_path, "")
-                saved_name = _saved_name or ""
-                if saved_map_id:
-                    self._set_active_map_id(saved_map_id, reason="map_sync_download", migrate_bindings=True)
-                response.message = "stcm_downloaded"
+                raise RuntimeError(
+                    "download_from_aurora is unsupported by the Super-LIO backend; use MapSaveRequest"
+                )
             elif req_op == op_upload:
-                import_result = self._import_saved_map_to_radar(requested_map_id, reason="map_sync_upload")
-                stcm_path = import_result["stcm_path"]
+                import_result = self._start_saved_map_localization(requested_map_id, reason="map_sync_upload")
+                bundle_dir = import_result["bundle_dir"]
                 saved_name = import_result["map_name"]
                 saved_map_id = import_result["map_id"]
                 response.message = (
                     "map_already_active_import_skipped"
                     if bool(import_result.get("import_skipped", False))
-                    else "stcm_uploaded"
+                    else "super_lio_localization_started"
                 )
             else:
                 raise RuntimeError("unsupported map sync operation")
 
-            self._attach_runtime_map_paths(response, False)
+            record = self._find_recorded_map_by_id(saved_map_id or requested_map_id)
+            if isinstance(record, dict):
+                response.map_yaml_path = str(record.get("yaml_path", "") or "")
+                response.map_image_path = str(record.get("image_path", "") or "")
             self._save_local_state()
             response.result = pb.RESULT_SUCCESS
             if hasattr(response, "map_id"):
@@ -8432,7 +8406,7 @@ class SchedulerNode:
 
         return response.SerializeToString(), pb.MSG_ID_MAP_SYNC_RESPONSE, pb.COMP_SCHEDULER
 
-    def _import_saved_map_to_radar(self, map_id, reason="map_import_to_radar"):
+    def _start_saved_map_localization(self, map_id, reason="map_localization_start"):
         requested_map_id = str(map_id or "").strip()
         if not requested_map_id:
             raise RuntimeError("map_id is required")
@@ -8440,54 +8414,29 @@ class SchedulerNode:
         if record is None:
             raise RuntimeError("map_id not found: {}".format(requested_map_id))
         map_name = str(record.get("name", "")).strip()
-        stcm_path_value = str(record.get("path", "")).strip()
-        stcm_path = os.path.abspath(stcm_path_value) if stcm_path_value else ""
+        bundle_dir = os.path.abspath(str(record.get("bundle_dir", "") or "").strip())
         current_map_id = str(self._current_map_id() or "").strip()
-        if current_map_id == requested_map_id:
-            rospy.loginfo(
-                "Map import skipped because requested map is already active: map_id=%s map_name=%s",
-                requested_map_id,
-                map_name or "<empty>",
-            )
-            return {
-                "map_id": requested_map_id,
-                "map_name": map_name,
-                "stcm_path": stcm_path,
-                "relocalization_accepted": False,
-                "import_skipped": True,
-            }
-
-        if not stcm_path:
-            raise RuntimeError("map_id found but path is empty: {}".format(requested_map_id))
-        if not os.path.exists(stcm_path):
-            raise RuntimeError("stcm file not found: {}".format(stcm_path))
-        self._ensure_sync_proxies()
-        self._send_radar_map_cache_clear(wait_after_sec=self._radar_clear_before_import_delay_sec)
-        result = self._sync_set_proxy(mapfile=stcm_path)
+        if not bundle_dir or not os.path.isdir(bundle_dir):
+            raise RuntimeError("map bundle not found: {}".format(bundle_dir))
+        self._prepare_for_map_mode_switch(reason)
+        self._ensure_super_lio_proxies()
+        result = self._super_lio_start_localization_proxy(map_id=requested_map_id)
         if not result.success:
-            raise RuntimeError(result.message or "sync_set_stcm failed")
+            raise RuntimeError(result.message or "Super-LIO localization start failed")
         self._set_active_map_id(requested_map_id, reason=reason, migrate_bindings=False)
-        self._switch_to_localization_mode_after_map_save()
-        if self._radar_relocalization_after_import_delay_sec > 0.0:
-            rospy.sleep(self._radar_relocalization_after_import_delay_sec)
-        relocalization_accepted = self._request_radar_relocalization(
-            reason="map_import:{}".format(requested_map_id),
-            raise_on_error=False,
-        )
+        self._clear_navigation_costmaps()
         rospy.loginfo(
-            "Map imported to radar: map_id=%s map_name=%s stcm=%s "
-            "localization_on=true relocalization_accepted=%s",
+            "Super-LIO localization map selected: map_id=%s map_name=%s bundle=%s initial_pose_required=true",
             requested_map_id,
             map_name,
-            stcm_path,
-            str(relocalization_accepted),
+            bundle_dir,
         )
         return {
             "map_id": requested_map_id,
             "map_name": map_name,
-            "stcm_path": stcm_path,
-            "relocalization_accepted": bool(relocalization_accepted),
-            "import_skipped": False,
+            "bundle_dir": bundle_dir,
+            "relocalization_accepted": True,
+            "import_skipped": current_map_id == requested_map_id,
         }
 
     def handle_map_import_to_radar_request(self, payload):
@@ -8499,13 +8448,13 @@ class SchedulerNode:
         response.map_id = requested_map_id
         response.imported = False
         try:
-            import_result = self._import_saved_map_to_radar(requested_map_id, reason="map_import_to_radar")
+            import_result = self._start_saved_map_localization(requested_map_id, reason="map_import_to_radar")
             response.result = pb.RESULT_SUCCESS
             import_skipped = bool(import_result.get("import_skipped", False))
             response.message = (
                 "map_already_active_import_skipped"
                 if import_skipped
-                else "map_imported_to_radar_and_localization_on"
+                else "super_lio_map_selected_and_localization_on"
             )
             response.map_id = str(import_result.get("map_id", requested_map_id))
             response.map_name = str(import_result.get("map_name", ""))
@@ -8566,20 +8515,17 @@ class SchedulerNode:
         request.ParseFromString(payload)
         response = pb.MapSaveResponse()
         response.navigation_map_reloaded = False
-        os.makedirs(self._stcm_local_dir, exist_ok=True)
-
         requested_name = (request.map_name or "").strip()
         requested_map_id = str(getattr(request, "map_id", "") or "").strip()
-        if requested_name:
-            stcm_path = self._build_stcm_download_path(requested_name, forced_map_id=requested_map_id)
-        else:
-            stcm_path = self._build_stcm_download_path("", forced_map_id=requested_map_id)
-        if hasattr(response, "stcm_path"):
-            response.stcm_path = stcm_path
 
         try:
-            existing_record = self._find_recorded_map_by_id(requested_map_id) if requested_map_id else None
-            if requested_map_id and isinstance(existing_record, dict):
+            is_live_request = self._is_live_map_id(requested_map_id)
+            existing_record = (
+                self._find_recorded_map_by_id(requested_map_id)
+                if requested_map_id and not is_live_request
+                else None
+            )
+            if requested_map_id and not is_live_request and isinstance(existing_record, dict):
                 map_id_ok, current_map_id = self._validate_requested_map_id(
                     requested_map_id,
                     "MapSaveRequest",
@@ -8599,10 +8545,6 @@ class SchedulerNode:
                     request,
                     current_map_id,
                 )
-
-                existing_path = os.path.abspath(str(existing_record.get("path", "") or "").strip())
-                if hasattr(response, "stcm_path"):
-                    response.stcm_path = existing_path
                 if requested_name:
                     existing_record["name"] = requested_name
                 existing_record["saved_at"] = int(time.time())
@@ -8621,7 +8563,8 @@ class SchedulerNode:
                 self._write_app_rotation_to_record(current_map_id, saved_app_rotation_deg)
                 self._save_map_registry_state()
                 self._save_local_state()
-
+                response.map_yaml_path = str(existing_record.get("yaml_path", "") or "")
+                response.map_image_path = str(existing_record.get("image_path", "") or "")
                 response.result = pb.RESULT_SUCCESS
                 response.message = "map_saved_offline"
                 if hasattr(response, "map_id"):
@@ -8638,24 +8581,26 @@ class SchedulerNode:
                         created_at = _format_ts_s(existing_record.get("saved_at", 0))
                     response.created_at = str(created_at or "")
                 rospy.loginfo(
-                    "Saved existing map metadata only: map_id=%s map_name=%s stcm=%s regions=%d raw_grid_unchanged=true",
+                    "Saved existing map metadata only: map_id=%s map_name=%s bundle=%s regions=%d raw_grid_unchanged=true",
                     requested_map_id,
                     str(existing_record.get("name", "") or ""),
-                    existing_path or "<empty>",
+                    str(existing_record.get("bundle_dir", "") or "<empty>"),
                     len(self.task_config.work_regions or []),
                 )
                 self._queue_saved_map_upload(
                     requested_map_id,
                     str(existing_record.get("name", "") or requested_name or ""),
-                    existing_path,
                 )
                 return response.SerializeToString(), pb.MSG_ID_MAP_SAVE_RESPONSE, pb.COMP_SCHEDULER
 
-            if requested_map_id:
+            target_map_id = self._saved_map_id_for_request(requested_map_id)
+            if is_live_request:
                 rospy.loginfo(
-                    "MapSaveRequest creates new saved map because map_id is not recorded yet: map_id=%s",
-                    requested_map_id,
+                    "MapSaveRequest resolved live source to new saved map id: requested_map_id=%s target_map_id=%s",
+                    requested_map_id or "<empty>",
+                    target_map_id,
                 )
+            target_map_name = requested_name or "地图"
             if not self._is_live_map_id(self._current_map_id()):
                 self._set_active_map_id(
                     self._live_map_id,
@@ -8669,30 +8614,25 @@ class SchedulerNode:
                 self.map_service._grinder_map_id = self._live_map_id
                 self.map_service.set_raw_map(live_raw_map)
             else:
-                rospy.logwarn("MapSaveRequest new map source has no live raw map before sync_get_stcm")
+                rospy.logwarn("MapSaveRequest new map source has no live OccupancyGrid")
             self._sync_task_regions_from_overlay()
             self._sync_task_map_binding(update_binding=True)
-            self._ensure_sync_proxies()
-            result = self._sync_get_proxy(mapfile=stcm_path)
-            if not result.success:
-                raise RuntimeError(result.message or "sync_get_stcm failed")
-            if (not os.path.exists(stcm_path)) or os.path.getsize(stcm_path) <= 0:
-                raise RuntimeError("save map finished but file is empty: {}".format(stcm_path))
             total_work_area_m2, estimated_time_s = self._compute_saved_map_metrics()
             region_metrics = self._compute_saved_region_metrics(estimated_time_s)
             thumb_format, thumb_b64, thumb_width, thumb_height = self._build_saved_map_thumbnail()
-            parsed_name, parsed_map_id = self._split_map_name_and_id_from_path(stcm_path)
-            target_map_id = str(requested_map_id or parsed_map_id or "").strip()
-            if target_map_id:
-                self._remove_saved_map_data_by_map_id(
-                    target_map_id,
-                    keep_path=stcm_path,
-                    reason="map_save_replace",
-                )
+            self._prepare_for_map_mode_switch("map_save")
+            self._ensure_super_lio_proxies()
+            save_result = self._super_lio_save_map_proxy(
+                map_id=target_map_id,
+                map_name=target_map_name,
+            )
+            if not bool(save_result.success):
+                raise RuntimeError(save_result.message or "Super-LIO map save failed")
+            bundle_dir = os.path.abspath(str(save_result.bundle_dir or "").strip())
             _saved_name, saved_map_id = self._register_saved_map(
-                stcm_path,
-                requested_name,
-                explicit_map_id=requested_map_id,
+                bundle_dir,
+                target_map_name,
+                explicit_map_id=target_map_id,
                 total_work_area_m2=total_work_area_m2,
                 estimated_time_s=estimated_time_s,
                 region_metrics=region_metrics,
@@ -8701,6 +8641,8 @@ class SchedulerNode:
                 thumb_width=thumb_width,
                 thumb_height=thumb_height,
             )
+            if not saved_map_id:
+                raise RuntimeError("Super-LIO assets saved but registry update failed")
             if saved_map_id:
                 prev_map_id = self._current_map_id()
                 saved_alignment_yaw = self._alignment_yaw_from_map_save_request(request, prev_map_id)
@@ -8738,20 +8680,17 @@ class SchedulerNode:
                         "Map saved without raw grid snapshot because current OccupancyGrid is unavailable: map_id=%s",
                         saved_map_id,
                     )
-            localization_switched = False
-            localization_err = ""
-            try:
-                self._switch_to_localization_mode_after_map_save()
-                localization_switched = True
-            except Exception as loc_exc:
-                localization_err = str(loc_exc)
-                rospy.logwarn("Map saved but failed to switch localization mode: %s", localization_err)
-            self._attach_runtime_map_paths(response, False)
+            record = self._find_recorded_map_by_id(saved_map_id)
+            response.map_yaml_path = str(record.get("yaml_path", "") if isinstance(record, dict) else "")
+            response.map_image_path = str(record.get("image_path", "") if isinstance(record, dict) else "")
+            localization_switched = bool(save_result.localization_started)
+            localization_err = "" if localization_switched else str(save_result.message or "localization failed")
+            if localization_switched:
+                self._clear_navigation_costmaps()
             self._save_local_state()
             self._queue_saved_map_upload(
                 saved_map_id or requested_map_id,
                 _saved_name or requested_name,
-                stcm_path,
             )
             response.result = pb.RESULT_SUCCESS
             response.message = "map_saved_and_localization_on" if localization_switched else "map_saved"
@@ -9536,60 +9475,6 @@ class SchedulerNode:
         )
         return outputs
 
-    def _switch_to_localization_mode_after_map_save(self, publish_count=6):
-        if self._set_map_localization_pub is None or SetMapLocalizationRequest is None:
-            raise RuntimeError("set_map_localization publisher is unavailable")
-        conn = int(self._set_map_localization_pub.get_num_connections())
-        if conn <= 0:
-            raise RuntimeError("set_map_localization has no subscribers; check slamware_ros_sdk node")
-        msg = SetMapLocalizationRequest()
-        msg.enabled = True
-        publish_count = max(1, int(publish_count))
-        for _ in range(publish_count):
-            self._set_map_localization_pub.publish(msg)
-            rospy.sleep(0.15)
-        self._radar_mapping_mode_active = False
-        self._radar_mapping_sync_remaining = 0
-        rospy.loginfo(
-            "Radar mapping sync stopped: localization mode active publish_count=%d interval_sec=0.15",
-            publish_count,
-        )
-
-    def _switch_to_mapping_mode(self, map_kind=0, set_live_map_active=True):
-        if self._set_map_update_pub is None or SetMapUpdateRequest is None:
-            raise RuntimeError("set_map_update publisher is unavailable")
-        conn = int(self._set_map_update_pub.get_num_connections())
-        if conn <= 0:
-            raise RuntimeError("set_map_update has no subscribers; check slamware_ros_sdk node")
-        msg = SetMapUpdateRequest()
-        msg.enabled = True
-        # Default to EXPLORERMAP when map_kind is unset.
-        if MapKind is not None:
-            kind_value = int(map_kind) if int(map_kind or 0) != 0 else int(MapKind.EXPLORERMAP)
-            kind_value = max(int(MapKind.UNKNOWN), min(int(MapKind.LOCALSLAMMAP), kind_value))
-        else:
-            kind_value = int(map_kind) if int(map_kind or 0) != 0 else 1
-        msg.kind.kind = kind_value
-        for _ in range(12):
-            self._set_map_update_pub.publish(msg)
-            rospy.sleep(0.15)
-        self._radar_mapping_mode_active = True
-        self._radar_mapping_sync_remaining = self._radar_mapping_sync_burst_count
-        rospy.loginfo(
-            "Radar mapping sync burst enabled: count=%d period=%.3fs topic=%s",
-            self._radar_mapping_sync_remaining,
-            self._radar_mapping_sync_period_sec,
-            self._sync_map_topic,
-        )
-        if set_live_map_active:
-            self._set_active_map_id(
-                self._live_map_id,
-                reason="map_mode_mapping_on",
-                migrate_bindings=False,
-                save_prev_overlay=False,
-            )
-        return conn, kind_value
-
     def handle_map_mode_request(self, payload):
         pb = self.sl_link_server.pb
         request = pb.MapModeRequest()
@@ -9602,54 +9487,47 @@ class SchedulerNode:
         try:
             if request.mode == pb.MAP_MODE_MAPPING:
                 if bool(request.enabled):
-                    conn, kind_value = self._switch_to_mapping_mode(
-                        map_kind=int(request.map_kind),
-                        set_live_map_active=True,
+                    self._prepare_for_map_mode_switch("super_lio_mapping_start")
+                    self._ensure_super_lio_proxies()
+                    result = self._super_lio_start_mapping_proxy()
+                    if not result.success:
+                        raise RuntimeError(result.message or "failed to start Super-LIO mapping")
+                    self._set_active_map_id(
+                        self._live_map_id,
+                        reason="map_mode_mapping_on",
+                        migrate_bindings=False,
+                        save_prev_overlay=False,
                     )
-                    response.map_kind = kind_value
                     response.result = pb.RESULT_SUCCESS
-                    response.message = "mapping_mode_command_published enabled=1 subscribers={}".format(conn)
+                    response.message = "super_lio_mapping_started"
                 else:
-                    # aurora_ros set_map_update callback ignores msg.enabled and always enters mapping mode.
-                    # To support "mapping off" without modifying aurora_ros, switch to localization mode.
-                    if self._set_map_localization_pub is None or SetMapLocalizationRequest is None:
-                        raise RuntimeError(
-                            "mapping_off fallback requires set_map_localization publisher, but it is unavailable"
-                        )
-                    conn = int(self._set_map_localization_pub.get_num_connections())
-                    if conn <= 0:
-                        raise RuntimeError(
-                            "mapping_off fallback failed: set_map_localization has no subscribers; check slamware_ros_sdk node"
-                        )
-                    msg = SetMapLocalizationRequest()
-                    msg.enabled = True
-                    for _ in range(12):
-                        self._set_map_localization_pub.publish(msg)
-                        rospy.sleep(0.15)
-                    self._radar_mapping_mode_active = False
-                    rospy.loginfo("Radar mapping sync stopped: mapping disabled via localization fallback")
+                    self._prepare_for_map_mode_switch("super_lio_mapping_stop")
+                    self._ensure_super_lio_proxies()
+                    result = self._super_lio_stop_proxy()
+                    if not result.success:
+                        raise RuntimeError(result.message or "failed to stop Super-LIO mapping")
                     response.result = pb.RESULT_SUCCESS
-                    response.message = (
-                        "mapping_off_fallback_to_localization enabled=1 subscribers={}".format(conn)
-                    )
+                    response.message = "super_lio_mapping_stopped"
             elif request.mode == pb.MAP_MODE_LOCALIZATION:
-                if self._set_map_localization_pub is None or SetMapLocalizationRequest is None:
-                    raise RuntimeError("set_map_localization publisher is unavailable")
-                conn = int(self._set_map_localization_pub.get_num_connections())
-                if conn <= 0:
-                    raise RuntimeError("set_map_localization has no subscribers; check slamware_ros_sdk node")
-                msg = SetMapLocalizationRequest()
-                msg.enabled = bool(request.enabled)
-                for _ in range(12):
-                    self._set_map_localization_pub.publish(msg)
-                    rospy.sleep(0.15)
                 if bool(request.enabled):
-                    self._radar_mapping_mode_active = False
-                    rospy.loginfo("Radar mapping sync stopped: localization mode command enabled")
+                    target_map_id = self._current_map_id()
+                    if self._is_live_map_id(target_map_id):
+                        raise RuntimeError("saved map must be selected before localization")
+                    self._prepare_for_map_mode_switch("super_lio_localization_start")
+                    self._ensure_super_lio_proxies()
+                    result = self._super_lio_start_localization_proxy(map_id=target_map_id)
+                    if not result.success:
+                        raise RuntimeError(result.message or "failed to start Super-LIO localization")
+                    self._clear_navigation_costmaps()
+                    response.message = "super_lio_localization_started_initial_pose_required"
+                else:
+                    self._prepare_for_map_mode_switch("super_lio_localization_stop")
+                    self._ensure_super_lio_proxies()
+                    result = self._super_lio_stop_proxy()
+                    if not result.success:
+                        raise RuntimeError(result.message or "failed to stop Super-LIO localization")
+                    response.message = "super_lio_localization_stopped"
                 response.result = pb.RESULT_SUCCESS
-                response.message = "localization_mode_command_published enabled={} subscribers={}".format(
-                    int(bool(request.enabled)), conn
-                )
             else:
                 response.result = pb.RESULT_INVALID_PARAM
                 response.message = "unsupported map mode"
@@ -9715,9 +9593,8 @@ class SchedulerNode:
         request = pb.MapCatalogRequest()
         request.ParseFromString(payload)
         response = pb.MapCatalogResponse()
-        target_dir = os.path.abspath(self._stcm_local_dir)
+        target_dir = os.path.abspath(self._super_lio_map_root)
         try:
-            self._cleanup_orphan_map_overlay_states()
             # Query should return recorded map metadata, not raw folder filenames.
             entries = self._iter_recorded_maps(target_dir=target_dir)
             response.total_count = int(len(entries))
@@ -9803,34 +9680,37 @@ class SchedulerNode:
             record = self._find_recorded_map_by_id(requested_map_id)
             if record is None:
                 raise RuntimeError("map_id not found: {}".format(requested_map_id))
-            target_path = os.path.abspath(str(record.get("path", "")).strip())
-            if not target_path:
-                raise RuntimeError("map_id found but path is empty: {}".format(requested_map_id))
+            target_path_value = str(record.get("bundle_dir", "") or "").strip()
+            if not target_path_value:
+                raise RuntimeError("map_id found but bundle_dir is empty: {}".format(requested_map_id))
+            target_path = os.path.abspath(target_path_value)
             if not os.path.exists(target_path):
-                raise RuntimeError("map file not found: {}".format(target_path))
-            if not os.path.isfile(target_path):
-                raise RuntimeError("target is not a file: {}".format(target_path))
-            record_name, record_id = self._split_map_name_and_id_from_path(target_path)
-            for rec in (self._map_registry or {}).values():
-                if isinstance(rec, dict) and os.path.abspath(str(rec.get("path", "")).strip()) == target_path:
-                    if str(rec.get("map_id", "")).strip():
-                        record_id = str(rec.get("map_id", "")).strip()
-                    if str(rec.get("name", "")).strip():
-                        record_name = str(rec.get("name", "")).strip()
-                    break
+                raise RuntimeError("map bundle not found: {}".format(target_path))
+            if not os.path.isdir(target_path):
+                raise RuntimeError("map bundle is not a directory: {}".format(target_path))
+            if (
+                target_path == self._super_lio_map_root
+                or os.path.commonpath([target_path, self._super_lio_map_root]) != self._super_lio_map_root
+            ):
+                raise RuntimeError("refuse to delete map bundle outside configured map root")
+            record_name = str(record.get("name", "") or requested_map_id)
+            record_id = str(record.get("map_id", "") or requested_map_id)
+            if self._current_map_id() == record_id:
+                self._prepare_for_map_mode_switch("delete_active_map")
+                self._ensure_super_lio_proxies()
+                stop_result = self._super_lio_stop_proxy()
+                if not stop_result.success:
+                    raise RuntimeError(stop_result.message or "failed to stop active localization")
             remote_deleted, remote_message = self.platform_file_sync.delete_map(requested_map_id)
             if not remote_deleted:
                 raise RuntimeError("server map delete failed: {}".format(remote_message))
-            os.remove(target_path)
-            self._unregister_saved_map(target_path)
+            shutil.rmtree(target_path)
+            self._unregister_saved_map(record_id)
             target_map_id = str(record_id or requested_map_id or "").strip()
-            parsed_name, parsed_id = self._split_map_name_and_id_from_path(target_path)
             deleted_aliases = {
                 str(requested_map_id or "").strip(),
                 str(record_id or "").strip(),
                 str(record_name or "").strip(),
-                str(parsed_name or "").strip(),
-                str(parsed_id or "").strip(),
             }
             if self._current_map_id() in deleted_aliases:
                 self._set_active_map_id(
@@ -9844,12 +9724,10 @@ class SchedulerNode:
                 record_id,
                 record_name,
             }
-            overlay_aliases.update([parsed_name, parsed_id])
             self._remove_map_overlay_states_for_aliases(overlay_aliases)
             # Also remove task bindings associated with this map_id.
             self._remove_planned_path_debug_for_map(target_map_id)
             self._remove_task_bindings_for_map_aliases(deleted_aliases, reason="map_delete")
-            self._cleanup_orphan_map_overlay_states()
             self._save_local_state()
             if hasattr(response, "map_id"):
                 response.map_id = record_id
@@ -10128,50 +10006,24 @@ class SchedulerNode:
             pb.COMP_SYSTEM,
         )
 
-    def _send_radar_map_cache_clear(self, wait_after_sec=0.0):
-        if self._clear_map_pub is None or ClearMapRequest is None:
-            raise RuntimeError("clear_map publisher is unavailable")
-        conn = int(self._clear_map_pub.get_num_connections())
-        if conn <= 0:
-            raise RuntimeError("clear_map has no subscribers; check slamware_ros_sdk node")
-
-        msg = ClearMapRequest()
-        if MapKind is not None:
-            msg.kind.kind = int(MapKind.EXPLORERMAP)
-        self._clear_map_pub.publish(msg)
-        rospy.loginfo("Radar map cache clear sent: topic=%s kind=EXPLORERMAP", self._clear_map_topic)
-        self._send_radar_map_sync()
-        if wait_after_sec > 0.0:
-            rospy.sleep(float(wait_after_sec))
-
-    def _send_radar_map_sync(self):
-        if self._sync_map_pub is None or SyncMapRequest is None:
-            rospy.logwarn("sync_map publisher is unavailable; skip radar map sync request")
-            return False
-        conn = int(self._sync_map_pub.get_num_connections())
-        if conn <= 0:
-            rospy.logwarn("sync_map has no subscribers; skip radar map sync request")
-            return False
-
-        self._sync_map_pub.publish(SyncMapRequest())
-        rospy.loginfo("Radar map sync sent: topic=%s", self._sync_map_topic)
-        return True
-
     def handle_radar_map_cache_clear_request(self, payload):
         pb = self.sl_link_server.pb
         request = pb.RadarMapCacheClearRequest()
         request.ParseFromString(payload)
         response = pb.RadarMapCacheClearResponse()
         response.result = pb.RESULT_SUCCESS
-        response.message = "radar_map_clear_sent_and_mapping_on"
+        response.message = "super_lio_live_map_reset"
         try:
-            self._send_radar_map_cache_clear()
-            conn, kind_value = self._switch_to_mapping_mode(set_live_map_active=True)
-            rospy.loginfo(
-                "Radar map cache clear followed by sync_map and mapping mode: subscribers=%d map_kind=%d",
-                conn,
-                kind_value,
-            )
+            self._ensure_super_lio_proxies()
+            status = self._super_lio_status_proxy()
+            if str(status.state) != "MAPPING":
+                raise RuntimeError("live map reset requires active MAPPING state")
+            rospy.wait_for_service("/cloud_to_occupancy_grid/reset_map", timeout=3.0)
+            reset_map = rospy.ServiceProxy("/cloud_to_occupancy_grid/reset_map", Trigger)
+            result = reset_map()
+            if not result.success:
+                raise RuntimeError(result.message or "Super-LIO 2D map reset failed")
+            self._clear_live_map_files()
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
@@ -10209,18 +10061,9 @@ class SchedulerNode:
         request = pb.RadarMapSyncRequest()
         request.ParseFromString(payload)
         response = pb.RadarMapSyncResponse()
-        try:
-            response.sent = bool(self._send_radar_map_sync())
-            if response.sent:
-                response.result = pb.RESULT_SUCCESS
-                response.message = "radar_map_sync_sent"
-            else:
-                response.result = pb.RESULT_FAILED
-                response.message = "radar_map_sync_unavailable"
-        except Exception as exc:
-            response.result = pb.RESULT_FAILED
-            response.message = str(exc)
-            response.sent = False
+        response.sent = False
+        response.result = pb.RESULT_FAILED
+        response.message = "radar_map_sync is unsupported by the Super-LIO backend"
         rospy.loginfo(
             "SL-LinkA radar map sync response: sent=%s result=%s message=%s",
             str(response.sent),
@@ -10233,74 +10076,125 @@ class SchedulerNode:
             pb.COMP_SYSTEM,
         )
 
-    def _request_radar_relocalization(self, reason="manual", raise_on_error=True):
-        try:
-            if RadarRelocalizationService is None:
-                raise RuntimeError("slamware_ros_sdk/RelocalizationRequest service is unavailable")
-            rospy.wait_for_service(
-                self._radar_relocalization_service,
-                timeout=self._radar_relocalization_service_wait_sec,
-            )
-            if self._radar_relocalization_proxy is None:
-                self._radar_relocalization_proxy = rospy.ServiceProxy(
-                    self._radar_relocalization_service,
-                    RadarRelocalizationService,
-                )
-            service_response = self._radar_relocalization_proxy()
-            accepted = bool(service_response.success)
-            if accepted:
-                request_timestamp_ns = int(time.time() * 1.0e9)
-                with self._radar_relocalization_status_lock:
-                    self._radar_relocalization_raw_available = True
-                    self._radar_relocalization_raw_status = "RelocalizationRunning"
-                    self._radar_relocalization_raw_timestamp_ns = request_timestamp_ns
-                    self._radar_relocalization_aggregate_status = "running"
-                    self._radar_relocalization_aggregate_timestamp_ns = request_timestamp_ns
-            rospy.loginfo(
-                "Radar relocalization requested: service=%s accepted=%s reason=%s",
-                self._radar_relocalization_service,
-                str(accepted),
-                str(reason),
-            )
-            return accepted
-        except Exception as exc:
-            self._radar_relocalization_proxy = None
-            if raise_on_error:
-                raise
-            rospy.logwarn(
-                "Radar relocalization request failed: service=%s reason=%s error=%s",
-                self._radar_relocalization_service,
-                str(reason),
-                exc,
-            )
-            return False
-
     def handle_radar_relocalization_request(self, payload):
         pb = self.sl_link_server.pb
         request = pb.RadarRelocalizationRequest()
         request.ParseFromString(payload)
         response = pb.RadarRelocalizationResponse()
         response.accepted = False
+        response.result = pb.RESULT_FAILED
+
+        if not bool(request.initial_pose_available) or not request.HasField("initial_pose"):
+            response.result = pb.RESULT_INVALID_PARAM
+            response.message = "initial_pose_required"
+            response.status = "rejected"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_RADAR_RELOCALIZATION_RESPONSE,
+                pb.COMP_SYSTEM,
+            )
+
+        pose = request.initial_pose
+        pose_values = (float(pose.x), float(pose.y), float(pose.heading_deg))
+        if not all(math.isfinite(value) for value in pose_values):
+            response.result = pb.RESULT_INVALID_PARAM
+            response.message = "initial_pose_contains_non_finite_value"
+            response.status = "rejected"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_RADAR_RELOCALIZATION_RESPONSE,
+                pb.COMP_SYSTEM,
+            )
+
         try:
-            response.accepted = self._request_radar_relocalization(
-                reason="sl_link_request",
-                raise_on_error=True,
-            )
-            response.result = pb.RESULT_SUCCESS if response.accepted else pb.RESULT_FAILED
-            response.message = (
-                "radar_relocalization_accepted"
-                if response.accepted
-                else "radar_relocalization_rejected"
-            )
+            if getattr(self, "_exec_active", False) or getattr(self, "state", None) in (
+                SchedulerState.PLANNING,
+                SchedulerState.RUNNING,
+                SchedulerState.PAUSED,
+            ):
+                response.result = pb.RESULT_BUSY
+                raise RuntimeError("task must be stopped before relocalization")
+            self._ensure_super_lio_proxies()
+            mode_status = self._super_lio_status_proxy()
+            if str(mode_status.state) != "LOCALIZING":
+                raise RuntimeError("Super-LIO localization is not active")
+
+            covariance = request.initial_pose_covariance
+            x_variance = self._initial_pose_position_variance
+            y_variance = self._initial_pose_position_variance
+            yaw_variance = self._initial_pose_yaw_variance
+            xy_covariance = 0.0
+            x_yaw_covariance = 0.0
+            y_yaw_covariance = 0.0
+            if bool(covariance.valid):
+                covariance_values = (
+                    float(covariance.x_variance),
+                    float(covariance.y_variance),
+                    float(covariance.yaw_variance),
+                    float(covariance.xy_covariance),
+                    float(covariance.x_yaw_covariance),
+                    float(covariance.y_yaw_covariance),
+                )
+                if not all(math.isfinite(value) for value in covariance_values):
+                    raise ValueError("initial_pose_covariance_contains_non_finite_value")
+                if covariance_values[0] < 0.0 or covariance_values[1] < 0.0 or covariance_values[2] < 0.0:
+                    raise ValueError("initial_pose_covariance_variance_must_be_non_negative")
+                (
+                    x_variance,
+                    y_variance,
+                    yaw_variance,
+                    xy_covariance,
+                    x_yaw_covariance,
+                    y_yaw_covariance,
+                ) = covariance_values
+
+            heading_rad = math.radians(pose_values[2])
+            heading_rad = math.atan2(math.sin(heading_rad), math.cos(heading_rad))
+            message = PoseWithCovarianceStamped()
+            message.header.stamp = rospy.Time.now()
+            message.header.frame_id = "map"
+            message.pose.pose.position.x = pose_values[0]
+            message.pose.pose.position.y = pose_values[1]
+            message.pose.pose.position.z = 0.0
+            message.pose.pose.orientation.z = math.sin(0.5 * heading_rad)
+            message.pose.pose.orientation.w = math.cos(0.5 * heading_rad)
+            message.pose.covariance[0] = x_variance
+            message.pose.covariance[1] = xy_covariance
+            message.pose.covariance[5] = x_yaw_covariance
+            message.pose.covariance[6] = xy_covariance
+            message.pose.covariance[7] = y_variance
+            message.pose.covariance[11] = y_yaw_covariance
+            # The Android request supplies a planar pose only.
+            message.pose.covariance[14] = 1.0e6
+            message.pose.covariance[21] = 1.0e6
+            message.pose.covariance[28] = 1.0e6
+            message.pose.covariance[30] = x_yaw_covariance
+            message.pose.covariance[31] = y_yaw_covariance
+            message.pose.covariance[35] = yaw_variance
+            self.initial_pose_pub.publish(message)
+
+            response.accepted = True
+            response.result = pb.RESULT_SUCCESS
+            response.message = "initial_pose_published"
+            response.status = "running"
+        except ValueError as exc:
+            response.result = pb.RESULT_INVALID_PARAM
+            response.message = str(exc) or "invalid_initial_pose"
+            response.status = "rejected"
+            rospy.logwarn("SL-LinkA initial pose rejected: %s", exc)
+        except RuntimeError as exc:
+            if response.result != pb.RESULT_BUSY:
+                response.result = pb.RESULT_BUSY
+            response.message = str(exc) or "relocalization_busy"
+            response.status = "rejected"
+            rospy.logwarn("SL-LinkA initial pose rejected: %s", exc)
         except Exception as exc:
-            response.result = pb.RESULT_FAILED
-            response.message = str(exc)
-            response.accepted = False
-        response.status = self._radar_relocalization_snapshot()["status"]
+            response.message = str(exc) or "initial_pose_publish_failed"
+            response.status = "rejected"
+            rospy.logwarn("SL-LinkA initial pose rejected: %s", exc)
+
         rospy.loginfo(
-            "SL-LinkA radar relocalization response: service=%s accepted=%s status=%s "
-            "result=%s message=%s",
-            self._radar_relocalization_service,
+            "SL-LinkA Super-LIO relocalization response: accepted=%s status=%s result=%s message=%s",
             str(response.accepted),
             response.status,
             str(response.result),
@@ -10317,9 +10211,20 @@ class SchedulerNode:
         request = pb.RadarRelocalizationStatusRequest()
         request.ParseFromString(payload)
         response = pb.RadarRelocalizationStatusResponse()
-        snapshot = self._radar_relocalization_snapshot()
-        response.raw_status = str(snapshot["raw_status"])
-        response.timestamp_ns = int(snapshot["timestamp_ns"])
+        response.timestamp_ns = int(time.time() * 1.0e9)
+        try:
+            self._ensure_super_lio_proxies()
+            status = self._super_lio_status_proxy()
+            if str(status.state) == "LOCALIZING" and bool(status.localization_ready):
+                response.raw_status = "RelocalizationSuccess"
+            elif str(status.state) == "LOCALIZING":
+                response.raw_status = "RelocalizationRunning"
+            elif str(status.state) == "ERROR":
+                response.raw_status = "RelocalizationFailed"
+            else:
+                response.raw_status = "Idle"
+        except Exception:
+            response.raw_status = "Unavailable"
         rospy.loginfo(
             "SL-LinkA radar relocalization status response: raw_status=%s timestamp_ns=%d",
             response.raw_status or "<empty>",

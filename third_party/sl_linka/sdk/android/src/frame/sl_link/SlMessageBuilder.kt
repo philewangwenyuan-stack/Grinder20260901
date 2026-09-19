@@ -101,6 +101,14 @@ object SlMessageBuilder {
         return buildFrame(0x050Cu, serializedData, dstId, 0x08u)
     }
 
+    fun buildRadarRelocalizationRequestRaw(serializedData: ByteArray, dstId: UByte): ByteArray {
+        return buildFrame(0x052Au, serializedData, dstId, 0x00u)
+    }
+
+    fun buildRadarRelocalizationStatusRequestRaw(serializedData: ByteArray, dstId: UByte): ByteArray {
+        return buildFrame(0x052Cu, serializedData, dstId, 0x00u)
+    }
+
     fun buildAck(receivedFrame: SlFrame, payloadData: ByteArray = ByteArray(0)): ByteArray {
         return buildFrame(
             msgId = receivedFrame.msgId,

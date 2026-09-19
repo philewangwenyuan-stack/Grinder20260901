@@ -1013,7 +1013,15 @@ typedef struct _sl_link_RadarMapSyncResponse {
 } sl_link_RadarMapSyncResponse;
 
 typedef struct _sl_link_RadarRelocalizationRequest {
-    char dummy_field;
+    /* Required for Super-LIO. The pose is expressed in the ROS map frame.
+ x/y use metres and heading_deg uses degrees counter-clockwise from map X. */
+    bool initial_pose_available;
+    bool has_initial_pose;
+    sl_link_Pose2D initial_pose;
+    /* Optional uncertainty for the initial guess. When valid=false, LOWER uses
+ its configured defaults. */
+    bool has_initial_pose_covariance;
+    sl_link_LocalizationCovariance initial_pose_covariance;
 } sl_link_RadarRelocalizationRequest;
 
 typedef struct _sl_link_RadarRelocalizationResponse {
@@ -1387,7 +1395,7 @@ extern "C" {
 #define sl_link_RadarSystemStatusResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0}
 #define sl_link_RadarMapSyncRequest_init_default {0}
 #define sl_link_RadarMapSyncResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
-#define sl_link_RadarRelocalizationRequest_init_default {0}
+#define sl_link_RadarRelocalizationRequest_init_default {0, false, sl_link_Pose2D_init_default, false, sl_link_LocalizationCovariance_init_default}
 #define sl_link_RadarRelocalizationResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_RadarRelocalizationStatusRequest_init_default {0}
 #define sl_link_RadarRelocalizationStatusResponse_init_default {{{NULL}, NULL}, 0}
@@ -1476,7 +1484,7 @@ extern "C" {
 #define sl_link_RadarSystemStatusResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0}
 #define sl_link_RadarMapSyncRequest_init_zero    {0}
 #define sl_link_RadarMapSyncResponse_init_zero   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
-#define sl_link_RadarRelocalizationRequest_init_zero {0}
+#define sl_link_RadarRelocalizationRequest_init_zero {0, false, sl_link_Pose2D_init_zero, false, sl_link_LocalizationCovariance_init_zero}
 #define sl_link_RadarRelocalizationResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_RadarRelocalizationStatusRequest_init_zero {0}
 #define sl_link_RadarRelocalizationStatusResponse_init_zero {{{NULL}, NULL}, 0}
@@ -1978,6 +1986,9 @@ extern "C" {
 #define sl_link_RadarMapSyncResponse_result_tag  1
 #define sl_link_RadarMapSyncResponse_message_tag 2
 #define sl_link_RadarMapSyncResponse_sent_tag    3
+#define sl_link_RadarRelocalizationRequest_initial_pose_available_tag 1
+#define sl_link_RadarRelocalizationRequest_initial_pose_tag 2
+#define sl_link_RadarRelocalizationRequest_initial_pose_covariance_tag 3
 #define sl_link_RadarRelocalizationResponse_result_tag 1
 #define sl_link_RadarRelocalizationResponse_message_tag 2
 #define sl_link_RadarRelocalizationResponse_accepted_tag 3
@@ -2855,9 +2866,13 @@ X(a, STATIC,   SINGULAR, BOOL,     sent,              3)
 #define sl_link_RadarMapSyncResponse_DEFAULT NULL
 
 #define sl_link_RadarRelocalizationRequest_FIELDLIST(X, a) \
-
+X(a, STATIC,   SINGULAR, BOOL,     initial_pose_available,   1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  initial_pose,      2) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  initial_pose_covariance,   3)
 #define sl_link_RadarRelocalizationRequest_CALLBACK NULL
 #define sl_link_RadarRelocalizationRequest_DEFAULT NULL
+#define sl_link_RadarRelocalizationRequest_initial_pose_MSGTYPE sl_link_Pose2D
+#define sl_link_RadarRelocalizationRequest_initial_pose_covariance_MSGTYPE sl_link_LocalizationCovariance
 
 #define sl_link_RadarRelocalizationResponse_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
@@ -3203,7 +3218,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_Pose2D_size                      15
 #define sl_link_RadarMapCacheClearRequest_size   0
 #define sl_link_RadarMapSyncRequest_size         0
-#define sl_link_RadarRelocalizationRequest_size  0
+#define sl_link_RadarRelocalizationRequest_size  53
 #define sl_link_RadarRelocalizationStatusRequest_size 0
 #define sl_link_RadarSystemStatusRequest_size    0
 #define sl_link_SettingsReadRequest_size         4

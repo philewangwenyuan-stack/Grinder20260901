@@ -86673,6 +86673,57 @@ public final class SlLink {
   public interface RadarRelocalizationRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:sl_link.RadarRelocalizationRequest)
       com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * Required for Super-LIO. The pose is expressed in the ROS map frame.
+     * x/y use metres and heading_deg uses degrees counter-clockwise from map X.
+     * </pre>
+     *
+     * <code>bool initial_pose_available = 1;</code>
+     */
+    boolean getInitialPoseAvailable();
+
+    /**
+     * <code>.sl_link.Pose2D initial_pose = 2;</code>
+     */
+    boolean hasInitialPose();
+    /**
+     * <code>.sl_link.Pose2D initial_pose = 2;</code>
+     */
+    sl_link.SlLink.Pose2D getInitialPose();
+    /**
+     * <code>.sl_link.Pose2D initial_pose = 2;</code>
+     */
+    sl_link.SlLink.Pose2DOrBuilder getInitialPoseOrBuilder();
+
+    /**
+     * <pre>
+     * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+     * its configured defaults.
+     * </pre>
+     *
+     * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+     */
+    boolean hasInitialPoseCovariance();
+    /**
+     * <pre>
+     * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+     * its configured defaults.
+     * </pre>
+     *
+     * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+     */
+    sl_link.SlLink.LocalizationCovariance getInitialPoseCovariance();
+    /**
+     * <pre>
+     * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+     * its configured defaults.
+     * </pre>
+     *
+     * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+     */
+    sl_link.SlLink.LocalizationCovarianceOrBuilder getInitialPoseCovarianceOrBuilder();
   }
   /**
    * Protobuf type {@code sl_link.RadarRelocalizationRequest}
@@ -86687,6 +86738,7 @@ public final class SlLink {
       super(builder);
     }
     private RadarRelocalizationRequest() {
+      initialPoseAvailable_ = false;
     }
 
     @java.lang.Override
@@ -86702,6 +86754,7 @@ public final class SlLink {
       if (extensionRegistry == null) {
         throw new java.lang.NullPointerException();
       }
+      int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -86712,6 +86765,37 @@ public final class SlLink {
             case 0:
               done = true;
               break;
+            case 8: {
+
+              initialPoseAvailable_ = input.readBool();
+              break;
+            }
+            case 18: {
+              sl_link.SlLink.Pose2D.Builder subBuilder = null;
+              if (initialPose_ != null) {
+                subBuilder = initialPose_.toBuilder();
+              }
+              initialPose_ = input.readMessage(sl_link.SlLink.Pose2D.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(initialPose_);
+                initialPose_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            case 26: {
+              sl_link.SlLink.LocalizationCovariance.Builder subBuilder = null;
+              if (initialPoseCovariance_ != null) {
+                subBuilder = initialPoseCovariance_.toBuilder();
+              }
+              initialPoseCovariance_ = input.readMessage(sl_link.SlLink.LocalizationCovariance.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(initialPoseCovariance_);
+                initialPoseCovariance_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
             default: {
               if (!parseUnknownFieldProto3(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -86744,6 +86828,77 @@ public final class SlLink {
               sl_link.SlLink.RadarRelocalizationRequest.class, sl_link.SlLink.RadarRelocalizationRequest.Builder.class);
     }
 
+    public static final int INITIAL_POSE_AVAILABLE_FIELD_NUMBER = 1;
+    private boolean initialPoseAvailable_;
+    /**
+     * <pre>
+     * Required for Super-LIO. The pose is expressed in the ROS map frame.
+     * x/y use metres and heading_deg uses degrees counter-clockwise from map X.
+     * </pre>
+     *
+     * <code>bool initial_pose_available = 1;</code>
+     */
+    public boolean getInitialPoseAvailable() {
+      return initialPoseAvailable_;
+    }
+
+    public static final int INITIAL_POSE_FIELD_NUMBER = 2;
+    private sl_link.SlLink.Pose2D initialPose_;
+    /**
+     * <code>.sl_link.Pose2D initial_pose = 2;</code>
+     */
+    public boolean hasInitialPose() {
+      return initialPose_ != null;
+    }
+    /**
+     * <code>.sl_link.Pose2D initial_pose = 2;</code>
+     */
+    public sl_link.SlLink.Pose2D getInitialPose() {
+      return initialPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : initialPose_;
+    }
+    /**
+     * <code>.sl_link.Pose2D initial_pose = 2;</code>
+     */
+    public sl_link.SlLink.Pose2DOrBuilder getInitialPoseOrBuilder() {
+      return getInitialPose();
+    }
+
+    public static final int INITIAL_POSE_COVARIANCE_FIELD_NUMBER = 3;
+    private sl_link.SlLink.LocalizationCovariance initialPoseCovariance_;
+    /**
+     * <pre>
+     * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+     * its configured defaults.
+     * </pre>
+     *
+     * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+     */
+    public boolean hasInitialPoseCovariance() {
+      return initialPoseCovariance_ != null;
+    }
+    /**
+     * <pre>
+     * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+     * its configured defaults.
+     * </pre>
+     *
+     * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+     */
+    public sl_link.SlLink.LocalizationCovariance getInitialPoseCovariance() {
+      return initialPoseCovariance_ == null ? sl_link.SlLink.LocalizationCovariance.getDefaultInstance() : initialPoseCovariance_;
+    }
+    /**
+     * <pre>
+     * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+     * its configured defaults.
+     * </pre>
+     *
+     * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+     */
+    public sl_link.SlLink.LocalizationCovarianceOrBuilder getInitialPoseCovarianceOrBuilder() {
+      return getInitialPoseCovariance();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -86758,6 +86913,15 @@ public final class SlLink {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (initialPoseAvailable_ != false) {
+        output.writeBool(1, initialPoseAvailable_);
+      }
+      if (initialPose_ != null) {
+        output.writeMessage(2, getInitialPose());
+      }
+      if (initialPoseCovariance_ != null) {
+        output.writeMessage(3, getInitialPoseCovariance());
+      }
       unknownFields.writeTo(output);
     }
 
@@ -86767,6 +86931,18 @@ public final class SlLink {
       if (size != -1) return size;
 
       size = 0;
+      if (initialPoseAvailable_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, initialPoseAvailable_);
+      }
+      if (initialPose_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getInitialPose());
+      }
+      if (initialPoseCovariance_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(3, getInitialPoseCovariance());
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -86783,6 +86959,18 @@ public final class SlLink {
       sl_link.SlLink.RadarRelocalizationRequest other = (sl_link.SlLink.RadarRelocalizationRequest) obj;
 
       boolean result = true;
+      result = result && (getInitialPoseAvailable()
+          == other.getInitialPoseAvailable());
+      result = result && (hasInitialPose() == other.hasInitialPose());
+      if (hasInitialPose()) {
+        result = result && getInitialPose()
+            .equals(other.getInitialPose());
+      }
+      result = result && (hasInitialPoseCovariance() == other.hasInitialPoseCovariance());
+      if (hasInitialPoseCovariance()) {
+        result = result && getInitialPoseCovariance()
+            .equals(other.getInitialPoseCovariance());
+      }
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -86794,6 +86982,17 @@ public final class SlLink {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + INITIAL_POSE_AVAILABLE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getInitialPoseAvailable());
+      if (hasInitialPose()) {
+        hash = (37 * hash) + INITIAL_POSE_FIELD_NUMBER;
+        hash = (53 * hash) + getInitialPose().hashCode();
+      }
+      if (hasInitialPoseCovariance()) {
+        hash = (37 * hash) + INITIAL_POSE_COVARIANCE_FIELD_NUMBER;
+        hash = (53 * hash) + getInitialPoseCovariance().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -86927,6 +87126,20 @@ public final class SlLink {
       @java.lang.Override
       public Builder clear() {
         super.clear();
+        initialPoseAvailable_ = false;
+
+        if (initialPoseBuilder_ == null) {
+          initialPose_ = null;
+        } else {
+          initialPose_ = null;
+          initialPoseBuilder_ = null;
+        }
+        if (initialPoseCovarianceBuilder_ == null) {
+          initialPoseCovariance_ = null;
+        } else {
+          initialPoseCovariance_ = null;
+          initialPoseCovarianceBuilder_ = null;
+        }
         return this;
       }
 
@@ -86953,6 +87166,17 @@ public final class SlLink {
       @java.lang.Override
       public sl_link.SlLink.RadarRelocalizationRequest buildPartial() {
         sl_link.SlLink.RadarRelocalizationRequest result = new sl_link.SlLink.RadarRelocalizationRequest(this);
+        result.initialPoseAvailable_ = initialPoseAvailable_;
+        if (initialPoseBuilder_ == null) {
+          result.initialPose_ = initialPose_;
+        } else {
+          result.initialPose_ = initialPoseBuilder_.build();
+        }
+        if (initialPoseCovarianceBuilder_ == null) {
+          result.initialPoseCovariance_ = initialPoseCovariance_;
+        } else {
+          result.initialPoseCovariance_ = initialPoseCovarianceBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -87001,6 +87225,15 @@ public final class SlLink {
 
       public Builder mergeFrom(sl_link.SlLink.RadarRelocalizationRequest other) {
         if (other == sl_link.SlLink.RadarRelocalizationRequest.getDefaultInstance()) return this;
+        if (other.getInitialPoseAvailable() != false) {
+          setInitialPoseAvailable(other.getInitialPoseAvailable());
+        }
+        if (other.hasInitialPose()) {
+          mergeInitialPose(other.getInitialPose());
+        }
+        if (other.hasInitialPoseCovariance()) {
+          mergeInitialPoseCovariance(other.getInitialPoseCovariance());
+        }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -87028,6 +87261,326 @@ public final class SlLink {
           }
         }
         return this;
+      }
+
+      private boolean initialPoseAvailable_ ;
+      /**
+       * <pre>
+       * Required for Super-LIO. The pose is expressed in the ROS map frame.
+       * x/y use metres and heading_deg uses degrees counter-clockwise from map X.
+       * </pre>
+       *
+       * <code>bool initial_pose_available = 1;</code>
+       */
+      public boolean getInitialPoseAvailable() {
+        return initialPoseAvailable_;
+      }
+      /**
+       * <pre>
+       * Required for Super-LIO. The pose is expressed in the ROS map frame.
+       * x/y use metres and heading_deg uses degrees counter-clockwise from map X.
+       * </pre>
+       *
+       * <code>bool initial_pose_available = 1;</code>
+       */
+      public Builder setInitialPoseAvailable(boolean value) {
+
+        initialPoseAvailable_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Required for Super-LIO. The pose is expressed in the ROS map frame.
+       * x/y use metres and heading_deg uses degrees counter-clockwise from map X.
+       * </pre>
+       *
+       * <code>bool initial_pose_available = 1;</code>
+       */
+      public Builder clearInitialPoseAvailable() {
+
+        initialPoseAvailable_ = false;
+        onChanged();
+        return this;
+      }
+
+      private sl_link.SlLink.Pose2D initialPose_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder> initialPoseBuilder_;
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public boolean hasInitialPose() {
+        return initialPoseBuilder_ != null || initialPose_ != null;
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public sl_link.SlLink.Pose2D getInitialPose() {
+        if (initialPoseBuilder_ == null) {
+          return initialPose_ == null ? sl_link.SlLink.Pose2D.getDefaultInstance() : initialPose_;
+        } else {
+          return initialPoseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public Builder setInitialPose(sl_link.SlLink.Pose2D value) {
+        if (initialPoseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          initialPose_ = value;
+          onChanged();
+        } else {
+          initialPoseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public Builder setInitialPose(
+          sl_link.SlLink.Pose2D.Builder builderForValue) {
+        if (initialPoseBuilder_ == null) {
+          initialPose_ = builderForValue.build();
+          onChanged();
+        } else {
+          initialPoseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public Builder mergeInitialPose(sl_link.SlLink.Pose2D value) {
+        if (initialPoseBuilder_ == null) {
+          if (initialPose_ != null) {
+            initialPose_ =
+              sl_link.SlLink.Pose2D.newBuilder(initialPose_).mergeFrom(value).buildPartial();
+          } else {
+            initialPose_ = value;
+          }
+          onChanged();
+        } else {
+          initialPoseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public Builder clearInitialPose() {
+        if (initialPoseBuilder_ == null) {
+          initialPose_ = null;
+          onChanged();
+        } else {
+          initialPose_ = null;
+          initialPoseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public sl_link.SlLink.Pose2D.Builder getInitialPoseBuilder() {
+
+        onChanged();
+        return getInitialPoseFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      public sl_link.SlLink.Pose2DOrBuilder getInitialPoseOrBuilder() {
+        if (initialPoseBuilder_ != null) {
+          return initialPoseBuilder_.getMessageOrBuilder();
+        } else {
+          return initialPose_ == null ?
+              sl_link.SlLink.Pose2D.getDefaultInstance() : initialPose_;
+        }
+      }
+      /**
+       * <code>.sl_link.Pose2D initial_pose = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>
+          getInitialPoseFieldBuilder() {
+        if (initialPoseBuilder_ == null) {
+          initialPoseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.Pose2D, sl_link.SlLink.Pose2D.Builder, sl_link.SlLink.Pose2DOrBuilder>(
+                  getInitialPose(),
+                  getParentForChildren(),
+                  isClean());
+          initialPose_ = null;
+        }
+        return initialPoseBuilder_;
+      }
+
+      private sl_link.SlLink.LocalizationCovariance initialPoseCovariance_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.LocalizationCovariance, sl_link.SlLink.LocalizationCovariance.Builder, sl_link.SlLink.LocalizationCovarianceOrBuilder> initialPoseCovarianceBuilder_;
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public boolean hasInitialPoseCovariance() {
+        return initialPoseCovarianceBuilder_ != null || initialPoseCovariance_ != null;
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public sl_link.SlLink.LocalizationCovariance getInitialPoseCovariance() {
+        if (initialPoseCovarianceBuilder_ == null) {
+          return initialPoseCovariance_ == null ? sl_link.SlLink.LocalizationCovariance.getDefaultInstance() : initialPoseCovariance_;
+        } else {
+          return initialPoseCovarianceBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public Builder setInitialPoseCovariance(sl_link.SlLink.LocalizationCovariance value) {
+        if (initialPoseCovarianceBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          initialPoseCovariance_ = value;
+          onChanged();
+        } else {
+          initialPoseCovarianceBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public Builder setInitialPoseCovariance(
+          sl_link.SlLink.LocalizationCovariance.Builder builderForValue) {
+        if (initialPoseCovarianceBuilder_ == null) {
+          initialPoseCovariance_ = builderForValue.build();
+          onChanged();
+        } else {
+          initialPoseCovarianceBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public Builder mergeInitialPoseCovariance(sl_link.SlLink.LocalizationCovariance value) {
+        if (initialPoseCovarianceBuilder_ == null) {
+          if (initialPoseCovariance_ != null) {
+            initialPoseCovariance_ =
+              sl_link.SlLink.LocalizationCovariance.newBuilder(initialPoseCovariance_).mergeFrom(value).buildPartial();
+          } else {
+            initialPoseCovariance_ = value;
+          }
+          onChanged();
+        } else {
+          initialPoseCovarianceBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public Builder clearInitialPoseCovariance() {
+        if (initialPoseCovarianceBuilder_ == null) {
+          initialPoseCovariance_ = null;
+          onChanged();
+        } else {
+          initialPoseCovariance_ = null;
+          initialPoseCovarianceBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public sl_link.SlLink.LocalizationCovariance.Builder getInitialPoseCovarianceBuilder() {
+
+        onChanged();
+        return getInitialPoseCovarianceFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      public sl_link.SlLink.LocalizationCovarianceOrBuilder getInitialPoseCovarianceOrBuilder() {
+        if (initialPoseCovarianceBuilder_ != null) {
+          return initialPoseCovarianceBuilder_.getMessageOrBuilder();
+        } else {
+          return initialPoseCovariance_ == null ?
+              sl_link.SlLink.LocalizationCovariance.getDefaultInstance() : initialPoseCovariance_;
+        }
+      }
+      /**
+       * <pre>
+       * Optional uncertainty for the initial guess. When valid=false, LOWER uses
+       * its configured defaults.
+       * </pre>
+       *
+       * <code>.sl_link.LocalizationCovariance initial_pose_covariance = 3;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          sl_link.SlLink.LocalizationCovariance, sl_link.SlLink.LocalizationCovariance.Builder, sl_link.SlLink.LocalizationCovarianceOrBuilder>
+          getInitialPoseCovarianceFieldBuilder() {
+        if (initialPoseCovarianceBuilder_ == null) {
+          initialPoseCovarianceBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              sl_link.SlLink.LocalizationCovariance, sl_link.SlLink.LocalizationCovariance.Builder, sl_link.SlLink.LocalizationCovarianceOrBuilder>(
+                  getInitialPoseCovariance(),
+                  getParentForChildren(),
+                  isClean());
+          initialPoseCovariance_ = null;
+        }
+        return initialPoseCovarianceBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -95796,159 +96349,163 @@ public final class SlLink {
       "tus\030\004 \001(\t\022\024\n\014timestamp_ns\030\005 \001(\004\"\025\n\023Radar" +
       "MapSyncRequest\"Z\n\024RadarMapSyncResponse\022#" +
       "\n\006result\030\001 \001(\0162\023.sl_link.ResultCode\022\017\n\007m" +
-      "essage\030\002 \001(\t\022\014\n\004sent\030\003 \001(\010\"\034\n\032RadarReloc" +
-      "alizationRequest\"u\n\033RadarRelocalizationR" +
-      "esponse\022#\n\006result\030\001 \001(\0162\023.sl_link.Result" +
-      "Code\022\017\n\007message\030\002 \001(\t\022\020\n\010accepted\030\003 \001(\010\022" +
-      "\016\n\006status\030\004 \001(\t\"\"\n RadarRelocalizationSt" +
-      "atusRequest\"\361\001\n!RadarRelocalizationStatu" +
-      "sResponse\022\022\n\nraw_status\030\005 \001(\t\022\024\n\014timesta" +
-      "mp_ns\030\n \001(\004J\004\010\001\020\002J\004\010\002\020\003J\004\010\003\020\004J\004\010\004\020\005J\004\010\006\020" +
-      "\007J\004\010\007\020\010J\004\010\010\020\tJ\004\010\t\020\nR\006resultR\007messageR\tav" +
-      "ailableR\006statusR\rsystem_statusR\016odom_ava" +
-      "ilableR\025odom_linear_speed_mpsR\030odom_angu" +
-      "lar_speed_radps\"<\n\017DiscLiftControl\022)\n\007co" +
-      "mmand\030\001 \001(\0162\030.sl_link.DiscLiftCommand\"\"\n" +
-      "\017LightingControl\022\017\n\007enabled\030\001 \001(\010\"&\n\023Cha" +
-      "ssisPowerControl\022\017\n\007enabled\030\001 \001(\010\"1\n\013Dis" +
-      "cControl\022\017\n\007enabled\030\001 \001(\010\022\021\n\tspeed_rpm\030\002" +
-      " \001(\r\"\'\n\024EmergencyStopControl\022\017\n\007enabled\030" +
-      "\001 \001(\010\"\260\001\n\022ManualDriveControl\022,\n\006motion\030\001" +
-      " \001(\0162\034.sl_link.ManualMotionCommand\022\023\n\013sp" +
-      "eed_ratio\030\002 \001(\002\022\020\n\010remote_x\030\003 \001(\002\022\020\n\010rem" +
-      "ote_y\030\004 \001(\002\022\025\n\rmax_speed_mps\030\005 \001(\002\022\034\n\024ma" +
-      "x_turn_speed_ratio\030\006 \001(\002\"\313\002\n\016ControlComm" +
-      "and\022-\n\tdisc_lift\030\001 \001(\0132\030.sl_link.DiscLif" +
-      "tControlH\000\022,\n\010lighting\030\002 \001(\0132\030.sl_link.L" +
-      "ightingControlH\000\0223\n\014manual_drive\030\003 \001(\0132\033" +
-      ".sl_link.ManualDriveControlH\000\0225\n\rchassis" +
-      "_power\030\004 \001(\0132\034.sl_link.ChassisPowerContr" +
-      "olH\000\022,\n\014disc_control\030\005 \001(\0132\024.sl_link.Dis" +
-      "cControlH\000\0227\n\016emergency_stop\030\006 \001(\0132\035.sl_" +
-      "link.EmergencyStopControlH\000B\t\n\007command\"\200" +
-      "\001\n\026ControlCommandResponse\022#\n\006result\030\001 \001(",
+      "essage\030\002 \001(\t\022\014\n\004sent\030\003 \001(\010\"\245\001\n\032RadarRelo" +
+      "calizationRequest\022\036\n\026initial_pose_availa" +
+      "ble\030\001 \001(\010\022%\n\014initial_pose\030\002 \001(\0132\017.sl_lin" +
+      "k.Pose2D\022@\n\027initial_pose_covariance\030\003 \001(" +
+      "\0132\037.sl_link.LocalizationCovariance\"u\n\033Ra" +
+      "darRelocalizationResponse\022#\n\006result\030\001 \001(" +
       "\0162\023.sl_link.ResultCode\022\017\n\007message\030\002 \001(\t\022" +
-      "0\n\017applied_command\030\003 \001(\0132\027.sl_link.Contr" +
-      "olCommand*\302\023\n\tMessageId\022\022\n\016MSG_ID_UNKNOW" +
-      "N\020\000\022\027\n\022MSG_ID_WIFI_CONFIG\020\201\004\022\036\n\031MSG_ID_W" +
-      "IFI_STATUS_REPORT\020\202\004\022!\n\034MSG_ID_SETTINGS_" +
-      "READ_REQUEST\020\203\004\022\"\n\035MSG_ID_SETTINGS_READ_" +
-      "RESPONSE\020\204\004\022\"\n\035MSG_ID_SETTINGS_WRITE_REQ" +
-      "UEST\020\205\004\022#\n\036MSG_ID_SETTINGS_WRITE_RESPONS" +
-      "E\020\206\004\022 \n\033MSG_ID_DEVICE_STATUS_REPORT\020\201\006\022 " +
-      "\n\033MSG_ID_CAMERA_FRAME_REQUEST\020\202\006\022\036\n\031MSG_" +
-      "ID_CAMERA_FRAME_CHUNK\020\203\006\022\027\n\022MSG_ID_MAP_R" +
-      "EQUEST\020\204\006\022\025\n\020MSG_ID_MAP_CHUNK\020\205\006\022\033\n\026MSG_" +
-      "ID_CONTROL_COMMAND\020\201\010\022$\n\037MSG_ID_CONTROL_" +
-      "COMMAND_RESPONSE\020\202\010\022\027\n\022MSG_ID_TASK_CONFI" +
-      "G\020\200\n\022 \n\033MSG_ID_TASK_CONFIG_RESPONSE\020\201\n\022\030" +
-      "\n\023MSG_ID_TASK_COMMAND\020\202\n\022!\n\034MSG_ID_TASK_" +
-      "COMMAND_RESPONSE\020\203\n\022\036\n\031MSG_ID_TASK_STATU" +
-      "S_REPORT\020\204\n\022#\n\036MSG_ID_PATH_POINT_PLAN_RE" +
-      "QUEST\020\205\n\022$\n\037MSG_ID_PATH_POINT_PLAN_RESPO" +
-      "NSE\020\206\n\022\037\n\032MSG_ID_MAP_PREVIEW_REQUEST\020\207\n\022" +
-      " \n\033MSG_ID_MAP_PREVIEW_RESPONSE\020\210\n\022\034\n\027MSG" +
-      "_ID_MAP_EDIT_COMMAND\020\211\n\022\035\n\030MSG_ID_MAP_ED" +
-      "IT_RESPONSE\020\212\n\022\"\n\035MSG_ID_MAP_EDIT_STATUS" +
-      "_REPORT\020\213\n\022%\n MSG_ID_VIDEO_STREAM_INFO_R" +
-      "EQUEST\020\214\n\022&\n!MSG_ID_VIDEO_STREAM_INFO_RE" +
-      "SPONSE\020\215\n\022\035\n\030MSG_ID_PATH_PLAN_REQUEST\020\216\n" +
-      "\022\036\n\031MSG_ID_PATH_PLAN_RESPONSE\020\217\n\022\034\n\027MSG_" +
-      "ID_MAP_SYNC_REQUEST\020\220\n\022\035\n\030MSG_ID_MAP_SYN" +
-      "C_RESPONSE\020\221\n\022\034\n\027MSG_ID_MAP_MODE_REQUEST" +
-      "\020\222\n\022\035\n\030MSG_ID_MAP_MODE_RESPONSE\020\223\n\022\037\n\032MS" +
-      "G_ID_MAP_CATALOG_REQUEST\020\224\n\022 \n\033MSG_ID_MA" +
-      "P_CATALOG_RESPONSE\020\225\n\022\036\n\031MSG_ID_MAP_DELE" +
-      "TE_REQUEST\020\226\n\022\037\n\032MSG_ID_MAP_DELETE_RESPO" +
-      "NSE\020\227\n\022\034\n\027MSG_ID_MAP_SAVE_REQUEST\020\230\n\022\035\n\030" +
-      "MSG_ID_MAP_SAVE_RESPONSE\020\231\n\022\037\n\032MSG_ID_MA" +
-      "P_METRICS_REQUEST\020\232\n\022 \n\033MSG_ID_MAP_METRI" +
-      "CS_RESPONSE\020\233\n\022\037\n\032MSG_ID_TASK_RESULT_REQ" +
-      "UEST\020\234\n\022 \n\033MSG_ID_TASK_RESULT_RESPONSE\020\235" +
-      "\n\022(\n#MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST" +
-      "\020\236\n\022)\n$MSG_ID_LIVE_MAP_CACHE_CLEAR_RESPO" +
-      "NSE\020\237\n\022)\n$MSG_ID_RADAR_MAP_CACHE_CLEAR_R" +
-      "EQUEST\020\240\n\022*\n%MSG_ID_RADAR_MAP_CACHE_CLEA" +
-      "R_RESPONSE\020\241\n\022\'\n\"MSG_ID_MAP_IMPORT_TO_RA" +
-      "DAR_REQUEST\020\242\n\022(\n#MSG_ID_MAP_IMPORT_TO_R" +
-      "ADAR_RESPONSE\020\243\n\022!\n\034MSG_ID_MAP_ALIGNMENT" +
-      "_REQUEST\020\244\n\022\"\n\035MSG_ID_MAP_ALIGNMENT_RESP" +
-      "ONSE\020\245\n\022\'\n\"MSG_ID_RADAR_SYSTEM_STATUS_RE" +
-      "QUEST\020\246\n\022(\n#MSG_ID_RADAR_SYSTEM_STATUS_R" +
-      "ESPONSE\020\247\n\022\"\n\035MSG_ID_RADAR_MAP_SYNC_REQU" +
-      "EST\020\250\n\022#\n\036MSG_ID_RADAR_MAP_SYNC_RESPONSE" +
-      "\020\251\n\022(\n#MSG_ID_RADAR_RELOCALIZATION_REQUE" +
-      "ST\020\252\n\022)\n$MSG_ID_RADAR_RELOCALIZATION_RES" +
-      "PONSE\020\253\n\022/\n*MSG_ID_RADAR_RELOCALIZATION_" +
-      "STATUS_REQUEST\020\254\n\0220\n+MSG_ID_RADAR_RELOCA" +
-      "LIZATION_STATUS_RESPONSE\020\255\n\022$\n\037MSG_ID_MA" +
-      "P_REGION_POINT_REQUEST\020\256\n\022%\n MSG_ID_MAP_" +
-      "REGION_POINT_RESPONSE\020\257\n\022*\n%MSG_ID_TASK_" +
-      "EXECUTION_HISTORY_REQUEST\020\260\n\022(\n#MSG_ID_T" +
-      "ASK_EXECUTION_HISTORY_CHUNK\020\261\n\022#\n\036MSG_ID" +
-      "_TASK_TRAJECTORY_REQUEST\020\262\n\022!\n\034MSG_ID_TA" +
-      "SK_TRAJECTORY_CHUNK\020\263\n\022)\n$MSG_ID_TASK_EX" +
-      "ECUTION_DELETE_REQUEST\020\264\n\022*\n%MSG_ID_TASK" +
-      "_EXECUTION_DELETE_RESPONSE\020\265\n\022&\n!MSG_ID_" +
-      "SYSTEM_CACHE_CLEAR_REQUEST\020\266\n\022\'\n\"MSG_ID_" +
-      "SYSTEM_CACHE_CLEAR_RESPONSE\020\267\n*X\n\010Device" +
-      "Id\022\023\n\017DEVICE_RESERVED\020\000\022\016\n\nDEVICE_APP\020\001\022" +
-      "\020\n\014DEVICE_LOWER\020\020\022\025\n\020DEVICE_BROADCAST\020\377\001" +
-      "*v\n\013ComponentId\022\017\n\013COMP_SYSTEM\020\000\022\r\n\tCOMP" +
-      "_WIFI\020\004\022\021\n\rCOMP_SETTINGS\020\005\022\016\n\nCOMP_MEDIA" +
-      "\020\006\022\020\n\014COMP_CONTROL\020\007\022\022\n\016COMP_SCHEDULER\020\010" +
-      "*v\n\nResultCode\022\022\n\016RESULT_SUCCESS\020\000\022\030\n\024RE" +
-      "SULT_INVALID_PARAM\020\001\022\026\n\022RESULT_UNSUPPORT" +
-      "ED\020\002\022\017\n\013RESULT_BUSY\020\003\022\021\n\rRESULT_FAILED\020\004" +
-      "*;\n\014SystemStatus\022\025\n\021SYS_STATUS_NORMAL\020\000\022" +
-      "\024\n\020SYS_STATUS_ERROR\020\001*Q\n\nWifiResult\022\020\n\014W" +
-      "IFI_PENDING\020\000\022\020\n\014WIFI_SUCCESS\020\001\022\r\n\tWIFI_" +
-      "FAIL\020\002\022\020\n\014WIFI_TIMEOUT\020\003*s\n\010WorkMode\022\025\n\021" +
-      "WORK_MODE_UNKNOWN\020\000\022\024\n\020WORK_MODE_MANUAL\020" +
-      "\001\022\022\n\016WORK_MODE_AUTO\020\002\022\022\n\016WORK_MODE_EDGE\020" +
-      "\003\022\022\n\016WORK_MODE_DOCK\020\004*z\n\rDiscLiftState\022\033" +
-      "\n\027DISC_LIFT_STATE_UNKNOWN\020\000\022\026\n\022DISC_LIFT" +
-      "_STATE_UP\020\001\022\030\n\024DISC_LIFT_STATE_DOWN\020\002\022\032\n" +
-      "\026DISC_LIFT_STATE_MOVING\020\003*W\n\017DiscLiftCom" +
-      "mand\022\026\n\022DISC_LIFT_CMD_STOP\020\000\022\024\n\020DISC_LIF" +
-      "T_CMD_UP\020\001\022\026\n\022DISC_LIFT_CMD_DOWN\020\002*\350\001\n\023M" +
-      "anualMotionCommand\022\026\n\022MANUAL_MOTION_STOP" +
-      "\020\000\022\031\n\025MANUAL_MOTION_FORWARD\020\001\022\032\n\026MANUAL_" +
-      "MOTION_BACKWARD\020\002\022\036\n\032MANUAL_MOTION_FORWA" +
-      "RD_LEFT\020\003\022\037\n\033MANUAL_MOTION_FORWARD_RIGHT" +
-      "\020\004\022\037\n\033MANUAL_MOTION_BACKWARD_LEFT\020\005\022 \n\034M" +
-      "ANUAL_MOTION_BACKWARD_RIGHT\020\006*;\n\013CameraC" +
-      "odec\022\025\n\021CAMERA_CODEC_JPEG\020\000\022\025\n\021CAMERA_CO" +
-      "DEC_H264\020\001*[\n\013MapEncoding\022\037\n\033MAP_ENCODIN" +
-      "G_OCCUPANCY_GRID\020\000\022\024\n\020MAP_ENCODING_PNG\020\001" +
-      "\022\025\n\021MAP_ENCODING_JSON\020\002*\202\001\n\nRegionType\022\027" +
-      "\n\023REGION_TYPE_UNKNOWN\020\000\022\024\n\020REGION_TYPE_W" +
-      "ORK\020\001\022\030\n\024REGION_TYPE_OBSTACLE\020\002\022\025\n\021REGIO" +
-      "N_TYPE_ERASE\020\003\022\024\n\020REGION_TYPE_CROP\020\004*\306\001\n" +
-      "\tTaskState\022\023\n\017TASK_STATE_IDLE\020\000\022\024\n\020TASK_" +
-      "STATE_READY\020\001\022\027\n\023TASK_STATE_PLANNING\020\002\022\026" +
-      "\n\022TASK_STATE_RUNNING\020\003\022\025\n\021TASK_STATE_PAU" +
-      "SED\020\004\022\030\n\024TASK_STATE_COMPLETED\020\005\022\026\n\022TASK_" +
-      "STATE_STOPPED\020\006\022\024\n\020TASK_STATE_ERROR\020\007*a\n" +
-      "\017TaskCommandType\022\022\n\016TASK_CMD_START\020\000\022\022\n\016" +
-      "TASK_CMD_PAUSE\020\001\022\023\n\017TASK_CMD_RESUME\020\002\022\021\n" +
-      "\rTASK_CMD_STOP\020\003*\337\002\n\020MapEditOperation\022\027\n" +
-      "\023MAP_EDIT_OP_UNKNOWN\020\000\022\"\n\036MAP_EDIT_OP_UP" +
-      "SERT_WORK_REGION\020\001\022&\n\"MAP_EDIT_OP_UPSERT" +
-      "_OBSTACLE_REGION\020\002\022\035\n\031MAP_EDIT_OP_DELETE" +
-      "_REGION\020\003\022\032\n\026MAP_EDIT_OP_PAINT_FREE\020\004\022\036\n" +
-      "\032MAP_EDIT_OP_PAINT_OCCUPIED\020\005\022\035\n\031MAP_EDI" +
-      "T_OP_PAINT_UNKNOWN\020\006\022#\n\037MAP_EDIT_OP_CLEA" +
-      "R_OVERLAY_PATCH\020\007\022#\n\037MAP_EDIT_OP_UPSERT_" +
-      "ERASE_REGION\020\010\022\"\n\036MAP_EDIT_OP_UPSERT_CRO" +
-      "P_REGION\020\t*s\n\020MapSyncOperation\022\027\n\023MAP_SY" +
-      "NC_OP_UNKNOWN\020\000\022$\n MAP_SYNC_OP_DOWNLOAD_" +
-      "FROM_AURORA\020\001\022 \n\034MAP_SYNC_OP_UPLOAD_TO_A" +
-      "URORA\020\002*T\n\013MapModeType\022\024\n\020MAP_MODE_UNKNO" +
-      "WN\020\000\022\024\n\020MAP_MODE_MAPPING\020\001\022\031\n\025MAP_MODE_L" +
-      "OCALIZATION\020\002:-\n\004unit\022\035.google.protobuf." +
-      "FieldOptions\030\321\206\003 \001(\t:.\n\005scale\022\035.google.p" +
-      "rotobuf.FieldOptions\030\322\206\003 \001(\001b\006proto3"
+      "\020\n\010accepted\030\003 \001(\010\022\016\n\006status\030\004 \001(\t\"\"\n Rad" +
+      "arRelocalizationStatusRequest\"\361\001\n!RadarR" +
+      "elocalizationStatusResponse\022\022\n\nraw_statu" +
+      "s\030\005 \001(\t\022\024\n\014timestamp_ns\030\n \001(\004J\004\010\001\020\002J\004\010\002\020" +
+      "\003J\004\010\003\020\004J\004\010\004\020\005J\004\010\006\020\007J\004\010\007\020\010J\004\010\010\020\tJ\004\010\t\020\nR\006r" +
+      "esultR\007messageR\tavailableR\006statusR\rsyste" +
+      "m_statusR\016odom_availableR\025odom_linear_sp" +
+      "eed_mpsR\030odom_angular_speed_radps\"<\n\017Dis" +
+      "cLiftControl\022)\n\007command\030\001 \001(\0162\030.sl_link." +
+      "DiscLiftCommand\"\"\n\017LightingControl\022\017\n\007en" +
+      "abled\030\001 \001(\010\"&\n\023ChassisPowerControl\022\017\n\007en" +
+      "abled\030\001 \001(\010\"1\n\013DiscControl\022\017\n\007enabled\030\001 " +
+      "\001(\010\022\021\n\tspeed_rpm\030\002 \001(\r\"\'\n\024EmergencyStopC" +
+      "ontrol\022\017\n\007enabled\030\001 \001(\010\"\260\001\n\022ManualDriveC" +
+      "ontrol\022,\n\006motion\030\001 \001(\0162\034.sl_link.ManualM" +
+      "otionCommand\022\023\n\013speed_ratio\030\002 \001(\002\022\020\n\010rem" +
+      "ote_x\030\003 \001(\002\022\020\n\010remote_y\030\004 \001(\002\022\025\n\rmax_spe" +
+      "ed_mps\030\005 \001(\002\022\034\n\024max_turn_speed_ratio\030\006 \001" +
+      "(\002\"\313\002\n\016ControlCommand\022-\n\tdisc_lift\030\001 \001(\013" +
+      "2\030.sl_link.DiscLiftControlH\000\022,\n\010lighting" +
+      "\030\002 \001(\0132\030.sl_link.LightingControlH\000\0223\n\014ma" +
+      "nual_drive\030\003 \001(\0132\033.sl_link.ManualDriveCo" +
+      "ntrolH\000\0225\n\rchassis_power\030\004 \001(\0132\034.sl_link" +
+      ".ChassisPowerControlH\000\022,\n\014disc_control\030\005",
+      " \001(\0132\024.sl_link.DiscControlH\000\0227\n\016emergenc" +
+      "y_stop\030\006 \001(\0132\035.sl_link.EmergencyStopCont" +
+      "rolH\000B\t\n\007command\"\200\001\n\026ControlCommandRespo" +
+      "nse\022#\n\006result\030\001 \001(\0162\023.sl_link.ResultCode" +
+      "\022\017\n\007message\030\002 \001(\t\0220\n\017applied_command\030\003 \001" +
+      "(\0132\027.sl_link.ControlCommand*\302\023\n\tMessageI" +
+      "d\022\022\n\016MSG_ID_UNKNOWN\020\000\022\027\n\022MSG_ID_WIFI_CON" +
+      "FIG\020\201\004\022\036\n\031MSG_ID_WIFI_STATUS_REPORT\020\202\004\022!" +
+      "\n\034MSG_ID_SETTINGS_READ_REQUEST\020\203\004\022\"\n\035MSG" +
+      "_ID_SETTINGS_READ_RESPONSE\020\204\004\022\"\n\035MSG_ID_" +
+      "SETTINGS_WRITE_REQUEST\020\205\004\022#\n\036MSG_ID_SETT" +
+      "INGS_WRITE_RESPONSE\020\206\004\022 \n\033MSG_ID_DEVICE_" +
+      "STATUS_REPORT\020\201\006\022 \n\033MSG_ID_CAMERA_FRAME_" +
+      "REQUEST\020\202\006\022\036\n\031MSG_ID_CAMERA_FRAME_CHUNK\020" +
+      "\203\006\022\027\n\022MSG_ID_MAP_REQUEST\020\204\006\022\025\n\020MSG_ID_MA" +
+      "P_CHUNK\020\205\006\022\033\n\026MSG_ID_CONTROL_COMMAND\020\201\010\022" +
+      "$\n\037MSG_ID_CONTROL_COMMAND_RESPONSE\020\202\010\022\027\n" +
+      "\022MSG_ID_TASK_CONFIG\020\200\n\022 \n\033MSG_ID_TASK_CO" +
+      "NFIG_RESPONSE\020\201\n\022\030\n\023MSG_ID_TASK_COMMAND\020" +
+      "\202\n\022!\n\034MSG_ID_TASK_COMMAND_RESPONSE\020\203\n\022\036\n" +
+      "\031MSG_ID_TASK_STATUS_REPORT\020\204\n\022#\n\036MSG_ID_" +
+      "PATH_POINT_PLAN_REQUEST\020\205\n\022$\n\037MSG_ID_PAT" +
+      "H_POINT_PLAN_RESPONSE\020\206\n\022\037\n\032MSG_ID_MAP_P" +
+      "REVIEW_REQUEST\020\207\n\022 \n\033MSG_ID_MAP_PREVIEW_" +
+      "RESPONSE\020\210\n\022\034\n\027MSG_ID_MAP_EDIT_COMMAND\020\211" +
+      "\n\022\035\n\030MSG_ID_MAP_EDIT_RESPONSE\020\212\n\022\"\n\035MSG_" +
+      "ID_MAP_EDIT_STATUS_REPORT\020\213\n\022%\n MSG_ID_V" +
+      "IDEO_STREAM_INFO_REQUEST\020\214\n\022&\n!MSG_ID_VI" +
+      "DEO_STREAM_INFO_RESPONSE\020\215\n\022\035\n\030MSG_ID_PA" +
+      "TH_PLAN_REQUEST\020\216\n\022\036\n\031MSG_ID_PATH_PLAN_R" +
+      "ESPONSE\020\217\n\022\034\n\027MSG_ID_MAP_SYNC_REQUEST\020\220\n" +
+      "\022\035\n\030MSG_ID_MAP_SYNC_RESPONSE\020\221\n\022\034\n\027MSG_I" +
+      "D_MAP_MODE_REQUEST\020\222\n\022\035\n\030MSG_ID_MAP_MODE" +
+      "_RESPONSE\020\223\n\022\037\n\032MSG_ID_MAP_CATALOG_REQUE" +
+      "ST\020\224\n\022 \n\033MSG_ID_MAP_CATALOG_RESPONSE\020\225\n\022" +
+      "\036\n\031MSG_ID_MAP_DELETE_REQUEST\020\226\n\022\037\n\032MSG_I" +
+      "D_MAP_DELETE_RESPONSE\020\227\n\022\034\n\027MSG_ID_MAP_S" +
+      "AVE_REQUEST\020\230\n\022\035\n\030MSG_ID_MAP_SAVE_RESPON" +
+      "SE\020\231\n\022\037\n\032MSG_ID_MAP_METRICS_REQUEST\020\232\n\022 " +
+      "\n\033MSG_ID_MAP_METRICS_RESPONSE\020\233\n\022\037\n\032MSG_" +
+      "ID_TASK_RESULT_REQUEST\020\234\n\022 \n\033MSG_ID_TASK" +
+      "_RESULT_RESPONSE\020\235\n\022(\n#MSG_ID_LIVE_MAP_C" +
+      "ACHE_CLEAR_REQUEST\020\236\n\022)\n$MSG_ID_LIVE_MAP" +
+      "_CACHE_CLEAR_RESPONSE\020\237\n\022)\n$MSG_ID_RADAR" +
+      "_MAP_CACHE_CLEAR_REQUEST\020\240\n\022*\n%MSG_ID_RA" +
+      "DAR_MAP_CACHE_CLEAR_RESPONSE\020\241\n\022\'\n\"MSG_I" +
+      "D_MAP_IMPORT_TO_RADAR_REQUEST\020\242\n\022(\n#MSG_" +
+      "ID_MAP_IMPORT_TO_RADAR_RESPONSE\020\243\n\022!\n\034MS" +
+      "G_ID_MAP_ALIGNMENT_REQUEST\020\244\n\022\"\n\035MSG_ID_" +
+      "MAP_ALIGNMENT_RESPONSE\020\245\n\022\'\n\"MSG_ID_RADA" +
+      "R_SYSTEM_STATUS_REQUEST\020\246\n\022(\n#MSG_ID_RAD" +
+      "AR_SYSTEM_STATUS_RESPONSE\020\247\n\022\"\n\035MSG_ID_R" +
+      "ADAR_MAP_SYNC_REQUEST\020\250\n\022#\n\036MSG_ID_RADAR" +
+      "_MAP_SYNC_RESPONSE\020\251\n\022(\n#MSG_ID_RADAR_RE" +
+      "LOCALIZATION_REQUEST\020\252\n\022)\n$MSG_ID_RADAR_" +
+      "RELOCALIZATION_RESPONSE\020\253\n\022/\n*MSG_ID_RAD" +
+      "AR_RELOCALIZATION_STATUS_REQUEST\020\254\n\0220\n+M" +
+      "SG_ID_RADAR_RELOCALIZATION_STATUS_RESPON" +
+      "SE\020\255\n\022$\n\037MSG_ID_MAP_REGION_POINT_REQUEST" +
+      "\020\256\n\022%\n MSG_ID_MAP_REGION_POINT_RESPONSE\020" +
+      "\257\n\022*\n%MSG_ID_TASK_EXECUTION_HISTORY_REQU" +
+      "EST\020\260\n\022(\n#MSG_ID_TASK_EXECUTION_HISTORY_" +
+      "CHUNK\020\261\n\022#\n\036MSG_ID_TASK_TRAJECTORY_REQUE" +
+      "ST\020\262\n\022!\n\034MSG_ID_TASK_TRAJECTORY_CHUNK\020\263\n" +
+      "\022)\n$MSG_ID_TASK_EXECUTION_DELETE_REQUEST" +
+      "\020\264\n\022*\n%MSG_ID_TASK_EXECUTION_DELETE_RESP" +
+      "ONSE\020\265\n\022&\n!MSG_ID_SYSTEM_CACHE_CLEAR_REQ" +
+      "UEST\020\266\n\022\'\n\"MSG_ID_SYSTEM_CACHE_CLEAR_RES" +
+      "PONSE\020\267\n*X\n\010DeviceId\022\023\n\017DEVICE_RESERVED\020" +
+      "\000\022\016\n\nDEVICE_APP\020\001\022\020\n\014DEVICE_LOWER\020\020\022\025\n\020D" +
+      "EVICE_BROADCAST\020\377\001*v\n\013ComponentId\022\017\n\013COM" +
+      "P_SYSTEM\020\000\022\r\n\tCOMP_WIFI\020\004\022\021\n\rCOMP_SETTIN" +
+      "GS\020\005\022\016\n\nCOMP_MEDIA\020\006\022\020\n\014COMP_CONTROL\020\007\022\022" +
+      "\n\016COMP_SCHEDULER\020\010*v\n\nResultCode\022\022\n\016RESU" +
+      "LT_SUCCESS\020\000\022\030\n\024RESULT_INVALID_PARAM\020\001\022\026" +
+      "\n\022RESULT_UNSUPPORTED\020\002\022\017\n\013RESULT_BUSY\020\003\022" +
+      "\021\n\rRESULT_FAILED\020\004*;\n\014SystemStatus\022\025\n\021SY" +
+      "S_STATUS_NORMAL\020\000\022\024\n\020SYS_STATUS_ERROR\020\001*" +
+      "Q\n\nWifiResult\022\020\n\014WIFI_PENDING\020\000\022\020\n\014WIFI_" +
+      "SUCCESS\020\001\022\r\n\tWIFI_FAIL\020\002\022\020\n\014WIFI_TIMEOUT" +
+      "\020\003*s\n\010WorkMode\022\025\n\021WORK_MODE_UNKNOWN\020\000\022\024\n" +
+      "\020WORK_MODE_MANUAL\020\001\022\022\n\016WORK_MODE_AUTO\020\002\022" +
+      "\022\n\016WORK_MODE_EDGE\020\003\022\022\n\016WORK_MODE_DOCK\020\004*" +
+      "z\n\rDiscLiftState\022\033\n\027DISC_LIFT_STATE_UNKN" +
+      "OWN\020\000\022\026\n\022DISC_LIFT_STATE_UP\020\001\022\030\n\024DISC_LI" +
+      "FT_STATE_DOWN\020\002\022\032\n\026DISC_LIFT_STATE_MOVIN" +
+      "G\020\003*W\n\017DiscLiftCommand\022\026\n\022DISC_LIFT_CMD_" +
+      "STOP\020\000\022\024\n\020DISC_LIFT_CMD_UP\020\001\022\026\n\022DISC_LIF" +
+      "T_CMD_DOWN\020\002*\350\001\n\023ManualMotionCommand\022\026\n\022" +
+      "MANUAL_MOTION_STOP\020\000\022\031\n\025MANUAL_MOTION_FO" +
+      "RWARD\020\001\022\032\n\026MANUAL_MOTION_BACKWARD\020\002\022\036\n\032M" +
+      "ANUAL_MOTION_FORWARD_LEFT\020\003\022\037\n\033MANUAL_MO" +
+      "TION_FORWARD_RIGHT\020\004\022\037\n\033MANUAL_MOTION_BA" +
+      "CKWARD_LEFT\020\005\022 \n\034MANUAL_MOTION_BACKWARD_" +
+      "RIGHT\020\006*;\n\013CameraCodec\022\025\n\021CAMERA_CODEC_J" +
+      "PEG\020\000\022\025\n\021CAMERA_CODEC_H264\020\001*[\n\013MapEncod" +
+      "ing\022\037\n\033MAP_ENCODING_OCCUPANCY_GRID\020\000\022\024\n\020" +
+      "MAP_ENCODING_PNG\020\001\022\025\n\021MAP_ENCODING_JSON\020" +
+      "\002*\202\001\n\nRegionType\022\027\n\023REGION_TYPE_UNKNOWN\020" +
+      "\000\022\024\n\020REGION_TYPE_WORK\020\001\022\030\n\024REGION_TYPE_O" +
+      "BSTACLE\020\002\022\025\n\021REGION_TYPE_ERASE\020\003\022\024\n\020REGI" +
+      "ON_TYPE_CROP\020\004*\306\001\n\tTaskState\022\023\n\017TASK_STA" +
+      "TE_IDLE\020\000\022\024\n\020TASK_STATE_READY\020\001\022\027\n\023TASK_" +
+      "STATE_PLANNING\020\002\022\026\n\022TASK_STATE_RUNNING\020\003" +
+      "\022\025\n\021TASK_STATE_PAUSED\020\004\022\030\n\024TASK_STATE_CO" +
+      "MPLETED\020\005\022\026\n\022TASK_STATE_STOPPED\020\006\022\024\n\020TAS" +
+      "K_STATE_ERROR\020\007*a\n\017TaskCommandType\022\022\n\016TA" +
+      "SK_CMD_START\020\000\022\022\n\016TASK_CMD_PAUSE\020\001\022\023\n\017TA" +
+      "SK_CMD_RESUME\020\002\022\021\n\rTASK_CMD_STOP\020\003*\337\002\n\020M" +
+      "apEditOperation\022\027\n\023MAP_EDIT_OP_UNKNOWN\020\000" +
+      "\022\"\n\036MAP_EDIT_OP_UPSERT_WORK_REGION\020\001\022&\n\"" +
+      "MAP_EDIT_OP_UPSERT_OBSTACLE_REGION\020\002\022\035\n\031" +
+      "MAP_EDIT_OP_DELETE_REGION\020\003\022\032\n\026MAP_EDIT_" +
+      "OP_PAINT_FREE\020\004\022\036\n\032MAP_EDIT_OP_PAINT_OCC" +
+      "UPIED\020\005\022\035\n\031MAP_EDIT_OP_PAINT_UNKNOWN\020\006\022#" +
+      "\n\037MAP_EDIT_OP_CLEAR_OVERLAY_PATCH\020\007\022#\n\037M" +
+      "AP_EDIT_OP_UPSERT_ERASE_REGION\020\010\022\"\n\036MAP_" +
+      "EDIT_OP_UPSERT_CROP_REGION\020\t*s\n\020MapSyncO" +
+      "peration\022\027\n\023MAP_SYNC_OP_UNKNOWN\020\000\022$\n MAP" +
+      "_SYNC_OP_DOWNLOAD_FROM_AURORA\020\001\022 \n\034MAP_S" +
+      "YNC_OP_UPLOAD_TO_AURORA\020\002*T\n\013MapModeType" +
+      "\022\024\n\020MAP_MODE_UNKNOWN\020\000\022\024\n\020MAP_MODE_MAPPI" +
+      "NG\020\001\022\031\n\025MAP_MODE_LOCALIZATION\020\002:-\n\004unit\022" +
+      "\035.google.protobuf.FieldOptions\030\321\206\003 \001(\t:." +
+      "\n\005scale\022\035.google.protobuf.FieldOptions\030\322" +
+      "\206\003 \001(\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -96430,7 +96987,7 @@ public final class SlLink {
     internal_static_sl_link_RadarRelocalizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sl_link_RadarRelocalizationRequest_descriptor,
-        new java.lang.String[] { });
+        new java.lang.String[] { "InitialPoseAvailable", "InitialPose", "InitialPoseCovariance", });
     internal_static_sl_link_RadarRelocalizationResponse_descriptor =
       getDescriptor().getMessageTypes().get(78);
     internal_static_sl_link_RadarRelocalizationResponse_fieldAccessorTable = new

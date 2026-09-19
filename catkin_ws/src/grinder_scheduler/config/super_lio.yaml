@@ -1,0 +1,9 @@
+# Super-LIO is the only supported map backend. The mode manager owns mapping
+# and relocation roslaunch processes; the scheduler only calls its services.
+localization_backend: super_lio
+super_lio_map_root: /home/neardi/work/Grinder/maps
+super_lio_service_timeout_sec: 30.0
+super_lio_startup_timeout_sec: 60.0
+super_lio_shutdown_timeout_sec: 8.0
+super_lio_loop_closure: false
+super_lio_autosave: false

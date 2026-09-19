@@ -981,6 +981,13 @@ message RadarMapSyncResponse {
 }
 
 message RadarRelocalizationRequest {
+  // Required for Super-LIO. The pose is expressed in the ROS map frame.
+  // x/y use metres and heading_deg uses degrees counter-clockwise from map X.
+  bool initial_pose_available = 1;
+  Pose2D initial_pose = 2;
+  // Optional uncertainty for the initial guess. When valid=false, LOWER uses
+  // its configured defaults.
+  LocalizationCovariance initial_pose_covariance = 3;
 }
 
 message RadarRelocalizationResponse {

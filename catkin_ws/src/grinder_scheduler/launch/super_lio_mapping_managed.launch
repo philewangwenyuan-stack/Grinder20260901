@@ -1,0 +1,15 @@
+<launch>
+  <arg name="staging_dir" />
+  <arg name="loop_closure" default="false" />
+  <arg name="autosave" default="false" />
+
+  <include file="$(find cloud_to_occupancy_grid)/launch/mid360_mapping.launch">
+    <arg name="rviz" value="false" />
+    <arg name="save_3d_map" value="true" />
+    <arg name="loop_closure" value="$(arg loop_closure)" />
+    <arg name="map_directory" value="$(arg staging_dir)" />
+    <arg name="map_name" value="map" />
+    <arg name="autosave" value="$(arg autosave)" />
+  </include>
+</launch>
+

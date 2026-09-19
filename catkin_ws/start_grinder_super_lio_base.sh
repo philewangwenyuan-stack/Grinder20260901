@@ -115,11 +115,11 @@ if [[ "${START_NAV}" == "1" ]]; then
   launch_bg "move_base_rpp" "roslaunch teb_local_planner_tutorials robot_diff_drive.launch local_planner:=rpp"
 fi
 
-launch_bg "scheduler" "roslaunch grinder_scheduler scheduler.launch super_lio_mode:=true odom_topic:=/lio/odom map_topic:=/map navigation_map_yaml_path:=${NAV_MAP_YAML}"
+launch_bg "scheduler" "roslaunch grinder_scheduler scheduler.launch odom_topic:=/lio/odom map_topic:=/map navigation_map_yaml_path:=${NAV_MAP_YAML} super_lio_map_root:=/home/neardi/work/Grinder/maps"
 
 echo
 echo "[INFO] Super-LIO base services started."
-echo "[INFO] Started: Livox (optional), chassis (optional), RPP move_base (optional), scheduler/SL-LinkA/RTSP."
+echo "[INFO] Started: Livox (optional), chassis (optional), RPP move_base (optional), scheduler/SL-LinkA/RTSP and Super-LIO mode manager."
 echo "[INFO] Mapping, relocation and map_server are intentionally not started."
 echo "[INFO] Press Ctrl+C to stop processes started by this script."
 wait

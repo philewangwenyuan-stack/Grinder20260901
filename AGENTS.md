@@ -28,7 +28,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 要修改/排查的内容 | 首选文件 | 相关文件 |
 | --- | --- | --- |
 | 调度入口、任务状态机、协议处理函数 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` | `models.py`、`scripts/scheduler_node.py` |
-| 调度参数 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` | `launch/scheduler.launch`、`launch/grinder_system.launch` |
+| 调度参数 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` | `config/super_lio.yaml`、`launch/scheduler.launch`、`launch/grinder_system.launch` |
 | 地图编辑、区域叠加、预览、持久化 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_service.py` | `scheduler_node.py` 中 `handle_map_*`、`_map_*` |
 | 路径规划输入/输出适配 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/planner_adapter.py` | `third_party/path_planner/mst27/mst27.py`、`mst27/cpp/mst27_cpp.cpp` |
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
@@ -44,6 +44,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |
 | 激光里程计与 EKF | `catkin_ws/src/rf2o_laser_odometry/` | `launch/`、`config/ekf.yaml` |
 | MID-360S + Super-LIO 实时二维栅格建图 | `catkin_ws/src/cloud_to_occupancy_grid/` | `config/mid360.yaml`、`launch/mid360_mapping.launch` |
+| Super-LIO 建图/保存/重定位生命周期 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/super_lio_mode_manager.py` | `launch/super_lio_*_managed.launch`、`srv/*SuperLio*.srv` |
 | Super-LIO 回环检测、位姿图和协方差 | `catkin_ws/src/super_lio_loop/` | `config/mid360_loop.yaml`、`launch/loop_closure.launch` |
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh` | `catkin_ws/PLATFORM_BUILD_RUN.md` |
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |

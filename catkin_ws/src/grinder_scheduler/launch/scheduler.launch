@@ -5,16 +5,25 @@
   <arg name="navigation_map_yaml_path" default="$(find teb_local_planner_tutorials)/maps/map.yaml" />
   <arg name="local_rtsp_mediamtx_path" default="tools/mediamtx/mediamtx" />
   <arg name="map_topic" default="/map" />
-  <arg name="odom_topic" default="/slamware_ros_sdk_server_node/odom" />
+  <arg name="odom_topic" default="/lio/odom" />
   <arg name="left_image_topic" default="/slamware_ros_sdk_server_node/left_image_raw" />
   <arg name="right_image_topic" default="/slamware_ros_sdk_server_node/right_image_raw" />
-  <arg name="super_lio_mode" default="false" />
+  <arg name="super_lio_map_root" default="/home/neardi/work/Grinder/maps" />
+
+  <node pkg="grinder_scheduler"
+        type="super_lio_mode_manager.py"
+        name="super_lio_mode_manager"
+        output="screen">
+    <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
+    <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
+  </node>
 
   <node pkg="grinder_scheduler"
         type="scheduler_node.py"
         name="grinder_scheduler"
         output="screen">
     <rosparam command="load" file="$(find grinder_scheduler)/config/scheduler.yaml" />
+    <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
     <param name="aurora_ip_address" value="$(arg aurora_ip_address)" />
     <param name="aurora_raw_image_on" value="$(arg aurora_raw_image_on)" />
     <param name="aurora_no_preview_image" value="$(arg aurora_no_preview_image)" />
@@ -24,8 +33,8 @@
     <param name="odom_topic" value="$(arg odom_topic)" />
     <param name="left_image_topic" value="$(arg left_image_topic)" />
     <param name="right_image_topic" value="$(arg right_image_topic)" />
-    <!-- Super-LIO mode has no Slamware map-alignment or mapping-mode topics. -->
-    <param if="$(arg super_lio_mode)" name="live_map_align_to_initial_yaw" value="false" />
-    <param if="$(arg super_lio_mode)" name="radar_mapping_mode_default_on_startup" value="false" />
+    <param name="localization_backend" value="super_lio" />
+    <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
+    <param name="live_map_align_to_initial_yaw" value="false" />
   </node>
 </launch>

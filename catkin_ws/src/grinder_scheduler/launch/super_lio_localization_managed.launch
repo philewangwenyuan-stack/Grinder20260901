@@ -1,0 +1,24 @@
+<launch>
+  <arg name="bundle_dir" />
+  <arg name="base_to_laser_x" default="0.0" />
+  <arg name="base_to_laser_y" default="0.0" />
+  <arg name="base_to_laser_z" default="0.0" />
+  <arg name="base_to_laser_roll" default="0.0" />
+  <arg name="base_to_laser_pitch" default="0.0" />
+  <arg name="base_to_laser_yaw" default="0.0" />
+
+  <node pkg="map_server" type="map_server" name="map_server"
+        args="$(arg bundle_dir)/map.yaml" output="screen" />
+  <include file="$(find super_lio)/launch/relocation.launch">
+    <arg name="rviz" value="false" />
+    <arg name="map_dir" value="$(arg bundle_dir)" />
+    <arg name="map_name" value="loc_map.pcd" />
+    <arg name="base_to_laser_x" value="$(arg base_to_laser_x)" />
+    <arg name="base_to_laser_y" value="$(arg base_to_laser_y)" />
+    <arg name="base_to_laser_z" value="$(arg base_to_laser_z)" />
+    <arg name="base_to_laser_roll" value="$(arg base_to_laser_roll)" />
+    <arg name="base_to_laser_pitch" value="$(arg base_to_laser_pitch)" />
+    <arg name="base_to_laser_yaw" value="$(arg base_to_laser_yaw)" />
+  </include>
+</launch>
+

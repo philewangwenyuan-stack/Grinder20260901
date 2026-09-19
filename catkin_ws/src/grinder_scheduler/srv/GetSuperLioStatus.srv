@@ -1,0 +1,7 @@
+---
+bool success
+string message
+string state
+string active_map_id
+string bundle_dir
+bool localization_ready

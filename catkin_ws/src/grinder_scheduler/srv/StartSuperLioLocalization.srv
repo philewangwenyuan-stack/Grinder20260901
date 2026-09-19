@@ -1,0 +1,9 @@
+string map_id
+---
+bool success
+string message
+string state
+string bundle_dir
+string yaml_path
+string image_path
+

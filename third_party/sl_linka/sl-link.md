@@ -777,7 +777,7 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 本地地图管理新增独立消息（不再依赖 `MapSyncOperation`，并以 `map_id` 作为唯一操作标识）：
 
-- `MapSaveRequest/Response`：从雷达保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；`map_id` 强制唯一，同一 `map_id` 再次保存时会先删除旧地图文件、旧区域状态和旧任务绑定，再保存最新数据
+- `MapSaveRequest/Response`：从实时建图保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；请求 `map_id` 为空或为 `LIVE_MAP` 时，LOWER 生成唯一正式 ID 并在响应中返回，`LIVE_MAP` 不会写入已保存地图注册表；请求已有正式 `map_id` 时只更新该地图的名称、区域、缩略图等元数据，不重新导出 PCD/PGM
 - `MapSaveResponse.created_at`：地图创建时间（`YYYY-MM-DD HH:MM:SS`，精确到秒）
 - `MapCatalogRequest/Response`：查询本地地图名称与数量，并返回地图元信息（面积/预计耗时/缩略图base64）
 - `MapDeleteRequest/Response`：按 `map_id` 删除本地地图，并递归删除文件服务器 `GrinderProject/maps/<map_id>` 下的文件及目录；服务器不存在该目录时按幂等成功处理
@@ -1025,7 +1025,7 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 | 消息 | 核心入参 | 说明 |
 |------|----------|------|
 | `MapCatalogRequest` | 无必填 | 可按实现决定是否附带缩略图 |
-| `MapSaveRequest` | `map_name`（建议）、`map_id`（可选）、`has_rotation_deg`、`rotation_deg` | 地图保存成功后返回 `map_id`、面积、耗时、创建时间；`has_rotation_deg=true` 时保存 `rotation_deg`，否则沿用当前地图已记录旋转角；同一 `map_id` 再次保存按替换处理，只保留最新地图数据 |
+| `MapSaveRequest` | `map_name`（建议）、`map_id`（可选）、`has_rotation_deg`、`rotation_deg` | 必须在建图模式仍活动时发送；`map_id` 为空或为 `LIVE_MAP` 时导出当前地图并生成唯一正式 ID，成功后返回该 ID、面积、耗时和创建时间；已有正式 `map_id` 只更新离线元数据；`has_rotation_deg=true` 时保存 `rotation_deg`，否则沿用当前地图已记录旋转角 |
 | `MapDeleteRequest` | `map_id` | 按 ID 删除，不依赖本地文件名 |
 | `MapMetricsRequest` | `map_id` | 返回区域面积/耗时明细（单位小时） |
 
@@ -1205,30 +1205,51 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 ### 6.12 雷达地图重定位
 
-APP 发送空的 `RadarRelocalizationRequest (0x052A)`：
+Super-LIO 定位模式启动后，APP 发送 `RadarRelocalizationRequest (0x052A)` 提供
+地图坐标系中的初始位姿：
 
 ```json
-{}
+{
+  "initial_pose_available": true,
+  "initial_pose": {
+    "x": 1.2,
+    "y": -0.5,
+    "heading_deg": 30.0
+  },
+  "initial_pose_covariance": {
+    "valid": true,
+    "x_variance": 0.25,
+    "y_variance": 0.25,
+    "yaw_variance": 0.06853892
+  }
+}
 ```
 
-LOWER 调用：
+字段约定：
 
-```bash
-rosservice call /slamware_ros_sdk_server_node/relocalization "{}"
-```
+- `x/y`：ROS `map` 坐标系，单位米。
+- `heading_deg`：从地图 X 正方向逆时针旋转，单位度。
+- `initial_pose_available` 必须为 `true`；空请求会被拒绝，避免误将机器人设置到原点。
+- `initial_pose_covariance.valid=false` 时，LOWER 使用调度配置中的默认协方差。
+
+LOWER 校验 Super-LIO 当前处于 `LOCALIZING`，转换为
+`geometry_msgs/PoseWithCovarianceStamped` 并发布一次 `/initialpose`。
 
 返回 `RadarRelocalizationResponse (0x052B)`：
 
 ```json
 {
   "result": "RESULT_SUCCESS",
-  "message": "radar_relocalization_accepted",
+  "message": "initial_pose_published",
   "accepted": true,
   "status": "running"
 }
 ```
 
-`accepted=true` 只表示异步重定位请求已被雷达接受，不表示重定位已经完成。
+`accepted=true` 只表示初始位姿已经发布，不表示三维配准已经完成。请求缺少位姿、
+包含非有限数值、协方差非法或者当前未处于定位模式时，返回
+`accepted=false / status=rejected`。参数错误返回 `RESULT_INVALID_PARAM`；定位模式未
+启动或任务仍在规划、运行、暂停时返回 `RESULT_BUSY`。必须先停止任务再重新定位。
 
 APP 可发送空的 `RadarRelocalizationStatusRequest (0x052C)` 查询最终状态：
 
@@ -1240,16 +1261,17 @@ APP 可发送空的 `RadarRelocalizationStatusRequest (0x052C)` 查询最终状�
 
 ```json
 {
-  "raw_status": "RelocalizationSucceed",
+  "raw_status": "RelocalizationSuccess",
   "timestamp_ns": 1780000000000000000
 }
 ```
 
-状态缓存规则：
+Super-LIO 状态含义：
 
-- `RelocalizationSucceed`、`RelocalizationFailed`、`RelocalizationCanceled` 是最终状态，结果保持到下一次重定位请求。
-- `RelocalizationNone` 不覆盖已经记录的有效结果。
-- `/slamware_ros_sdk_server_node/system_status` 和 odom 数据不参与聚合，也不在该响应中返回。
+- `RelocalizationRunning`：定位节点运行中，仍在等待初始位姿或有效定位里程计。
+- `RelocalizationSuccess`：模式管理器已收到初始位姿及其后的 `/lio/odom`。
+- `RelocalizationFailed`：模式管理器处于错误状态。
+- `Idle`：当前没有运行定位模式。
 
 请求示例（进入定位模式）：
 

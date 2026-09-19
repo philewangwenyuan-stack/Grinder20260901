@@ -53,6 +53,40 @@ class SlLinkExample {
     fun requestVideoStreamInfo(serializedRequest: ByteArray): ByteArray =
         SlMessageBuilder.buildVideoStreamInfoRequestRaw(serializedRequest, 0x10u)
 
+    fun sendInitialPose(
+        xMeters: Float,
+        yMeters: Float,
+        headingDegrees: Float,
+        positionVariance: Float = 0.25f,
+        yawVariance: Float = 0.06853892f
+    ): ByteArray {
+        val pose = sl_link.SlLink.Pose2D.newBuilder()
+            .setX(xMeters)
+            .setY(yMeters)
+            .setHeadingDeg(headingDegrees)
+            .build()
+        val covariance = sl_link.SlLink.LocalizationCovariance.newBuilder()
+            .setValid(true)
+            .setXVariance(positionVariance)
+            .setYVariance(positionVariance)
+            .setYawVariance(yawVariance)
+            .build()
+        val request = sl_link.SlLink.RadarRelocalizationRequest.newBuilder()
+            .setInitialPoseAvailable(true)
+            .setInitialPose(pose)
+            .setInitialPoseCovariance(covariance)
+            .build()
+        return SlMessageBuilder.buildRadarRelocalizationRequestRaw(request.toByteArray(), 0x10u)
+    }
+
+    fun requestRelocalizationStatus(): ByteArray {
+        val request = sl_link.SlLink.RadarRelocalizationStatusRequest.getDefaultInstance()
+        return SlMessageBuilder.buildRadarRelocalizationStatusRequestRaw(
+            request.toByteArray(),
+            0x10u
+        )
+    }
+
     fun handleReceivedData(data: ByteArray) {
         val frames = parser.parse(data)
         for (frame in frames) {
@@ -87,6 +121,8 @@ class SlLinkExample {
             0x050A -> println("  MapEditResponse payload=${frame.payload.size} bytes")
             0x050B -> println("  MapEditStatusReport payload=${frame.payload.size} bytes")
             0x050D -> println("  VideoStreamInfoResponse payload=${frame.payload.size} bytes")
+            0x052B -> handleRelocalizationResponse(frame)
+            0x052D -> handleRelocalizationStatusResponse(frame)
             else -> println("  Unknown message type")
         }
     }
@@ -142,6 +178,21 @@ class SlLinkExample {
     private fun handleControlCommandResponse(frame: SlFrame) {
         val response = sl_link.SlLink.ControlCommandResponse.parseFrom(frame.payload)
         println("  Control result=${response.result} message=${response.message}")
+    }
+
+    private fun handleRelocalizationResponse(frame: SlFrame) {
+        val response = sl_link.SlLink.RadarRelocalizationResponse.parseFrom(frame.payload)
+        println(
+            "  Relocalization accepted=${response.accepted} status=${response.status} " +
+                "result=${response.result} message=${response.message}"
+        )
+    }
+
+    private fun handleRelocalizationStatusResponse(frame: SlFrame) {
+        val response = sl_link.SlLink.RadarRelocalizationStatusResponse.parseFrom(frame.payload)
+        println(
+            "  Relocalization status=${response.rawStatus} timestampNs=${response.timestampNs}"
+        )
     }
 
     fun printStats() {

@@ -103,7 +103,7 @@ class PlatformFileSync:
         if self._thread is not None:
             self._thread.join(timeout=3.0)
 
-    def enqueue_map(self, map_id, map_name, local_map_dir, stcm_path):
+    def enqueue_map(self, map_id, map_name, local_map_dir):
         if not self.enabled:
             return False
         target_map_id = str(map_id or "").strip()
@@ -114,7 +114,6 @@ class PlatformFileSync:
             "map_id": target_map_id,
             "map_name": str(map_name or "").strip(),
             "local_map_dir": str(local_map_dir or "").strip(),
-            "stcm_path": str(stcm_path or "").strip(),
             "generation": generation,
         }
         if not job["map_id"]:
@@ -537,7 +536,7 @@ class PlatformFileSync:
                 parts.extend(relative.split(os.sep))
             folder_id = self._ensure_folder_path(parts)
             for filename in files:
-                if filename.endswith(".tmp") or filename.lower().endswith(".stcm"):
+                if filename.endswith(".tmp"):
                     continue
                 self._multipart_upload(os.path.join(root, filename), folder_id)
                 uploaded += 1
@@ -549,7 +548,7 @@ class PlatformFileSync:
         if uploaded <= 0:
             raise RuntimeError("no local map files found")
         rospy.loginfo(
-            "Map files uploaded without STCM: project_id=%s remote=%s/maps/%s files=%d",
+            "Super-LIO map bundle uploaded: project_id=%s remote=%s/maps/%s files=%d",
             self.project_id,
             self.remote_root_name,
             job["map_id"],
