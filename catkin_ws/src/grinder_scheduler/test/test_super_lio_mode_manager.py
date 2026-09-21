@@ -24,12 +24,20 @@ class _Dummy:
 # Asset validation is intentionally ROS-independent. Stub imports so the test
 # can also run on development hosts without a ROS installation.
 _stub_module("roslaunch", rlutil=_Dummy(), parent=_Dummy(), configure_logging=lambda _uuid: None)
-_stub_module("rosnode", get_node_names=lambda: [])
+_stub_module(
+    "rosnode",
+    get_node_names=lambda: [],
+    rosnode_ping=lambda _name, **_kwargs: True,
+    kill_nodes=lambda _names: None,
+)
 _stub_module(
     "rospy",
     ServiceException=RuntimeError,
     is_shutdown=lambda: False,
     logerr=lambda *_args: None,
+    logwarn=lambda *_args: None,
+    logwarn_throttle=lambda *_args: None,
+    sleep=lambda _seconds: None,
 )
 _stub_module("nav_msgs")
 _stub_module("nav_msgs.msg", OccupancyGrid=_Dummy, Odometry=_Dummy)
@@ -119,6 +127,78 @@ class SuperLioAssetValidationTest(unittest.TestCase):
         worker.join(timeout=1.0)
         self.assertFalse(worker.is_alive())
         self.assertEqual(result["value"], ("mapping", manager._main_thread_id))
+
+    def test_stop_owned_launch_kills_stale_mapping_nodes(self):
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._launch_parent = types.SimpleNamespace(shutdown=lambda: None)
+        manager._owned_mode = "mapping"
+        manager._shutdown_timeout = 0.0
+
+        active_nodes = set(SuperLioModeManager._MAPPING_NODES)
+        active_nodes.add("/map_server")
+        killed_nodes = []
+        rosnode_module = sys.modules["rosnode"]
+        old_get_node_names = rosnode_module.get_node_names
+        old_kill_nodes = rosnode_module.kill_nodes
+
+        def get_node_names():
+            return sorted(active_nodes)
+
+        def kill_nodes(node_names):
+            killed_nodes.extend(node_names)
+            active_nodes.difference_update(node_names)
+
+        rosnode_module.get_node_names = get_node_names
+        rosnode_module.kill_nodes = kill_nodes
+        try:
+            manager._stop_owned_launch()
+        finally:
+            rosnode_module.get_node_names = old_get_node_names
+            rosnode_module.kill_nodes = old_kill_nodes
+
+        self.assertEqual(set(killed_nodes), SuperLioModeManager._MAPPING_NODES)
+        self.assertIn("/map_server", active_nodes)
+
+    def test_unreachable_registration_does_not_block_manager(self):
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._state = manager.IDLE
+        manager._message = "idle"
+        manager._launch_parent = None
+        rosnode_module = sys.modules["rosnode"]
+        old_get_node_names = rosnode_module.get_node_names
+        old_rosnode_ping = rosnode_module.rosnode_ping
+        rosnode_module.get_node_names = lambda: ["/relocation_node"]
+        rosnode_module.rosnode_ping = lambda _name, **_kwargs: False
+        try:
+            manager._detect_unowned_conflicts()
+            manager._assert_no_unowned_nodes()
+        finally:
+            rosnode_module.get_node_names = old_get_node_names
+            rosnode_module.rosnode_ping = old_rosnode_ping
+
+        self.assertEqual(manager._state, manager.IDLE)
+        self.assertEqual(manager._message, "idle")
+
+    def test_reachable_registration_still_blocks_manager(self):
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._state = manager.IDLE
+        manager._message = "idle"
+        manager._launch_parent = None
+        rosnode_module = sys.modules["rosnode"]
+        old_get_node_names = rosnode_module.get_node_names
+        old_rosnode_ping = rosnode_module.rosnode_ping
+        rosnode_module.get_node_names = lambda: ["/relocation_node"]
+        rosnode_module.rosnode_ping = lambda _name, **_kwargs: True
+        try:
+            manager._detect_unowned_conflicts()
+            with self.assertRaisesRegex(RuntimeError, "unowned Super-LIO nodes"):
+                manager._assert_no_unowned_nodes()
+        finally:
+            rosnode_module.get_node_names = old_get_node_names
+            rosnode_module.rosnode_ping = old_rosnode_ping
+
+        self.assertEqual(manager._state, manager.ERROR)
+        self.assertIn("/relocation_node", manager._message)
 
 
 if __name__ == "__main__":

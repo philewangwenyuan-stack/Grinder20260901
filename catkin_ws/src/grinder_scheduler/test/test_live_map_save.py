@@ -115,6 +115,54 @@ def _node(map_root=""):
 
 
 class LiveMapSaveTest(unittest.TestCase):
+    def test_map_delete_commits_local_delete_before_remote_queue(self):
+        with tempfile.TemporaryDirectory() as map_root:
+            bundle_dir = os.path.join(map_root, "saved-map")
+            os.makedirs(bundle_dir)
+            with open(os.path.join(bundle_dir, "loc_map.pcd"), "w", encoding="utf-8") as handle:
+                handle.write("map")
+
+            node = _node(map_root)
+            node._map_registry["saved-map"] = {
+                "map_id": "saved-map",
+                "name": "测试地图",
+                "bundle_dir": bundle_dir,
+            }
+            node._map_delete_require_remote_success = False
+            node._active_map_id = "LIVE_MAP"
+            node._task_bindings = {}
+            node._task_obstacle_regions = {}
+            node._task_obstacle_regions_lock = mock.Mock()
+            node._last_task_result = {}
+            node._current_map_id = mock.Mock(return_value="LIVE_MAP")
+            node._prepare_for_map_mode_switch = mock.Mock()
+            node._ensure_super_lio_proxies = mock.Mock()
+            node._unregister_saved_map = mock.Mock()
+            node._remove_map_overlay_states_for_aliases = mock.Mock()
+            node._remove_planned_path_debug_for_map = mock.Mock()
+            node._remove_task_bindings_for_map_aliases = mock.Mock()
+            node._save_local_state = mock.Mock()
+            node.platform_file_sync = SimpleNamespace(
+                enqueue_map_delete=mock.Mock(return_value=(True, "queued"))
+            )
+            node.sl_link_server = SimpleNamespace(pb=pb)
+
+            request = pb.MapDeleteRequest(map_id="saved-map")
+            payload, message_id, component_id = node.handle_map_delete_request(
+                request.SerializeToString()
+            )
+            response = pb.MapDeleteResponse.FromString(payload)
+
+            self.assertEqual(message_id, pb.MSG_ID_MAP_DELETE_RESPONSE)
+            self.assertEqual(component_id, pb.COMP_SCHEDULER)
+            self.assertEqual(response.result, pb.RESULT_SUCCESS)
+            self.assertTrue(response.deleted)
+            self.assertTrue(response.local_deleted)
+            self.assertFalse(response.remote_deleted)
+            self.assertTrue(response.remote_delete_pending)
+            self.assertFalse(os.path.exists(bundle_dir))
+            node.platform_file_sync.enqueue_map_delete.assert_called_once_with("saved-map")
+
     def test_stale_live_registry_record_cannot_enter_metadata_only_branch(self):
         node = _node()
         node.sl_link_server = SimpleNamespace(pb=pb)

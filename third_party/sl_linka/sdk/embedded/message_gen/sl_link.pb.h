@@ -265,11 +265,93 @@ typedef struct _sl_link_MapSettings {
     float inflation_radius;
     pb_callback_t obstacle_regions;
     pb_callback_t work_regions;
+    /* Robot footprint vertices expressed in the base_link frame, ordered around
+ the polygon. Empty keeps the currently configured footprint. */
+    pb_callback_t footprint;
+    /* base_link -> base_laser_link extrinsic. Geometry is persisted by the
+ scheduler; static TF consumers apply it after their next restart/mode load. */
+    float base_laser_x;
+    float base_laser_y;
+    float base_laser_z;
+    float base_laser_roll_deg;
+    float base_laser_pitch_deg;
+    float base_laser_yaw_deg;
+    /* Global path-planner parameters used by the MST27 planner. Optional keeps
+ older geometry-only writes from overwriting values they do not edit. */
+    bool has_endpoint_margin;
+    float endpoint_margin;
+    bool has_output_point_spacing;
+    float output_point_spacing;
+    bool has_aligned_obstacle_inflation;
+    float aligned_obstacle_inflation;
+    bool has_aligned_obstacle_max_extent;
+    float aligned_obstacle_max_extent;
+    bool has_obstacle_corner_angle_deg;
+    float obstacle_corner_angle_deg;
+    bool has_obstacle_avoidance_distance;
+    float obstacle_avoidance_distance;
 } sl_link_MapSettings;
+
+typedef struct _sl_link_RppSettings {
+    float desired_linear_vel;
+    float max_linear_vel;
+    float max_angular_vel;
+    float max_linear_accel;
+    float max_angular_accel;
+    float lookahead_dist;
+    float min_lookahead_dist;
+    float max_lookahead_dist;
+    float curvature_lookahead_dist;
+    float regulated_linear_scaling_min_radius;
+    float regulated_linear_scaling_min_speed;
+    bool use_collision_detection;
+    bool use_footprint_expansion_collision_detection;
+    float collision_front_clearance_m;
+    float collision_side_clearance_m;
+    float max_allowed_time_to_collision_up_to_carrot;
+    uint32_t collision_confirm_scans;
+    uint32_t collision_clear_confirm_scans;
+    bool use_rotate_to_heading;
+    float rotate_to_heading_angular_vel;
+    float rotate_to_heading_min_angle;
+    float goal_dist_tol;
+    float angle_tol;
+    bool allow_reversing;
+    bool use_fixed_curvature_lookahead;
+    bool use_regulated_linear_velocity_scaling;
+    /* Additional high-impact tracking/collision controls exposed by the board. */
+    bool use_fixed_distance_collision_detection;
+    float collision_stop_distance_m;
+    float collision_scan_half_angle_rad;
+    float collision_scan_timeout_s;
+    uint32_t prediction_collision_confirm_cycles;
+    bool use_cost_regulated_linear_velocity_scaling;
+    float cost_scaling_dist;
+    float cost_scaling_gain;
+    float lookahead_time;
+    bool use_velocity_scaled_lookahead_dist;
+    bool use_approach_velocity_scaling;
+    float approach_velocity_scaling_dist;
+    float min_approach_linear_velocity;
+    uint32_t collision_min_valid_points;
+    bool use_command_velocity_for_accel_limit;
+    bool use_command_angular_velocity_for_accel_limit;
+    float command_velocity_memory_timeout;
+    float max_robot_pose_search_dist;
+    float trans_stopped_vel;
+    float theta_stopped_vel;
+    bool collision_side_only_when_turning;
+    float collision_side_turning_min_angular_vel;
+    bool use_corner_aware_rotate_to_heading;
+    float rotate_to_heading_exit_angle;
+    uint32_t rotate_to_heading_stable_cycles;
+    float rotate_to_heading_corner_distance;
+} sl_link_RppSettings;
 
 typedef struct _sl_link_SettingsReadRequest {
     bool read_chassis;
     bool read_map;
+    bool read_rpp;
 } sl_link_SettingsReadRequest;
 
 typedef struct _sl_link_SettingsReadResponse {
@@ -279,6 +361,8 @@ typedef struct _sl_link_SettingsReadResponse {
     bool has_map;
     sl_link_MapSettings map;
     pb_callback_t message;
+    bool has_rpp;
+    sl_link_RppSettings rpp;
 } sl_link_SettingsReadResponse;
 
 typedef struct _sl_link_SettingsWriteRequest {
@@ -286,6 +370,15 @@ typedef struct _sl_link_SettingsWriteRequest {
     sl_link_ChassisSettings chassis;
     bool has_map;
     sl_link_MapSettings map;
+    bool has_rpp;
+    sl_link_RppSettings rpp;
+    /* Apply RPP through dynamic_reconfigure immediately; it is not persistent
+ unless save_rpp_default is also true. */
+    bool apply_rpp_temporarily;
+    bool save_rpp_default;
+    /* Optional partial-update mask for RppSettings. Bit N selects the field
+ number N+1; zero means the message is a complete settings snapshot. */
+    uint64_t rpp_field_mask;
 } sl_link_SettingsWriteRequest;
 
 typedef struct _sl_link_SettingsWriteResponse {
@@ -295,6 +388,11 @@ typedef struct _sl_link_SettingsWriteResponse {
     sl_link_ChassisSettings chassis;
     bool has_map;
     sl_link_MapSettings map;
+    bool has_rpp;
+    sl_link_RppSettings rpp;
+    bool rpp_applied;
+    bool rpp_saved;
+    bool geometry_requires_restart;
 } sl_link_SettingsWriteResponse;
 
 typedef struct _sl_link_Pose2D {
@@ -744,6 +842,9 @@ typedef struct _sl_link_MapDeleteResponse {
     pb_callback_t map_id;
     pb_callback_t map_name;
     bool deleted;
+    bool local_deleted;
+    bool remote_deleted;
+    bool remote_delete_pending;
 } sl_link_MapDeleteResponse;
 
 typedef struct _sl_link_MapSaveRequest {
@@ -1186,6 +1287,7 @@ extern "C" {
 
 
 
+
 #define sl_link_SettingsReadResponse_result_ENUMTYPE sl_link_ResultCode
 
 
@@ -1323,11 +1425,12 @@ extern "C" {
 #define sl_link_PolygonPoint_init_default        {0, 0}
 #define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
 #define sl_link_ChassisSettings_init_default     {0, 0, 0, _sl_link_WorkMode_MIN, 0}
-#define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_SettingsReadRequest_init_default {0, 0}
-#define sl_link_SettingsReadResponse_init_default {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, {{NULL}, NULL}}
-#define sl_link_SettingsWriteRequest_init_default {false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default}
-#define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default}
+#define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define sl_link_RppSettings_init_default         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define sl_link_SettingsReadRequest_init_default {0, 0, 0}
+#define sl_link_SettingsReadResponse_init_default {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, {{NULL}, NULL}, false, sl_link_RppSettings_init_default}
+#define sl_link_SettingsWriteRequest_init_default {false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
+#define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
 #define sl_link_Pose2D_init_default              {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_default {0, 0, 0, 0, 0, 0, 0}
 #define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0}
@@ -1368,7 +1471,7 @@ extern "C" {
 #define sl_link_MapCatalogItem_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapCatalogResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapDeleteRequest_init_default    {{{NULL}, NULL}}
-#define sl_link_MapDeleteResponse_init_default   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_MapDeleteResponse_init_default   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapSaveRequest_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
 #define sl_link_MapSaveResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapMetricsRequest_init_default   {{{NULL}, NULL}}
@@ -1412,11 +1515,12 @@ extern "C" {
 #define sl_link_PolygonPoint_init_zero           {0, 0}
 #define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
 #define sl_link_ChassisSettings_init_zero        {0, 0, 0, _sl_link_WorkMode_MIN, 0}
-#define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_SettingsReadRequest_init_zero    {0, 0}
-#define sl_link_SettingsReadResponse_init_zero   {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, {{NULL}, NULL}}
-#define sl_link_SettingsWriteRequest_init_zero   {false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero}
-#define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero}
+#define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define sl_link_RppSettings_init_zero            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define sl_link_SettingsReadRequest_init_zero    {0, 0, 0}
+#define sl_link_SettingsReadResponse_init_zero   {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, {{NULL}, NULL}, false, sl_link_RppSettings_init_zero}
+#define sl_link_SettingsWriteRequest_init_zero   {false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
+#define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
 #define sl_link_Pose2D_init_zero                 {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_zero {0, 0, 0, 0, 0, 0, 0}
 #define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0}
@@ -1457,7 +1561,7 @@ extern "C" {
 #define sl_link_MapCatalogItem_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapCatalogResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapDeleteRequest_init_zero       {{{NULL}, NULL}}
-#define sl_link_MapDeleteResponse_init_zero      {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_MapDeleteResponse_init_zero      {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapSaveRequest_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
 #define sl_link_MapSaveResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapMetricsRequest_init_zero      {{{NULL}, NULL}}
@@ -1526,18 +1630,93 @@ extern "C" {
 #define sl_link_MapSettings_inflation_radius_tag 6
 #define sl_link_MapSettings_obstacle_regions_tag 7
 #define sl_link_MapSettings_work_regions_tag     8
+#define sl_link_MapSettings_footprint_tag        9
+#define sl_link_MapSettings_base_laser_x_tag     10
+#define sl_link_MapSettings_base_laser_y_tag     11
+#define sl_link_MapSettings_base_laser_z_tag     12
+#define sl_link_MapSettings_base_laser_roll_deg_tag 13
+#define sl_link_MapSettings_base_laser_pitch_deg_tag 14
+#define sl_link_MapSettings_base_laser_yaw_deg_tag 15
+#define sl_link_MapSettings_endpoint_margin_tag  16
+#define sl_link_MapSettings_output_point_spacing_tag 17
+#define sl_link_MapSettings_aligned_obstacle_inflation_tag 18
+#define sl_link_MapSettings_aligned_obstacle_max_extent_tag 19
+#define sl_link_MapSettings_obstacle_corner_angle_deg_tag 20
+#define sl_link_MapSettings_obstacle_avoidance_distance_tag 21
+#define sl_link_RppSettings_desired_linear_vel_tag 1
+#define sl_link_RppSettings_max_linear_vel_tag   2
+#define sl_link_RppSettings_max_angular_vel_tag  3
+#define sl_link_RppSettings_max_linear_accel_tag 4
+#define sl_link_RppSettings_max_angular_accel_tag 5
+#define sl_link_RppSettings_lookahead_dist_tag   6
+#define sl_link_RppSettings_min_lookahead_dist_tag 7
+#define sl_link_RppSettings_max_lookahead_dist_tag 8
+#define sl_link_RppSettings_curvature_lookahead_dist_tag 9
+#define sl_link_RppSettings_regulated_linear_scaling_min_radius_tag 10
+#define sl_link_RppSettings_regulated_linear_scaling_min_speed_tag 11
+#define sl_link_RppSettings_use_collision_detection_tag 12
+#define sl_link_RppSettings_use_footprint_expansion_collision_detection_tag 13
+#define sl_link_RppSettings_collision_front_clearance_m_tag 14
+#define sl_link_RppSettings_collision_side_clearance_m_tag 15
+#define sl_link_RppSettings_max_allowed_time_to_collision_up_to_carrot_tag 16
+#define sl_link_RppSettings_collision_confirm_scans_tag 17
+#define sl_link_RppSettings_collision_clear_confirm_scans_tag 18
+#define sl_link_RppSettings_use_rotate_to_heading_tag 19
+#define sl_link_RppSettings_rotate_to_heading_angular_vel_tag 20
+#define sl_link_RppSettings_rotate_to_heading_min_angle_tag 21
+#define sl_link_RppSettings_goal_dist_tol_tag    22
+#define sl_link_RppSettings_angle_tol_tag        23
+#define sl_link_RppSettings_allow_reversing_tag  24
+#define sl_link_RppSettings_use_fixed_curvature_lookahead_tag 25
+#define sl_link_RppSettings_use_regulated_linear_velocity_scaling_tag 26
+#define sl_link_RppSettings_use_fixed_distance_collision_detection_tag 27
+#define sl_link_RppSettings_collision_stop_distance_m_tag 28
+#define sl_link_RppSettings_collision_scan_half_angle_rad_tag 29
+#define sl_link_RppSettings_collision_scan_timeout_s_tag 30
+#define sl_link_RppSettings_prediction_collision_confirm_cycles_tag 31
+#define sl_link_RppSettings_use_cost_regulated_linear_velocity_scaling_tag 32
+#define sl_link_RppSettings_cost_scaling_dist_tag 33
+#define sl_link_RppSettings_cost_scaling_gain_tag 34
+#define sl_link_RppSettings_lookahead_time_tag   35
+#define sl_link_RppSettings_use_velocity_scaled_lookahead_dist_tag 36
+#define sl_link_RppSettings_use_approach_velocity_scaling_tag 37
+#define sl_link_RppSettings_approach_velocity_scaling_dist_tag 38
+#define sl_link_RppSettings_min_approach_linear_velocity_tag 39
+#define sl_link_RppSettings_collision_min_valid_points_tag 40
+#define sl_link_RppSettings_use_command_velocity_for_accel_limit_tag 41
+#define sl_link_RppSettings_use_command_angular_velocity_for_accel_limit_tag 42
+#define sl_link_RppSettings_command_velocity_memory_timeout_tag 43
+#define sl_link_RppSettings_max_robot_pose_search_dist_tag 44
+#define sl_link_RppSettings_trans_stopped_vel_tag 45
+#define sl_link_RppSettings_theta_stopped_vel_tag 46
+#define sl_link_RppSettings_collision_side_only_when_turning_tag 47
+#define sl_link_RppSettings_collision_side_turning_min_angular_vel_tag 48
+#define sl_link_RppSettings_use_corner_aware_rotate_to_heading_tag 49
+#define sl_link_RppSettings_rotate_to_heading_exit_angle_tag 50
+#define sl_link_RppSettings_rotate_to_heading_stable_cycles_tag 51
+#define sl_link_RppSettings_rotate_to_heading_corner_distance_tag 52
 #define sl_link_SettingsReadRequest_read_chassis_tag 1
 #define sl_link_SettingsReadRequest_read_map_tag 2
+#define sl_link_SettingsReadRequest_read_rpp_tag 3
 #define sl_link_SettingsReadResponse_result_tag  1
 #define sl_link_SettingsReadResponse_chassis_tag 2
 #define sl_link_SettingsReadResponse_map_tag     3
 #define sl_link_SettingsReadResponse_message_tag 4
+#define sl_link_SettingsReadResponse_rpp_tag     5
 #define sl_link_SettingsWriteRequest_chassis_tag 1
 #define sl_link_SettingsWriteRequest_map_tag     2
+#define sl_link_SettingsWriteRequest_rpp_tag     3
+#define sl_link_SettingsWriteRequest_apply_rpp_temporarily_tag 4
+#define sl_link_SettingsWriteRequest_save_rpp_default_tag 5
+#define sl_link_SettingsWriteRequest_rpp_field_mask_tag 6
 #define sl_link_SettingsWriteResponse_result_tag 1
 #define sl_link_SettingsWriteResponse_message_tag 2
 #define sl_link_SettingsWriteResponse_chassis_tag 3
 #define sl_link_SettingsWriteResponse_map_tag    4
+#define sl_link_SettingsWriteResponse_rpp_tag    5
+#define sl_link_SettingsWriteResponse_rpp_applied_tag 6
+#define sl_link_SettingsWriteResponse_rpp_saved_tag 7
+#define sl_link_SettingsWriteResponse_geometry_requires_restart_tag 8
 #define sl_link_Pose2D_x_tag                     1
 #define sl_link_Pose2D_y_tag                     2
 #define sl_link_Pose2D_heading_deg_tag           3
@@ -1816,6 +1995,9 @@ extern "C" {
 #define sl_link_MapDeleteResponse_map_id_tag     3
 #define sl_link_MapDeleteResponse_map_name_tag   4
 #define sl_link_MapDeleteResponse_deleted_tag    5
+#define sl_link_MapDeleteResponse_local_deleted_tag 6
+#define sl_link_MapDeleteResponse_remote_deleted_tag 7
+#define sl_link_MapDeleteResponse_remote_delete_pending_tag 8
 #define sl_link_MapSaveRequest_map_name_tag      1
 #define sl_link_MapSaveRequest_map_id_tag        2
 #define sl_link_MapSaveRequest_has_rotation_deg_tag 3
@@ -2069,15 +2251,86 @@ X(a, STATIC,   SINGULAR, FLOAT,    turn_radius,       4) \
 X(a, STATIC,   SINGULAR, FLOAT,    overlap_ratio,     5) \
 X(a, STATIC,   SINGULAR, FLOAT,    inflation_radius,   6) \
 X(a, CALLBACK, REPEATED, MESSAGE,  obstacle_regions,   7) \
-X(a, CALLBACK, REPEATED, MESSAGE,  work_regions,      8)
+X(a, CALLBACK, REPEATED, MESSAGE,  work_regions,      8) \
+X(a, CALLBACK, REPEATED, MESSAGE,  footprint,         9) \
+X(a, STATIC,   SINGULAR, FLOAT,    base_laser_x,     10) \
+X(a, STATIC,   SINGULAR, FLOAT,    base_laser_y,     11) \
+X(a, STATIC,   SINGULAR, FLOAT,    base_laser_z,     12) \
+X(a, STATIC,   SINGULAR, FLOAT,    base_laser_roll_deg,  13) \
+X(a, STATIC,   SINGULAR, FLOAT,    base_laser_pitch_deg,  14) \
+X(a, STATIC,   SINGULAR, FLOAT,    base_laser_yaw_deg,  15) \
+X(a, STATIC,   OPTIONAL, FLOAT,    endpoint_margin,  16) \
+X(a, STATIC,   OPTIONAL, FLOAT,    output_point_spacing,  17) \
+X(a, STATIC,   OPTIONAL, FLOAT,    aligned_obstacle_inflation,  18) \
+X(a, STATIC,   OPTIONAL, FLOAT,    aligned_obstacle_max_extent,  19) \
+X(a, STATIC,   OPTIONAL, FLOAT,    obstacle_corner_angle_deg,  20) \
+X(a, STATIC,   OPTIONAL, FLOAT,    obstacle_avoidance_distance,  21)
 #define sl_link_MapSettings_CALLBACK pb_default_field_callback
 #define sl_link_MapSettings_DEFAULT NULL
 #define sl_link_MapSettings_obstacle_regions_MSGTYPE sl_link_PolygonRegion
 #define sl_link_MapSettings_work_regions_MSGTYPE sl_link_PolygonRegion
+#define sl_link_MapSettings_footprint_MSGTYPE sl_link_PolygonPoint
+
+#define sl_link_RppSettings_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, FLOAT,    desired_linear_vel,   1) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_linear_vel,    2) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_angular_vel,   3) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_linear_accel,   4) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_angular_accel,   5) \
+X(a, STATIC,   SINGULAR, FLOAT,    lookahead_dist,    6) \
+X(a, STATIC,   SINGULAR, FLOAT,    min_lookahead_dist,   7) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_lookahead_dist,   8) \
+X(a, STATIC,   SINGULAR, FLOAT,    curvature_lookahead_dist,   9) \
+X(a, STATIC,   SINGULAR, FLOAT,    regulated_linear_scaling_min_radius,  10) \
+X(a, STATIC,   SINGULAR, FLOAT,    regulated_linear_scaling_min_speed,  11) \
+X(a, STATIC,   SINGULAR, BOOL,     use_collision_detection,  12) \
+X(a, STATIC,   SINGULAR, BOOL,     use_footprint_expansion_collision_detection,  13) \
+X(a, STATIC,   SINGULAR, FLOAT,    collision_front_clearance_m,  14) \
+X(a, STATIC,   SINGULAR, FLOAT,    collision_side_clearance_m,  15) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_allowed_time_to_collision_up_to_carrot,  16) \
+X(a, STATIC,   SINGULAR, UINT32,   collision_confirm_scans,  17) \
+X(a, STATIC,   SINGULAR, UINT32,   collision_clear_confirm_scans,  18) \
+X(a, STATIC,   SINGULAR, BOOL,     use_rotate_to_heading,  19) \
+X(a, STATIC,   SINGULAR, FLOAT,    rotate_to_heading_angular_vel,  20) \
+X(a, STATIC,   SINGULAR, FLOAT,    rotate_to_heading_min_angle,  21) \
+X(a, STATIC,   SINGULAR, FLOAT,    goal_dist_tol,    22) \
+X(a, STATIC,   SINGULAR, FLOAT,    angle_tol,        23) \
+X(a, STATIC,   SINGULAR, BOOL,     allow_reversing,  24) \
+X(a, STATIC,   SINGULAR, BOOL,     use_fixed_curvature_lookahead,  25) \
+X(a, STATIC,   SINGULAR, BOOL,     use_regulated_linear_velocity_scaling,  26) \
+X(a, STATIC,   SINGULAR, BOOL,     use_fixed_distance_collision_detection,  27) \
+X(a, STATIC,   SINGULAR, FLOAT,    collision_stop_distance_m,  28) \
+X(a, STATIC,   SINGULAR, FLOAT,    collision_scan_half_angle_rad,  29) \
+X(a, STATIC,   SINGULAR, FLOAT,    collision_scan_timeout_s,  30) \
+X(a, STATIC,   SINGULAR, UINT32,   prediction_collision_confirm_cycles,  31) \
+X(a, STATIC,   SINGULAR, BOOL,     use_cost_regulated_linear_velocity_scaling,  32) \
+X(a, STATIC,   SINGULAR, FLOAT,    cost_scaling_dist,  33) \
+X(a, STATIC,   SINGULAR, FLOAT,    cost_scaling_gain,  34) \
+X(a, STATIC,   SINGULAR, FLOAT,    lookahead_time,   35) \
+X(a, STATIC,   SINGULAR, BOOL,     use_velocity_scaled_lookahead_dist,  36) \
+X(a, STATIC,   SINGULAR, BOOL,     use_approach_velocity_scaling,  37) \
+X(a, STATIC,   SINGULAR, FLOAT,    approach_velocity_scaling_dist,  38) \
+X(a, STATIC,   SINGULAR, FLOAT,    min_approach_linear_velocity,  39) \
+X(a, STATIC,   SINGULAR, UINT32,   collision_min_valid_points,  40) \
+X(a, STATIC,   SINGULAR, BOOL,     use_command_velocity_for_accel_limit,  41) \
+X(a, STATIC,   SINGULAR, BOOL,     use_command_angular_velocity_for_accel_limit,  42) \
+X(a, STATIC,   SINGULAR, FLOAT,    command_velocity_memory_timeout,  43) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_robot_pose_search_dist,  44) \
+X(a, STATIC,   SINGULAR, FLOAT,    trans_stopped_vel,  45) \
+X(a, STATIC,   SINGULAR, FLOAT,    theta_stopped_vel,  46) \
+X(a, STATIC,   SINGULAR, BOOL,     collision_side_only_when_turning,  47) \
+X(a, STATIC,   SINGULAR, FLOAT,    collision_side_turning_min_angular_vel,  48) \
+X(a, STATIC,   SINGULAR, BOOL,     use_corner_aware_rotate_to_heading,  49) \
+X(a, STATIC,   SINGULAR, FLOAT,    rotate_to_heading_exit_angle,  50) \
+X(a, STATIC,   SINGULAR, UINT32,   rotate_to_heading_stable_cycles,  51) \
+X(a, STATIC,   SINGULAR, FLOAT,    rotate_to_heading_corner_distance,  52)
+#define sl_link_RppSettings_CALLBACK NULL
+#define sl_link_RppSettings_DEFAULT NULL
 
 #define sl_link_SettingsReadRequest_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     read_chassis,      1) \
-X(a, STATIC,   SINGULAR, BOOL,     read_map,          2)
+X(a, STATIC,   SINGULAR, BOOL,     read_map,          2) \
+X(a, STATIC,   SINGULAR, BOOL,     read_rpp,          3)
 #define sl_link_SettingsReadRequest_CALLBACK NULL
 #define sl_link_SettingsReadRequest_DEFAULT NULL
 
@@ -2085,29 +2338,41 @@ X(a, STATIC,   SINGULAR, BOOL,     read_map,          2)
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  chassis,           2) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  map,               3) \
-X(a, CALLBACK, SINGULAR, STRING,   message,           4)
+X(a, CALLBACK, SINGULAR, STRING,   message,           4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  rpp,               5)
 #define sl_link_SettingsReadResponse_CALLBACK pb_default_field_callback
 #define sl_link_SettingsReadResponse_DEFAULT NULL
 #define sl_link_SettingsReadResponse_chassis_MSGTYPE sl_link_ChassisSettings
 #define sl_link_SettingsReadResponse_map_MSGTYPE sl_link_MapSettings
+#define sl_link_SettingsReadResponse_rpp_MSGTYPE sl_link_RppSettings
 
 #define sl_link_SettingsWriteRequest_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  chassis,           1) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  map,               2)
+X(a, STATIC,   OPTIONAL, MESSAGE,  map,               2) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  rpp,               3) \
+X(a, STATIC,   SINGULAR, BOOL,     apply_rpp_temporarily,   4) \
+X(a, STATIC,   SINGULAR, BOOL,     save_rpp_default,   5) \
+X(a, STATIC,   SINGULAR, UINT64,   rpp_field_mask,    6)
 #define sl_link_SettingsWriteRequest_CALLBACK NULL
 #define sl_link_SettingsWriteRequest_DEFAULT NULL
 #define sl_link_SettingsWriteRequest_chassis_MSGTYPE sl_link_ChassisSettings
 #define sl_link_SettingsWriteRequest_map_MSGTYPE sl_link_MapSettings
+#define sl_link_SettingsWriteRequest_rpp_MSGTYPE sl_link_RppSettings
 
 #define sl_link_SettingsWriteResponse_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  chassis,           3) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  map,               4)
+X(a, STATIC,   OPTIONAL, MESSAGE,  map,               4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  rpp,               5) \
+X(a, STATIC,   SINGULAR, BOOL,     rpp_applied,       6) \
+X(a, STATIC,   SINGULAR, BOOL,     rpp_saved,         7) \
+X(a, STATIC,   SINGULAR, BOOL,     geometry_requires_restart,   8)
 #define sl_link_SettingsWriteResponse_CALLBACK pb_default_field_callback
 #define sl_link_SettingsWriteResponse_DEFAULT NULL
 #define sl_link_SettingsWriteResponse_chassis_MSGTYPE sl_link_ChassisSettings
 #define sl_link_SettingsWriteResponse_map_MSGTYPE sl_link_MapSettings
+#define sl_link_SettingsWriteResponse_rpp_MSGTYPE sl_link_RppSettings
 
 #define sl_link_Pose2D_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, FLOAT,    x,                 1) \
@@ -2577,7 +2842,10 @@ X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, CALLBACK, SINGULAR, STRING,   map_id,            3) \
 X(a, CALLBACK, SINGULAR, STRING,   map_name,          4) \
-X(a, STATIC,   SINGULAR, BOOL,     deleted,           5)
+X(a, STATIC,   SINGULAR, BOOL,     deleted,           5) \
+X(a, STATIC,   SINGULAR, BOOL,     local_deleted,     6) \
+X(a, STATIC,   SINGULAR, BOOL,     remote_deleted,    7) \
+X(a, STATIC,   SINGULAR, BOOL,     remote_delete_pending,   8)
 #define sl_link_MapDeleteResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapDeleteResponse_DEFAULT NULL
 
@@ -2959,6 +3227,7 @@ extern const pb_msgdesc_t sl_link_PolygonPoint_msg;
 extern const pb_msgdesc_t sl_link_PolygonRegion_msg;
 extern const pb_msgdesc_t sl_link_ChassisSettings_msg;
 extern const pb_msgdesc_t sl_link_MapSettings_msg;
+extern const pb_msgdesc_t sl_link_RppSettings_msg;
 extern const pb_msgdesc_t sl_link_SettingsReadRequest_msg;
 extern const pb_msgdesc_t sl_link_SettingsReadResponse_msg;
 extern const pb_msgdesc_t sl_link_SettingsWriteRequest_msg;
@@ -3050,6 +3319,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_PolygonRegion_fields &sl_link_PolygonRegion_msg
 #define sl_link_ChassisSettings_fields &sl_link_ChassisSettings_msg
 #define sl_link_MapSettings_fields &sl_link_MapSettings_msg
+#define sl_link_RppSettings_fields &sl_link_RppSettings_msg
 #define sl_link_SettingsReadRequest_fields &sl_link_SettingsReadRequest_msg
 #define sl_link_SettingsReadResponse_fields &sl_link_SettingsReadResponse_msg
 #define sl_link_SettingsWriteRequest_fields &sl_link_SettingsWriteRequest_msg
@@ -3200,7 +3470,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_RadarRelocalizationResponse_size depends on runtime parameters */
 /* sl_link_RadarRelocalizationStatusResponse_size depends on runtime parameters */
 /* sl_link_ControlCommandResponse_size depends on runtime parameters */
-#define SL_LINK_SL_LINK_PB_H_MAX_SIZE            sl_link_TaskTrajectoryPoint_size
+#define SL_LINK_SL_LINK_PB_H_MAX_SIZE            sl_link_RppSettings_size
 #define sl_link_CameraFrameRequest_size          8
 #define sl_link_ChassisPowerControl_size         2
 #define sl_link_ChassisSettings_size             20
@@ -3221,7 +3491,8 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_RadarRelocalizationRequest_size  53
 #define sl_link_RadarRelocalizationStatusRequest_size 0
 #define sl_link_RadarSystemStatusRequest_size    0
-#define sl_link_SettingsReadRequest_size         4
+#define sl_link_RppSettings_size                 260
+#define sl_link_SettingsReadRequest_size         6
 #define sl_link_SystemCacheClearRequest_size     6
 #define sl_link_TaskTrajectoryPoint_size         54
 #define sl_link_VideoStreamInfoRequest_size      2

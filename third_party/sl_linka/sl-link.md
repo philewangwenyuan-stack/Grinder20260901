@@ -103,8 +103,33 @@ message WifiStatusReport {
 - 转弯半径 `turn_radius`
 - 重叠比例 `overlap_ratio`
 - 膨胀半径 `inflation_radius`
+- 扫掠线起止点留边 `endpoint_margin`
+- 输出路径补点间距 `output_point_spacing`，设为 `0` 时关闭补点
+- 角度对齐后的柱体外接矩形膨胀距离 `aligned_obstacle_inflation`
+- 柱体识别最大边长 `aligned_obstacle_max_extent`，超过后按墙体处理
+- 绕柱进入/退出角度 `obstacle_corner_angle_deg`
+- 额外避让距离 `obstacle_avoidance_distance`
 - 障碍区域 `obstacle_regions[]`
 - 运行区域 `work_regions[]`
+- 机器人 footprint 顶点 `footprint[]`，坐标在 `base_link`，当前默认矩形为 `x=[-0.60,1.00]`、`y=±0.47`
+- `base_link -> base_laser_link` 外参：`base_laser_x/y/z` 单位 m，`base_laser_roll/pitch/yaw_deg` 单位 deg
+
+#### RPP 导航相关 `RppSettings`
+
+`SettingsReadRequest.read_rpp=true` 读取当前 RPP 参数。`SettingsWriteRequest.rpp` 写入参数；
+`apply_rpp_temporarily=true` 通过 dynamic_reconfigure 立即应用，`save_rpp_default=true` 同步保存默认 YAML。
+两者可以同时设置。重点参数包括：
+
+如果只修改部分字段，使用 `rpp_field_mask`（bit N 对应 `RppSettings` 的字段号 N+1）；
+传 `0` 表示发送完整参数快照。这样布尔值也能明确写入 `false`。
+
+- 目标/最大线速度、最大角速度、线/角加速度
+- 固定/速度自适应前视距离、曲率前视距离及曲率减速
+- 前向碰撞预测、固定距离停车、footprint 膨胀、前/侧安全距离、确认帧数
+- 障碍物代价减速、原地对正、目标距离/角度容差、是否允许倒车
+
+footprint 若 costmap 正在运行会尝试动态更新；`base_link -> base_laser_link` 属于静态 TF，
+写入后由 Super-LIO 下一次模式重载使用，响应中的 `geometry_requires_restart=true` 表示当前静态 TF/未运行的 costmap 仍需重启或重载。
 
 区域统一使用多边形结构：
 
@@ -273,7 +298,7 @@ message PolygonRegion {
 | `0x0514` | `MapCatalogRequest` | `APP -> LOWER` | 请求本地地图列表（名称/数量） |
 | `0x0515` | `MapCatalogResponse` | `LOWER -> APP` | 返回本地地图列表（含面积/预计耗时/缩略图） |
 | `0x0516` | `MapDeleteRequest` | `APP -> LOWER` | 按 map_id 删除本地地图及文件服务器对应目录 |
-| `0x0517` | `MapDeleteResponse` | `LOWER -> APP` | 返回删除结果 |
+| `0x0517` | `MapDeleteResponse` | `LOWER -> APP` | 返回本地删除、远端删除/待重试结果；默认本地成功即 `RESULT_SUCCESS` |
 | `0x0518` | `MapSaveRequest` | `APP -> LOWER` | 请求从雷达保存地图到本地 |
 | `0x0519` | `MapSaveResponse` | `LOWER -> APP` | 返回保存结果与 map_id（含面积/预计耗时/创建时间） |
 | `0x051A` | `MapMetricsRequest` | `APP -> LOWER` | 按 map_id 请求地图面积与预计耗时 |
@@ -777,7 +802,7 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 本地地图管理新增独立消息（不再依赖 `MapSyncOperation`，并以 `map_id` 作为唯一操作标识）：
 
-- `MapSaveRequest/Response`：从实时建图保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；请求 `map_id` 为空或为 `LIVE_MAP` 时，LOWER 生成唯一正式 ID 并在响应中返回，`LIVE_MAP` 不会写入已保存地图注册表；请求已有正式 `map_id` 时只更新该地图的名称、区域、缩略图等元数据，不重新导出 PCD/PGM
+- `MapSaveRequest/Response`：从实时建图保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；请求 `map_id` 为空或为 `LIVE_MAP` 时，LOWER 生成唯一正式 ID 并在响应中返回，`LIVE_MAP` 不会写入已保存地图注册表；请求已有正式 `map_id` 时只更新该地图的名称、区域、缩略图等元数据，不重新导出 PCD/PGM。实时建图保存成功后会停止/清理建图节点，但不会立即启动定位；原有任务启动流程在需要时再按当前保存地图启动定位节点
 - `MapSaveResponse.created_at`：地图创建时间（`YYYY-MM-DD HH:MM:SS`，精确到秒）
 - `MapCatalogRequest/Response`：查询本地地图名称与数量，并返回地图元信息（面积/预计耗时/缩略图base64）
 - `MapDeleteRequest/Response`：按 `map_id` 删除本地地图，并递归删除文件服务器 `GrinderProject/maps/<map_id>` 下的文件及目录；服务器不存在该目录时按幂等成功处理

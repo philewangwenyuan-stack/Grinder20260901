@@ -211,8 +211,48 @@ class SuperLioModeManager:
         except Exception:
             return set()
 
+    @staticmethod
+    def _node_is_reachable(node_name):
+        """Return whether a master registration belongs to a live node."""
+        try:
+            try:
+                return bool(
+                    rosnode.rosnode_ping(
+                        node_name, max_count=1, skip_cache=True
+                    )
+                )
+            except TypeError:
+                # Keep compatibility with older rosnode versions without the
+                # skip_cache keyword.
+                return bool(rosnode.rosnode_ping(node_name, max_count=1))
+        except Exception as exc:
+            rospy.logwarn(
+                "Unable to contact Super-LIO node %s while checking ownership: %s",
+                node_name,
+                exc,
+            )
+            return False
+
+    def _live_managed_nodes(self):
+        """Return registered Super-LIO nodes that still answer XML-RPC."""
+        registered = self._node_names() & (self._MAPPING_NODES | self._LOCALIZATION_NODES)
+        live = set()
+        stale = []
+        for node_name in sorted(registered):
+            if self._node_is_reachable(node_name):
+                live.add(node_name)
+            else:
+                stale.append(node_name)
+        if stale:
+            rospy.logwarn_throttle(
+                5.0,
+                "Ignoring unreachable Super-LIO registrations: %s",
+                ", ".join(stale),
+            )
+        return live
+
     def _detect_unowned_conflicts(self):
-        conflicts = sorted(self._node_names() & (self._MAPPING_NODES | self._LOCALIZATION_NODES))
+        conflicts = sorted(self._live_managed_nodes())
         if conflicts:
             self._state = self.ERROR
             self._message = "unowned Super-LIO nodes already running: {}".format(", ".join(conflicts))
@@ -221,7 +261,7 @@ class SuperLioModeManager:
     def _assert_no_unowned_nodes(self):
         if self._launch_parent is not None:
             return
-        conflicts = sorted(self._node_names() & (self._MAPPING_NODES | self._LOCALIZATION_NODES))
+        conflicts = sorted(self._live_managed_nodes())
         if conflicts:
             raise RuntimeError("unowned Super-LIO nodes already running: {}".format(", ".join(conflicts)))
 
@@ -242,9 +282,30 @@ class SuperLioModeManager:
             parent.shutdown()
             deadline = time.monotonic() + self._shutdown_timeout
             while time.monotonic() < deadline:
-                if not (self._node_names() & (self._MAPPING_NODES | self._LOCALIZATION_NODES)):
+                if not self._live_managed_nodes():
                     break
                 rospy.sleep(0.1)
+
+            # roslaunch normally propagates shutdown to all children.  Some
+            # Super-LIO/driver processes can outlive the launch parent,
+            # though, and would keep publishing mapping data after a
+            # successful map save.  Only kill nodes that belong to the
+            # managed mapping launch and only when they remain after the
+            # graceful shutdown timeout; never touch unowned nodes here.
+            stale_mapping_nodes = sorted(self._live_managed_nodes() & self._MAPPING_NODES)
+            if stale_mapping_nodes:
+                rospy.logwarn(
+                    "Managed mapping launch still has nodes after shutdown; "
+                    "killing: %s",
+                    ", ".join(stale_mapping_nodes),
+                )
+                try:
+                    rosnode.kill_nodes(stale_mapping_nodes)
+                except Exception as exc:
+                    rospy.logerr(
+                        "Failed to kill stale managed mapping nodes: %s",
+                        exc,
+                    )
 
     def _wait_service(self, name):
         rospy.wait_for_service(name, timeout=self._startup_timeout)
@@ -451,23 +512,20 @@ class SuperLioModeManager:
                 paths = self._validate_bundle(final_dir)
 
                 self._stop_owned_launch()
-                localization_started = False
-                localization_error = ""
-                try:
-                    self._start_localization_locked(map_id)
-                    localization_started = True
-                except Exception as exc:
-                    localization_error = str(exc)
-                    self._state = self.ERROR
-                    self._message = "map saved but localization failed: {}".format(localization_error)
+                # Saving a map is the end of the mapping session.  Do not
+                # immediately start localization here: the task-start path
+                # owns that transition so an idle robot does not keep the
+                # localization stack alive after an APP save operation.
+                self._state = self.IDLE
+                self._message = "map saved; mapping stopped; localization pending"
+                self._active_map_id = map_id
+                self._bundle_dir = final_dir
+                self._localization_ready = False
+                self._initial_pose_received = False
 
                 response.success = True
-                response.localization_started = localization_started
-                response.message = (
-                    "map_saved_and_localization_on"
-                    if localization_started
-                    else self._message
-                )
+                response.localization_started = False
+                response.message = "map_saved_localization_pending"
                 response.state = self._state
                 response.bundle_dir = final_dir
                 response.loc_pcd_path = paths["loc"]

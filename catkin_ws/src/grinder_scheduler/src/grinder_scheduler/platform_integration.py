@@ -64,6 +64,9 @@ class PlatformFileSync:
         remote_root_name="GrinderProject",
         enabled=False,
         timeout_sec=30.0,
+        map_delete_retry_sec=30.0,
+        map_delete_retry_max_sec=1800.0,
+        pending_delete_path="",
     ):
         self.enabled = bool(enabled)
         self.platform_base_url = str(platform_base_url or "").rstrip("/")
@@ -83,6 +86,13 @@ class PlatformFileSync:
         self._lock = threading.Lock()
         self._operation_lock = threading.Lock()
         self._map_job_generations = {}
+        self._map_delete_retry_sec = max(1.0, float(map_delete_retry_sec))
+        self._map_delete_retry_max_sec = max(
+            self._map_delete_retry_sec,
+            float(map_delete_retry_max_sec),
+        )
+        self._pending_delete_path = str(pending_delete_path or "").strip()
+        self._pending_delete_jobs = {}
 
     def start(self):
         if not self.enabled:
@@ -91,6 +101,7 @@ class PlatformFileSync:
             rospy.logwarn("Platform file sync disabled: platform username/password is empty")
             self.enabled = False
             return
+        self._load_pending_delete_jobs()
         self._thread = threading.Thread(target=self._worker, name="grinder-file-sync", daemon=True)
         self._thread.start()
 
@@ -159,6 +170,154 @@ class PlatformFileSync:
         except Exception as exc:
             rospy.logerr("Remote map delete failed: map_id=%s error=%s", target_map_id, exc)
             return False, str(exc)
+
+    def enqueue_map_delete(self, map_id):
+        """Queue remote deletion without making the local delete depend on HTTP.
+
+        The queue is persisted when a state path is configured, so a temporary
+        platform outage does not lose the remote cleanup after a scheduler
+        restart. A map upload job for the same ID is superseded immediately.
+        """
+        target_map_id = str(map_id or "").strip()
+        if not target_map_id:
+            return False, "map_id is empty"
+        if not self.enabled:
+            return False, "platform file sync is disabled"
+        with self._lock:
+            self._map_job_generations[target_map_id] = (
+                self._map_job_generations.get(target_map_id, 0) + 1
+            )
+            previous = self._pending_delete_jobs.get(target_map_id, {})
+            self._pending_delete_jobs[target_map_id] = {
+                "map_id": target_map_id,
+                "attempts": int(previous.get("attempts", 0) or 0),
+                "next_attempt_at": time.time(),
+                "last_error": "",
+                "in_progress": False,
+            }
+            self._save_pending_delete_jobs_locked()
+        rospy.loginfo("Remote map delete queued: map_id=%s", target_map_id)
+        return True, "remote map delete queued"
+
+    def _load_pending_delete_jobs(self):
+        if not self._pending_delete_path or not os.path.exists(self._pending_delete_path):
+            return
+        try:
+            with open(self._pending_delete_path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            jobs = payload.get("jobs", {}) if isinstance(payload, dict) else {}
+            if not isinstance(jobs, dict):
+                return
+            with self._lock:
+                self._pending_delete_jobs = {}
+                for map_id, item in jobs.items():
+                    if not isinstance(item, dict):
+                        continue
+                    target_map_id = str(item.get("map_id", map_id) or "").strip()
+                    if not target_map_id:
+                        continue
+                    self._pending_delete_jobs[target_map_id] = {
+                        "map_id": target_map_id,
+                        "attempts": max(0, int(item.get("attempts", 0) or 0)),
+                        "next_attempt_at": float(item.get("next_attempt_at", time.time()) or time.time()),
+                        "last_error": str(item.get("last_error", "") or ""),
+                        "in_progress": False,
+                    }
+            if self._pending_delete_jobs:
+                rospy.loginfo(
+                    "Loaded pending remote map deletes: count=%d path=%s",
+                    len(self._pending_delete_jobs),
+                    self._pending_delete_path,
+                )
+        except Exception as exc:
+            rospy.logwarn("Failed to load pending remote map deletes: %s", exc)
+
+    def _save_pending_delete_jobs_locked(self):
+        if not self._pending_delete_path:
+            return
+        try:
+            os.makedirs(os.path.dirname(self._pending_delete_path) or ".", exist_ok=True)
+            payload = {
+                "schema_version": 1,
+                "jobs": {
+                    map_id: dict(item)
+                    for map_id, item in self._pending_delete_jobs.items()
+                },
+                "saved_at": int(time.time()),
+            }
+            tmp_path = self._pending_delete_path + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, self._pending_delete_path)
+        except Exception as exc:
+            rospy.logwarn("Failed to persist pending remote map deletes: %s", exc)
+
+    def _claim_pending_delete_job(self):
+        now = time.time()
+        with self._lock:
+            for map_id, item in self._pending_delete_jobs.items():
+                if bool(item.get("in_progress", False)):
+                    continue
+                if float(item.get("next_attempt_at", 0.0) or 0.0) > now:
+                    continue
+                item["in_progress"] = True
+                self._save_pending_delete_jobs_locked()
+                return dict(item)
+        return None
+
+    def _finish_pending_delete_job(self, job, error=""):
+        map_id = str(job.get("map_id", "") or "").strip()
+        if not map_id:
+            return
+        with self._lock:
+            if not error:
+                self._pending_delete_jobs.pop(map_id, None)
+                self._save_pending_delete_jobs_locked()
+                return
+            item = self._pending_delete_jobs.get(map_id)
+            if item is None:
+                return
+            attempts = max(0, int(item.get("attempts", 0) or 0)) + 1
+            delay = min(
+                self._map_delete_retry_max_sec,
+                self._map_delete_retry_sec * (2 ** min(attempts - 1, 6)),
+            )
+            item.update(
+                {
+                    "attempts": attempts,
+                    "next_attempt_at": time.time() + delay,
+                    "last_error": str(error),
+                    "in_progress": False,
+                }
+            )
+            self._save_pending_delete_jobs_locked()
+
+    def _process_pending_delete_job(self, job):
+        map_id = str(job.get("map_id", "") or "").strip()
+        try:
+            with self._operation_lock:
+                if not self.get_project_id() or not self._file_token:
+                    self._authenticate()
+                deleted_files, deleted_folders = self._delete_remote_map(map_id)
+            self._finish_pending_delete_job(job)
+            rospy.loginfo(
+                "Remote map delete completed: map_id=%s files=%d folders=%d",
+                map_id,
+                deleted_files,
+                deleted_folders,
+            )
+        except Exception as exc:
+            self._finish_pending_delete_job(job, str(exc))
+            rospy.logerr(
+                "Remote map delete retry failed: map_id=%s attempt=%d next_retry_sec=%.1f error=%s",
+                map_id,
+                int(job.get("attempts", 0) or 0) + 1,
+                min(
+                    self._map_delete_retry_max_sec,
+                    self._map_delete_retry_sec * (2 ** min(int(job.get("attempts", 0) or 0), 6)),
+                ),
+                exc,
+            )
 
     def _request_json(self, base_url, path, method="GET", body=None, headers=None):
         url = base_url + path
@@ -561,6 +720,10 @@ class PlatformFileSync:
         except Exception as exc:
             rospy.logwarn("Platform startup authentication failed; retry on map upload: %s", exc)
         while not self._stop_event.is_set():
+            pending_delete = self._claim_pending_delete_job()
+            if pending_delete is not None:
+                self._process_pending_delete_job(pending_delete)
+                continue
             try:
                 job = self._jobs.get(timeout=0.5)
             except queue.Empty:

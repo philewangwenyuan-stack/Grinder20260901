@@ -164,7 +164,7 @@ class RobotConfig:
     aligned_obstacle_inflation: float = 0.7  # 角度对齐后的柱子外接矩形膨胀距离，单位：米
     aligned_obstacle_max_extent: float = 3.0  # 柱子识别的最大边长，单位：米；超过后按墙体处理
     obstacle_corner_angle_deg: float = 45.0  # 绕柱外推四个锚点的进入和退出角度，单位：度
-    obstacle_avoidance_distance: float = 0.1  # 在0.6米柱子膨胀范围外追加的避让距离，单位：米
+    obstacle_avoidance_distance: float = 0.0  # 在0.6米柱子膨胀范围外追加的避让距离，单位：米
 
 
 def _direction_axis(direction):

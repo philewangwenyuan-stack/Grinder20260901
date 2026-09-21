@@ -267,11 +267,87 @@ message MapSettings {
   float inflation_radius = 6 [(unit) = "m", (scale) = 1];
   repeated PolygonRegion obstacle_regions = 7;
   repeated PolygonRegion work_regions = 8;
+  // Robot footprint vertices expressed in the base_link frame, ordered around
+  // the polygon. Empty keeps the currently configured footprint.
+  repeated PolygonPoint footprint = 9;
+  // base_link -> base_laser_link extrinsic. Geometry is persisted by the
+  // scheduler; static TF consumers apply it after their next restart/mode load.
+  float base_laser_x = 10 [(unit) = "m", (scale) = 1];
+  float base_laser_y = 11 [(unit) = "m", (scale) = 1];
+  float base_laser_z = 12 [(unit) = "m", (scale) = 1];
+  float base_laser_roll_deg = 13 [(unit) = "deg", (scale) = 1];
+  float base_laser_pitch_deg = 14 [(unit) = "deg", (scale) = 1];
+  float base_laser_yaw_deg = 15 [(unit) = "deg", (scale) = 1];
+  // Global path-planner parameters used by the MST27 planner. Optional keeps
+  // older geometry-only writes from overwriting values they do not edit.
+  optional float endpoint_margin = 16 [(unit) = "m", (scale) = 1];
+  optional float output_point_spacing = 17 [(unit) = "m", (scale) = 1];
+  optional float aligned_obstacle_inflation = 18 [(unit) = "m", (scale) = 1];
+  optional float aligned_obstacle_max_extent = 19 [(unit) = "m", (scale) = 1];
+  optional float obstacle_corner_angle_deg = 20 [(unit) = "deg", (scale) = 1];
+  optional float obstacle_avoidance_distance = 21 [(unit) = "m", (scale) = 1];
+}
+
+message RppSettings {
+  float desired_linear_vel = 1 [(unit) = "m/s", (scale) = 1];
+  float max_linear_vel = 2 [(unit) = "m/s", (scale) = 1];
+  float max_angular_vel = 3 [(unit) = "rad/s", (scale) = 1];
+  float max_linear_accel = 4 [(unit) = "m/s2", (scale) = 1];
+  float max_angular_accel = 5 [(unit) = "rad/s2", (scale) = 1];
+  float lookahead_dist = 6 [(unit) = "m", (scale) = 1];
+  float min_lookahead_dist = 7 [(unit) = "m", (scale) = 1];
+  float max_lookahead_dist = 8 [(unit) = "m", (scale) = 1];
+  float curvature_lookahead_dist = 9 [(unit) = "m", (scale) = 1];
+  float regulated_linear_scaling_min_radius = 10 [(unit) = "m", (scale) = 1];
+  float regulated_linear_scaling_min_speed = 11 [(unit) = "m/s", (scale) = 1];
+  bool use_collision_detection = 12;
+  bool use_footprint_expansion_collision_detection = 13;
+  float collision_front_clearance_m = 14 [(unit) = "m", (scale) = 1];
+  float collision_side_clearance_m = 15 [(unit) = "m", (scale) = 1];
+  float max_allowed_time_to_collision_up_to_carrot = 16 [(unit) = "s", (scale) = 1];
+  uint32 collision_confirm_scans = 17;
+  uint32 collision_clear_confirm_scans = 18;
+  bool use_rotate_to_heading = 19;
+  float rotate_to_heading_angular_vel = 20 [(unit) = "rad/s", (scale) = 1];
+  float rotate_to_heading_min_angle = 21 [(unit) = "rad", (scale) = 1];
+  float goal_dist_tol = 22 [(unit) = "m", (scale) = 1];
+  float angle_tol = 23 [(unit) = "rad", (scale) = 1];
+  bool allow_reversing = 24;
+  bool use_fixed_curvature_lookahead = 25;
+  bool use_regulated_linear_velocity_scaling = 26;
+  // Additional high-impact tracking/collision controls exposed by the board.
+  bool use_fixed_distance_collision_detection = 27;
+  float collision_stop_distance_m = 28 [(unit) = "m", (scale) = 1];
+  float collision_scan_half_angle_rad = 29 [(unit) = "rad", (scale) = 1];
+  float collision_scan_timeout_s = 30 [(unit) = "s", (scale) = 1];
+  uint32 prediction_collision_confirm_cycles = 31;
+  bool use_cost_regulated_linear_velocity_scaling = 32;
+  float cost_scaling_dist = 33 [(unit) = "m", (scale) = 1];
+  float cost_scaling_gain = 34 [(unit) = "ratio", (scale) = 1];
+  float lookahead_time = 35 [(unit) = "s", (scale) = 1];
+  bool use_velocity_scaled_lookahead_dist = 36;
+  bool use_approach_velocity_scaling = 37;
+  float approach_velocity_scaling_dist = 38 [(unit) = "m", (scale) = 1];
+  float min_approach_linear_velocity = 39 [(unit) = "m/s", (scale) = 1];
+  uint32 collision_min_valid_points = 40;
+  bool use_command_velocity_for_accel_limit = 41;
+  bool use_command_angular_velocity_for_accel_limit = 42;
+  float command_velocity_memory_timeout = 43 [(unit) = "s", (scale) = 1];
+  float max_robot_pose_search_dist = 44 [(unit) = "m", (scale) = 1];
+  float trans_stopped_vel = 45 [(unit) = "m/s", (scale) = 1];
+  float theta_stopped_vel = 46 [(unit) = "rad/s", (scale) = 1];
+  bool collision_side_only_when_turning = 47;
+  float collision_side_turning_min_angular_vel = 48 [(unit) = "rad/s", (scale) = 1];
+  bool use_corner_aware_rotate_to_heading = 49;
+  float rotate_to_heading_exit_angle = 50 [(unit) = "rad", (scale) = 1];
+  uint32 rotate_to_heading_stable_cycles = 51;
+  float rotate_to_heading_corner_distance = 52 [(unit) = "m", (scale) = 1];
 }
 
 message SettingsReadRequest {
   bool read_chassis = 1;
   bool read_map = 2;
+  bool read_rpp = 3;
 }
 
 message SettingsReadResponse {
@@ -279,11 +355,20 @@ message SettingsReadResponse {
   ChassisSettings chassis = 2;
   MapSettings map = 3;
   string message = 4;
+  RppSettings rpp = 5;
 }
 
 message SettingsWriteRequest {
   ChassisSettings chassis = 1;
   MapSettings map = 2;
+  RppSettings rpp = 3;
+  // Apply RPP through dynamic_reconfigure immediately; it is not persistent
+  // unless save_rpp_default is also true.
+  bool apply_rpp_temporarily = 4;
+  bool save_rpp_default = 5;
+  // Optional partial-update mask for RppSettings. Bit N selects the field
+  // number N+1; zero means the message is a complete settings snapshot.
+  uint64 rpp_field_mask = 6;
 }
 
 message SettingsWriteResponse {
@@ -291,6 +376,10 @@ message SettingsWriteResponse {
   string message = 2;
   ChassisSettings chassis = 3;
   MapSettings map = 4;
+  RppSettings rpp = 5;
+  bool rpp_applied = 6;
+  bool rpp_saved = 7;
+  bool geometry_requires_restart = 8;
 }
 
 message Pose2D {
@@ -718,6 +807,9 @@ message MapDeleteResponse {
   string map_id = 3;
   string map_name = 4;
   bool deleted = 5;
+  bool local_deleted = 6;
+  bool remote_deleted = 7;
+  bool remote_delete_pending = 8;
 }
 
 message MapSaveRequest {

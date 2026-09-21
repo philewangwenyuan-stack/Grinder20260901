@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import json
 import math
 import os
@@ -74,6 +75,72 @@ except Exception:
 
 PREVIEW_MAX_EDGE_CAP = 640
 DEFAULT_LIVE_MAP_ID = "LIVE_MAP"
+DEFAULT_ROBOT_FOOTPRINT = [
+    (-0.60, 0.47),
+    (1.00, 0.47),
+    (1.00, -0.47),
+    (-0.60, -0.47),
+]
+
+# Keep this list limited to parameters that materially change tracking,
+# straight-line behavior, speed limiting, or collision stopping. The names
+# intentionally match RegulatedPurePursuitConfig so dynamic_reconfigure can
+# apply the same dictionary without an adapter table.
+RPP_PARAMETER_DEFAULTS = {
+    "desired_linear_vel": 0.06,
+    "max_linear_vel": 0.15,
+    "max_angular_vel": 0.25,
+    "max_linear_accel": 0.4,
+    "max_angular_accel": 0.4,
+    "lookahead_dist": 0.8,
+    "min_lookahead_dist": 0.3,
+    "max_lookahead_dist": 1.2,
+    "lookahead_time": 1.5,
+    "use_velocity_scaled_lookahead_dist": False,
+    "use_fixed_curvature_lookahead": True,
+    "curvature_lookahead_dist": 0.45,
+    "use_regulated_linear_velocity_scaling": True,
+    "regulated_linear_scaling_min_radius": 1.2,
+    "regulated_linear_scaling_min_speed": 0.01,
+    "use_collision_detection": False,
+    "use_fixed_distance_collision_detection": True,
+    "use_footprint_expansion_collision_detection": True,
+    "collision_front_clearance_m": 0.25,
+    "collision_side_clearance_m": 0.10,
+    "collision_stop_distance_m": 1.8,
+    "collision_scan_half_angle_rad": 0.35,
+    "collision_scan_timeout_s": 1.5,
+    "max_allowed_time_to_collision_up_to_carrot": 5.0,
+    "collision_confirm_scans": 15,
+    "collision_clear_confirm_scans": 3,
+    "prediction_collision_confirm_cycles": 1,
+    "collision_min_valid_points": 10,
+    "use_cost_regulated_linear_velocity_scaling": False,
+    "cost_scaling_dist": 0.5,
+    "cost_scaling_gain": 1.0,
+    "use_rotate_to_heading": False,
+    "rotate_to_heading_angular_vel": 0.2,
+    "rotate_to_heading_min_angle": 0.45,
+    "goal_dist_tol": 0.12,
+    "angle_tol": 0.05,
+    "allow_reversing": False,
+    "use_approach_velocity_scaling": False,
+    "approach_velocity_scaling_dist": 0.2,
+    "min_approach_linear_velocity": 0.01,
+    "use_command_velocity_for_accel_limit": False,
+    "use_command_angular_velocity_for_accel_limit": False,
+    "command_velocity_memory_timeout": 1.0,
+    "max_robot_pose_search_dist": 2.5,
+    "trans_stopped_vel": 0.01,
+    "theta_stopped_vel": 0.01,
+    "collision_side_only_when_turning": True,
+    "collision_side_turning_min_angular_vel": 0.015,
+    "use_corner_aware_rotate_to_heading": True,
+    "rotate_to_heading_exit_angle": 0.08,
+    "rotate_to_heading_stable_cycles": 3,
+    "rotate_to_heading_corner_distance": 0.03,
+}
+RPP_PARAMETER_NAMES = tuple(RPP_PARAMETER_DEFAULTS.keys())
 
 
 def _format_ts_s(ts_value):
@@ -129,6 +196,17 @@ class SchedulerNode:
         self._collision_pause_latched = False
         self.task_config = TaskConfigModel()
         self._load_robot_config_from_params()
+        self._robot_footprint = self._normalize_footprint(
+            rospy.get_param("~footprint", DEFAULT_ROBOT_FOOTPRINT)
+        )
+        self._base_laser_tf = {
+            "base_laser_x": float(rospy.get_param("~base_laser_x", 0.0)),
+            "base_laser_y": float(rospy.get_param("~base_laser_y", 0.0)),
+            "base_laser_z": float(rospy.get_param("~base_laser_z", 0.0)),
+            "base_laser_roll_deg": float(rospy.get_param("~base_laser_roll_deg", 0.0)),
+            "base_laser_pitch_deg": float(rospy.get_param("~base_laser_pitch_deg", 0.0)),
+            "base_laser_yaw_deg": float(rospy.get_param("~base_laser_yaw_deg", 0.0)),
+        }
         self._progress_history = deque(maxlen=180)
         self.last_error = ""
         self.replan_requested = False
@@ -342,6 +420,13 @@ class SchedulerNode:
         )
         self._navigation_speed_client = None
         self._navigation_speed_lock = threading.Lock()
+        self._rpp_reconfigure_client = None
+        self._rpp_reconfigure_lock = threading.Lock()
+        self._costmap_reconfigure_clients = {}
+        self._costmap_reconfigure_lock = threading.Lock()
+        self._map_delete_require_remote_success = bool(
+            rospy.get_param("~map_delete_require_remote_success", False)
+        )
         self._chassis_settings = {
             "work_mode": 1,  # 1:auto, 2:manual
             "disc_speed_rpm": 1200,
@@ -362,6 +447,21 @@ class SchedulerNode:
             rospy.get_param("~robot_config_yaml_path", "catkin_ws/src/grinder_scheduler/config/scheduler.yaml"),
             self._runtime_base_dir,
         )
+        self._costmap_common_config_yaml_path = _resolve_runtime_path(
+            rospy.get_param(
+                "~costmap_common_config_yaml_path",
+                "catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/costmap_common_params.yaml",
+            ),
+            self._runtime_base_dir,
+        )
+        self._rpp_config_yaml_path = _resolve_runtime_path(
+            rospy.get_param(
+                "~rpp_config_yaml_path",
+                "catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/rpp_local_planner_params.yaml",
+            ),
+            self._runtime_base_dir,
+        )
+        self._apply_base_laser_tf_params()
         self._initial_map_preview_enabled = bool(rospy.get_param("~initial_map_preview_enabled", False))
         self._initial_map_preview_saved = False
         self._initial_map_preview_dir = _resolve_runtime_path(
@@ -774,6 +874,12 @@ class SchedulerNode:
             remote_root_name=rospy.get_param("~file_remote_root_name", "GrinderProject"),
             enabled=rospy.get_param("~file_upload_on_map_save", True),
             timeout_sec=rospy.get_param("~platform_http_timeout_sec", 30.0),
+            map_delete_retry_sec=rospy.get_param("~map_delete_retry_sec", 30.0),
+            map_delete_retry_max_sec=rospy.get_param("~map_delete_retry_max_sec", 1800.0),
+            pending_delete_path=os.path.join(
+                self._persist_state_dir,
+                "pending_remote_map_deletes.json",
+            ),
         )
         self.platform_file_sync.start()
 
@@ -1708,6 +1814,41 @@ class SchedulerNode:
         response.origin.heading_deg = 0.0
         response.frame_id = str(map_info.get("frame_id", ""))
 
+    @staticmethod
+    def _normalize_footprint(value):
+        """Return a validated clockwise/counter-clockwise XY polygon."""
+        try:
+            points = list(value)
+        except Exception:
+            points = []
+        normalized = []
+        for point in points:
+            try:
+                if isinstance(point, dict):
+                    x_value = point.get("x")
+                    y_value = point.get("y")
+                else:
+                    x_value, y_value = point[0], point[1]
+                x_value = float(x_value)
+                y_value = float(y_value)
+                if not (math.isfinite(x_value) and math.isfinite(y_value)):
+                    continue
+                normalized.append((x_value, y_value))
+            except Exception:
+                continue
+        if len(normalized) < 3:
+            return list(DEFAULT_ROBOT_FOOTPRINT)
+        return normalized
+
+    @staticmethod
+    def _format_robot_footprint(footprint):
+        return "[{}]".format(
+            ", ".join(
+                "[{:.6f}, {:.6f}]".format(float(point[0]), float(point[1]))
+                for point in footprint
+            )
+        )
+
     def _load_robot_config_from_params(self):
         self.task_config.vehicle_width = max(
             0.1, float(rospy.get_param("~vehicle_width", self.task_config.vehicle_width))
@@ -1727,6 +1868,28 @@ class SchedulerNode:
         self.task_config.inflation_radius = max(
             0.0, float(rospy.get_param("~inflation_radius", self.task_config.inflation_radius))
         )
+        self.task_config.endpoint_margin = max(
+            0.0, float(rospy.get_param("~endpoint_margin", self.task_config.endpoint_margin))
+        )
+        self.task_config.output_point_spacing = max(
+            0.0, float(rospy.get_param("~output_point_spacing", self.task_config.output_point_spacing))
+        )
+        self.task_config.aligned_obstacle_inflation = max(
+            0.0,
+            float(rospy.get_param("~aligned_obstacle_inflation", self.task_config.aligned_obstacle_inflation)),
+        )
+        self.task_config.aligned_obstacle_max_extent = max(
+            0.01,
+            float(rospy.get_param("~aligned_obstacle_max_extent", self.task_config.aligned_obstacle_max_extent)),
+        )
+        self.task_config.obstacle_corner_angle_deg = min(
+            89.99,
+            max(0.01, float(rospy.get_param("~obstacle_corner_angle_deg", self.task_config.obstacle_corner_angle_deg))),
+        )
+        self.task_config.obstacle_avoidance_distance = max(
+            0.0,
+            float(rospy.get_param("~obstacle_avoidance_distance", self.task_config.obstacle_avoidance_distance)),
+        )
 
     def _sync_robot_config_to_yaml(self):
         path = self._robot_config_yaml_path
@@ -1739,9 +1902,24 @@ class SchedulerNode:
             "turn_radius": float(self.task_config.turn_radius),
             "overlap_ratio": float(self.task_config.overlap_ratio),
             "inflation_radius": float(self.task_config.inflation_radius),
+            "endpoint_margin": float(self.task_config.endpoint_margin),
+            "output_point_spacing": float(self.task_config.output_point_spacing),
+            "aligned_obstacle_inflation": float(self.task_config.aligned_obstacle_inflation),
+            "aligned_obstacle_max_extent": float(self.task_config.aligned_obstacle_max_extent),
+            "obstacle_corner_angle_deg": float(self.task_config.obstacle_corner_angle_deg),
+            "obstacle_avoidance_distance": float(self.task_config.obstacle_avoidance_distance),
+            "footprint": self._format_robot_footprint(self._robot_footprint),
+            "base_laser_x": float(self._base_laser_tf["base_laser_x"]),
+            "base_laser_y": float(self._base_laser_tf["base_laser_y"]),
+            "base_laser_z": float(self._base_laser_tf["base_laser_z"]),
+            "base_laser_roll_deg": float(self._base_laser_tf["base_laser_roll_deg"]),
+            "base_laser_pitch_deg": float(self._base_laser_tf["base_laser_pitch_deg"]),
+            "base_laser_yaw_deg": float(self._base_laser_tf["base_laser_yaw_deg"]),
         }
 
         def _fmt(value):
+            if isinstance(value, str) and value.startswith("["):
+                return value
             text = "{:.6f}".format(float(value)).rstrip("0").rstrip(".")
             return text if text else "0"
 
@@ -1769,6 +1947,28 @@ class SchedulerNode:
             handle.write(content)
         os.replace(tmp_path, path)
 
+    def _sync_footprint_to_costmap_yaml(self):
+        """Persist the polygon used by both costmaps for the next move_base start."""
+        path = self._costmap_common_config_yaml_path
+        if not path or not os.path.exists(path):
+            raise RuntimeError("costmap config file does not exist: {}".format(path))
+        with open(path, "r", encoding="utf-8") as handle:
+            content = handle.read()
+        pattern = r"^(\s*footprint\s*:\s*).*$"
+        if not re.search(pattern, content, flags=re.MULTILINE):
+            raise RuntimeError("costmap config does not contain footprint")
+        footprint_text = self._format_robot_footprint(self._robot_footprint)
+        content = re.sub(
+            pattern,
+            lambda match: "{}{}".format(match.group(1), footprint_text),
+            content,
+            flags=re.MULTILINE,
+        )
+        tmp_path = path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(tmp_path, path)
+
     def _reload_robot_config_from_yaml(self):
         path = self._robot_config_yaml_path
         if not path or (not os.path.exists(path)):
@@ -1789,13 +1989,26 @@ class SchedulerNode:
                     "turn_radius",
                     "overlap_ratio",
                     "inflation_radius",
+                    "endpoint_margin",
+                    "output_point_spacing",
+                    "aligned_obstacle_inflation",
+                    "aligned_obstacle_max_extent",
+                    "obstacle_corner_angle_deg",
+                    "obstacle_avoidance_distance",
+                    "footprint",
+                    "base_laser_x",
+                    "base_laser_y",
+                    "base_laser_z",
+                    "base_laser_roll_deg",
+                    "base_laser_pitch_deg",
+                    "base_laser_yaw_deg",
                 ):
                     continue
                 token = value.split("#", 1)[0].strip()
                 if not token:
                     continue
                 try:
-                    values[key] = float(token)
+                    values[key] = ast.literal_eval(token) if key == "footprint" else float(token)
                 except Exception:
                     continue
 
@@ -1814,7 +2027,188 @@ class SchedulerNode:
             self.task_config.overlap_ratio = max(0.0, min(0.95, float(values["overlap_ratio"])))
         if "inflation_radius" in values:
             self.task_config.inflation_radius = max(0.0, float(values["inflation_radius"]))
+        if "endpoint_margin" in values:
+            self.task_config.endpoint_margin = max(0.0, float(values["endpoint_margin"]))
+        if "output_point_spacing" in values:
+            self.task_config.output_point_spacing = max(0.0, float(values["output_point_spacing"]))
+        if "aligned_obstacle_inflation" in values:
+            self.task_config.aligned_obstacle_inflation = max(0.0, float(values["aligned_obstacle_inflation"]))
+        if "aligned_obstacle_max_extent" in values:
+            self.task_config.aligned_obstacle_max_extent = max(0.01, float(values["aligned_obstacle_max_extent"]))
+        if "obstacle_corner_angle_deg" in values:
+            self.task_config.obstacle_corner_angle_deg = min(
+                89.99, max(0.01, float(values["obstacle_corner_angle_deg"]))
+            )
+        if "obstacle_avoidance_distance" in values:
+            self.task_config.obstacle_avoidance_distance = max(
+                0.0, float(values["obstacle_avoidance_distance"])
+            )
+        if "footprint" in values:
+            self._robot_footprint = self._normalize_footprint(values["footprint"])
+        for key in (
+            "base_laser_x",
+            "base_laser_y",
+            "base_laser_z",
+            "base_laser_roll_deg",
+            "base_laser_pitch_deg",
+            "base_laser_yaw_deg",
+        ):
+            if key in values:
+                self._base_laser_tf[key] = float(values[key])
         return True
+
+    def _read_rpp_settings(self):
+        namespace = self._navigation_speed_reconfigure_namespace.rstrip("/")
+        values = {}
+        for name, default in RPP_PARAMETER_DEFAULTS.items():
+            value = rospy.get_param(namespace + "/" + name, default)
+            if isinstance(default, bool):
+                values[name] = bool(value)
+            elif name in ("collision_confirm_scans", "collision_clear_confirm_scans",
+                          "prediction_collision_confirm_cycles", "collision_min_valid_points",
+                          "rotate_to_heading_stable_cycles"):
+                values[name] = max(0, int(value))
+            else:
+                values[name] = float(value)
+        return values
+
+    @staticmethod
+    def _rpp_values_from_message(message, baseline=None, field_mask=0):
+        values = dict(baseline or {})
+        integer_names = {
+            "collision_confirm_scans",
+            "collision_clear_confirm_scans",
+            "prediction_collision_confirm_cycles",
+            "collision_min_valid_points",
+            "rotate_to_heading_stable_cycles",
+        }
+        for index, name in enumerate(RPP_PARAMETER_NAMES):
+            if field_mask and not (int(field_mask) & (1 << index)):
+                continue
+            if not hasattr(message, name):
+                continue
+            value = getattr(message, name)
+            if name in integer_names:
+                values[name] = max(0, int(value))
+            elif isinstance(RPP_PARAMETER_DEFAULTS[name], bool):
+                values[name] = bool(value)
+            else:
+                values[name] = float(value)
+        return values
+
+    @staticmethod
+    def _fill_rpp_message(message, values):
+        for name in RPP_PARAMETER_DEFAULTS:
+            if not hasattr(message, name) or name not in values:
+                continue
+            setattr(message, name, values[name])
+
+    def _apply_rpp_settings(self, values):
+        namespace = self._navigation_speed_reconfigure_namespace.rstrip("/")
+        if DynamicReconfigureClient is None:
+            raise RuntimeError("dynamic_reconfigure client is unavailable")
+        try:
+            with self._rpp_reconfigure_lock:
+                if self._rpp_reconfigure_client is None:
+                    self._rpp_reconfigure_client = DynamicReconfigureClient(
+                        namespace,
+                        timeout=self._navigation_speed_reconfigure_timeout,
+                    )
+                result = self._rpp_reconfigure_client.update_configuration(values)
+            return {
+                name: result.get(name, value)
+                for name, value in values.items()
+            }
+        except Exception:
+            with self._rpp_reconfigure_lock:
+                self._rpp_reconfigure_client = None
+            raise
+
+    def _save_rpp_settings_to_yaml(self, values):
+        path = self._rpp_config_yaml_path
+        if not path:
+            raise RuntimeError("rpp_config_yaml_path is empty")
+        if not os.path.exists(path):
+            raise RuntimeError("RPP config file does not exist: {}".format(path))
+
+        def _format(value):
+            if isinstance(value, bool):
+                return "true" if value else "false"
+            if isinstance(value, int):
+                return str(value)
+            text = "{:.6f}".format(float(value)).rstrip("0").rstrip(".")
+            return text if text else "0"
+
+        with open(path, "r", encoding="utf-8") as handle:
+            content = handle.read()
+        missing = []
+        for key, value in values.items():
+            pattern = r"^(\s*" + re.escape(key) + r"\s*:\s*).*$"
+            if not re.search(pattern, content, flags=re.MULTILINE):
+                missing.append(key)
+                continue
+            content = re.sub(
+                pattern,
+                lambda match, v=_format(value): "{}{}".format(match.group(1), v),
+                content,
+                flags=re.MULTILINE,
+            )
+        if missing:
+            raise RuntimeError("RPP config keys missing: {}".format(", ".join(sorted(missing))))
+        tmp_path = path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(tmp_path, path)
+
+    def _apply_robot_footprint(self):
+        footprint_text = self._format_robot_footprint(self._robot_footprint)
+        success = True
+        if DynamicReconfigureClient is None:
+            success = False
+        else:
+            for namespace in ("/move_base/global_costmap", "/move_base/local_costmap"):
+                try:
+                    with self._costmap_reconfigure_lock:
+                        client = self._costmap_reconfigure_clients.get(namespace)
+                        if client is None:
+                            client = DynamicReconfigureClient(
+                                namespace,
+                                timeout=self._navigation_speed_reconfigure_timeout,
+                            )
+                            self._costmap_reconfigure_clients[namespace] = client
+                        client.update_configuration({"footprint": footprint_text})
+                except Exception as exc:
+                    success = False
+                    with self._costmap_reconfigure_lock:
+                        self._costmap_reconfigure_clients.pop(namespace, None)
+                    rospy.logwarn(
+                        "Could not dynamically update costmap footprint namespace=%s: %s",
+                        namespace,
+                        exc,
+                    )
+        # Keep the parameter server and the next costmap restart consistent,
+        # even when move_base is not currently running.
+        for namespace in ("/move_base/global_costmap", "/move_base/local_costmap"):
+            rospy.set_param(namespace + "/footprint", footprint_text)
+        return success
+
+    def _apply_base_laser_tf_params(self):
+        values = self._base_laser_tf
+        runtime_values = {
+            "base_to_laser_x": float(values["base_laser_x"]),
+            "base_to_laser_y": float(values["base_laser_y"]),
+            "base_to_laser_z": float(values["base_laser_z"]),
+            "base_to_laser_roll": math.radians(float(values["base_laser_roll_deg"])),
+            "base_to_laser_pitch": math.radians(float(values["base_laser_pitch_deg"])),
+            "base_to_laser_yaw": math.radians(float(values["base_laser_yaw_deg"])),
+        }
+        for key, value in runtime_values.items():
+            rospy.set_param("/super_lio_mode_manager/" + key, value)
+            rospy.set_param("~" + key, value)
+        # The static_transform_publisher is intentionally not replaced while
+        # running: a second TF publisher would create competing transforms.
+        # The mode manager will use these values on its next mode reload.
+        return runtime_values
 
     def _safe_num(self, value):
         text = "{:.4f}".format(float(value)).rstrip("0").rstrip(".")
@@ -2566,6 +2960,12 @@ class SchedulerNode:
             turn_radius=task_config.turn_radius,
             overlap_ratio=task_config.overlap_ratio,
             inflation_radius=task_config.inflation_radius,
+            endpoint_margin=task_config.endpoint_margin,
+            output_point_spacing=task_config.output_point_spacing,
+            aligned_obstacle_inflation=task_config.aligned_obstacle_inflation,
+            aligned_obstacle_max_extent=task_config.aligned_obstacle_max_extent,
+            obstacle_corner_angle_deg=task_config.obstacle_corner_angle_deg,
+            obstacle_avoidance_distance=task_config.obstacle_avoidance_distance,
             current_pose=self._pose_from_source_to_aligned_map(task_config.current_pose, alignment_yaw),
             start_pose=self._pose_from_source_to_aligned_map(task_config.start_pose, alignment_yaw),
             end_pose=self._pose_from_source_to_aligned_map(task_config.end_pose, alignment_yaw),
@@ -3208,6 +3608,12 @@ class SchedulerNode:
                     turn_radius=self.task_config.turn_radius,
                     overlap_ratio=self.task_config.overlap_ratio,
                     inflation_radius=self.task_config.inflation_radius,
+                    endpoint_margin=self.task_config.endpoint_margin,
+                    output_point_spacing=self.task_config.output_point_spacing,
+                    aligned_obstacle_inflation=self.task_config.aligned_obstacle_inflation,
+                    aligned_obstacle_max_extent=self.task_config.aligned_obstacle_max_extent,
+                    obstacle_corner_angle_deg=self.task_config.obstacle_corner_angle_deg,
+                    obstacle_avoidance_distance=self.task_config.obstacle_avoidance_distance,
                 )
                 cfg_map_id = str(self.task_config.map_id or "").strip()
                 if cfg_map_id:
@@ -4361,6 +4767,12 @@ class SchedulerNode:
                 turn_radius=self.task_config.turn_radius,
                 overlap_ratio=self.task_config.overlap_ratio,
                 inflation_radius=self.task_config.inflation_radius,
+                endpoint_margin=self.task_config.endpoint_margin,
+                output_point_spacing=self.task_config.output_point_spacing,
+                aligned_obstacle_inflation=self.task_config.aligned_obstacle_inflation,
+                aligned_obstacle_max_extent=self.task_config.aligned_obstacle_max_extent,
+                obstacle_corner_angle_deg=self.task_config.obstacle_corner_angle_deg,
+                obstacle_avoidance_distance=self.task_config.obstacle_avoidance_distance,
                 current_pose=current_pose,
                 start_pose=request_start_pose or {},
                 end_pose=request_end_pose or {},
@@ -7393,6 +7805,22 @@ class SchedulerNode:
             response.map.turn_radius = self.task_config.turn_radius
             response.map.overlap_ratio = self.task_config.overlap_ratio
             response.map.inflation_radius = self.task_config.inflation_radius
+            response.map.endpoint_margin = self.task_config.endpoint_margin
+            response.map.output_point_spacing = self.task_config.output_point_spacing
+            response.map.aligned_obstacle_inflation = self.task_config.aligned_obstacle_inflation
+            response.map.aligned_obstacle_max_extent = self.task_config.aligned_obstacle_max_extent
+            response.map.obstacle_corner_angle_deg = self.task_config.obstacle_corner_angle_deg
+            response.map.obstacle_avoidance_distance = self.task_config.obstacle_avoidance_distance
+            for point in self._robot_footprint:
+                pb_point = response.map.footprint.add()
+                pb_point.x = float(point[0])
+                pb_point.y = float(point[1])
+            response.map.base_laser_x = float(self._base_laser_tf["base_laser_x"])
+            response.map.base_laser_y = float(self._base_laser_tf["base_laser_y"])
+            response.map.base_laser_z = float(self._base_laser_tf["base_laser_z"])
+            response.map.base_laser_roll_deg = float(self._base_laser_tf["base_laser_roll_deg"])
+            response.map.base_laser_pitch_deg = float(self._base_laser_tf["base_laser_pitch_deg"])
+            response.map.base_laser_yaw_deg = float(self._base_laser_tf["base_laser_yaw_deg"])
             for region in self.map_service.get_overlay_regions()["obstacle_regions"]:
                 pb_region = response.map.obstacle_regions.add()
                 pb_region.name = region["name"]
@@ -7419,116 +7847,230 @@ class SchedulerNode:
                     pb_point = pb_region.points.add()
                     pb_point.x = point["x"]
                     pb_point.y = point["y"]
+        if request.read_rpp:
+            self._fill_rpp_message(response.rpp, self._read_rpp_settings())
         return response.SerializeToString(), pb.MSG_ID_SETTINGS_READ_RESPONSE, pb.COMP_SETTINGS
 
     def handle_settings_write_request(self, payload):
         pb = self.sl_link_server.pb
         request = pb.SettingsWriteRequest()
         request.ParseFromString(payload)
-        if request.HasField("chassis"):
-            work_mode = int(request.chassis.work_mode)
-            if work_mode == int(pb.WORK_MODE_AUTO):
-                self.work_mode_pub.publish(UInt16(data=1))
-                self._chassis_settings["work_mode"] = 1
-            elif work_mode == int(pb.WORK_MODE_MANUAL):
-                self.work_mode_pub.publish(UInt16(data=2))
-                self._chassis_settings["work_mode"] = 2
-            disc_speed = int(request.chassis.disc_speed_rpm)
-            disc_speed = max(-32768, min(32767, disc_speed))
-            self.disc_speed_pub.publish(Int16(data=disc_speed))
-            self._chassis_settings["disc_speed_rpm"] = int(max(0, disc_speed))
-            disc_enabled = bool(request.chassis.disc_enabled)
-            self.disc_enable_pub.publish(Bool(data=disc_enabled))
-            rospy.loginfo(
-                "Disc settings applied: speed=%drpm enabled=%s topics=(/chassis/disc_speed_cmd,/chassis/disc_enable_cmd)",
-                disc_speed,
-                str(disc_enabled),
-            )
-            requested_run_speed = float(request.chassis.run_speed)
-            applied_run_speed = max(
-                0.0,
-                min(self._max_chassis_run_speed, requested_run_speed),
-            )
-            self._chassis_settings["run_speed"] = applied_run_speed
-            self._update_navigation_speed_limit(applied_run_speed, log=True)
-            if applied_run_speed <= 0.0:
-                if self.state == SchedulerState.RUNNING:
-                    self._pause_execution()
-                rospy.logwarn("Run speed set to zero; task/navigation motion is disabled")
-            if abs(applied_run_speed - requested_run_speed) > 1e-6:
-                rospy.logwarn(
-                    "Requested run speed clamped: requested=%.3fm/s applied=%.3fm/s max=%.3fm/s",
-                    requested_run_speed,
-                    applied_run_speed,
-                    self._max_chassis_run_speed,
-                )
-            if float(request.chassis.max_turn_speed_ratio) > 0.0:
-                requested_turn_ratio = float(request.chassis.max_turn_speed_ratio)
-                applied_turn_ratio = max(0.01, min(1.0, requested_turn_ratio))
-                self._chassis_settings["max_turn_speed_ratio"] = applied_turn_ratio
-                rospy.loginfo(
-                    "Manual turn speed ratio updated: requested=%.3f applied=%.3f",
-                    requested_turn_ratio,
-                    applied_turn_ratio,
-                )
-                if abs(applied_turn_ratio - requested_turn_ratio) > 1e-6:
-                    rospy.logwarn(
-                        "Requested turn speed ratio clamped: requested=%.3f applied=%.3f",
-                        requested_turn_ratio,
-                        applied_turn_ratio,
-                    )
-            self._save_local_state()
-        if request.HasField("map"):
-            if request.map.vehicle_width > 0.0:
-                self.task_config.vehicle_width = float(request.map.vehicle_width)
-            if request.map.vehicle_length > 0.0:
-                self.task_config.vehicle_length = float(request.map.vehicle_length)
-            self.task_config.default_path_spacing = request.map.default_path_spacing or self.task_config.default_path_spacing
-            self.task_config.turn_radius = request.map.turn_radius or self.task_config.turn_radius
-            self.task_config.overlap_ratio = request.map.overlap_ratio
-            self.task_config.inflation_radius = request.map.inflation_radius or self.task_config.inflation_radius
-            for region in request.map.work_regions:
-                self.map_service.apply_edit(
-                    {
-                        "operation": "UPSERT_WORK_REGION",
-                        "region": {
-                            "name": region.name,
-                            "points": [{"x": p.x, "y": p.y} for p in region.points],
-                            "region_id": region.region_id,
-                            "priority": int(region.priority),
-                            "enabled": bool(region.enabled),
-                            "color_argb": int(region.color_argb),
-                            "closed": bool(region.closed),
-                            "region_type": int(region.region_type) if int(region.region_type) != 0 else int(pb.REGION_TYPE_WORK),
-                        },
-                    }
-                )
-            for region in request.map.obstacle_regions:
-                self.map_service.apply_edit(
-                    {
-                        "operation": "UPSERT_OBSTACLE_REGION",
-                        "region": {
-                            "name": region.name,
-                            "points": [{"x": p.x, "y": p.y} for p in region.points],
-                            "region_id": region.region_id,
-                            "priority": int(region.priority),
-                            "enabled": bool(region.enabled),
-                            "color_argb": int(region.color_argb),
-                            "closed": bool(region.closed),
-                            "region_type": int(region.region_type) if int(region.region_type) != 0 else int(pb.REGION_TYPE_OBSTACLE),
-                        },
-                    }
-                )
-            try:
-                self._sync_robot_config_to_yaml()
-            except Exception as exc:
-                rospy.logwarn("Failed to sync robot config to yaml %s: %s", self._robot_config_yaml_path, exc)
-            self._save_local_state()
         response = pb.SettingsWriteResponse()
         response.result = pb.RESULT_SUCCESS
         response.message = "Settings applied"
-        if request.HasField("chassis"):
-            response.chassis.CopyFrom(request.chassis)
+        response.geometry_requires_restart = False
+        try:
+            if request.HasField("chassis"):
+                work_mode = int(request.chassis.work_mode)
+                if work_mode == int(pb.WORK_MODE_AUTO):
+                    self.work_mode_pub.publish(UInt16(data=1))
+                    self._chassis_settings["work_mode"] = 1
+                elif work_mode == int(pb.WORK_MODE_MANUAL):
+                    self.work_mode_pub.publish(UInt16(data=2))
+                    self._chassis_settings["work_mode"] = 2
+                disc_speed = int(request.chassis.disc_speed_rpm)
+                disc_speed = max(-32768, min(32767, disc_speed))
+                self.disc_speed_pub.publish(Int16(data=disc_speed))
+                self._chassis_settings["disc_speed_rpm"] = int(max(0, disc_speed))
+                disc_enabled = bool(request.chassis.disc_enabled)
+                self.disc_enable_pub.publish(Bool(data=disc_enabled))
+                rospy.loginfo(
+                    "Disc settings applied: speed=%drpm enabled=%s topics=(/chassis/disc_speed_cmd,/chassis/disc_enable_cmd)",
+                    disc_speed,
+                    str(disc_enabled),
+                )
+                requested_run_speed = float(request.chassis.run_speed)
+                applied_run_speed = max(
+                    0.0,
+                    min(self._max_chassis_run_speed, requested_run_speed),
+                )
+                self._chassis_settings["run_speed"] = applied_run_speed
+                self._update_navigation_speed_limit(applied_run_speed, log=True)
+                if applied_run_speed <= 0.0:
+                    if self.state == SchedulerState.RUNNING:
+                        self._pause_execution()
+                    rospy.logwarn("Run speed set to zero; task/navigation motion is disabled")
+                if abs(applied_run_speed - requested_run_speed) > 1e-6:
+                    rospy.logwarn(
+                        "Requested run speed clamped: requested=%.3fm/s applied=%.3fm/s max=%.3fm/s",
+                        requested_run_speed,
+                        applied_run_speed,
+                        self._max_chassis_run_speed,
+                    )
+                if float(request.chassis.max_turn_speed_ratio) > 0.0:
+                    requested_turn_ratio = float(request.chassis.max_turn_speed_ratio)
+                    applied_turn_ratio = max(0.01, min(1.0, requested_turn_ratio))
+                    self._chassis_settings["max_turn_speed_ratio"] = applied_turn_ratio
+                    rospy.loginfo(
+                        "Manual turn speed ratio updated: requested=%.3f applied=%.3f",
+                        requested_turn_ratio,
+                        applied_turn_ratio,
+                    )
+                    if abs(applied_turn_ratio - requested_turn_ratio) > 1e-6:
+                        rospy.logwarn(
+                            "Requested turn speed ratio clamped: requested=%.3f applied=%.3f",
+                            requested_turn_ratio,
+                            applied_turn_ratio,
+                        )
+                self._save_local_state()
+                response.chassis.CopyFrom(request.chassis)
+
+            if request.HasField("map"):
+                if request.map.vehicle_width > 0.0:
+                    self.task_config.vehicle_width = float(request.map.vehicle_width)
+                if request.map.vehicle_length > 0.0:
+                    self.task_config.vehicle_length = float(request.map.vehicle_length)
+                self.task_config.default_path_spacing = request.map.default_path_spacing or self.task_config.default_path_spacing
+                self.task_config.turn_radius = request.map.turn_radius or self.task_config.turn_radius
+                # MapSettings 的路径规划页只携带自己负责的字段；未填写的旧字段
+                # 不能因为 proto3 默认值 0.0 被覆盖。
+                self.task_config.overlap_ratio = request.map.overlap_ratio or self.task_config.overlap_ratio
+                self.task_config.inflation_radius = request.map.inflation_radius or self.task_config.inflation_radius
+                if request.map.HasField("endpoint_margin"):
+                    self.task_config.endpoint_margin = max(0.0, float(request.map.endpoint_margin))
+                if request.map.HasField("output_point_spacing"):
+                    self.task_config.output_point_spacing = max(0.0, float(request.map.output_point_spacing))
+                if request.map.HasField("aligned_obstacle_inflation"):
+                    self.task_config.aligned_obstacle_inflation = max(
+                        0.0, float(request.map.aligned_obstacle_inflation)
+                    )
+                if request.map.HasField("aligned_obstacle_max_extent"):
+                    self.task_config.aligned_obstacle_max_extent = max(
+                        0.01, float(request.map.aligned_obstacle_max_extent)
+                    )
+                if request.map.HasField("obstacle_corner_angle_deg"):
+                    self.task_config.obstacle_corner_angle_deg = min(
+                        89.99, max(0.01, float(request.map.obstacle_corner_angle_deg))
+                    )
+                if request.map.HasField("obstacle_avoidance_distance"):
+                    self.task_config.obstacle_avoidance_distance = max(
+                        0.0, float(request.map.obstacle_avoidance_distance)
+                    )
+
+                geometry_changed = False
+                footprint_runtime_applied = True
+                if len(request.map.footprint) > 0:
+                    if len(request.map.footprint) < 3:
+                        raise ValueError("footprint must contain at least three points")
+                    self._robot_footprint = self._normalize_footprint(
+                        [(point.x, point.y) for point in request.map.footprint]
+                    )
+                    geometry_changed = True
+                    footprint_runtime_applied = self._apply_robot_footprint()
+                base_laser_fields = (
+                    "base_laser_x", "base_laser_y", "base_laser_z",
+                    "base_laser_roll_deg", "base_laser_pitch_deg", "base_laser_yaw_deg",
+                )
+                requested_base_laser = {
+                    key: float(getattr(request.map, key))
+                    for key in base_laser_fields
+                }
+                if any(abs(value) > 1e-9 for value in requested_base_laser.values()):
+                    self._base_laser_tf.update(requested_base_laser)
+                    self._apply_base_laser_tf_params()
+                    geometry_changed = True
+                    response.geometry_requires_restart = True
+                if geometry_changed and not footprint_runtime_applied:
+                    response.geometry_requires_restart = True
+
+                for region in request.map.work_regions:
+                    self.map_service.apply_edit(
+                        {
+                            "operation": "UPSERT_WORK_REGION",
+                            "region": {
+                                "name": region.name,
+                                "points": [{"x": p.x, "y": p.y} for p in region.points],
+                                "region_id": region.region_id,
+                                "priority": int(region.priority),
+                                "enabled": bool(region.enabled),
+                                "color_argb": int(region.color_argb),
+                                "closed": bool(region.closed),
+                                "region_type": int(region.region_type) if int(region.region_type) != 0 else int(pb.REGION_TYPE_WORK),
+                            },
+                        }
+                    )
+                for region in request.map.obstacle_regions:
+                    self.map_service.apply_edit(
+                        {
+                            "operation": "UPSERT_OBSTACLE_REGION",
+                            "region": {
+                                "name": region.name,
+                                "points": [{"x": p.x, "y": p.y} for p in region.points],
+                                "region_id": region.region_id,
+                                "priority": int(region.priority),
+                                "enabled": bool(region.enabled),
+                                "color_argb": int(region.color_argb),
+                                "closed": bool(region.closed),
+                                "region_type": int(region.region_type) if int(region.region_type) != 0 else int(pb.REGION_TYPE_OBSTACLE),
+                            },
+                        }
+                )
+                try:
+                    self._sync_robot_config_to_yaml()
+                except Exception as exc:
+                    rospy.logwarn("Failed to sync robot geometry config to yaml %s: %s", self._robot_config_yaml_path, exc)
+                if geometry_changed:
+                    try:
+                        self._sync_footprint_to_costmap_yaml()
+                    except Exception as exc:
+                        response.geometry_requires_restart = True
+                        rospy.logwarn("Failed to persist footprint to costmap yaml: %s", exc)
+                response.map.CopyFrom(request.map)
+                response.map.vehicle_width = float(self.task_config.vehicle_width)
+                response.map.vehicle_length = float(self.task_config.vehicle_length)
+                response.map.default_path_spacing = float(self.task_config.default_path_spacing)
+                response.map.turn_radius = float(self.task_config.turn_radius)
+                response.map.overlap_ratio = float(self.task_config.overlap_ratio)
+                response.map.inflation_radius = float(self.task_config.inflation_radius)
+                response.map.endpoint_margin = float(self.task_config.endpoint_margin)
+                response.map.output_point_spacing = float(self.task_config.output_point_spacing)
+                response.map.aligned_obstacle_inflation = float(self.task_config.aligned_obstacle_inflation)
+                response.map.aligned_obstacle_max_extent = float(self.task_config.aligned_obstacle_max_extent)
+                response.map.obstacle_corner_angle_deg = float(self.task_config.obstacle_corner_angle_deg)
+                response.map.obstacle_avoidance_distance = float(self.task_config.obstacle_avoidance_distance)
+                response.map.ClearField("footprint")
+                for point in self._robot_footprint:
+                    pb_point = response.map.footprint.add()
+                    pb_point.x = float(point[0])
+                    pb_point.y = float(point[1])
+                response.map.base_laser_x = self._base_laser_tf["base_laser_x"]
+                response.map.base_laser_y = self._base_laser_tf["base_laser_y"]
+                response.map.base_laser_z = self._base_laser_tf["base_laser_z"]
+                response.map.base_laser_roll_deg = self._base_laser_tf["base_laser_roll_deg"]
+                response.map.base_laser_pitch_deg = self._base_laser_tf["base_laser_pitch_deg"]
+                response.map.base_laser_yaw_deg = self._base_laser_tf["base_laser_yaw_deg"]
+                self._save_local_state()
+
+            if request.HasField("rpp"):
+                rpp_field_mask = int(request.rpp_field_mask)
+                current_rpp = self._read_rpp_settings() if rpp_field_mask else None
+                requested_rpp = self._rpp_values_from_message(
+                    request.rpp,
+                    baseline=current_rpp,
+                    field_mask=rpp_field_mask,
+                )
+                effective_rpp = requested_rpp
+                if request.apply_rpp_temporarily or not request.save_rpp_default:
+                    effective_rpp = self._apply_rpp_settings(requested_rpp)
+                    response.rpp_applied = True
+                if request.save_rpp_default:
+                    self._save_rpp_settings_to_yaml(effective_rpp)
+                    response.rpp_saved = True
+                self._fill_rpp_message(response.rpp, effective_rpp)
+
+            message_parts = []
+            if response.geometry_requires_restart:
+                message_parts.append("geometry saved; restart or reload localization/costmaps to apply all geometry")
+            if response.rpp_applied:
+                message_parts.append("RPP applied temporarily")
+            if response.rpp_saved:
+                message_parts.append("RPP default saved")
+            if message_parts:
+                response.message = "; ".join(message_parts)
+        except Exception as exc:
+            response.result = pb.RESULT_FAILED
+            response.message = str(exc)
+            rospy.logwarn("Settings write failed: %s", exc)
         return response.SerializeToString(), pb.MSG_ID_SETTINGS_WRITE_RESPONSE, pb.COMP_SETTINGS
 
     def handle_control_command(self, payload):
@@ -7873,6 +8415,12 @@ class SchedulerNode:
             turn_radius=request.turn_radius or self.task_config.turn_radius,
             overlap_ratio=request.overlap_ratio or self.task_config.overlap_ratio,
             inflation_radius=request.inflation_radius or self.task_config.inflation_radius,
+            endpoint_margin=self.task_config.endpoint_margin,
+            output_point_spacing=self.task_config.output_point_spacing,
+            aligned_obstacle_inflation=self.task_config.aligned_obstacle_inflation,
+            aligned_obstacle_max_extent=self.task_config.aligned_obstacle_max_extent,
+            obstacle_corner_angle_deg=self.task_config.obstacle_corner_angle_deg,
+            obstacle_avoidance_distance=self.task_config.obstacle_avoidance_distance,
         )
         task_obstacle_key = self._task_obstacle_binding_key(current_map_id, task_id)
         with self._task_obstacle_regions_lock:
@@ -8684,7 +9232,11 @@ class SchedulerNode:
             response.map_yaml_path = str(record.get("yaml_path", "") if isinstance(record, dict) else "")
             response.map_image_path = str(record.get("image_path", "") if isinstance(record, dict) else "")
             localization_switched = bool(save_result.localization_started)
-            localization_err = "" if localization_switched else str(save_result.message or "localization failed")
+            # Saving a map intentionally stops mapping and leaves localization
+            # off.  Localization is started lazily by _start_execution when a
+            # task is actually requested, so a successful save without an
+            # active localization session is not an error.
+            localization_err = ""
             if localization_switched:
                 self._clear_navigation_costmaps()
             self._save_local_state()
@@ -8693,7 +9245,11 @@ class SchedulerNode:
                 _saved_name or requested_name,
             )
             response.result = pb.RESULT_SUCCESS
-            response.message = "map_saved_and_localization_on" if localization_switched else "map_saved"
+            response.message = (
+                "map_saved_and_localization_on"
+                if localization_switched
+                else "map_saved_localization_pending"
+            )
             if localization_err:
                 response.message = "{} ({})".format(response.message, localization_err)
             if hasattr(response, "map_id"):
@@ -9674,6 +10230,12 @@ class SchedulerNode:
         if hasattr(response, "map_id"):
             response.map_id = requested_map_id
         response.deleted = False
+        if hasattr(response, "local_deleted"):
+            response.local_deleted = False
+        if hasattr(response, "remote_deleted"):
+            response.remote_deleted = False
+        if hasattr(response, "remote_delete_pending"):
+            response.remote_delete_pending = False
         try:
             if not requested:
                 raise RuntimeError("map_id is empty")
@@ -9684,9 +10246,8 @@ class SchedulerNode:
             if not target_path_value:
                 raise RuntimeError("map_id found but bundle_dir is empty: {}".format(requested_map_id))
             target_path = os.path.abspath(target_path_value)
-            if not os.path.exists(target_path):
-                raise RuntimeError("map bundle not found: {}".format(target_path))
-            if not os.path.isdir(target_path):
+            target_exists = os.path.exists(target_path)
+            if target_exists and not os.path.isdir(target_path):
                 raise RuntimeError("map bundle is not a directory: {}".format(target_path))
             if (
                 target_path == self._super_lio_map_root
@@ -9695,16 +10256,24 @@ class SchedulerNode:
                 raise RuntimeError("refuse to delete map bundle outside configured map root")
             record_name = str(record.get("name", "") or requested_map_id)
             record_id = str(record.get("map_id", "") or requested_map_id)
+            response.map_id = record_id
+            response.map_name = record_name
             if self._current_map_id() == record_id:
                 self._prepare_for_map_mode_switch("delete_active_map")
                 self._ensure_super_lio_proxies()
                 stop_result = self._super_lio_stop_proxy()
                 if not stop_result.success:
                     raise RuntimeError(stop_result.message or "failed to stop active localization")
-            remote_deleted, remote_message = self.platform_file_sync.delete_map(requested_map_id)
-            if not remote_deleted:
-                raise RuntimeError("server map delete failed: {}".format(remote_message))
-            shutil.rmtree(target_path)
+            # Local deletion is the authoritative result for the APP. Do not
+            # make it depend on a platform HTTP request that may time out.
+            if target_exists:
+                shutil.rmtree(target_path)
+            else:
+                rospy.logwarn(
+                    "Map bundle already absent; cleaning registry and remote delete state: map_id=%s path=%s",
+                    record_id,
+                    target_path,
+                )
             self._unregister_saved_map(record_id)
             target_map_id = str(record_id or requested_map_id or "").strip()
             deleted_aliases = {
@@ -9728,14 +10297,60 @@ class SchedulerNode:
             # Also remove task bindings associated with this map_id.
             self._remove_planned_path_debug_for_map(target_map_id)
             self._remove_task_bindings_for_map_aliases(deleted_aliases, reason="map_delete")
-            self._save_local_state()
+            if hasattr(response, "local_deleted"):
+                response.local_deleted = True
+
+            remote_deleted = False
+            remote_pending = False
+            remote_message = ""
+            if self._map_delete_require_remote_success:
+                # Preserve the local deletion before entering the legacy
+                # synchronous remote path as well.
+                self._save_local_state()
+                remote_deleted, remote_message = self.platform_file_sync.delete_map(requested_map_id)
+                if not remote_deleted:
+                    if hasattr(response, "remote_delete_pending"):
+                        response.remote_delete_pending = False
+                    response.deleted = True
+                    response.result = pb.RESULT_FAILED
+                    response.map_id = record_id
+                    response.map_name = record_name
+                    response.message = (
+                        "local map deleted; remote map delete failed: {}"
+                    ).format(remote_message)
+                    if hasattr(response, "remote_deleted"):
+                        response.remote_deleted = False
+                    return response.SerializeToString(), pb.MSG_ID_MAP_DELETE_RESPONSE, pb.COMP_SCHEDULER
+            else:
+                remote_pending, remote_message = self.platform_file_sync.enqueue_map_delete(
+                    requested_map_id
+                )
+                # Persist registry/overlay removal after the remote job has
+                # been durably queued, minimizing the crash window where a
+                # local delete could lose its remote cleanup intent.
+                self._save_local_state()
+                if not remote_pending:
+                    rospy.logwarn(
+                        "Local map deleted but remote map delete was not queued: map_id=%s reason=%s",
+                        requested_map_id,
+                        remote_message,
+                    )
+            if hasattr(response, "remote_deleted"):
+                response.remote_deleted = bool(remote_deleted)
+            if hasattr(response, "remote_delete_pending"):
+                response.remote_delete_pending = bool(remote_pending)
             if hasattr(response, "map_id"):
                 response.map_id = record_id
             if hasattr(response, "map_name"):
                 response.map_name = record_name
             response.deleted = True
             response.result = pb.RESULT_SUCCESS
-            response.message = "deleted locally and from server"
+            if remote_deleted:
+                response.message = "deleted locally and from server"
+            elif remote_pending:
+                response.message = "deleted locally; remote delete queued for retry"
+            else:
+                response.message = "deleted locally; remote delete unavailable"
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)

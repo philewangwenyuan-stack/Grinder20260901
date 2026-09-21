@@ -51,7 +51,13 @@ class TaskConfigModel:
     planning_angle_deg: Optional[float] = None
     turn_radius: float = 0.8
     overlap_ratio: float = 0.1
-    inflation_radius: float = 0.65
+    inflation_radius: float = 0.6
+    endpoint_margin: float = 2.0
+    output_point_spacing: float = 0.3
+    aligned_obstacle_inflation: float = 0.7
+    aligned_obstacle_max_extent: float = 3.0
+    obstacle_corner_angle_deg: float = 45.0
+    obstacle_avoidance_distance: float = 0.0
     current_pose: Dict = field(default_factory=dict)
     start_pose: Dict = field(default_factory=dict)
     end_pose: Dict = field(default_factory=dict)

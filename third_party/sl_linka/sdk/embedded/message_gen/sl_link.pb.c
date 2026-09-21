@@ -24,16 +24,19 @@ PB_BIND(sl_link_ChassisSettings, sl_link_ChassisSettings, AUTO)
 PB_BIND(sl_link_MapSettings, sl_link_MapSettings, AUTO)
 
 
+PB_BIND(sl_link_RppSettings, sl_link_RppSettings, AUTO)
+
+
 PB_BIND(sl_link_SettingsReadRequest, sl_link_SettingsReadRequest, AUTO)
 
 
-PB_BIND(sl_link_SettingsReadResponse, sl_link_SettingsReadResponse, AUTO)
+PB_BIND(sl_link_SettingsReadResponse, sl_link_SettingsReadResponse, 2)
 
 
-PB_BIND(sl_link_SettingsWriteRequest, sl_link_SettingsWriteRequest, AUTO)
+PB_BIND(sl_link_SettingsWriteRequest, sl_link_SettingsWriteRequest, 2)
 
 
-PB_BIND(sl_link_SettingsWriteResponse, sl_link_SettingsWriteResponse, AUTO)
+PB_BIND(sl_link_SettingsWriteResponse, sl_link_SettingsWriteResponse, 2)
 
 
 PB_BIND(sl_link_Pose2D, sl_link_Pose2D, AUTO)

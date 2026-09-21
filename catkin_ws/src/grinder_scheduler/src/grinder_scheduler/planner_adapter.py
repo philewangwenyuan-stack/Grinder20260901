@@ -152,6 +152,20 @@ class PlannerAdapter:
             turning_radius=max(task_config.turn_radius, 0.1),
             overlap_ratio=max(0.0, min(task_config.overlap_ratio, 0.95)),
             inflation_radius=max(task_config.inflation_radius, 0.0),
+            endpoint_margin=max(getattr(task_config, "endpoint_margin", 2.0), 0.0),
+            output_point_spacing=max(getattr(task_config, "output_point_spacing", 0.3), 0.0),
+            aligned_obstacle_inflation=max(
+                getattr(task_config, "aligned_obstacle_inflation", 0.7), 0.0
+            ),
+            aligned_obstacle_max_extent=max(
+                getattr(task_config, "aligned_obstacle_max_extent", 3.0), 0.01
+            ),
+            obstacle_corner_angle_deg=min(
+                max(getattr(task_config, "obstacle_corner_angle_deg", 45.0), 0.01), 89.99
+            ),
+            obstacle_avoidance_distance=max(
+                getattr(task_config, "obstacle_avoidance_distance", 0.0), 0.0
+            ),
         )
         planner = module.MultiStagePathPlanner(robot_config)
         inflation_pixels = int(max(0.0, float(robot_config.inflation_radius)) * ratio)
