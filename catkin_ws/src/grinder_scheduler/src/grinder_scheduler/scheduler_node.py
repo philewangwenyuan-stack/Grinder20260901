@@ -8073,10 +8073,12 @@ class SchedulerNode:
             rospy.logwarn("Settings write failed: %s", exc)
         return response.SerializeToString(), pb.MSG_ID_SETTINGS_WRITE_RESPONSE, pb.COMP_SETTINGS
 
-    def handle_control_command(self, payload):
+    def handle_control_command(self, payload, parsed_request=None):
         pb = self.sl_link_server.pb
-        request = pb.ControlCommand()
-        request.ParseFromString(payload)
+        request = parsed_request
+        if request is None:
+            request = pb.ControlCommand()
+            request.ParseFromString(payload)
         control_fields = set(getattr(request, "DESCRIPTOR").fields_by_name.keys())
         has_disc_control = "disc_control" in control_fields
         has_emergency_stop = "emergency_stop" in control_fields
@@ -8773,9 +8775,10 @@ class SchedulerNode:
             )
             return []
 
-        # Keep chunk size compatible with legacy protocol max payload.
-        chunk_size = int(request.max_chunk_size) if request.max_chunk_size else 512
-        chunk_size = max(64, min(512, chunk_size))
+        # SL-LinkA uses a uint16 payload length. A 4 KiB data chunk plus
+        # MapChunk metadata stays well below that limit and cuts frame count.
+        chunk_size = int(request.max_chunk_size) if request.max_chunk_size else 4096
+        chunk_size = max(256, min(4096, chunk_size))
 
         info = raw_map.info
         width = int(info.width)

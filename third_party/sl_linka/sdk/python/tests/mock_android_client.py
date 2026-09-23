@@ -66,12 +66,12 @@ def main(addr=("127.0.0.1", 8002)):
         send_frame(s, seq, pb.MSG_ID_CAMERA_FRAME_REQUEST, pb.COMP_MEDIA, cam.SerializeToString())
         seq += 1
 
-        map_req = pb.MapRequest(snapshot=True, max_chunk_size=512)
+        map_req = pb.MapRequest(snapshot=True, max_chunk_size=4096)
         send_frame(s, seq, pb.MSG_ID_MAP_REQUEST, pb.COMP_MEDIA, map_req.SerializeToString())
 
         deadline = time.time() + 5.0
         while time.time() < deadline:
-            data = s.recv(4096)
+            data = s.recv(32 * 1024)
             if not data:
                 break
 

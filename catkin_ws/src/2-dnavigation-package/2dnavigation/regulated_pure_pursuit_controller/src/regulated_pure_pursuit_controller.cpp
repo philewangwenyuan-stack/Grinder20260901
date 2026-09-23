@@ -12,6 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Low-speed steering variant for the Grinder platform.
+//
+// This file is a drop-in alternative to regulated_pure_pursuit_controller.cpp.
+// Compile this file INSTEAD OF the original source file, never alongside it,
+// because both files implement and export the same plugin class.
+//
+// The original geometric curvature remains responsible for regulated linear
+// speed. Only the final steering command is compensated, so a low linear
+// speed cannot push a meaningful angular correction below the chassis'
+// intentional 0.045 rad/s angular deadband.
+
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -42,6 +53,77 @@ namespace regulated_pure_pursuit_controller
 
 namespace
 {
+
+// At 0.10 m/s the current robot tracks correctly. Use that speed only as a
+// classifier: if the same path curvature would create a useful angular
+// command at 0.10 m/s, the curvature is considered a real correction rather
+// than straight-line noise.
+constexpr double kLowSpeedSteeringReferenceLinearVel = 0.10;
+
+// Never create a steering command when RPP has intentionally reduced the
+// translational command to a near-stop (goal approach, collision, etc.).
+constexpr double kLowSpeedSteeringMinimumLinearVel = 0.015;
+
+// The downstream chassis intentionally rejects |angular.z| < 0.045 rad/s.
+// Use a small margin so quantization and filtering cannot push the corrected
+// command back into that deadband.
+constexpr double kChassisAngularDeadband = 0.045;
+constexpr double kMinimumEffectiveAngularVel = 0.050;
+
+// Schmitt thresholds evaluated at the known-good 0.10 m/s reference speed.
+// A correction must be clearly meaningful before compensation starts, while
+// an already active correction may decay farther before it is released. This
+// hysteresis, together with one neutral cycle on direction reversal, prevents
+// low-speed left/right chatter and S-shaped tracking.
+constexpr double kReferenceAngularEnter = 0.050;
+constexpr double kReferenceAngularExit = 0.030;
+
+double compensateLowSpeedAngularDeadband(
+  double linear_vel, double path_curvature, double raw_angular_vel,
+  double previous_angular_command)
+{
+  const double linear_speed = std::abs(linear_vel);
+  const double raw_angular_speed = std::abs(raw_angular_vel);
+
+  if (linear_speed < kLowSpeedSteeringMinimumLinearVel ||
+    linear_speed >= kLowSpeedSteeringReferenceLinearVel ||
+    raw_angular_speed < 1e-9 ||
+    raw_angular_speed >= kChassisAngularDeadband)
+  {
+    return raw_angular_vel;
+  }
+
+  const double reference_linear_vel = std::copysign(
+    kLowSpeedSteeringReferenceLinearVel, linear_vel);
+  const double reference_angular_vel = reference_linear_vel * path_curvature;
+  const double reference_angular_speed = std::abs(reference_angular_vel);
+  const bool same_turn_direction =
+    raw_angular_vel * previous_angular_command > 0.0;
+  const bool previous_effective_correction =
+    same_turn_direction &&
+    std::abs(previous_angular_command) >= kMinimumEffectiveAngularVel;
+
+  // Force one neutral/deadband cycle before changing correction direction.
+  // The chassis will turn this raw sub-deadband command into zero.
+  const bool reversing_effective_correction =
+    raw_angular_vel * previous_angular_command < 0.0 &&
+    std::abs(previous_angular_command) >= kMinimumEffectiveAngularVel;
+  if (reversing_effective_correction) {
+    return raw_angular_vel;
+  }
+
+  const bool enter_correction =
+    reference_angular_speed >= kReferenceAngularEnter;
+  const bool hold_correction =
+    previous_effective_correction &&
+    reference_angular_speed >= kReferenceAngularExit;
+
+  if (!enter_correction && !hold_correction) {
+    return raw_angular_vel;
+  }
+
+  return std::copysign(kMinimumEffectiveAngularVel, raw_angular_vel);
+}
 
 bool getFirstPathSegmentHeading(const nav_msgs::Path & path, double & heading)
 {
@@ -602,8 +684,22 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       }
     }
       
-    // Apply curvature to angular velocity after constraining linear velocity
-    angular_vel = linear_vel * regulation_curvature;
+    // Preserve the original path curvature for regulated linear speed. For
+    // steering only, bridge the chassis' intentional angular deadband when a
+    // curvature that is meaningful at the known-good 0.10 m/s reference speed
+    // would otherwise be lost at 0.03-0.05 m/s.
+    const double raw_angular_vel = linear_vel * regulation_curvature;
+    angular_vel = compensateLowSpeedAngularDeadband(
+      linear_vel, regulation_curvature, raw_angular_vel,
+      last_cmd_angular_vel_);
+    if (std::abs(angular_vel - raw_angular_vel) > 1e-9) {
+      ROS_DEBUG_THROTTLE(
+        1.0,
+        "[RPP] Low-speed steering compensation: v=%.3f curvature=%.3f "
+        "raw_w=%.3f output_w=%.3f previous_w=%.3f",
+        linear_vel, regulation_curvature, raw_angular_vel, angular_vel,
+        last_cmd_angular_vel_);
+    }
   }
 
   // Collision checking on this velocity heading

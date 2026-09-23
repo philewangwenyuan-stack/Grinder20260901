@@ -145,7 +145,7 @@ class SlLinkClient(QtCore.QObject):
                     break
                 sock = self._sock
             try:
-                data = sock.recv(4096)
+                data = sock.recv(32 * 1024)
                 if not data:
                     self.log.emit("Socket closed by peer")
                     break
@@ -1395,7 +1395,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if hasattr(self, "preview_tabs"):
             self.preview_tabs.setCurrentIndex(1)
         map_id = self._get_selected_or_manual_map_id()
-        req = pb.MapRequest(snapshot=True, max_chunk_size=512)
+        req = pb.MapRequest(snapshot=True, max_chunk_size=4096)
         if hasattr(req, "map_id"):
             req.map_id = str(map_id or "")
         self._append_log(

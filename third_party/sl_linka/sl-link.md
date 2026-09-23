@@ -223,7 +223,7 @@ message PolygonRegion {
 说明：
 - 当前按“快照 + 分片回传”定义
 - `MapRequest.map_id` 可选；空值或 `LIVE_MAP` 表示请求实时原始地图，非空历史地图 ID 表示读取该地图保存的离线原始栅格并分片返回
-- `MapRequest.snapshot` 表示请求当前地图快照；`max_chunk_size` 控制单个分片大小；`map_id` 为字符串地图 ID
+- `MapRequest.snapshot` 表示请求当前地图快照；`max_chunk_size` 控制单个分片大小，默认 `4096`，有效范围 `256~4096`；`map_id` 为字符串地图 ID
 - `MapRequest` 返回原始 `map` 坐标系栅格，不应用 `alignment_yaw`、APP 旋转角或二者差值；PNG 按 `preview_max_edge_cap` 等比例缩小，默认最大边为 `640px`，小图不放大
 - `MapPreviewRequest` 同样基于原始 `map` 坐标生成图片，可按请求叠加区域，但不应用三个旋转角；三个角度字段仅作为元数据返回给 APP
 - 支持 `OCCUPANCY_GRID / PNG / JSON` 三种编码标识

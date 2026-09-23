@@ -1,4 +1,3 @@
-import json
 import socket
 import socketserver
 import threading
@@ -240,30 +239,24 @@ class SlLinkAServer:
     def _log_rx_frame(self, frame):
         if rospy is None:
             return
-        class_name = self._request_message_class_name(frame.msg_id)
-        params = {}
-        if class_name and hasattr(self.pb, class_name):
-            try:
-                request = getattr(self.pb, class_name)()
-                request.ParseFromString(frame.payload or b"")
-                params = self._message_to_log_dict(request)
-            except Exception as exc:
-                params = {"decode_error": str(exc)}
         rospy.loginfo(
-            "SL-LinkA RX command: msg_id=0x%04X name=%s seq=%d ack=%d src=%d dst=%d payload_len=%d params=%s",
-            int(frame.msg_id),
-            self._msg_id_name(frame.msg_id),
+            "SL-LinkA RX frame: version=%d flags=0x%02X seq=%d ack=%d src=%d dst=%d "
+            "comp=%d msg_id=0x%04X name=%s payload_len=%d",
+            int(frame.version),
+            int(frame.flags),
             int(frame.seq),
             int(frame.ack_seq),
             int(frame.src_id),
             int(frame.dst_id),
+            int(frame.comp_id),
+            int(frame.msg_id),
+            self._msg_id_name(frame.msg_id),
             len(frame.payload or b""),
-            json.dumps(params, ensure_ascii=False, sort_keys=True),
         )
 
     def start(self):
         if rospy is not None:
-            rospy.loginfo("SL-LinkA detailed RX command logging enabled")
+            rospy.loginfo("SL-LinkA header-only RX frame logging enabled")
         outer = self
 
         class RequestHandler(socketserver.BaseRequestHandler):
@@ -321,7 +314,7 @@ class SlLinkAServer:
             def handle(self):
                 while self.running:
                     try:
-                        data = self.request.recv(4096)
+                        data = self.request.recv(32 * 1024)
                     except socket.timeout:
                         # Keep the connection alive on idle timeout.
                         continue
@@ -339,10 +332,15 @@ class SlLinkAServer:
                         outer._log_rx_frame(frame)
                         try:
                             if int(frame.msg_id) == int(outer.pb.MSG_ID_CONTROL_COMMAND):
-                                if self._is_manual_control(frame):
+                                control_request = self._parse_control_command(frame)
+                                if (
+                                    control_request is not None
+                                    and control_request.HasField("manual_drive")
+                                ):
                                     accepted = self.manual_control_executor.submit(
                                         self._dispatch_control_immediately,
                                         frame,
+                                        control_request,
                                         True,
                                     )
                                     if not accepted and rospy is not None:
@@ -352,7 +350,11 @@ class SlLinkAServer:
                                             int(frame.seq),
                                         )
                                 else:
-                                    self._dispatch_control_immediately(frame, False)
+                                    self._dispatch_control_immediately(
+                                        frame,
+                                        control_request,
+                                        False,
+                                    )
                             elif self._is_map_background_request(frame.msg_id):
                                 dropped = self.map_dispatch_executor.submit(
                                     self._dispatch_ordered,
@@ -387,13 +389,13 @@ class SlLinkAServer:
                 self.control_response_executor.shutdown(wait=False)
                 self.bulk_response_executor.shutdown(wait=False)
 
-            def _is_manual_control(self, frame):
+            def _parse_control_command(self, frame):
                 try:
                     request = outer.pb.ControlCommand()
                     request.ParseFromString(frame.payload or b"")
-                    return request.HasField("manual_drive")
+                    return request
                 except Exception:
-                    return False
+                    return None
 
             def _is_map_background_request(self, msg_id):
                 names = (
@@ -443,9 +445,17 @@ class SlLinkAServer:
                             exc,
                         )
 
-            def _dispatch_control_immediately(self, frame, latest_response=False):
+            def _dispatch_control_immediately(
+                self,
+                frame,
+                control_request=None,
+                latest_response=False,
+            ):
                 started = time.monotonic()
-                payload, msg_id, comp_id = outer._handler.handle_control_command(frame.payload)
+                payload, msg_id, comp_id = outer._handler.handle_control_command(
+                    frame.payload,
+                    parsed_request=control_request,
+                )
                 applied_ms = (time.monotonic() - started) * 1000.0
                 if rospy is not None:
                     rospy.loginfo(
