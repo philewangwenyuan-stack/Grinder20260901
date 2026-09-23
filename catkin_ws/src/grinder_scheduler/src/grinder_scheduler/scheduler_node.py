@@ -36,6 +36,7 @@ from std_srvs.srv import Empty, Trigger, TriggerResponse
 from grinder_scheduler.srv import (
     GetSuperLioStatus,
     SaveSuperLioMap,
+    SetSuperLioInitialPose,
     StartSuperLioLocalization,
 )
 
@@ -51,6 +52,7 @@ from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
 from grinder_scheduler.map_catalog_response import fill_map_catalog_response
+from grinder_scheduler.map_asset_revision import get_or_compute_map_asset_revision
 from grinder_scheduler.models import (
     PlannerPath,
     SchedulerState,
@@ -63,6 +65,12 @@ from grinder_scheduler.msg import MapPreviewMetadata, SchedulerStatus
 from grinder_scheduler.planner_adapter import PlannerAdapter
 from grinder_scheduler.platform_integration import MqttDeviceReporter, PlatformFileSync
 from grinder_scheduler.sl_linka_adapter import SlLinkAServer
+from grinder_scheduler.metrics_registry import MetricsRegistry
+from grinder_scheduler.metrics_exporter import MetricsExporter
+
+
+# 调度器与模式管理器是两个进程，各自保存本进程的计数和耗时分布。
+metrics = MetricsRegistry()
 
 try:
     from slamware_ros_sdk.msg import (
@@ -442,6 +450,18 @@ class SchedulerNode:
             if runtime_base_param
             else _detect_runtime_base_dir()
         )
+        self._metrics_exporter = None
+        if bool(rospy.get_param("~metrics_export_enabled", True)):
+            metrics_dir = rospy.get_param(
+                "~metrics_export_dir",
+                os.path.join(self._runtime_base_dir, "temp", "grinder_metrics"),
+            )
+            self._metrics_exporter = MetricsExporter(
+                metrics, metrics_dir, "grinder_scheduler",
+                interval_sec=rospy.get_param("~metrics_export_interval_sec", 10.0),
+                logwarn=rospy.logwarn,
+            )
+            self._metrics_exporter.start()
         self._preview_max_edge_cap = max(64, int(rospy.get_param("~preview_max_edge_cap", PREVIEW_MAX_EDGE_CAP)))
         self._robot_config_yaml_path = _resolve_runtime_path(
             rospy.get_param("~robot_config_yaml_path", "catkin_ws/src/grinder_scheduler/config/scheduler.yaml"),
@@ -681,6 +701,7 @@ class SchedulerNode:
         self._super_lio_start_localization_proxy = None
         self._super_lio_stop_proxy = None
         self._super_lio_status_proxy = None
+        self._super_lio_set_initial_pose_proxy = None
         self._initial_pose_position_variance = max(
             0.0, float(rospy.get_param("~initial_pose_position_variance", 0.25))
         )
@@ -798,9 +819,6 @@ class SchedulerNode:
         self.status_pub = rospy.Publisher("/scheduler/status", SchedulerStatus, queue_size=10)
         self.preview_meta_pub = rospy.Publisher("/scheduler/map_preview_metadata", MapPreviewMetadata, queue_size=10, latch=True)
         self.diagnostics_pub = rospy.Publisher("/diagnostics", DiagnosticArray, queue_size=10)
-        self.initial_pose_pub = rospy.Publisher(
-            "/initialpose", PoseWithCovarianceStamped, queue_size=1
-        )
 
         self.wheel_cmd_pub = rospy.Publisher("/chassis/wheel_speed_cmd", WheelSpeedCommand, queue_size=10)
         self.disc_speed_pub = rospy.Publisher("/chassis/disc_speed_cmd", Int16, queue_size=10)
@@ -859,6 +877,10 @@ class SchedulerNode:
             host=rospy.get_param("~sl_linka_host", "0.0.0.0"),
             port=rospy.get_param("~sl_linka_port", 8002),
             callback_handler=self,
+            rx_diagnostic_logging=rospy.get_param("~sl_linka_rx_diagnostic_logging", False),
+            rx_sample_interval_sec=rospy.get_param("~sl_linka_rx_sample_interval_sec", 1.0),
+            rx_stats_interval_sec=rospy.get_param("~sl_linka_rx_stats_interval_sec", 60.0),
+            metrics_registry=metrics,
         )
         self.sl_link_server.start()
 
@@ -3149,6 +3171,7 @@ class SchedulerNode:
             self._super_lio_start_localization_service,
             self._super_lio_stop_service,
             self._super_lio_status_service,
+            "/super_lio_mode/set_initial_pose",
         )
         for service_name in service_names:
             rospy.wait_for_service(service_name, timeout=self._super_lio_service_timeout_sec)
@@ -3172,6 +3195,36 @@ class SchedulerNode:
             self._super_lio_status_proxy = rospy.ServiceProxy(
                 self._super_lio_status_service, GetSuperLioStatus
             )
+        if self._super_lio_set_initial_pose_proxy is None:
+            self._super_lio_set_initial_pose_proxy = rospy.ServiceProxy(
+                "/super_lio_mode/set_initial_pose", SetSuperLioInitialPose
+            )
+
+    def _fill_super_lio_lifecycle_fields(self, response, include_identity=True):
+        """Copy current manager identity and cleanup status into an APP response."""
+        try:
+            self._ensure_super_lio_proxies()
+            status = self._super_lio_status_proxy()
+            fields = [
+                ("lifecycle_state", str(status.state)),
+                ("residual_nodes", list(status.residual_nodes or [])),
+            ]
+            if include_identity:
+                fields.extend((
+                    ("map_id", str(status.active_map_id or "")),
+                    ("map_revision", str(status.active_map_revision or "")),
+                ))
+            for field, value in fields:
+                if hasattr(response, field):
+                    if field == "residual_nodes":
+                        del response.residual_nodes[:]
+                        response.residual_nodes.extend(value)
+                    else:
+                        setattr(response, field, value)
+        except Exception as exc:
+            if hasattr(response, "lifecycle_state") and not response.lifecycle_state:
+                response.lifecycle_state = "UNAVAILABLE"
+            rospy.logwarn("Unable to attach Super-LIO lifecycle status: %s", exc)
 
     def _prepare_for_map_mode_switch(self, reason):
         if self._exec_active or self.state in (SchedulerState.RUNNING, SchedulerState.PAUSED):
@@ -3864,6 +3917,8 @@ class SchedulerNode:
         return nav_path
 
     def shutdown(self):
+        if getattr(self, "_metrics_exporter", None) is not None:
+            self._metrics_exporter.stop()
         self._save_local_state()
         self.mqtt_reporter.stop()
         self.platform_file_sync.stop()
@@ -5613,6 +5668,7 @@ class SchedulerNode:
                 "name": name,
                 "path": bundle_dir,
                 "bundle_dir": bundle_dir,
+                "map_revision": get_or_compute_map_asset_revision(bundle_dir),
                 "loc_pcd_path": paths["loc_pcd_path"],
                 "plan_pcd_path": paths["plan_pcd_path"],
                 "yaml_path": paths["yaml_path"],
@@ -5905,7 +5961,7 @@ class SchedulerNode:
         try:
             self._ensure_super_lio_proxies()
             mode_status = self._super_lio_status_proxy()
-            if str(mode_status.state) != "LOCALIZING":
+            if str(mode_status.state) not in ("LOCALIZING", "RELOCALIZING", "READY"):
                 raise RuntimeError("Super-LIO localization is not active")
             if not bool(mode_status.localization_ready):
                 raise RuntimeError("initial pose has not been received")
@@ -8750,22 +8806,25 @@ class SchedulerNode:
                 outputs.append((chunk.SerializeToString(), pb.MSG_ID_CAMERA_FRAME_CHUNK, pb.COMP_MEDIA))
         return outputs
 
+    @metrics.timed("map_build_ms")
     def build_map_chunks(self, payload):
+        # 计时覆盖整个地图构建流程，包含读取、缩放、PNG 编码和分片序列化。
         pb = self.sl_link_server.pb
         request = pb.MapRequest()
         request.ParseFromString(payload)
         requested_map_id = str(getattr(request, "map_id", "") or "").strip()
-        if self._is_live_map_id(requested_map_id):
-            raw_map = self.aurora_bridge.get_map()
-            raw_map_source = "live"
-        else:
-            try:
-                raw_map = self._load_saved_raw_grid_map(requested_map_id)
-                raw_map_source = "saved"
-                rospy.loginfo("MapRequest using saved raw grid: map_id=%s", requested_map_id)
-            except Exception as exc:
-                rospy.logwarn("MapRequest failed to load saved raw grid: map_id=%s error=%s", requested_map_id, exc)
-                return []
+        with metrics.timer("map_load_ms"):
+            if self._is_live_map_id(requested_map_id):
+                raw_map = self.aurora_bridge.get_map()
+                raw_map_source = "live"
+            else:
+                try:
+                    raw_map = self._load_saved_raw_grid_map(requested_map_id)
+                    raw_map_source = "saved"
+                    rospy.loginfo("MapRequest using saved raw grid: map_id=%s", requested_map_id)
+                except Exception as exc:
+                    rospy.logwarn("MapRequest failed to load saved raw grid: map_id=%s error=%s", requested_map_id, exc)
+                    return []
         if raw_map is None:
             rospy.logwarn_throttle(
                 2.0,
@@ -8787,7 +8846,8 @@ class SchedulerNode:
         origin_x = float(info.origin.position.x)
         origin_y = float(info.origin.position.y)
         frame_id = str(raw_map.header.frame_id)
-        grid = np.array(raw_map.data, dtype=np.int16).reshape((height, width))
+        with metrics.timer("map_grid_convert_ms"):
+            grid = np.array(raw_map.data, dtype=np.int16).reshape((height, width))
         preview_scale_x = 1.0
         preview_scale_y = 1.0
         output_width = width
@@ -8805,35 +8865,43 @@ class SchedulerNode:
         # Fallback: set ~map_request_encoding:=grid to output raw OccupancyGrid bytes.
         if self._map_request_encoding in ("grid", "occupancy", "occupancy_grid"):
             encoding = pb.MAP_ENCODING_OCCUPANCY_GRID
-            data = grid.astype(np.int8).tobytes()
+            with metrics.timer("map_grid_encode_ms"):
+                data = grid.astype(np.int8).tobytes()
         else:
             encoding = pb.MAP_ENCODING_PNG
-            image = np.zeros((grid.shape[0], grid.shape[1], 3), dtype=np.uint8)
-            image[:, :] = (180, 180, 180)
-            image[grid == 0] = (245, 245, 245)
-            image[grid >= 100] = (45, 45, 45)
-            image = cv2.flip(image, 0)
+            with metrics.timer("map_colorize_ms"):
+                image = np.zeros((grid.shape[0], grid.shape[1], 3), dtype=np.uint8)
+                image[:, :] = (180, 180, 180)
+                image[grid == 0] = (245, 245, 245)
+                image[grid >= 100] = (45, 45, 45)
+            # 当前仅做图像上下翻转，未执行二维地图旋转；不要把此项标作“旋转耗时”。
+            with metrics.timer("map_vertical_flip_ms"):
+                image = cv2.flip(image, 0)
             max_edge = max(64, int(self._preview_max_edge_cap))
             output_width, output_height, _ = self._preview_meta(width, height, max_edge)
             if output_width != width or output_height != height:
-                image = cv2.resize(
-                    image,
-                    (output_width, output_height),
-                    interpolation=cv2.INTER_AREA,
-                )
+                with metrics.timer("map_resize_ms"):
+                    image = cv2.resize(
+                        image,
+                        (output_width, output_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
                 preview_scale_x = float(output_width) / float(max(1, width))
                 preview_scale_y = float(output_height) / float(max(1, height))
-            ok, buffer = cv2.imencode(".png", image)
+            with metrics.timer("map_png_encode_ms"):
+                ok, buffer = cv2.imencode(".png", image)
+                if ok:
+                    data = buffer.tobytes()
             if not ok:
                 rospy.logwarn("MapRequest PNG encode failed, fallback to OccupancyGrid bytes")
                 encoding = pb.MAP_ENCODING_OCCUPANCY_GRID
-                data = grid.astype(np.int8).tobytes()
+                with metrics.timer("map_grid_encode_ms"):
+                    data = grid.astype(np.int8).tobytes()
                 output_width = width
                 output_height = height
                 preview_scale_x = 1.0
                 preview_scale_y = 1.0
             else:
-                data = buffer.tobytes()
                 rospy.loginfo(
                     "MapRequest PNG prepared: source_size=%sx%s output_size=%sx%s "
                     "scale_x=%.6f scale_y=%.6f max_edge=%d bytes=%d",
@@ -8878,30 +8946,32 @@ class SchedulerNode:
         now_utc = int(time.time())
 
         outputs = []
-        for index in range(total):
-            chunk = pb.MapChunk()
-            chunk.map_id = map_id
-            chunk.utc_time = now_utc
-            chunk.encoding = encoding
-            chunk.width = int(width)
-            chunk.height = int(height)
-            chunk.resolution = float(resolution)
-            chunk.origin.x = float(origin_x)
-            chunk.origin.y = float(origin_y)
-            chunk.origin.heading_deg = 0.0
-            chunk.frame_id = frame_id
-            chunk.preview_scale_x = float(preview_scale_x)
-            chunk.preview_scale_y = float(preview_scale_y)
-            chunk.map_version = max(0, int(map_version))
-            self._apply_localization_covariance(chunk)
-            self._apply_alignment_yaw_to_response(
-                chunk,
-                requested_map_id or self._live_map_id,
-            )
-            chunk.chunk_index = index
-            chunk.total_chunks = total
-            chunk.data = data[index * chunk_size : (index + 1) * chunk_size]
-            outputs.append((chunk.SerializeToString(), pb.MSG_ID_MAP_CHUNK, pb.COMP_MEDIA))
+        with metrics.timer("map_chunk_serialize_ms"):
+            for index in range(total):
+                chunk = pb.MapChunk()
+                chunk.map_id = map_id
+                chunk.utc_time = now_utc
+                chunk.encoding = encoding
+                chunk.width = int(width)
+                chunk.height = int(height)
+                chunk.resolution = float(resolution)
+                chunk.origin.x = float(origin_x)
+                chunk.origin.y = float(origin_y)
+                chunk.origin.heading_deg = 0.0
+                chunk.frame_id = frame_id
+                chunk.preview_scale_x = float(preview_scale_x)
+                chunk.preview_scale_y = float(preview_scale_y)
+                chunk.map_version = max(0, int(map_version))
+                self._apply_localization_covariance(chunk)
+                self._apply_alignment_yaw_to_response(
+                    chunk,
+                    requested_map_id or self._live_map_id,
+                )
+                chunk.chunk_index = index
+                chunk.total_chunks = total
+                chunk.data = data[index * chunk_size : (index + 1) * chunk_size]
+                outputs.append((chunk.SerializeToString(), pb.MSG_ID_MAP_CHUNK, pb.COMP_MEDIA))
+        metrics.counter("map_chunks_built").inc(len(outputs))
         return outputs
 
     def handle_map_sync_request(self, payload):
@@ -8941,12 +9011,21 @@ class SchedulerNode:
             if isinstance(record, dict):
                 response.map_yaml_path = str(record.get("yaml_path", "") or "")
                 response.map_image_path = str(record.get("image_path", "") or "")
+                if hasattr(response, "map_revision"):
+                    response.map_revision = str(
+                        import_result.get("map_revision", "")
+                        or record.get("map_revision", "")
+                        or ""
+                    )
             self._save_local_state()
             response.result = pb.RESULT_SUCCESS
             if hasattr(response, "map_id"):
                 response.map_id = str(saved_map_id or requested_map_id or "")
             if hasattr(response, "map_name"):
                 response.map_name = str(saved_name or "")
+            if hasattr(response, "map_revision"):
+                response.map_revision = str(import_result.get("map_revision", "") or "")
+            self._fill_super_lio_lifecycle_fields(response, include_identity=False)
             if not response.message:
                 response.message = "ok"
         except Exception as exc:
@@ -8954,6 +9033,8 @@ class SchedulerNode:
             response.message = str(exc)
             if hasattr(response, "map_id"):
                 response.map_id = str(requested_map_id or "")
+
+        self._fill_super_lio_lifecycle_fields(response, include_identity=False)
 
         return response.SerializeToString(), pb.MSG_ID_MAP_SYNC_RESPONSE, pb.COMP_SCHEDULER
 
@@ -8974,6 +9055,12 @@ class SchedulerNode:
         result = self._super_lio_start_localization_proxy(map_id=requested_map_id)
         if not result.success:
             raise RuntimeError(result.message or "Super-LIO localization start failed")
+        map_revision = str(
+            getattr(result, "asset_revision", "")
+            or record.get("map_revision", "")
+            or get_or_compute_map_asset_revision(bundle_dir)
+        )
+        record["map_revision"] = map_revision
         self._set_active_map_id(requested_map_id, reason=reason, migrate_bindings=False)
         self._clear_navigation_costmaps()
         rospy.loginfo(
@@ -8985,6 +9072,7 @@ class SchedulerNode:
         return {
             "map_id": requested_map_id,
             "map_name": map_name,
+            "map_revision": map_revision,
             "bundle_dir": bundle_dir,
             "relocalization_accepted": True,
             "import_skipped": current_map_id == requested_map_id,
@@ -9009,7 +9097,9 @@ class SchedulerNode:
             )
             response.map_id = str(import_result.get("map_id", requested_map_id))
             response.map_name = str(import_result.get("map_name", ""))
+            response.map_revision = str(import_result.get("map_revision", ""))
             response.imported = not import_skipped
+            self._fill_super_lio_lifecycle_fields(response, include_identity=False)
             self._save_local_state()
         except Exception as exc:
             response.result = pb.RESULT_FAILED
@@ -9106,6 +9196,9 @@ class SchedulerNode:
                 existing_record["thumb_b64"] = str(thumb_b64 or "")
                 existing_record["thumb_width"] = int(max(0, int(thumb_width or 0)))
                 existing_record["thumb_height"] = int(max(0, int(thumb_height or 0)))
+                existing_record["map_revision"] = get_or_compute_map_asset_revision(
+                    str(existing_record.get("bundle_dir", "") or "")
+                )
                 if saved_alignment_yaw is not None:
                     self._write_alignment_yaw_to_record(
                         current_map_id,
@@ -9120,6 +9213,13 @@ class SchedulerNode:
                 response.message = "map_saved_offline"
                 if hasattr(response, "map_id"):
                     response.map_id = requested_map_id
+                if hasattr(response, "map_revision"):
+                    response.map_revision = str(existing_record.get("map_revision", "") or "")
+                if hasattr(response, "mapping_stopped"):
+                    response.mapping_stopped = False
+                if hasattr(response, "localization_started"):
+                    response.localization_started = False
+                self._fill_super_lio_lifecycle_fields(response, include_identity=False)
                 if hasattr(response, "map_name"):
                     response.map_name = str(existing_record.get("name", "") or requested_name or "")
                 if hasattr(response, "total_work_area_m2"):
@@ -9248,7 +9348,8 @@ class SchedulerNode:
                 _saved_name or requested_name,
             )
             response.result = pb.RESULT_SUCCESS
-            response.message = (
+            mapping_stopped = bool(getattr(save_result, "mapping_stopped", True))
+            response.message = "map_saved_mapping_stop_timeout" if not mapping_stopped else (
                 "map_saved_and_localization_on"
                 if localization_switched
                 else "map_saved_localization_pending"
@@ -9257,6 +9358,16 @@ class SchedulerNode:
                 response.message = "{} ({})".format(response.message, localization_err)
             if hasattr(response, "map_id"):
                 response.map_id = str(saved_map_id or requested_map_id or "")
+            if hasattr(response, "map_revision"):
+                response.map_revision = str(
+                    getattr(save_result, "asset_revision", "")
+                    or (record.get("map_revision", "") if isinstance(record, dict) else "")
+                    or ""
+                )
+            if hasattr(response, "mapping_stopped"):
+                response.mapping_stopped = mapping_stopped
+            if hasattr(response, "localization_started"):
+                response.localization_started = localization_switched
             if hasattr(response, "map_name"):
                 response.map_name = str(_saved_name or requested_name or "")
             if hasattr(response, "total_work_area_m2"):
@@ -9271,9 +9382,11 @@ class SchedulerNode:
                     if not created_at:
                         created_at = _format_ts_s(record.get("saved_at", 0))
                 response.created_at = str(created_at or "")
+            self._fill_super_lio_lifecycle_fields(response, include_identity=False)
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
+            self._fill_super_lio_lifecycle_fields(response, include_identity=False)
 
         return response.SerializeToString(), pb.MSG_ID_MAP_SAVE_RESPONSE, pb.COMP_SCHEDULER
 
@@ -10094,6 +10207,7 @@ class SchedulerNode:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
 
+        self._fill_super_lio_lifecycle_fields(response)
         return response.SerializeToString(), pb.MSG_ID_MAP_MODE_RESPONSE, pb.COMP_SCHEDULER
 
     def handle_map_alignment_request(self, payload):
@@ -10701,11 +10815,24 @@ class SchedulerNode:
         response = pb.RadarRelocalizationResponse()
         response.accepted = False
         response.result = pb.RESULT_FAILED
+        requested_map_id = str(getattr(request, "map_id", "") or "").strip()
+        requested_map_revision = str(getattr(request, "map_revision", "") or "").strip().lower()
+        if hasattr(response, "map_id"):
+            response.map_id = requested_map_id
+        if hasattr(response, "map_revision"):
+            response.map_revision = requested_map_revision
 
-        if not bool(request.initial_pose_available) or not request.HasField("initial_pose"):
+        if (
+            not bool(request.initial_pose_available)
+            or not request.HasField("initial_pose")
+            or not requested_map_id
+            or not requested_map_revision
+        ):
             response.result = pb.RESULT_INVALID_PARAM
-            response.message = "initial_pose_required"
+            response.message = "initial_pose_and_map_identity_required"
             response.status = "rejected"
+            if hasattr(response, "lifecycle_state"):
+                response.lifecycle_state = "REJECTED"
             return (
                 response.SerializeToString(),
                 pb.MSG_ID_RADAR_RELOCALIZATION_RESPONSE,
@@ -10734,8 +10861,14 @@ class SchedulerNode:
                 raise RuntimeError("task must be stopped before relocalization")
             self._ensure_super_lio_proxies()
             mode_status = self._super_lio_status_proxy()
-            if str(mode_status.state) != "LOCALIZING":
+            if str(mode_status.state) not in ("LOCALIZING", "RELOCALIZING", "READY"):
                 raise RuntimeError("Super-LIO localization is not active")
+            if (
+                requested_map_id != str(mode_status.active_map_id or "")
+                or requested_map_revision != str(mode_status.active_map_revision or "").lower()
+            ):
+                response.result = pb.RESULT_INVALID_PARAM
+                raise ValueError("initial_pose_map_identity_mismatch")
 
             covariance = request.initial_pose_covariance
             x_variance = self._initial_pose_position_variance
@@ -10789,27 +10922,44 @@ class SchedulerNode:
             message.pose.covariance[30] = x_yaw_covariance
             message.pose.covariance[31] = y_yaw_covariance
             message.pose.covariance[35] = yaw_variance
-            self.initial_pose_pub.publish(message)
+            accepted = self._super_lio_set_initial_pose_proxy(
+                map_id=requested_map_id,
+                map_revision=requested_map_revision,
+                pose=message,
+            )
+            if not bool(accepted.success):
+                response.result = pb.RESULT_INVALID_PARAM if "identity" in str(accepted.message) else pb.RESULT_BUSY
+                raise RuntimeError(accepted.message or "Super-LIO rejected initial pose")
 
             response.accepted = True
             response.result = pb.RESULT_SUCCESS
-            response.message = "initial_pose_published"
+            response.message = "initial_pose_accepted"
             response.status = "running"
+            if hasattr(response, "lifecycle_state"):
+                response.lifecycle_state = str(accepted.state or "RELOCALIZING")
+            if hasattr(response, "map_id"):
+                response.map_id = str(accepted.active_map_id or requested_map_id)
+            if hasattr(response, "map_revision"):
+                response.map_revision = str(accepted.active_map_revision or requested_map_revision)
         except ValueError as exc:
-            response.result = pb.RESULT_INVALID_PARAM
+            if response.result != pb.RESULT_INVALID_PARAM:
+                response.result = pb.RESULT_INVALID_PARAM
             response.message = str(exc) or "invalid_initial_pose"
             response.status = "rejected"
             rospy.logwarn("SL-LinkA initial pose rejected: %s", exc)
         except RuntimeError as exc:
-            if response.result != pb.RESULT_BUSY:
+            if response.result not in (pb.RESULT_BUSY, pb.RESULT_INVALID_PARAM):
                 response.result = pb.RESULT_BUSY
             response.message = str(exc) or "relocalization_busy"
             response.status = "rejected"
             rospy.logwarn("SL-LinkA initial pose rejected: %s", exc)
         except Exception as exc:
-            response.message = str(exc) or "initial_pose_publish_failed"
+            response.message = str(exc) or "initial_pose_acceptance_failed"
             response.status = "rejected"
             rospy.logwarn("SL-LinkA initial pose rejected: %s", exc)
+
+        if hasattr(response, "lifecycle_state") and not response.lifecycle_state:
+            self._fill_super_lio_lifecycle_fields(response)
 
         rospy.loginfo(
             "SL-LinkA Super-LIO relocalization response: accepted=%s status=%s result=%s message=%s",
@@ -10833,16 +10983,29 @@ class SchedulerNode:
         try:
             self._ensure_super_lio_proxies()
             status = self._super_lio_status_proxy()
-            if str(status.state) == "LOCALIZING" and bool(status.localization_ready):
+            lifecycle_state = str(status.state or "")
+            if lifecycle_state == "READY" and bool(status.localization_ready):
                 response.raw_status = "RelocalizationSuccess"
-            elif str(status.state) == "LOCALIZING":
+            elif lifecycle_state in ("LOCALIZING", "RELOCALIZING"):
                 response.raw_status = "RelocalizationRunning"
-            elif str(status.state) == "ERROR":
+            elif lifecycle_state in ("ERROR", "TIMEOUT"):
                 response.raw_status = "RelocalizationFailed"
             else:
                 response.raw_status = "Idle"
+            response.lifecycle_state = lifecycle_state
+            response.detail = str(status.message or "")
+            response.map_id = str(status.active_map_id or "")
+            response.map_revision = str(status.active_map_revision or "")
+            response.good_frames = int(status.localization_good_frames)
+            response.required_frames = int(status.localization_required_frames)
+            response.registration_quality_valid = bool(status.registration_quality_valid)
+            response.registration_fitness = float(status.registration_fitness)
+            response.registration_inlier_ratio = float(status.registration_inlier_ratio)
+            response.residual_nodes.extend(list(status.residual_nodes or []))
         except Exception:
             response.raw_status = "Unavailable"
+            response.lifecycle_state = "UNAVAILABLE"
+            response.detail = "Super-LIO status service unavailable"
         rospy.loginfo(
             "SL-LinkA radar relocalization status response: raw_status=%s timestamp_ns=%d",
             response.raw_status or "<empty>",
@@ -10911,10 +11074,23 @@ class SchedulerNode:
                 if offline_preview
                 else self._current_map_id()
             )
+            if hasattr(response, "map_id"):
+                response.map_id = str(response_map_id or "")
+            if hasattr(response, "map_revision"):
+                map_record = self._find_recorded_map_by_id(response_map_id)
+                if isinstance(map_record, dict):
+                    response.map_revision = str(
+                        map_record.get("map_revision", "")
+                        or get_or_compute_map_asset_revision(
+                            str(map_record.get("bundle_dir", "") or "")
+                        )
+                    )
             self._apply_alignment_yaw_to_response(response, response_map_id)
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
+            if hasattr(response, "map_id"):
+                response.map_id = str(requested_map_id or self._current_map_id() or "")
             rospy.logwarn(
                 "MapPreviewRequest failed: map_id=%s error=%s",
                 requested_map_id or self._live_map_id,

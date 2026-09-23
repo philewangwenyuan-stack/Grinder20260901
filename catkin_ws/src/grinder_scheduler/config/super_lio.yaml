@@ -5,5 +5,24 @@ super_lio_map_root: /home/neardi/work/Grinder/maps
 super_lio_service_timeout_sec: 30.0
 super_lio_startup_timeout_sec: 60.0
 super_lio_shutdown_timeout_sec: 8.0
+super_lio_cleanup_timeout_sec: 4.0
+super_lio_health_window_sec: 1.0
+super_lio_message_max_age_sec: 0.5
+super_lio_map_max_age_sec: 5.0
+super_lio_min_lidar_hz: 5.0
+super_lio_min_imu_hz: 20.0
+super_lio_min_odom_hz: 5.0
+super_lio_localization_stable_frames: 8
+super_lio_fitness_max_m2: 0.3
+super_lio_inlier_ratio_min: 0.2
+super_lio_min_correspondences: 100
+super_lio_max_xy_variance: 0.25
+super_lio_max_yaw_variance: 0.06853892
+super_lio_max_pose_jump_m: 0.75
+super_lio_max_yaw_jump_rad: 0.52359878
+super_lio_tf_base_frame: base_link
+# Add fixed ports owned by managed Super-LIO nodes here. The unique Livox
+# startup script checks the external driver's configured host UDP ports.
+super_lio_preflight_ports: []
 super_lio_loop_closure: false
 super_lio_autosave: false

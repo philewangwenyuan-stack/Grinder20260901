@@ -5,3 +5,10 @@ string state
 string active_map_id
 string bundle_dir
 bool localization_ready
+string active_map_revision
+uint32 localization_good_frames
+uint32 localization_required_frames
+bool registration_quality_valid
+float64 registration_fitness
+float64 registration_inlier_ratio
+string[] residual_nodes

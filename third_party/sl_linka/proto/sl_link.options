@@ -1,0 +1,3 @@
+sl_link.MapModeResponse.residual_nodes max_count:8 max_size:64
+sl_link.MapSaveResponse.residual_nodes max_count:8 max_size:64
+sl_link.RadarRelocalizationStatusResponse.residual_nodes max_count:8 max_size:64

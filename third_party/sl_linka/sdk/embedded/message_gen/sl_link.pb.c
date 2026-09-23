@@ -138,7 +138,7 @@ PB_BIND(sl_link_MapImportToRadarResponse, sl_link_MapImportToRadarResponse, AUTO
 PB_BIND(sl_link_MapModeRequest, sl_link_MapModeRequest, AUTO)
 
 
-PB_BIND(sl_link_MapModeResponse, sl_link_MapModeResponse, AUTO)
+PB_BIND(sl_link_MapModeResponse, sl_link_MapModeResponse, 2)
 
 
 PB_BIND(sl_link_MapAlignmentRequest, sl_link_MapAlignmentRequest, AUTO)
@@ -165,7 +165,7 @@ PB_BIND(sl_link_MapDeleteResponse, sl_link_MapDeleteResponse, AUTO)
 PB_BIND(sl_link_MapSaveRequest, sl_link_MapSaveRequest, AUTO)
 
 
-PB_BIND(sl_link_MapSaveResponse, sl_link_MapSaveResponse, AUTO)
+PB_BIND(sl_link_MapSaveResponse, sl_link_MapSaveResponse, 2)
 
 
 PB_BIND(sl_link_MapMetricsRequest, sl_link_MapMetricsRequest, AUTO)
@@ -249,7 +249,7 @@ PB_BIND(sl_link_RadarRelocalizationResponse, sl_link_RadarRelocalizationResponse
 PB_BIND(sl_link_RadarRelocalizationStatusRequest, sl_link_RadarRelocalizationStatusRequest, AUTO)
 
 
-PB_BIND(sl_link_RadarRelocalizationStatusResponse, sl_link_RadarRelocalizationStatusResponse, AUTO)
+PB_BIND(sl_link_RadarRelocalizationStatusResponse, sl_link_RadarRelocalizationStatusResponse, 2)
 
 
 PB_BIND(sl_link_DiscLiftControl, sl_link_DiscLiftControl, AUTO)

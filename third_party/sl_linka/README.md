@@ -90,15 +90,15 @@
 | `0x0510` | `MapSyncRequest` | `APP -> LOWER` | `COMP_SCHEDULER` | 请求 STCM 下载/上传与导航地图刷新 |
 | `0x0511` | `MapSyncResponse` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回地图同步结果 |
 | `0x0512` | `MapModeRequest` | `APP -> LOWER` | `COMP_SCHEDULER` | 请求雷达切换建图/定位模式 |
-| `0x0513` | `MapModeResponse` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回模式切换结果 |
+| `0x0513` | `MapModeResponse` | `LOWER -> APP` | `COMP_SCHEDULER` | 返回生命周期状态、地图身份和残留节点 |
 | `0x0526` | `RadarSystemStatusRequest` | `APP -> LOWER` | `COMP_SYSTEM` | 查询雷达最新系统状态 |
 | `0x0527` | `RadarSystemStatusResponse` | `LOWER -> APP` | `COMP_SYSTEM` | 返回雷达状态和时间戳 |
 | `0x0528` | `RadarMapSyncRequest` | `APP -> LOWER` | `COMP_SYSTEM` | 触发雷达同步当前地图 |
 | `0x0529` | `RadarMapSyncResponse` | `LOWER -> APP` | `COMP_SYSTEM` | 返回雷达地图同步指令发送结果 |
-| `0x052A` | `RadarRelocalizationRequest` | `APP -> LOWER` | `COMP_SYSTEM` | 触发雷达地图重定位 |
-| `0x052B` | `RadarRelocalizationResponse` | `LOWER -> APP` | `COMP_SYSTEM` | 返回雷达是否受理重定位及当前聚合状态 |
-| `0x052C` | `RadarRelocalizationStatusRequest` | `APP -> LOWER` | `COMP_SYSTEM` | 查询雷达地图重定位聚合状态 |
-| `0x052D` | `RadarRelocalizationStatusResponse` | `LOWER -> APP` | `COMP_SYSTEM` | 返回原始状态、系统状态和聚合结果 |
+| `0x052A` | `RadarRelocalizationRequest` | `APP -> LOWER` | `COMP_SYSTEM` | 携带 `map_id/map_revision` 与初始位姿 |
+| `0x052B` | `RadarRelocalizationResponse` | `LOWER -> APP` | `COMP_SYSTEM` | 返回请求受理结果、地图身份和生命周期状态 |
+| `0x052C` | `RadarRelocalizationStatusRequest` | `APP -> LOWER` | `COMP_SYSTEM` | 查询 Super-LIO 生命周期与定位质量 |
+| `0x052D` | `RadarRelocalizationStatusResponse` | `LOWER -> APP` | `COMP_SYSTEM` | 返回 READY 帧数、配准质量和残留节点 |
 
 ## 参数模型
 

@@ -1,0 +1,9 @@
+string map_id
+string map_revision
+geometry_msgs/PoseWithCovarianceStamped pose
+---
+bool success
+string message
+string state
+string active_map_id
+string active_map_revision

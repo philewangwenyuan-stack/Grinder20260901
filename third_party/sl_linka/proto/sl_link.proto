@@ -594,6 +594,9 @@ message MapPreviewResponse {
   float alignment_yaw_deg = 14;
   float app_rotation_deg = 15;
   float rotation_alignment_delta_deg = 16;
+  string map_id = 17;
+  // SHA-256 revision of immutable saved assets; distinct from map_version (region edits).
+  string map_revision = 18;
 }
 
 // Lightweight map annotation query. It does not render or return an image.
@@ -724,9 +727,11 @@ message MapSyncResponse {
   MapSyncOperation operation = 3;
   string map_id = 4;
   string map_name = 8;
+  string map_revision = 9;
   string map_yaml_path = 5;
   string map_image_path = 6;
   bool navigation_map_reloaded = 7;
+  string lifecycle_state = 10;
 }
 
 message MapImportToRadarRequest {
@@ -739,6 +744,8 @@ message MapImportToRadarResponse {
   string map_id = 3;
   string map_name = 4;
   bool imported = 5;
+  string map_revision = 6;
+  string lifecycle_state = 7;
 }
 
 message MapModeRequest {
@@ -753,6 +760,10 @@ message MapModeResponse {
   MapModeType mode = 3;
   bool enabled = 4;
   int32 map_kind = 5;
+  string lifecycle_state = 6;
+  string map_id = 7;
+  string map_revision = 8;
+  repeated string residual_nodes = 9;
 }
 
 message MapAlignmentRequest {
@@ -788,6 +799,7 @@ message MapCatalogItem {
   uint32 thumbnail_height = 9;
   string thumbnail_image_b64 = 10;
   string created_at = 11;
+  string map_revision = 12;
 }
 
 message MapCatalogResponse {
@@ -833,6 +845,11 @@ message MapSaveResponse {
   float total_work_area_m2 = 8 [(unit) = "m2", (scale) = 1];
   float estimated_time_s = 9 [(unit) = "s", (scale) = 1];
   string created_at = 10;
+  string map_revision = 11;
+  string lifecycle_state = 12;
+  bool mapping_stopped = 13;
+  bool localization_started = 14;
+  repeated string residual_nodes = 15;
 }
 
 message MapMetricsRequest {
@@ -1080,6 +1097,9 @@ message RadarRelocalizationRequest {
   // Optional uncertainty for the initial guess. When valid=false, LOWER uses
   // its configured defaults.
   LocalizationCovariance initial_pose_covariance = 3;
+  // Must match the currently active immutable saved map.
+  string map_id = 4;
+  string map_revision = 5;
 }
 
 message RadarRelocalizationResponse {
@@ -1088,6 +1108,9 @@ message RadarRelocalizationResponse {
   // True means the radar accepted the asynchronous relocalization request.
   bool accepted = 3;
   string status = 4;
+  string map_id = 5;
+  string map_revision = 6;
+  string lifecycle_state = 7;
 }
 
 message RadarRelocalizationStatusRequest {
@@ -1102,6 +1125,16 @@ message RadarRelocalizationStatusResponse {
   reserved 7, 8, 9;
   reserved "odom_available", "odom_linear_speed_mps", "odom_angular_speed_radps";
   uint64 timestamp_ns = 10;
+  string lifecycle_state = 11;
+  string detail = 12;
+  string map_id = 13;
+  string map_revision = 14;
+  uint32 good_frames = 15;
+  uint32 required_frames = 16;
+  bool registration_quality_valid = 17;
+  float registration_fitness = 18;
+  float registration_inlier_ratio = 19;
+  repeated string residual_nodes = 20;
 }
 
 message DiscLiftControl {

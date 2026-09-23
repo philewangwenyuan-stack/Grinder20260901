@@ -39,6 +39,7 @@ _stub_module(
     "grinder_scheduler.srv",
     GetSuperLioStatus=object,
     SaveSuperLioMap=object,
+    SetSuperLioInitialPose=object,
     StartSuperLioLocalization=object,
 )
 
@@ -50,25 +51,46 @@ SchedulerNode = scheduler_module.SchedulerNode
 scheduler_module.rospy.rostime.set_rostime_initialized(True)
 
 
-class _Publisher:
-    def __init__(self):
-        self.messages = []
-
-    def publish(self, message):
-        self.messages.append(message)
-
-
-def _node(state="LOCALIZING"):
+def _node(state="LOCALIZING", active_map_id="map-001", map_revision="a" * 64):
     node = SchedulerNode.__new__(SchedulerNode)
     node.sl_link_server = SimpleNamespace(pb=pb)
     node._initial_pose_position_variance = 0.25
     node._initial_pose_yaw_variance = math.radians(15.0) ** 2
     node._ensure_super_lio_proxies = lambda: None
-    node._super_lio_status_proxy = lambda: SimpleNamespace(state=state)
-    node.initial_pose_pub = _Publisher()
+    node._super_lio_status_proxy = lambda: SimpleNamespace(
+        state=state,
+        active_map_id=active_map_id,
+        active_map_revision=map_revision,
+    )
+    node.set_initial_pose_calls = []
+
+    def set_initial_pose(map_id, map_revision, pose):
+        node.set_initial_pose_calls.append((map_id, map_revision, pose))
+        return SimpleNamespace(
+            success=True,
+            message="initial_pose_published",
+            state="RELOCALIZING",
+            active_map_id=active_map_id,
+            active_map_revision=map_revision,
+        )
+
+    node._super_lio_set_initial_pose_proxy = set_initial_pose
+    node._fill_super_lio_lifecycle_fields = lambda response: setattr(
+        response, "lifecycle_state", state
+    )
     node.state = scheduler_module.SchedulerState.IDLE
     node._exec_active = False
     return node
+
+
+def _request_with_identity(**kwargs):
+    request = pb.RadarRelocalizationRequest(
+        initial_pose_available=True,
+        map_id="map-001",
+        map_revision="a" * 64,
+        **kwargs
+    )
+    return request
 
 
 def _call(node, request):
@@ -85,7 +107,7 @@ def _call(node, request):
 class RelocalizationInitialPoseTest(unittest.TestCase):
     def test_valid_request_publishes_map_pose(self):
         node = _node()
-        request = pb.RadarRelocalizationRequest(initial_pose_available=True)
+        request = _request_with_identity()
         request.initial_pose.x = 1.2
         request.initial_pose.y = -0.5
         request.initial_pose.heading_deg = 30.0
@@ -97,8 +119,10 @@ class RelocalizationInitialPoseTest(unittest.TestCase):
         self.assertEqual(response.result, pb.RESULT_SUCCESS)
         self.assertTrue(response.accepted)
         self.assertEqual(response.status, "running")
-        self.assertEqual(len(node.initial_pose_pub.messages), 1)
-        message = node.initial_pose_pub.messages[0]
+        self.assertEqual(len(node.set_initial_pose_calls), 1)
+        sent_map_id, sent_revision, message = node.set_initial_pose_calls[0]
+        self.assertEqual(sent_map_id, "map-001")
+        self.assertEqual(sent_revision, "a" * 64)
         self.assertEqual(message.header.frame_id, "map")
         self.assertAlmostEqual(message.pose.pose.position.x, 1.2, places=5)
         self.assertAlmostEqual(message.pose.pose.position.y, -0.5, places=5)
@@ -109,26 +133,26 @@ class RelocalizationInitialPoseTest(unittest.TestCase):
 
     def test_missing_pose_is_rejected(self):
         node = _node()
-        request = pb.RadarRelocalizationRequest(initial_pose_available=True)
+        request = _request_with_identity()
         response, _, _ = _call(node, request)
         self.assertEqual(response.result, pb.RESULT_INVALID_PARAM)
         self.assertFalse(response.accepted)
-        self.assertEqual(response.message, "initial_pose_required")
-        self.assertFalse(node.initial_pose_pub.messages)
+        self.assertEqual(response.message, "initial_pose_and_map_identity_required")
+        self.assertFalse(node.set_initial_pose_calls)
 
     def test_inactive_localization_is_rejected(self):
         node = _node(state="IDLE")
-        request = pb.RadarRelocalizationRequest(initial_pose_available=True)
+        request = _request_with_identity()
         request.initial_pose.SetInParent()
         response, _, _ = _call(node, request)
         self.assertEqual(response.result, pb.RESULT_BUSY)
         self.assertFalse(response.accepted)
         self.assertIn("not active", response.message)
-        self.assertFalse(node.initial_pose_pub.messages)
+        self.assertFalse(node.set_initial_pose_calls)
 
     def test_negative_variance_is_rejected(self):
         node = _node()
-        request = pb.RadarRelocalizationRequest(initial_pose_available=True)
+        request = _request_with_identity()
         request.initial_pose.SetInParent()
         request.initial_pose_covariance.valid = True
         request.initial_pose_covariance.x_variance = -1.0
@@ -136,19 +160,30 @@ class RelocalizationInitialPoseTest(unittest.TestCase):
         self.assertEqual(response.result, pb.RESULT_INVALID_PARAM)
         self.assertFalse(response.accepted)
         self.assertIn("non_negative", response.message)
-        self.assertFalse(node.initial_pose_pub.messages)
+        self.assertFalse(node.set_initial_pose_calls)
 
     def test_active_task_is_rejected(self):
         node = _node()
         node.state = scheduler_module.SchedulerState.RUNNING
         node._exec_active = True
-        request = pb.RadarRelocalizationRequest(initial_pose_available=True)
+        request = _request_with_identity()
         request.initial_pose.SetInParent()
         response, _, _ = _call(node, request)
         self.assertEqual(response.result, pb.RESULT_BUSY)
         self.assertFalse(response.accepted)
         self.assertIn("stopped", response.message)
-        self.assertFalse(node.initial_pose_pub.messages)
+        self.assertFalse(node.set_initial_pose_calls)
+
+    def test_stale_map_revision_is_rejected(self):
+        node = _node()
+        request = _request_with_identity()
+        request.map_revision = "b" * 64
+        request.initial_pose.SetInParent()
+        response, _, _ = _call(node, request)
+        self.assertEqual(response.result, pb.RESULT_INVALID_PARAM)
+        self.assertFalse(response.accepted)
+        self.assertIn("map_identity_mismatch", response.message)
+        self.assertFalse(node.set_initial_pose_calls)
 
 
 if __name__ == "__main__":

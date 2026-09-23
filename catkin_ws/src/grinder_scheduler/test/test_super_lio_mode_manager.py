@@ -41,8 +41,12 @@ _stub_module(
 )
 _stub_module("nav_msgs")
 _stub_module("nav_msgs.msg", OccupancyGrid=_Dummy, Odometry=_Dummy)
+_stub_module("sensor_msgs")
+_stub_module("sensor_msgs.msg", Imu=_Dummy, PointCloud2=_Dummy)
 _stub_module("geometry_msgs")
 _stub_module("geometry_msgs.msg", PoseWithCovarianceStamped=_Dummy)
+_stub_module("diagnostic_msgs")
+_stub_module("diagnostic_msgs.msg", DiagnosticArray=_Dummy)
 _stub_module("std_msgs")
 _stub_module("std_msgs.msg", Bool=_Dummy)
 _stub_module("std_srvs")
@@ -53,13 +57,18 @@ _stub_module(
     GetSuperLioStatusResponse=_Dummy,
     SaveSuperLioMap=_Dummy,
     SaveSuperLioMapResponse=_Dummy,
+    SetSuperLioInitialPose=_Dummy,
+    SetSuperLioInitialPoseResponse=_Dummy,
     StartSuperLioLocalization=_Dummy,
     StartSuperLioLocalizationResponse=_Dummy,
 )
 _stub_module("super_lio")
 _stub_module("super_lio.srv", GetMap=_Dummy, GetMapRequest=_Dummy)
 
-from grinder_scheduler.super_lio_mode_manager import SuperLioModeManager  # noqa: E402
+from grinder_scheduler.super_lio_mode_manager import (  # noqa: E402
+    SuperLioModeManager,
+    SuperLioShutdownTimeout,
+)
 
 
 class SuperLioAssetValidationTest(unittest.TestCase):
@@ -128,53 +137,97 @@ class SuperLioAssetValidationTest(unittest.TestCase):
         self.assertFalse(worker.is_alive())
         self.assertEqual(result["value"], ("mapping", manager._main_thread_id))
 
-    def test_stop_owned_launch_kills_stale_mapping_nodes(self):
+    def test_stop_owned_launch_rechecks_and_does_not_kill_by_ros_name(self):
         manager = SuperLioModeManager.__new__(SuperLioModeManager)
-        manager._launch_parent = types.SimpleNamespace(shutdown=lambda: None)
+        active_uris = {"mapping": "http://owned-node"}
+        checks = []
+        manager._launch_parent = types.SimpleNamespace(
+            shutdown=lambda: active_uris.clear()
+        )
         manager._owned_mode = "mapping"
+        manager._owned_node_uris = {"/super_lio_node": "http://owned-node"}
+        manager._expected_owned_node_names = set(SuperLioModeManager._MAPPING_NODES)
+        manager._accept_new_owned_node_uris = False
         manager._shutdown_timeout = 0.0
-
-        active_nodes = set(SuperLioModeManager._MAPPING_NODES)
-        active_nodes.add("/map_server")
-        killed_nodes = []
+        manager._cleanup_timeout = 0.0
         rosnode_module = sys.modules["rosnode"]
         old_get_node_names = rosnode_module.get_node_names
         old_kill_nodes = rosnode_module.kill_nodes
 
         def get_node_names():
-            return sorted(active_nodes)
+            return ["/super_lio_node"] if active_uris else []
 
         def kill_nodes(node_names):
-            killed_nodes.extend(node_names)
-            active_nodes.difference_update(node_names)
+            raise AssertionError("stop must not kill nodes by ROS name")
 
         rosnode_module.get_node_names = get_node_names
         rosnode_module.kill_nodes = kill_nodes
+        manager._node_uri_is_reachable = lambda uri: uri in active_uris.values()
+        manager._lookup_node_uri = lambda node_name: "http://owned-node"
+        original_residual_check = manager._owned_residual_nodes
+
+        def tracked_residual_check():
+            checks.append(True)
+            return original_residual_check()
+
+        manager._owned_residual_nodes = tracked_residual_check
         try:
             manager._stop_owned_launch()
         finally:
             rosnode_module.get_node_names = old_get_node_names
             rosnode_module.kill_nodes = old_kill_nodes
 
-        self.assertEqual(set(killed_nodes), SuperLioModeManager._MAPPING_NODES)
-        self.assertIn("/map_server", active_nodes)
+        self.assertGreaterEqual(len(checks), 2)
+        self.assertEqual(manager._owned_node_uris, {})
+        self.assertIsNone(manager._launch_parent)
+
+    def test_stop_timeout_reports_only_residual_node_names(self):
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._launch_parent = types.SimpleNamespace(shutdown=lambda: None)
+        manager._owned_mode = "mapping"
+        manager._owned_node_uris = {"/super_lio_node": "http://owned-node"}
+        manager._expected_owned_node_names = set(SuperLioModeManager._MAPPING_NODES)
+        manager._accept_new_owned_node_uris = False
+        manager._shutdown_timeout = 0.0
+        manager._cleanup_timeout = 0.0
+        manager._refresh_owned_node_uris = lambda: None
+        manager._node_uri_is_reachable = lambda _uri: True
+        manager._node_names = lambda: {"/super_lio_node", "/map_server"}
+        manager._lookup_node_uri = lambda _node_name: "http://owned-node"
+        manager._owned_residual_nodes = lambda: ["/super_lio_node"]
+
+        module = sys.modules["grinder_scheduler.super_lio_mode_manager"]
+        old_server_proxy = module.ServerProxy
+
+        class _NodeProxy:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def shutdown(self, *_args):
+                return 1, "ok", 0
+
+        module.ServerProxy = lambda *_args, **_kwargs: _NodeProxy()
+        try:
+            with self.assertRaises(SuperLioShutdownTimeout) as caught:
+                manager._stop_owned_launch()
+        finally:
+            module.ServerProxy = old_server_proxy
+
+        self.assertEqual(caught.exception.residual_nodes, ["/super_lio_node"])
+        self.assertIsNotNone(manager._launch_parent)
+        self.assertEqual(manager._owned_node_uris, {"/super_lio_node": "http://owned-node"})
 
     def test_unreachable_registration_does_not_block_manager(self):
         manager = SuperLioModeManager.__new__(SuperLioModeManager)
         manager._state = manager.IDLE
         manager._message = "idle"
         manager._launch_parent = None
-        rosnode_module = sys.modules["rosnode"]
-        old_get_node_names = rosnode_module.get_node_names
-        old_rosnode_ping = rosnode_module.rosnode_ping
-        rosnode_module.get_node_names = lambda: ["/relocation_node"]
-        rosnode_module.rosnode_ping = lambda _name, **_kwargs: False
-        try:
-            manager._detect_unowned_conflicts()
-            manager._assert_no_unowned_nodes()
-        finally:
-            rosnode_module.get_node_names = old_get_node_names
-            rosnode_module.rosnode_ping = old_rosnode_ping
+        manager._live_managed_nodes = lambda: set()
+        manager._detect_unowned_conflicts()
+        manager._assert_no_unowned_nodes()
 
         self.assertEqual(manager._state, manager.IDLE)
         self.assertEqual(manager._message, "idle")
@@ -184,18 +237,10 @@ class SuperLioAssetValidationTest(unittest.TestCase):
         manager._state = manager.IDLE
         manager._message = "idle"
         manager._launch_parent = None
-        rosnode_module = sys.modules["rosnode"]
-        old_get_node_names = rosnode_module.get_node_names
-        old_rosnode_ping = rosnode_module.rosnode_ping
-        rosnode_module.get_node_names = lambda: ["/relocation_node"]
-        rosnode_module.rosnode_ping = lambda _name, **_kwargs: True
-        try:
-            manager._detect_unowned_conflicts()
-            with self.assertRaisesRegex(RuntimeError, "unowned Super-LIO nodes"):
-                manager._assert_no_unowned_nodes()
-        finally:
-            rosnode_module.get_node_names = old_get_node_names
-            rosnode_module.rosnode_ping = old_rosnode_ping
+        manager._live_managed_nodes = lambda: {"/relocation_node"}
+        manager._detect_unowned_conflicts()
+        with self.assertRaisesRegex(RuntimeError, "unowned Super-LIO nodes"):
+            manager._assert_no_unowned_nodes()
 
         self.assertEqual(manager._state, manager.ERROR)
         self.assertIn("/relocation_node", manager._message)

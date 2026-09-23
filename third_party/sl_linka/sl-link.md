@@ -228,6 +228,7 @@ message PolygonRegion {
 - `MapPreviewRequest` 同样基于原始 `map` 坐标生成图片，可按请求叠加区域，但不应用三个旋转角；三个角度字段仅作为元数据返回给 APP
 - 支持 `OCCUPANCY_GRID / PNG / JSON` 三种编码标识
 - `MapChunk` 的基本信息与 `MapPreviewResponse` 保持一致：`map_version/width/height/resolution/origin/frame_id/preview_scale_x/preview_scale_y`
+- `map_version` 是区域编辑版本；`map_revision` 是已保存 PCD/PGM/YAML 资产的 SHA-256 版本。两者用途不同，初始位姿请求必须使用 `map_id + map_revision`
 - `width/height` 为原始栅格尺寸；PNG 图片尺寸为 `width * preview_scale_x`、`height * preview_scale_y`（取整），原点通过 `origin.x/origin.y/origin.heading_deg` 返回
 
 ## 5. 控制指令
@@ -291,16 +292,16 @@ message PolygonRegion {
 | `0x050D` | `VideoStreamInfoResponse` | `LOWER -> APP` | 返回视频流信息 |
 | `0x050E` | `PathPlanRequest` | `APP -> LOWER` | 请求立即路径规划 |
 | `0x050F` | `PathPlanResponse` | `LOWER -> APP` | 返回路径规划摘要结果 |
-| `0x0510` | `MapSyncRequest` | `APP -> LOWER` | 地图同步请求（雷达上传/下载） |
+| `0x0510` | `MapSyncRequest` | `APP -> LOWER` | 选择本地保存地图并启动 Super-LIO 定位（下载操作不支持） |
 | `0x0511` | `MapSyncResponse` | `LOWER -> APP` | 返回地图同步结果 |
 | `0x0512` | `MapModeRequest` | `APP -> LOWER` | 请求雷达切换建图/定位模式 |
-| `0x0513` | `MapModeResponse` | `LOWER -> APP` | 返回模式切换指令处理结果 |
+| `0x0513` | `MapModeResponse` | `LOWER -> APP` | 返回模式切换结果、生命周期状态、地图身份和残留节点 |
 | `0x0514` | `MapCatalogRequest` | `APP -> LOWER` | 请求本地地图列表（名称/数量） |
-| `0x0515` | `MapCatalogResponse` | `LOWER -> APP` | 返回本地地图列表（含面积/预计耗时/缩略图） |
+| `0x0515` | `MapCatalogResponse` | `LOWER -> APP` | 返回本地地图列表（含面积/预计耗时/缩略图/map_revision） |
 | `0x0516` | `MapDeleteRequest` | `APP -> LOWER` | 按 map_id 删除本地地图及文件服务器对应目录 |
 | `0x0517` | `MapDeleteResponse` | `LOWER -> APP` | 返回本地删除、远端删除/待重试结果；默认本地成功即 `RESULT_SUCCESS` |
 | `0x0518` | `MapSaveRequest` | `APP -> LOWER` | 请求从雷达保存地图到本地 |
-| `0x0519` | `MapSaveResponse` | `LOWER -> APP` | 返回保存结果与 map_id（含面积/预计耗时/创建时间） |
+| `0x0519` | `MapSaveResponse` | `LOWER -> APP` | 返回保存结果、资产版本、建图停止状态和独立的定位启动状态 |
 | `0x051A` | `MapMetricsRequest` | `APP -> LOWER` | 按 map_id 请求地图面积与预计耗时 |
 | `0x051B` | `MapMetricsResponse` | `LOWER -> APP` | 返回 map_id/name + 工作区域面积/耗时明细 |
 | `0x051C` | `TaskResultRequest` | `APP -> LOWER` | 请求上次任务执行结果（可带 map_id/task_id） |
@@ -310,17 +311,17 @@ message PolygonRegion {
 | `0x0520` | `RadarMapCacheClearRequest` | `APP -> LOWER` | 请求清除雷达侧地图缓存/地图数据 |
 | `0x0521` | `RadarMapCacheClearResponse` | `LOWER -> APP` | 返回雷达清图指令下发结果 |
 | `0x0522` | `MapImportToRadarRequest` | `APP -> LOWER` | 按 map_id 将本地保存地图导入雷达（先清雷达地图缓存，导入后进入纯定位模式） |
-| `0x0523` | `MapImportToRadarResponse` | `LOWER -> APP` | 返回地图导入雷达结果 |
+| `0x0523` | `MapImportToRadarResponse` | `LOWER -> APP` | 返回地图选择结果、map_revision 和生命周期状态 |
 | `0x0524` | `MapAlignmentRequest` | `APP -> LOWER` | 设置独立的 APP 地图规划/显示旋转角，不覆盖雷达启动对齐角 |
 | `0x0525` | `MapAlignmentResponse` | `LOWER -> APP` | 返回 APP 旋转角、雷达对齐角及二者差值 |
 | `0x0526` | `RadarSystemStatusRequest` | `APP -> LOWER` | 查询 `/slamware_ros_sdk_server_node/system_status` 最新状态 |
 | `0x0527` | `RadarSystemStatusResponse` | `LOWER -> APP` | 返回状态可用性、原始状态字符串和时间戳 |
 | `0x0528` | `RadarMapSyncRequest` | `APP -> LOWER` | 触发 `/slamware_ros_sdk_server_node/sync_map` 地图同步 |
 | `0x0529` | `RadarMapSyncResponse` | `LOWER -> APP` | 返回地图同步消息是否成功发布 |
-| `0x052A` | `RadarRelocalizationRequest` | `APP -> LOWER` | 调用 `/slamware_ros_sdk_server_node/relocalization` 触发地图重定位 |
-| `0x052B` | `RadarRelocalizationResponse` | `LOWER -> APP` | 返回雷达是否受理异步重定位请求及当前聚合状态 |
-| `0x052C` | `RadarRelocalizationStatusRequest` | `APP -> LOWER` | 查询雷达地图重定位聚合状态 |
-| `0x052D` | `RadarRelocalizationStatusResponse` | `LOWER -> APP` | 返回 `/relocalization_status` 原始状态 |
+| `0x052A` | `RadarRelocalizationRequest` | `APP -> LOWER` | 携带当前 map_id/map_revision 和初始位姿，请求 Super-LIO 重定位 |
+| `0x052B` | `RadarRelocalizationResponse` | `LOWER -> APP` | 返回是否接受初始位姿及地图身份/生命周期状态 |
+| `0x052C` | `RadarRelocalizationStatusRequest` | `APP -> LOWER` | 查询 Super-LIO 定位质量和生命周期状态 |
+| `0x052D` | `RadarRelocalizationStatusResponse` | `LOWER -> APP` | 返回 READY 帧数、配准质量、地图身份和残留节点 |
 | `0x052E` | `MapRegionPointRequest` | `APP -> LOWER` | 按地图查询区域及点位，不生成预览图 |
 | `0x052F` | `MapRegionPointResponse` | `LOWER -> APP` | 返回区域多边形顶点及工作区起终点 |
 | `0x0530` | `TaskExecutionHistoryRequest` | `APP -> LOWER` | 按地图、任务和开始时间范围查询任务执行记录 |
@@ -797,12 +798,14 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 `MapSyncOperation` 语义（同步）：
 
-- `MAP_SYNC_OP_DOWNLOAD_FROM_AURORA`：从雷达下载地图到本地并注册 `map_id`
-- `MAP_SYNC_OP_UPLOAD_TO_AURORA`：按 `map_id` 从本地记录地图上传到雷达
+- `MAP_SYNC_OP_DOWNLOAD_FROM_AURORA`：Super-LIO 后端不支持，LOWER 返回失败
+- `MAP_SYNC_OP_UPLOAD_TO_AURORA`：按 `map_id` 选择本地保存的 Super-LIO 地图，并启动 map_server/relocation_node；`MapSyncResponse` 返回 `map_revision` 与 `lifecycle_state`
 
 本地地图管理新增独立消息（不再依赖 `MapSyncOperation`，并以 `map_id` 作为唯一操作标识）：
 
-- `MapSaveRequest/Response`：从实时建图保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；请求 `map_id` 为空或为 `LIVE_MAP` 时，LOWER 生成唯一正式 ID 并在响应中返回，`LIVE_MAP` 不会写入已保存地图注册表；请求已有正式 `map_id` 时只更新该地图的名称、区域、缩略图等元数据，不重新导出 PCD/PGM。实时建图保存成功后会停止/清理建图节点，但不会立即启动定位；原有任务启动流程在需要时再按当前保存地图启动定位节点
+- `MapSaveRequest/Response`：从实时建图保存地图到本地（支持中文地图名 + 时间戳），并记录当前任务工作区总面积、预计耗时与地图旋转角；请求 `map_id` 为空或为 `LIVE_MAP` 时，LOWER 生成唯一正式 ID 并在响应中返回，`LIVE_MAP` 不会写入已保存地图注册表；请求已有正式 `map_id` 时只更新该地图的名称、区域、缩略图等元数据，不重新导出 PCD/PGM。PCD/PGM/YAML/元数据先写入唯一临时目录并 `fsync`，再原子发布；`MapSaveResponse.mapping_stopped` 和 `localization_started` 分开表示，保存成功不代表定位已启动。若停止超时，响应带 `lifecycle_state=TIMEOUT` 和 `residual_nodes[]`
+- `MapCatalogItem.map_revision`、`MapPreviewResponse.map_revision`、`MapSyncResponse.map_revision` 与 `MapImportToRadarResponse.map_revision` 表示不可变地图资产版本。`MapPreviewResponse.map_version` 仍仅表示区域编辑版本
+- `MapModeResponse.lifecycle_state` 可为 `STARTING/STOPPING/MAPPING/LOCALIZING/RELOCALIZING/READY/IDLE/TIMEOUT/ERROR`；服务可用或节点出现只代表正在启动，不代表 READY
 - `MapSaveResponse.created_at`：地图创建时间（`YYYY-MM-DD HH:MM:SS`，精确到秒）
 - `MapCatalogRequest/Response`：查询本地地图名称与数量，并返回地图元信息（面积/预计耗时/缩略图base64）
 - `MapDeleteRequest/Response`：按 `map_id` 删除本地地图，并递归删除文件服务器 `GrinderProject/maps/<map_id>` 下的文件及目录；服务器不存在该目录时按幂等成功处理
@@ -814,10 +817,10 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 - `MapMetricsResponse.region_metrics[]`：工作区域明细（`region_id`、`region_name`、`repeat`、`area_m2`、`estimated_time_h`）
 - `LiveMapCacheClearRequest/Response`：清除 LIVE_MAP 缓存（区域状态 + live_map 目录缓存）
 - `RadarMapCacheClearRequest/Response`：清除雷达侧地图缓存/地图数据（调度程序转发到 `/slamware_ros_sdk_server_node/clear_map`，随后向 `/slamware_ros_sdk_server_node/set_map_update` 下发建图模式）
-- `MapImportToRadarRequest/Response`：按 `map_id` 将本地保存的 `.stcm` 地图导入雷达；导入前先向 `/slamware_ros_sdk_server_node/clear_map` 下发清图，再调用 `/slamware_ros_sdk_server_node/sync_set_stcm`，成功后向 `/slamware_ros_sdk_server_node/set_map_localization` 下发纯定位模式，等待配置的稳定时间后调用 `/slamware_ros_sdk_server_node/relocalization`
+- `MapImportToRadarRequest/Response`：Super-LIO 后端按 `map_id` 选择本地保存的 PCD/PGM/YAML 资产并启动定位，不调用 Slamware 的 STCM 导入接口；响应返回 `map_revision` 与 `lifecycle_state`
 - `MapAlignmentRequest/Response`：按 `map_id` 保存 APP 地图旋转角及其与雷达 `alignment_yaw` 的角差；路径规划角为 `alignment_yaw_deg + rotation_alignment_delta_deg`，LOWER 保持地图和区域在原始 `map` 坐标系并将该角度直接传给 mst27，生成的路径也保持原始 `map` 坐标和朝向；`map_id` 为空时作用于当前地图
-- `RadarRelocalizationRequest/Response`：请求无参数，LOWER 调用 `/slamware_ros_sdk_server_node/relocalization`；`accepted=true` 仅表示雷达已受理，不能表示地图重定位已经成功
-- `RadarRelocalizationStatusRequest/Response`：只根据 `/slamware_ros_sdk_server_node/relocalization_status` 返回原始状态；系统状态、聚合状态和 odom 数据均不返回
+- `RadarRelocalizationRequest/Response`：请求必须包含当前活动的 `map_id` 与 `map_revision`。LOWER 验证地图身份后才接受初始位姿；`accepted=true` 仅表示请求已进入重定位流程
+- `RadarRelocalizationStatusResponse`：`raw_status=RelocalizationSuccess` 仅在生命周期为 `READY` 时返回；同时可读 `good_frames/required_frames/registration_quality_valid/registration_fitness/registration_inlier_ratio`、地图身份、`detail` 和 `residual_nodes[]`
 
 `PathPlanResponse` 地图信息字段（用于上位机直接渲染坐标）：
 
@@ -1054,6 +1057,13 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 | `MapDeleteRequest` | `map_id` | 按 ID 删除，不依赖本地文件名 |
 | `MapMetricsRequest` | `map_id` | 返回区域面积/耗时明细（单位小时） |
 
+APP 应读取以下响应字段：
+
+- `MapCatalogItem.map_revision`：目录中每张已保存地图的资产版本。
+- `MapSaveResponse.map_revision`：刚保存或更新元数据的地图资产版本。
+- `MapSaveResponse.mapping_stopped`：映射节点是否全部停止并通过复查；若为 `false`，检查 `lifecycle_state/residual_nodes[]`。
+- `MapSaveResponse.localization_started`：是否另行启动定位。当前地图保存操作不会自动启动定位，成功保存时该字段为 `false`。
+
 `MapAlignmentRequest (0x0524)` 关键字段：
 
 | 字段 | 含义 |
@@ -1087,6 +1097,7 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 |------|------|
 | `result` / `message` | 结果码与说明 |
 | `map_version` | 地图版本号（编辑或刷新后递增） |
+| `map_id` / `map_revision` | 保存地图的身份与资产 SHA-256；`map_revision` 与编辑版本 `map_version` 不同 |
 | `width` / `height` | 地图原始栅格尺寸（cell） |
 | `resolution` | 地图分辨率（米/格） |
 | `origin.x` / `origin.y` | 地图原点在 `frame_id` 坐标系下的位置 |
@@ -1209,11 +1220,9 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 ### 6.11 雷达模式切换
 
-1. APP 发送 `MapModeRequest`
-2. LOWER 发布到 Aurora ROS 话题：
-   - `MAP_MODE_MAPPING` -> `/slamware_ros_sdk_server_node/set_map_update`
-   - `MAP_MODE_LOCALIZATION` -> `/slamware_ros_sdk_server_node/set_map_localization`
-3. LOWER 返回 `MapModeResponse`
+1. APP 发送 `MapModeRequest`。
+2. LOWER 返回 `MapModeResponse`，其中 `lifecycle_state=STARTING` 表示启动流程已受理，不能据此开始任务。
+3. APP 轮询 `RadarRelocalizationStatusRequest`；只有状态为 `READY` 且 `registration_quality_valid=true` 才允许任务启动。停止超时时读取 `residual_nodes[]`。
 
 请求示例（进入建图模式）：
 
@@ -1230,11 +1239,14 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 ### 6.12 雷达地图重定位
 
-Super-LIO 定位模式启动后，APP 发送 `RadarRelocalizationRequest (0x052A)` 提供
-地图坐标系中的初始位姿：
+APP 先从地图目录/预览或地图选择响应取得当前 `map_id` 和 `map_revision`。启动
+Super-LIO 定位模式后，APP 发送 `RadarRelocalizationRequest (0x052A)`，同时提供这两个
+身份字段和地图坐标系中的初始位姿：
 
 ```json
 {
+  "map_id": "map-20260923-001",
+  "map_revision": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "initial_pose_available": true,
   "initial_pose": {
     "x": 1.2,
@@ -1254,27 +1266,31 @@ Super-LIO 定位模式启动后，APP 发送 `RadarRelocalizationRequest (0x052A
 
 - `x/y`：ROS `map` 坐标系，单位米。
 - `heading_deg`：从地图 X 正方向逆时针旋转，单位度。
+- `map_id/map_revision` 必须与当前已加载的不可变地图资产完全匹配；缺失或过期会被拒绝。
 - `initial_pose_available` 必须为 `true`；空请求会被拒绝，避免误将机器人设置到原点。
 - `initial_pose_covariance.valid=false` 时，LOWER 使用调度配置中的默认协方差。
 
-LOWER 校验 Super-LIO 当前处于 `LOCALIZING`，转换为
-`geometry_msgs/PoseWithCovarianceStamped` 并发布一次 `/initialpose`。
+LOWER 校验地图身份后，通过带 `map_id/map_revision` 的本地服务发布一次
+`geometry_msgs/PoseWithCovarianceStamped` 到 `/initialpose`，生命周期进入 `RELOCALIZING`。
 
 返回 `RadarRelocalizationResponse (0x052B)`：
 
 ```json
 {
   "result": "RESULT_SUCCESS",
-  "message": "initial_pose_published",
+  "message": "initial_pose_accepted",
   "accepted": true,
-  "status": "running"
+  "status": "running",
+  "map_id": "map-20260923-001",
+  "map_revision": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "lifecycle_state": "RELOCALIZING"
 }
 ```
 
-`accepted=true` 只表示初始位姿已经发布，不表示三维配准已经完成。请求缺少位姿、
-包含非有限数值、协方差非法或者当前未处于定位模式时，返回
-`accepted=false / status=rejected`。参数错误返回 `RESULT_INVALID_PARAM`；定位模式未
-启动或任务仍在规划、运行、暂停时返回 `RESULT_BUSY`。必须先停止任务再重新定位。
+`accepted=true` 只表示带地图身份的初始位姿已被接受，不表示三维配准已经完成。请求缺少
+身份/位姿、包含非有限数值、协方差非法或地图版本过期时，返回
+`accepted=false / status=rejected`。定位模式未启动或任务仍在规划、运行、暂停时返回
+`RESULT_BUSY`。必须先停止任务再重新定位。
 
 APP 可发送空的 `RadarRelocalizationStatusRequest (0x052C)` 查询最终状态：
 
@@ -1287,15 +1303,23 @@ APP 可发送空的 `RadarRelocalizationStatusRequest (0x052C)` 查询最终状�
 ```json
 {
   "raw_status": "RelocalizationSuccess",
+  "lifecycle_state": "READY",
+  "map_id": "map-20260923-001",
+  "map_revision": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "good_frames": 8,
+  "required_frames": 8,
+  "registration_quality_valid": true,
+  "registration_fitness": 0.012,
+  "registration_inlier_ratio": 0.67,
   "timestamp_ns": 1780000000000000000
 }
 ```
 
 Super-LIO 状态含义：
 
-- `RelocalizationRunning`：定位节点运行中，仍在等待初始位姿或有效定位里程计。
-- `RelocalizationSuccess`：模式管理器已收到初始位姿及其后的 `/lio/odom`。
-- `RelocalizationFailed`：模式管理器处于错误状态。
+- `RelocalizationRunning`：定位节点运行中，仍在等待初始位姿或连续稳定帧。
+- `RelocalizationSuccess`：生命周期达到 `READY`；连续 N 帧配准指标、位姿协方差、TF 和位姿跳变均通过。
+- `RelocalizationFailed`：模式管理器处于 `ERROR` 或 `TIMEOUT`；检查 `detail` 与 `residual_nodes[]`。
 - `Idle`：当前没有运行定位模式。
 
 请求示例（进入定位模式）：

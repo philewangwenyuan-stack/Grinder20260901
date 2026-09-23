@@ -107,7 +107,17 @@ class _DropIfBusyWorker:
 
 
 class SlLinkAServer:
-    def __init__(self, sdk_dir, host, port, callback_handler):
+    def __init__(
+        self,
+        sdk_dir,
+        host,
+        port,
+        callback_handler,
+        rx_diagnostic_logging=False,
+        rx_sample_interval_sec=1.0,
+        rx_stats_interval_sec=60.0,
+        metrics_registry=None,
+    ):
         ensure_sl_linka_sdk_on_path(sdk_dir)
         from sl_link.frame import SL_PROTOCOL_VERSION, SlFrame, SlFrameParser
         from sl_link.message_gen import sl_link_pb2 as pb
@@ -123,6 +133,26 @@ class SlLinkAServer:
         self._thread = None
         self._seq = 0
         self._seq_lock = threading.Lock()
+        self._rx_diagnostic_logging = bool(rx_diagnostic_logging)
+        self._rx_sample_interval_sec = max(0.0, float(rx_sample_interval_sec))
+        self._rx_stats_interval_sec = max(1.0, float(rx_stats_interval_sec))
+        self._rx_log_lock = threading.Lock()
+        self._rx_stats_started_at = time.monotonic()
+        self._rx_last_sample_at = self._rx_stats_started_at - self._rx_sample_interval_sec
+        self._rx_frames = 0
+        self._rx_payload_bytes = 0
+        self._rx_frame_counter = metrics_registry.counter("sl_rx_frames") if metrics_registry else None
+        self._control_queue_wait = metrics_registry.histogram("control_queue_wait_ms") if metrics_registry else None
+        self._ordered_queue_wait = metrics_registry.histogram("ordered_queue_wait_ms") if metrics_registry else None
+        self._map_chunks_sent = metrics_registry.counter("map_chunks_sent") if metrics_registry else None
+        self._map_frame_pack_ms = metrics_registry.histogram("map_frame_pack_ms") if metrics_registry else None
+        self._map_socket_send_ms = metrics_registry.histogram("map_socket_send_ms") if metrics_registry else None
+        self._map_send_total_ms = metrics_registry.histogram("map_send_total_ms") if metrics_registry else None
+        self._map_socket_send_total_ms = metrics_registry.histogram("map_socket_send_total_ms") if metrics_registry else None
+        self._map_request_total_ms = metrics_registry.histogram("map_request_total_ms") if metrics_registry else None
+        self._map_wire_bytes_sent = metrics_registry.counter("map_wire_bytes_sent") if metrics_registry else None
+        self._map_send_failures = metrics_registry.counter("map_send_failures") if metrics_registry else None
+        self._map_build_failures = metrics_registry.counter("map_build_failures") if metrics_registry else None
 
     def _enum_name(self, enum_type_name, value):
         enum_type = getattr(self.pb, enum_type_name, None)
@@ -237,26 +267,63 @@ class SlLinkAServer:
         return ""
 
     def _log_rx_frame(self, frame):
+        # 每帧只更新内存计数；采样日志和指标文件写入不在 TCP 接收热路径执行。
+        if self._rx_frame_counter is not None:
+            self._rx_frame_counter.inc()
         if rospy is None:
             return
-        rospy.loginfo(
-            "SL-LinkA RX frame: version=%d flags=0x%02X seq=%d ack=%d src=%d dst=%d "
-            "comp=%d msg_id=0x%04X name=%s payload_len=%d",
-            int(frame.version),
-            int(frame.flags),
-            int(frame.seq),
-            int(frame.ack_seq),
-            int(frame.src_id),
-            int(frame.dst_id),
-            int(frame.comp_id),
-            int(frame.msg_id),
-            self._msg_id_name(frame.msg_id),
-            len(frame.payload or b""),
-        )
+        now = time.monotonic()
+        payload_len = len(frame.payload or b"")
+        with self._rx_log_lock:
+            self._rx_frames += 1
+            self._rx_payload_bytes += payload_len
+            sample = self._rx_diagnostic_logging or (
+                self._rx_sample_interval_sec > 0.0
+                and now - self._rx_last_sample_at >= self._rx_sample_interval_sec
+            )
+            if sample:
+                self._rx_last_sample_at = now
+            elapsed = now - self._rx_stats_started_at
+            stats = None
+            if elapsed >= self._rx_stats_interval_sec:
+                stats = (self._rx_frames, self._rx_payload_bytes, elapsed)
+                self._rx_frames = 0
+                self._rx_payload_bytes = 0
+                self._rx_stats_started_at = now
+        if sample:
+            rospy.loginfo(
+                "SL-LinkA RX %s: version=%d flags=0x%02X seq=%d ack=%d src=%d dst=%d "
+                "comp=%d msg_id=0x%04X name=%s payload_len=%d",
+                "frame" if self._rx_diagnostic_logging else "sample",
+                int(frame.version),
+                int(frame.flags),
+                int(frame.seq),
+                int(frame.ack_seq),
+                int(frame.src_id),
+                int(frame.dst_id),
+                int(frame.comp_id),
+                int(frame.msg_id),
+                self._msg_id_name(frame.msg_id),
+                payload_len,
+            )
+        if stats is not None:
+            frames, payload_bytes, elapsed = stats
+            rospy.loginfo(
+                "SL-LinkA RX stats: interval_sec=%.1f frames=%d frames_per_sec=%.1f payload_bytes=%d",
+                elapsed,
+                frames,
+                frames / elapsed,
+                payload_bytes,
+            )
 
     def start(self):
         if rospy is not None:
-            rospy.loginfo("SL-LinkA header-only RX frame logging enabled")
+            rospy.loginfo(
+                "SL-LinkA RX logging: diagnostic=%s sample_interval_sec=%.1f stats_interval_sec=%.1f",
+                self._rx_diagnostic_logging,
+                self._rx_sample_interval_sec,
+                self._rx_stats_interval_sec,
+            )
         outer = self
 
         class RequestHandler(socketserver.BaseRequestHandler):
@@ -342,6 +409,7 @@ class SlLinkAServer:
                                         frame,
                                         control_request,
                                         True,
+                                        received_at,
                                     )
                                     if not accepted and rospy is not None:
                                         rospy.logwarn_throttle(
@@ -354,6 +422,7 @@ class SlLinkAServer:
                                         frame,
                                         control_request,
                                         False,
+                                        received_at,
                                     )
                             elif self._is_map_background_request(frame.msg_id):
                                 dropped = self.map_dispatch_executor.submit(
@@ -426,6 +495,8 @@ class SlLinkAServer:
 
             def _dispatch_ordered(self, frame, received_at, queue_name="ordered"):
                 queue_delay_ms = (time.monotonic() - float(received_at)) * 1000.0
+                if outer._ordered_queue_wait is not None:
+                    outer._ordered_queue_wait.observe(queue_delay_ms)
                 if rospy is not None and queue_delay_ms >= 100.0:
                     rospy.logwarn(
                         "SL-LinkA %s request queue delay: msg_id=0x%04X seq=%d delay_ms=%.1f",
@@ -450,15 +521,20 @@ class SlLinkAServer:
                 frame,
                 control_request=None,
                 latest_response=False,
+                received_at=None,
             ):
                 started = time.monotonic()
+                if received_at is not None and outer._control_queue_wait is not None:
+                    # 控制等待时间从收到完整帧算到开始执行业务，便于发现排队抖动。
+                    outer._control_queue_wait.observe((started - received_at) * 1000.0)
                 payload, msg_id, comp_id = outer._handler.handle_control_command(
                     frame.payload,
                     parsed_request=control_request,
                 )
                 applied_ms = (time.monotonic() - started) * 1000.0
                 if rospy is not None:
-                    rospy.loginfo(
+                    rospy.loginfo_throttle(
+                        5.0,
                         "SL-LinkA control applied immediately: rx_seq=%d apply_ms=%.1f",
                         int(frame.seq),
                         applied_ms,
@@ -601,6 +677,12 @@ class SlLinkAServer:
                     self.request.sendall(packed)
                     send_elapsed_ms = (time.monotonic() - send_started) * 1000.0
                 total_elapsed_ms = (time.monotonic() - total_started) * 1000.0
+                if int(msg_id) == int(outer.pb.MSG_ID_MAP_CHUNK):
+                    # 帧打包与 sendall 分开计时；sendall 返回只表示数据进入本机 TCP 栈。
+                    if outer._map_frame_pack_ms is not None:
+                        outer._map_frame_pack_ms.observe(pack_elapsed_ms)
+                        outer._map_socket_send_ms.observe(send_elapsed_ms)
+                        outer._map_wire_bytes_sent.inc(len(packed))
                 if rospy is not None and int(msg_id) == int(outer.pb.MSG_ID_PATH_PLAN_RESPONSE):
                     rospy.loginfo(
                         "SL-LinkA TX PathPlanResponse: seq=%d ack=%d bytes=%d total_ms=%.1f pack_ms=%.1f send_ms=%.1f",
@@ -611,6 +693,7 @@ class SlLinkAServer:
                         pack_elapsed_ms,
                         send_elapsed_ms,
                     )
+                return pack_elapsed_ms, send_elapsed_ms, len(packed)
 
         class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
             allow_reuse_address = True
@@ -684,9 +767,43 @@ class SlLinkAServer:
                 request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_MAP_REQUEST:
-            chunks = self._handler.build_map_chunks(frame.payload)
-            for payload, msg_id, comp_id in chunks:
-                request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            request_started = time.monotonic()
+            send_started = None
+            socket_send_total_ms = 0.0
+            try:
+                chunks = self._handler.build_map_chunks(frame.payload)
+                send_started = time.monotonic()
+                for payload, msg_id, comp_id in chunks:
+                    sent = request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+                    if sent is not None:
+                        socket_send_total_ms += sent[1]
+                    if self._map_chunks_sent is not None:
+                        # 只有 sendall 成功后才计入已发送分片，避免把构建数量当成传输成功数量。
+                        self._map_chunks_sent.inc()
+                if rospy is not None:
+                    rospy.loginfo_throttle(
+                        5.0,
+                        "SL-LinkA map transfer: chunks=%d build_ms=%.1f send_ms=%.1f socket_ms=%.1f total_ms=%.1f",
+                        len(chunks),
+                        (send_started - request_started) * 1000.0,
+                        (time.monotonic() - send_started) * 1000.0,
+                        socket_send_total_ms,
+                        (time.monotonic() - request_started) * 1000.0,
+                    )
+            except Exception:
+                if send_started is None and self._map_build_failures is not None:
+                    self._map_build_failures.inc()
+                elif send_started is not None and self._map_send_failures is not None:
+                    self._map_send_failures.inc()
+                raise
+            finally:
+                finished = time.monotonic()
+                if send_started is not None and self._map_send_total_ms is not None:
+                    # 整张地图发送阶段包含打包、锁等待和 socket 阻塞时间。
+                    self._map_send_total_ms.observe((finished - send_started) * 1000.0)
+                    self._map_socket_send_total_ms.observe(socket_send_total_ms)
+                if self._map_request_total_ms is not None:
+                    self._map_request_total_ms.observe((finished - request_started) * 1000.0)
             return
         if frame.msg_id == pb.MSG_ID_MAP_PREVIEW_REQUEST:
             payload, msg_id, comp_id = self._handler.handle_map_preview_request(frame.payload)

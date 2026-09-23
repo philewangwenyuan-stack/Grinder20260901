@@ -10,4 +10,6 @@ string loc_pcd_path
 string plan_pcd_path
 string yaml_path
 string image_path
-
+string asset_revision
+bool mapping_stopped
+string[] residual_nodes

@@ -55,6 +55,7 @@
   <exec_depend>super_lio</exec_depend>
   <exec_depend>roslaunch</exec_depend>
   <exec_depend>tf</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
 
   <export />
 </package>

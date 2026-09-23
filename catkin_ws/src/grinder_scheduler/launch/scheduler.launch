@@ -9,6 +9,21 @@
   <arg name="left_image_topic" default="/slamware_ros_sdk_server_node/left_image_raw" />
   <arg name="right_image_topic" default="/slamware_ros_sdk_server_node/right_image_raw" />
   <arg name="super_lio_map_root" default="/home/neardi/work/Grinder/maps" />
+  <arg name="enable_metrics_node" default="false" />
+  <arg name="metrics_export_enabled" default="true" />
+  <arg name="metrics_export_dir" default="/tmp/grinder_metrics" />
+  <arg name="metrics_export_interval_sec" default="10.0" />
+  <arg name="sl_linka_rx_diagnostic_logging" default="false" />
+
+  <!-- 可选系统采样节点：1 Hz 内存采样，后台每 10 秒写一次有界 JSON 快照。 -->
+  <node if="$(arg enable_metrics_node)"
+        pkg="grinder_scheduler"
+        type="grinder_metrics_node.py"
+        name="grinder_metrics"
+        output="screen">
+    <param name="metrics_export_dir" value="$(arg metrics_export_dir)" />
+    <param name="metrics_export_interval_sec" value="$(arg metrics_export_interval_sec)" />
+  </node>
 
   <node pkg="grinder_scheduler"
         type="super_lio_mode_manager.py"
@@ -16,6 +31,9 @@
         output="screen">
     <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
     <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
+    <param name="metrics_export_enabled" value="$(arg metrics_export_enabled)" />
+    <param name="metrics_export_dir" value="$(arg metrics_export_dir)" />
+    <param name="metrics_export_interval_sec" value="$(arg metrics_export_interval_sec)" />
   </node>
 
   <node pkg="grinder_scheduler"
@@ -35,6 +53,10 @@
     <param name="right_image_topic" value="$(arg right_image_topic)" />
     <param name="localization_backend" value="super_lio" />
     <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
+    <param name="metrics_export_enabled" value="$(arg metrics_export_enabled)" />
+    <param name="metrics_export_dir" value="$(arg metrics_export_dir)" />
+    <param name="metrics_export_interval_sec" value="$(arg metrics_export_interval_sec)" />
+    <param name="sl_linka_rx_diagnostic_logging" value="$(arg sl_linka_rx_diagnostic_logging)" />
     <param name="live_map_align_to_initial_yaw" value="false" />
   </node>
 </launch>

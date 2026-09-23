@@ -54,6 +54,8 @@ class SlLinkExample {
         SlMessageBuilder.buildVideoStreamInfoRequestRaw(serializedRequest, 0x10u)
 
     fun sendInitialPose(
+        mapId: String,
+        mapRevision: String,
         xMeters: Float,
         yMeters: Float,
         headingDegrees: Float,
@@ -72,6 +74,8 @@ class SlLinkExample {
             .setYawVariance(yawVariance)
             .build()
         val request = sl_link.SlLink.RadarRelocalizationRequest.newBuilder()
+            .setMapId(mapId)
+            .setMapRevision(mapRevision)
             .setInitialPoseAvailable(true)
             .setInitialPose(pose)
             .setInitialPoseCovariance(covariance)

@@ -103,7 +103,14 @@ if [[ "${START_LIVOX}" == "1" ]]; then
     echo "[ERROR] or start the Livox driver separately and rerun with START_LIVOX=0."
     exit 1
   fi
-  echo "[INFO] Livox driver package: $(rospack find livox_ros_driver2)"
+  local_livox_package="$(rospack find livox_ros_driver2)"
+  local_livox_launch="$(find "${local_livox_package}" -maxdepth 3 -type f -name msg_MID360s.launch -print -quit)"
+  if [[ -z "${local_livox_launch}" ]]; then
+    echo "[ERROR] Could not locate livox_ros_driver2/msg_MID360s.launch under ${local_livox_package}."
+    exit 1
+  fi
+  echo "[INFO] Livox driver package: ${local_livox_package}"
+  python3 "${SCRIPT_DIR}/scripts/check_livox_udp_ports.py" "${local_livox_package}" "${local_livox_launch}"
   launch_bg "livox" "roslaunch livox_ros_driver2 msg_MID360s.launch"
 fi
 

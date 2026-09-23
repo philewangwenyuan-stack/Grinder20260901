@@ -617,6 +617,9 @@ typedef struct _sl_link_MapPreviewResponse {
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
+    pb_callback_t map_id;
+    /* SHA-256 revision of immutable saved assets; distinct from map_version (region edits). */
+    pb_callback_t map_revision;
 } sl_link_MapPreviewResponse;
 
 /* Lightweight map annotation query. It does not render or return an image. */
@@ -761,6 +764,8 @@ typedef struct _sl_link_MapSyncResponse {
     pb_callback_t map_image_path;
     bool navigation_map_reloaded;
     pb_callback_t map_name;
+    pb_callback_t map_revision;
+    pb_callback_t lifecycle_state;
 } sl_link_MapSyncResponse;
 
 typedef struct _sl_link_MapImportToRadarRequest {
@@ -773,6 +778,8 @@ typedef struct _sl_link_MapImportToRadarResponse {
     pb_callback_t map_id;
     pb_callback_t map_name;
     bool imported;
+    pb_callback_t map_revision;
+    pb_callback_t lifecycle_state;
 } sl_link_MapImportToRadarResponse;
 
 typedef struct _sl_link_MapModeRequest {
@@ -787,6 +794,11 @@ typedef struct _sl_link_MapModeResponse {
     sl_link_MapModeType mode;
     bool enabled;
     int32_t map_kind;
+    pb_callback_t lifecycle_state;
+    pb_callback_t map_id;
+    pb_callback_t map_revision;
+    pb_size_t residual_nodes_count;
+    char residual_nodes[8][64];
 } sl_link_MapModeResponse;
 
 typedef struct _sl_link_MapAlignmentRequest {
@@ -823,6 +835,7 @@ typedef struct _sl_link_MapCatalogItem {
     uint32_t thumbnail_height;
     pb_callback_t thumbnail_image_b64;
     pb_callback_t created_at;
+    pb_callback_t map_revision;
 } sl_link_MapCatalogItem;
 
 typedef struct _sl_link_MapCatalogResponse {
@@ -868,6 +881,12 @@ typedef struct _sl_link_MapSaveResponse {
     float total_work_area_m2;
     float estimated_time_s;
     pb_callback_t created_at;
+    pb_callback_t map_revision;
+    pb_callback_t lifecycle_state;
+    bool mapping_stopped;
+    bool localization_started;
+    pb_size_t residual_nodes_count;
+    char residual_nodes[8][64];
 } sl_link_MapSaveResponse;
 
 typedef struct _sl_link_MapMetricsRequest {
@@ -1123,6 +1142,9 @@ typedef struct _sl_link_RadarRelocalizationRequest {
  its configured defaults. */
     bool has_initial_pose_covariance;
     sl_link_LocalizationCovariance initial_pose_covariance;
+    /* Must match the currently active immutable saved map. */
+    pb_callback_t map_id;
+    pb_callback_t map_revision;
 } sl_link_RadarRelocalizationRequest;
 
 typedef struct _sl_link_RadarRelocalizationResponse {
@@ -1131,6 +1153,9 @@ typedef struct _sl_link_RadarRelocalizationResponse {
     /* True means the radar accepted the asynchronous relocalization request. */
     bool accepted;
     pb_callback_t status;
+    pb_callback_t map_id;
+    pb_callback_t map_revision;
+    pb_callback_t lifecycle_state;
 } sl_link_RadarRelocalizationResponse;
 
 typedef struct _sl_link_RadarRelocalizationStatusRequest {
@@ -1140,6 +1165,17 @@ typedef struct _sl_link_RadarRelocalizationStatusRequest {
 typedef struct _sl_link_RadarRelocalizationStatusResponse {
     pb_callback_t raw_status;
     uint64_t timestamp_ns;
+    pb_callback_t lifecycle_state;
+    pb_callback_t detail;
+    pb_callback_t map_id;
+    pb_callback_t map_revision;
+    uint32_t good_frames;
+    uint32_t required_frames;
+    bool registration_quality_valid;
+    float registration_fitness;
+    float registration_inlier_ratio;
+    pb_size_t residual_nodes_count;
+    char residual_nodes[8][64];
 } sl_link_RadarRelocalizationStatusResponse;
 
 typedef struct _sl_link_DiscLiftControl {
@@ -1448,7 +1484,7 @@ extern "C" {
 #define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewRequest_init_default   {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
-#define sl_link_MapPreviewResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0}
+#define sl_link_MapPreviewResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapRegionPointRequest_init_default {{{NULL}, NULL}}
 #define sl_link_WorkRegionPointInfo_init_default {false, sl_link_PolygonRegion_init_default, 0, false, sl_link_Pose2D_init_default, 0, false, sl_link_Pose2D_init_default}
 #define sl_link_MapRegionPointResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_default}
@@ -1460,20 +1496,20 @@ extern "C" {
 #define sl_link_PathPlanRequest_init_default     {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPlanResponse_init_default    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0}
 #define sl_link_MapSyncRequest_init_default      {_sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, 0}
-#define sl_link_MapSyncResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}}
+#define sl_link_MapSyncResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapImportToRadarRequest_init_default {{{NULL}, NULL}}
-#define sl_link_MapImportToRadarResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_MapImportToRadarResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapModeRequest_init_default      {_sl_link_MapModeType_MIN, 0, 0}
-#define sl_link_MapModeResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapModeType_MIN, 0, 0}
+#define sl_link_MapModeResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapModeType_MIN, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {"", "", "", "", "", "", "", ""}}
 #define sl_link_MapAlignmentRequest_init_default {{{NULL}, NULL}, 0}
 #define sl_link_MapAlignmentResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapCatalogRequest_init_default   {0}
-#define sl_link_MapCatalogItem_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_MapCatalogItem_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapCatalogResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapDeleteRequest_init_default    {{{NULL}, NULL}}
 #define sl_link_MapDeleteResponse_init_default   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapSaveRequest_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
-#define sl_link_MapSaveResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_MapSaveResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {"", "", "", "", "", "", "", ""}}
 #define sl_link_MapMetricsRequest_init_default   {{{NULL}, NULL}}
 #define sl_link_RegionMetricsItem_init_default   {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_MapMetricsResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1498,10 +1534,10 @@ extern "C" {
 #define sl_link_RadarSystemStatusResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0}
 #define sl_link_RadarMapSyncRequest_init_default {0}
 #define sl_link_RadarMapSyncResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
-#define sl_link_RadarRelocalizationRequest_init_default {0, false, sl_link_Pose2D_init_default, false, sl_link_LocalizationCovariance_init_default}
-#define sl_link_RadarRelocalizationResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
+#define sl_link_RadarRelocalizationRequest_init_default {0, false, sl_link_Pose2D_init_default, false, sl_link_LocalizationCovariance_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_RadarRelocalizationResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_RadarRelocalizationStatusRequest_init_default {0}
-#define sl_link_RadarRelocalizationStatusResponse_init_default {{{NULL}, NULL}, 0}
+#define sl_link_RadarRelocalizationStatusResponse_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {"", "", "", "", "", "", "", ""}}
 #define sl_link_DiscLiftControl_init_default     {_sl_link_DiscLiftCommand_MIN}
 #define sl_link_LightingControl_init_default     {0}
 #define sl_link_ChassisPowerControl_init_default {0}
@@ -1538,7 +1574,7 @@ extern "C" {
 #define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewRequest_init_zero      {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
-#define sl_link_MapPreviewResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0}
+#define sl_link_MapPreviewResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapRegionPointRequest_init_zero  {{{NULL}, NULL}}
 #define sl_link_WorkRegionPointInfo_init_zero    {false, sl_link_PolygonRegion_init_zero, 0, false, sl_link_Pose2D_init_zero, 0, false, sl_link_Pose2D_init_zero}
 #define sl_link_MapRegionPointResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_zero}
@@ -1550,20 +1586,20 @@ extern "C" {
 #define sl_link_PathPlanRequest_init_zero        {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPlanResponse_init_zero       {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0}
 #define sl_link_MapSyncRequest_init_zero         {_sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, 0}
-#define sl_link_MapSyncResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}}
+#define sl_link_MapSyncResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapImportToRadarRequest_init_zero {{{NULL}, NULL}}
-#define sl_link_MapImportToRadarResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_MapImportToRadarResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapModeRequest_init_zero         {_sl_link_MapModeType_MIN, 0, 0}
-#define sl_link_MapModeResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapModeType_MIN, 0, 0}
+#define sl_link_MapModeResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapModeType_MIN, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {"", "", "", "", "", "", "", ""}}
 #define sl_link_MapAlignmentRequest_init_zero    {{{NULL}, NULL}, 0}
 #define sl_link_MapAlignmentResponse_init_zero   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapCatalogRequest_init_zero      {0}
-#define sl_link_MapCatalogItem_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_MapCatalogItem_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapCatalogResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapDeleteRequest_init_zero       {{{NULL}, NULL}}
 #define sl_link_MapDeleteResponse_init_zero      {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapSaveRequest_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
-#define sl_link_MapSaveResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_MapSaveResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {"", "", "", "", "", "", "", ""}}
 #define sl_link_MapMetricsRequest_init_zero      {{{NULL}, NULL}}
 #define sl_link_RegionMetricsItem_init_zero      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_MapMetricsResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1588,10 +1624,10 @@ extern "C" {
 #define sl_link_RadarSystemStatusResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0}
 #define sl_link_RadarMapSyncRequest_init_zero    {0}
 #define sl_link_RadarMapSyncResponse_init_zero   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
-#define sl_link_RadarRelocalizationRequest_init_zero {0, false, sl_link_Pose2D_init_zero, false, sl_link_LocalizationCovariance_init_zero}
-#define sl_link_RadarRelocalizationResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
+#define sl_link_RadarRelocalizationRequest_init_zero {0, false, sl_link_Pose2D_init_zero, false, sl_link_LocalizationCovariance_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_RadarRelocalizationResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_RadarRelocalizationStatusRequest_init_zero {0}
-#define sl_link_RadarRelocalizationStatusResponse_init_zero {{{NULL}, NULL}, 0}
+#define sl_link_RadarRelocalizationStatusResponse_init_zero {{{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {"", "", "", "", "", "", "", ""}}
 #define sl_link_DiscLiftControl_init_zero        {_sl_link_DiscLiftCommand_MIN}
 #define sl_link_LightingControl_init_zero        {0}
 #define sl_link_ChassisPowerControl_init_zero    {0}
@@ -1862,6 +1898,8 @@ extern "C" {
 #define sl_link_MapPreviewResponse_alignment_yaw_deg_tag 14
 #define sl_link_MapPreviewResponse_app_rotation_deg_tag 15
 #define sl_link_MapPreviewResponse_rotation_alignment_delta_deg_tag 16
+#define sl_link_MapPreviewResponse_map_id_tag    17
+#define sl_link_MapPreviewResponse_map_revision_tag 18
 #define sl_link_MapRegionPointRequest_map_id_tag 1
 #define sl_link_WorkRegionPointInfo_region_tag   1
 #define sl_link_WorkRegionPointInfo_start_pose_available_tag 2
@@ -1951,12 +1989,16 @@ extern "C" {
 #define sl_link_MapSyncResponse_map_image_path_tag 6
 #define sl_link_MapSyncResponse_navigation_map_reloaded_tag 7
 #define sl_link_MapSyncResponse_map_name_tag     8
+#define sl_link_MapSyncResponse_map_revision_tag 9
+#define sl_link_MapSyncResponse_lifecycle_state_tag 10
 #define sl_link_MapImportToRadarRequest_map_id_tag 1
 #define sl_link_MapImportToRadarResponse_result_tag 1
 #define sl_link_MapImportToRadarResponse_message_tag 2
 #define sl_link_MapImportToRadarResponse_map_id_tag 3
 #define sl_link_MapImportToRadarResponse_map_name_tag 4
 #define sl_link_MapImportToRadarResponse_imported_tag 5
+#define sl_link_MapImportToRadarResponse_map_revision_tag 6
+#define sl_link_MapImportToRadarResponse_lifecycle_state_tag 7
 #define sl_link_MapModeRequest_mode_tag          1
 #define sl_link_MapModeRequest_enabled_tag       2
 #define sl_link_MapModeRequest_map_kind_tag      3
@@ -1965,6 +2007,10 @@ extern "C" {
 #define sl_link_MapModeResponse_mode_tag         3
 #define sl_link_MapModeResponse_enabled_tag      4
 #define sl_link_MapModeResponse_map_kind_tag     5
+#define sl_link_MapModeResponse_lifecycle_state_tag 6
+#define sl_link_MapModeResponse_map_id_tag       7
+#define sl_link_MapModeResponse_map_revision_tag 8
+#define sl_link_MapModeResponse_residual_nodes_tag 9
 #define sl_link_MapAlignmentRequest_map_id_tag   1
 #define sl_link_MapAlignmentRequest_rotation_deg_tag 2
 #define sl_link_MapAlignmentResponse_result_tag  1
@@ -1985,6 +2031,7 @@ extern "C" {
 #define sl_link_MapCatalogItem_thumbnail_height_tag 9
 #define sl_link_MapCatalogItem_thumbnail_image_b64_tag 10
 #define sl_link_MapCatalogItem_created_at_tag    11
+#define sl_link_MapCatalogItem_map_revision_tag  12
 #define sl_link_MapCatalogResponse_result_tag    1
 #define sl_link_MapCatalogResponse_message_tag   2
 #define sl_link_MapCatalogResponse_total_count_tag 3
@@ -2012,6 +2059,11 @@ extern "C" {
 #define sl_link_MapSaveResponse_total_work_area_m2_tag 8
 #define sl_link_MapSaveResponse_estimated_time_s_tag 9
 #define sl_link_MapSaveResponse_created_at_tag   10
+#define sl_link_MapSaveResponse_map_revision_tag 11
+#define sl_link_MapSaveResponse_lifecycle_state_tag 12
+#define sl_link_MapSaveResponse_mapping_stopped_tag 13
+#define sl_link_MapSaveResponse_localization_started_tag 14
+#define sl_link_MapSaveResponse_residual_nodes_tag 15
 #define sl_link_MapMetricsRequest_map_id_tag     1
 #define sl_link_RegionMetricsItem_region_id_tag  1
 #define sl_link_RegionMetricsItem_region_name_tag 2
@@ -2171,12 +2223,27 @@ extern "C" {
 #define sl_link_RadarRelocalizationRequest_initial_pose_available_tag 1
 #define sl_link_RadarRelocalizationRequest_initial_pose_tag 2
 #define sl_link_RadarRelocalizationRequest_initial_pose_covariance_tag 3
+#define sl_link_RadarRelocalizationRequest_map_id_tag 4
+#define sl_link_RadarRelocalizationRequest_map_revision_tag 5
 #define sl_link_RadarRelocalizationResponse_result_tag 1
 #define sl_link_RadarRelocalizationResponse_message_tag 2
 #define sl_link_RadarRelocalizationResponse_accepted_tag 3
 #define sl_link_RadarRelocalizationResponse_status_tag 4
+#define sl_link_RadarRelocalizationResponse_map_id_tag 5
+#define sl_link_RadarRelocalizationResponse_map_revision_tag 6
+#define sl_link_RadarRelocalizationResponse_lifecycle_state_tag 7
 #define sl_link_RadarRelocalizationStatusResponse_raw_status_tag 5
 #define sl_link_RadarRelocalizationStatusResponse_timestamp_ns_tag 10
+#define sl_link_RadarRelocalizationStatusResponse_lifecycle_state_tag 11
+#define sl_link_RadarRelocalizationStatusResponse_detail_tag 12
+#define sl_link_RadarRelocalizationStatusResponse_map_id_tag 13
+#define sl_link_RadarRelocalizationStatusResponse_map_revision_tag 14
+#define sl_link_RadarRelocalizationStatusResponse_good_frames_tag 15
+#define sl_link_RadarRelocalizationStatusResponse_required_frames_tag 16
+#define sl_link_RadarRelocalizationStatusResponse_registration_quality_valid_tag 17
+#define sl_link_RadarRelocalizationStatusResponse_registration_fitness_tag 18
+#define sl_link_RadarRelocalizationStatusResponse_registration_inlier_ratio_tag 19
+#define sl_link_RadarRelocalizationStatusResponse_residual_nodes_tag 20
 #define sl_link_DiscLiftControl_command_tag      1
 #define sl_link_LightingControl_enabled_tag      1
 #define sl_link_ChassisPowerControl_enabled_tag  1
@@ -2598,7 +2665,9 @@ X(a, STATIC,   SINGULAR, FLOAT,    preview_scale_y,  12) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  localization_covariance,  13) \
 X(a, STATIC,   SINGULAR, FLOAT,    alignment_yaw_deg,  14) \
 X(a, STATIC,   SINGULAR, FLOAT,    app_rotation_deg,  15) \
-X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  16)
+X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  16) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,           17) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,     18)
 #define sl_link_MapPreviewResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapPreviewResponse_DEFAULT NULL
 #define sl_link_MapPreviewResponse_origin_MSGTYPE sl_link_Pose2D
@@ -2752,7 +2821,9 @@ X(a, CALLBACK, SINGULAR, STRING,   map_id,            4) \
 X(a, CALLBACK, SINGULAR, STRING,   map_yaml_path,     5) \
 X(a, CALLBACK, SINGULAR, STRING,   map_image_path,    6) \
 X(a, STATIC,   SINGULAR, BOOL,     navigation_map_reloaded,   7) \
-X(a, CALLBACK, SINGULAR, STRING,   map_name,          8)
+X(a, CALLBACK, SINGULAR, STRING,   map_name,          8) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,      9) \
+X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,  10)
 #define sl_link_MapSyncResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapSyncResponse_DEFAULT NULL
 
@@ -2766,7 +2837,9 @@ X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, CALLBACK, SINGULAR, STRING,   map_id,            3) \
 X(a, CALLBACK, SINGULAR, STRING,   map_name,          4) \
-X(a, STATIC,   SINGULAR, BOOL,     imported,          5)
+X(a, STATIC,   SINGULAR, BOOL,     imported,          5) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,      6) \
+X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,   7)
 #define sl_link_MapImportToRadarResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapImportToRadarResponse_DEFAULT NULL
 
@@ -2782,7 +2855,11 @@ X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, STATIC,   SINGULAR, UENUM,    mode,              3) \
 X(a, STATIC,   SINGULAR, BOOL,     enabled,           4) \
-X(a, STATIC,   SINGULAR, INT32,    map_kind,          5)
+X(a, STATIC,   SINGULAR, INT32,    map_kind,          5) \
+X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,   6) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            7) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,      8) \
+X(a, STATIC,   REPEATED, STRING,   residual_nodes,    9)
 #define sl_link_MapModeResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapModeResponse_DEFAULT NULL
 
@@ -2819,7 +2896,8 @@ X(a, CALLBACK, SINGULAR, STRING,   thumbnail_format,   7) \
 X(a, STATIC,   SINGULAR, UINT32,   thumbnail_width,   8) \
 X(a, STATIC,   SINGULAR, UINT32,   thumbnail_height,   9) \
 X(a, CALLBACK, SINGULAR, STRING,   thumbnail_image_b64,  10) \
-X(a, CALLBACK, SINGULAR, STRING,   created_at,       11)
+X(a, CALLBACK, SINGULAR, STRING,   created_at,       11) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,     12)
 #define sl_link_MapCatalogItem_CALLBACK pb_default_field_callback
 #define sl_link_MapCatalogItem_DEFAULT NULL
 
@@ -2867,7 +2945,12 @@ X(a, CALLBACK, SINGULAR, STRING,   map_image_path,    6) \
 X(a, STATIC,   SINGULAR, BOOL,     navigation_map_reloaded,   7) \
 X(a, STATIC,   SINGULAR, FLOAT,    total_work_area_m2,   8) \
 X(a, STATIC,   SINGULAR, FLOAT,    estimated_time_s,   9) \
-X(a, CALLBACK, SINGULAR, STRING,   created_at,       10)
+X(a, CALLBACK, SINGULAR, STRING,   created_at,       10) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,     11) \
+X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,  12) \
+X(a, STATIC,   SINGULAR, BOOL,     mapping_stopped,  13) \
+X(a, STATIC,   SINGULAR, BOOL,     localization_started,  14) \
+X(a, STATIC,   REPEATED, STRING,   residual_nodes,   15)
 #define sl_link_MapSaveResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapSaveResponse_DEFAULT NULL
 
@@ -3136,8 +3219,10 @@ X(a, STATIC,   SINGULAR, BOOL,     sent,              3)
 #define sl_link_RadarRelocalizationRequest_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     initial_pose_available,   1) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  initial_pose,      2) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  initial_pose_covariance,   3)
-#define sl_link_RadarRelocalizationRequest_CALLBACK NULL
+X(a, STATIC,   OPTIONAL, MESSAGE,  initial_pose_covariance,   3) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            4) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,      5)
+#define sl_link_RadarRelocalizationRequest_CALLBACK pb_default_field_callback
 #define sl_link_RadarRelocalizationRequest_DEFAULT NULL
 #define sl_link_RadarRelocalizationRequest_initial_pose_MSGTYPE sl_link_Pose2D
 #define sl_link_RadarRelocalizationRequest_initial_pose_covariance_MSGTYPE sl_link_LocalizationCovariance
@@ -3146,7 +3231,10 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  initial_pose_covariance,   3)
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, STATIC,   SINGULAR, BOOL,     accepted,          3) \
-X(a, CALLBACK, SINGULAR, STRING,   status,            4)
+X(a, CALLBACK, SINGULAR, STRING,   status,            4) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            5) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,      6) \
+X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,   7)
 #define sl_link_RadarRelocalizationResponse_CALLBACK pb_default_field_callback
 #define sl_link_RadarRelocalizationResponse_DEFAULT NULL
 
@@ -3157,7 +3245,17 @@ X(a, CALLBACK, SINGULAR, STRING,   status,            4)
 
 #define sl_link_RadarRelocalizationStatusResponse_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   raw_status,        5) \
-X(a, STATIC,   SINGULAR, UINT64,   timestamp_ns,     10)
+X(a, STATIC,   SINGULAR, UINT64,   timestamp_ns,     10) \
+X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,  11) \
+X(a, CALLBACK, SINGULAR, STRING,   detail,           12) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,           13) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,     14) \
+X(a, STATIC,   SINGULAR, UINT32,   good_frames,      15) \
+X(a, STATIC,   SINGULAR, UINT32,   required_frames,  16) \
+X(a, STATIC,   SINGULAR, BOOL,     registration_quality_valid,  17) \
+X(a, STATIC,   SINGULAR, FLOAT,    registration_fitness,  18) \
+X(a, STATIC,   SINGULAR, FLOAT,    registration_inlier_ratio,  19) \
+X(a, STATIC,   REPEATED, STRING,   residual_nodes,   20)
 #define sl_link_RadarRelocalizationStatusResponse_CALLBACK pb_default_field_callback
 #define sl_link_RadarRelocalizationStatusResponse_DEFAULT NULL
 
@@ -3467,6 +3565,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_RadarMapCacheClearResponse_size depends on runtime parameters */
 /* sl_link_RadarSystemStatusResponse_size depends on runtime parameters */
 /* sl_link_RadarMapSyncResponse_size depends on runtime parameters */
+/* sl_link_RadarRelocalizationRequest_size depends on runtime parameters */
 /* sl_link_RadarRelocalizationResponse_size depends on runtime parameters */
 /* sl_link_RadarRelocalizationStatusResponse_size depends on runtime parameters */
 /* sl_link_ControlCommandResponse_size depends on runtime parameters */
@@ -3488,7 +3587,6 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_Pose2D_size                      15
 #define sl_link_RadarMapCacheClearRequest_size   0
 #define sl_link_RadarMapSyncRequest_size         0
-#define sl_link_RadarRelocalizationRequest_size  53
 #define sl_link_RadarRelocalizationStatusRequest_size 0
 #define sl_link_RadarSystemStatusRequest_size    0
 #define sl_link_RppSettings_size                 260

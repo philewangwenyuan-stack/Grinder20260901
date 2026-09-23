@@ -608,9 +608,9 @@ roslaunch super_lio relocation.launch \
 `/lio/map/save_map=false`，不累计保存点云；固定地图定位还应保持
 `/lio/relocation/update_map=false`。
 
-首次启动后可在 RViz 使用 `2D Pose Estimate` 发布 `/initialpose`；正式 APP 链路通过
-`RadarRelocalizationRequest (0x052A)` 下发 `x/y/heading_deg`，调度器校验后转换并
-发布同一 ROS 话题。验证：
+首次启动后可在 RViz 使用 `2D Pose Estimate` 发布 `/initialpose` 做人工联调；正式 APP
+链路通过 `RadarRelocalizationRequest (0x052A)` 一并传入当前 `map_id/map_revision` 和
+`x/y/heading_deg`。调度器只在身份匹配后调用模式管理器发布 `/initialpose`。验证：
 
 ```bash
 rostopic hz /lio/odom
@@ -714,17 +714,18 @@ MAP_MODE_MAPPING enabled=true
 MapSaveRequest map_id="" 或 map_id="LIVE_MAP"
   -> 保存 PCD 与 PGM/YAML
   -> LOWER 生成唯一正式 map_id，并在响应中返回
-  -> 停止建图
-  -> 自动启动 map_server + relocation_node
-  -> 等待 APP 通过 0x052A 下发初始位姿（或 RViz 发布 /initialpose）
+  -> 停止并复查建图节点
+  -> 返回 map_revision、mapping_stopped、localization_started=false
 
 MAP_MODE_LOCALIZATION enabled=true
-  -> 使用当前 map_id 启动旧地图重定位
+  -> 返回 STARTING，再进入 LOCALIZING，等待带 map_id/map_revision 的初始位姿
+  -> APP 轮询 0x052D；只有 lifecycle_state=READY 才允许开始任务
 ```
 
 APP 必须在 `MAPPING` 仍处于活动状态时发送 `MapSaveRequest`，不要先发送
 `MAP_MODE_LOCALIZATION`。`LIVE_MAP` 只是实时建图源的保留 ID，不会作为资产目录名；
-保存成功后响应中的新 `map_id` 才是后续目录、定位和上传使用的正式 ID。
+保存成功后响应中的新 `map_id/map_revision` 才是后续地图选择和重定位使用的身份。地图
+保存成功不表示定位已经启动或已达到 `READY`。
 
 每张地图保存为独立资产包：
 

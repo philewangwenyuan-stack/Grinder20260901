@@ -1,3 +1,8 @@
+import datetime
+
+from grinder_scheduler.map_asset_revision import get_or_compute_map_asset_revision
+
+
 def fill_map_catalog_response(
     response,
     entries,
@@ -34,12 +39,20 @@ def fill_map_catalog_response(
             if isinstance(record, dict):
                 created_at = str(record.get("created_at", "") or "").strip()
                 if (not created_at) and int(record.get("saved_at", 0) or 0) > 0:
-                    import datetime
 
                     created_at = datetime.datetime.fromtimestamp(
                         int(record.get("saved_at", 0))
                     ).strftime("%Y-%m-%d %H:%M:%S")
             item.created_at = str(created_at)
+        if hasattr(item, "map_revision") and isinstance(record, dict):
+            revision = str(record.get("map_revision", "") or "").strip()
+            if not revision:
+                bundle_dir = str(record.get("bundle_dir", "") or "").strip()
+                try:
+                    revision = get_or_compute_map_asset_revision(bundle_dir) if bundle_dir else ""
+                except Exception:
+                    revision = ""
+            item.map_revision = revision
         if hasattr(item, "total_work_area_m2"):
             item.total_work_area_m2 = float(max(0.0, total_work_area_m2))
         if hasattr(item, "estimated_time_s"):
