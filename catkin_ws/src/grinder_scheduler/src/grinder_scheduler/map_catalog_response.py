@@ -52,6 +52,11 @@ def fill_map_catalog_response(
                     revision = get_or_compute_map_asset_revision(bundle_dir) if bundle_dir else ""
                 except Exception:
                     revision = ""
+                if revision:
+                    # The bundle is immutable after save. Cache a revision
+                    # computed for a legacy registry entry so catalog reads
+                    # do not hash large PCD files repeatedly.
+                    record["map_revision"] = revision
             item.map_revision = revision
         if hasattr(item, "total_work_area_m2"):
             item.total_work_area_m2 = float(max(0.0, total_work_area_m2))

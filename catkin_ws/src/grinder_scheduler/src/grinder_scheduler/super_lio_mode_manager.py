@@ -7,6 +7,7 @@ import queue
 import re
 import socket
 import shutil
+import struct
 import tempfile
 import threading
 import time
@@ -19,7 +20,7 @@ import rospy
 from diagnostic_msgs.msg import DiagnosticArray
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
-from sensor_msgs.msg import Imu, PointCloud2
+from sensor_msgs.msg import Imu
 from std_msgs.msg import Bool
 from std_srvs.srv import Trigger, TriggerResponse
 
@@ -182,7 +183,12 @@ class SuperLioModeManager:
         self._initial_pose_pub = rospy.Publisher(
             "/initialpose", PoseWithCovarianceStamped, queue_size=1
         )
-        rospy.Subscriber("/livox/lidar", PointCloud2, self._lidar_callback, queue_size=10)
+        # Only the header timestamp is needed here. Decoding every Livox point
+        # in Python can consume a core while roslaunch runs on the main thread.
+        rospy.Subscriber(
+            "/livox/lidar", rospy.AnyMsg, self._lidar_callback,
+            queue_size=1, buff_size=8 * 1024 * 1024,
+        )
         rospy.Subscriber("/livox/imu", Imu, self._imu_callback, queue_size=100)
         rospy.Subscriber("/lio/odom", Odometry, self._localization_odom_callback, queue_size=1)
         rospy.Subscriber("/map", OccupancyGrid, self._map_callback, queue_size=1)
@@ -299,14 +305,34 @@ class SuperLioModeManager:
             return 0.0
 
     def _record_stream_message(self, topic, message):
-        stamp = self._stamp_sec(message)
+        self._record_stream_stamp(topic, self._stamp_sec(message))
+
+    def _record_stream_stamp(self, topic, stamp):
         with self._health_lock:
             samples = self._stream_samples.get(topic)
             if samples is not None:
                 samples.append((time.monotonic(), stamp))
 
+    @staticmethod
+    def _livox_raw_stamp(message):
+        connection = getattr(message, "_connection_header", None) or {}
+        if connection.get("type") != "livox_ros_driver2/CustomMsg":
+            return 0.0
+        payload = getattr(message, "_buff", None) or b""
+        if len(payload) < 16:
+            return 0.0
+        try:
+            _, seconds, nanoseconds, frame_length = struct.unpack_from("<IIII", payload)
+        except (TypeError, struct.error):
+            return 0.0
+        if nanoseconds >= 1_000_000_000 or len(payload) < 16 + frame_length:
+            return 0.0
+        return float(seconds) + float(nanoseconds) * 1e-9
+
     def _lidar_callback(self, message):
-        self._record_stream_message("/livox/lidar", message)
+        stamp = self._livox_raw_stamp(message)
+        if stamp > 0.0:
+            self._record_stream_stamp("/livox/lidar", stamp)
 
     def _imu_callback(self, message):
         self._record_stream_message("/livox/imu", message)
@@ -795,11 +821,22 @@ class SuperLioModeManager:
         self._accept_new_owned_node_uris = False
         self._residual_nodes = []
 
-    def _wait_service(self, name):
-        rospy.wait_for_service(name, timeout=self._startup_timeout)
+    def _wait_service(self, name, deadline=None):
+        timeout = self._startup_timeout
+        if deadline is not None:
+            timeout = float(deadline) - time.monotonic()
+            if timeout <= 0.0:
+                raise RuntimeError(
+                    "startup timeout exceeded while waiting for service {}".format(name)
+                )
+        rospy.wait_for_service(name, timeout=timeout)
 
-    def _wait_topic_event(self, event, topic):
-        deadline = time.monotonic() + self._startup_timeout
+    def _wait_topic_event(self, event, topic, deadline=None):
+        deadline = (
+            float(deadline)
+            if deadline is not None
+            else time.monotonic() + self._startup_timeout
+        )
         while not rospy.is_shutdown():
             remaining = deadline - time.monotonic()
             if remaining <= 0.0:
@@ -819,15 +856,33 @@ class SuperLioModeManager:
             self._last_quality_stamp = 0.0
             self._map_metadata = None
 
-    def _wait_for_health(self, predicate, description):
-        deadline = time.monotonic() + self._startup_timeout
+    def _wait_for_health(self, predicate, description, deadline=None, diagnostics=None):
+        deadline = (
+            float(deadline)
+            if deadline is not None
+            else time.monotonic() + self._startup_timeout
+        )
         while not rospy.is_shutdown():
             self._refresh_owned_node_uris()
             if predicate():
                 return
             remaining = deadline - time.monotonic()
             if remaining <= 0.0:
-                raise RuntimeError("startup health timeout: {}".format(description))
+                details = ""
+                if callable(diagnostics):
+                    try:
+                        failed = [
+                            str(name)
+                            for name, healthy in diagnostics().items()
+                            if not healthy
+                        ]
+                        if failed:
+                            details = "; failing_checks={}".format(",".join(failed))
+                    except Exception as exc:
+                        details = "; diagnostics_error={}".format(exc)
+                raise RuntimeError(
+                    "startup health timeout: {}{}".format(description, details)
+                )
             rospy.sleep(min(0.1, remaining))
         raise RuntimeError("shutdown while waiting for startup health: {}".format(description))
 
@@ -836,6 +891,21 @@ class SuperLioModeManager:
             self._stream_is_healthy("/livox/lidar", self._min_lidar_hz)
             and self._stream_is_healthy("/livox/imu", self._min_imu_hz)
         )
+
+    def _mapping_health_checks(self):
+        return {
+            "livox_lidar_rate_freshness": self._stream_is_healthy(
+                "/livox/lidar", self._min_lidar_hz
+            ),
+            "livox_imu_rate_freshness": self._stream_is_healthy(
+                "/livox/imu", self._min_imu_hz
+            ),
+            "lio_odom_rate_freshness": self._stream_is_healthy(
+                "/lio/odom", self._min_odom_hz
+            ),
+            "map_freshness": self._map_is_fresh(),
+            "map_to_base_tf": self._tf_is_valid(),
+        }
 
     def _clear_localization_quality(self):
         self._initial_pose_received = False
@@ -871,21 +941,24 @@ class SuperLioModeManager:
         ]
         try:
             rospy.loginfo("Starting managed Super-LIO mapping launch")
+            launch_started = time.monotonic()
             self._start_launch(self._mapping_launch, args, "mapping")
-            self._wait_service("/lio/get_3dmap")
-            self._wait_service("/cloud_to_occupancy_grid/save_map")
-            self._wait_service("/cloud_to_occupancy_grid/reset_map")
+            rospy.loginfo(
+                "Managed Super-LIO mapping processes launched in %.1fs",
+                time.monotonic() - launch_started,
+            )
+            startup_deadline = time.monotonic() + self._startup_timeout
+            self._wait_service("/lio/get_3dmap", deadline=startup_deadline)
+            self._wait_service("/cloud_to_occupancy_grid/save_map", deadline=startup_deadline)
+            self._wait_service("/cloud_to_occupancy_grid/reset_map", deadline=startup_deadline)
             rospy.loginfo("Super-LIO mapping services ready; waiting for fresh Livox/odometry streams")
-            self._wait_topic_event(self._odom_event, "/lio/odom")
-            self._wait_topic_event(self._map_event, "/map")
+            self._wait_topic_event(self._odom_event, "/lio/odom", deadline=startup_deadline)
+            self._wait_topic_event(self._map_event, "/map", deadline=startup_deadline)
             self._wait_for_health(
-                lambda: (
-                    self._assert_livox_stream_health()
-                    and self._stream_is_healthy("/lio/odom", self._min_odom_hz)
-                    and self._map_is_fresh()
-                    and self._tf_is_valid()
-                ),
+                lambda: all(self._mapping_health_checks().values()),
                 "fresh /livox/lidar, /livox/imu, /lio/odom, /map and valid map->{} TF".format(self._tf_base_frame),
+                deadline=startup_deadline,
+                diagnostics=self._mapping_health_checks,
             )
         except Exception as startup_error:
             try:
@@ -995,11 +1068,18 @@ class SuperLioModeManager:
         ):
             args.append("{}:={}".format(key, rospy.get_param("~" + key, 0.0)))
         try:
+            launch_started = time.monotonic()
             self._start_launch(self._localization_launch, args, "localization")
-            self._wait_topic_event(self._map_event, "/map")
+            rospy.loginfo(
+                "Managed Super-LIO localization processes launched in %.1fs",
+                time.monotonic() - launch_started,
+            )
+            startup_deadline = time.monotonic() + self._startup_timeout
+            self._wait_topic_event(self._map_event, "/map", deadline=startup_deadline)
             self._wait_for_health(
                 lambda: self._assert_livox_stream_health() and self._map_is_fresh(),
                 "fresh /livox/lidar, /livox/imu and map_server /map",
+                deadline=startup_deadline,
             )
         except Exception as startup_error:
             try:
@@ -1028,6 +1108,7 @@ class SuperLioModeManager:
                 return TriggerResponse(success=True, message=message)
             except Exception as exc:
                 _record_operation_failure("start_mapping", exc)
+                rospy.logerr("Super-LIO mapping startup failed: %s", exc)
                 self._state = self.TIMEOUT if isinstance(exc, SuperLioShutdownTimeout) else self.ERROR
                 self._message = str(exc)
                 self._residual_nodes = list(getattr(exc, "residual_nodes", []))

@@ -343,6 +343,12 @@ class SlLinkAServer:
                     max_pending=32,
                     name="sl_linka_ordered",
                 )
+                # Local map deletion must not queue behind a synchronous map
+                # mode transition, which may wait for Super-LIO health checks.
+                self.map_delete_executor = ThreadPoolExecutor(
+                    max_workers=1,
+                    thread_name_prefix="sl_linka_delete",
+                )
                 self.map_dispatch_executor = _BoundedLatestWorker(
                     max_pending=4,
                     name="sl_linka_map",
@@ -432,6 +438,13 @@ class SlLinkAServer:
                                     "map",
                                 )
                                 self._log_dropped_job("map request", dropped)
+                            elif self._is_map_delete_request(frame.msg_id):
+                                self.map_delete_executor.submit(
+                                    self._dispatch_ordered,
+                                    frame,
+                                    received_at,
+                                    "delete",
+                                )
                             else:
                                 dropped = self.dispatch_executor.submit(
                                     self._dispatch_ordered,
@@ -452,6 +465,7 @@ class SlLinkAServer:
             def finish(self):
                 self.running = False
                 self.dispatch_executor.shutdown(wait=False)
+                self.map_delete_executor.shutdown(wait=False)
                 self.map_dispatch_executor.shutdown(wait=False)
                 self.manual_control_executor.shutdown(wait=False)
                 self.manual_response_executor.shutdown(wait=False)
@@ -479,6 +493,12 @@ class SlLinkAServer:
                     for name in names
                     if hasattr(outer.pb, name)
                 }
+
+            def _is_map_delete_request(self, msg_id):
+                return (
+                    hasattr(outer.pb, "MSG_ID_MAP_DELETE_REQUEST")
+                    and int(msg_id) == int(outer.pb.MSG_ID_MAP_DELETE_REQUEST)
+                )
 
             def _log_dropped_job(self, queue_name, dropped):
                 if dropped is None or rospy is None:

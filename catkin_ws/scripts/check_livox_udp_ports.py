@@ -49,7 +49,14 @@ def collect_host_ports(value):
     if isinstance(value, dict):
         host_info = value.get("host_net_info")
         if isinstance(host_info, dict):
-            for key, raw_port in host_info.items():
+            host_entries = [host_info]
+        elif isinstance(host_info, list):
+            host_entries = [entry for entry in host_info if isinstance(entry, dict)]
+        else:
+            host_entries = []
+
+        for host_entry in host_entries:
+            for key, raw_port in host_entry.items():
                 if not key.endswith("_port"):
                     continue
                 try:
@@ -61,7 +68,9 @@ def collect_host_ports(value):
                 if not 1 <= port <= 65535:
                     raise RuntimeError("invalid Livox host UDP port {}={}".format(key, port))
                 host_key = key[:-5] + "_ip"
-                configured_host = str(host_info.get(host_key, "") or "").strip()
+                configured_host = str(
+                    host_entry.get(host_key) or host_entry.get("host_ip") or ""
+                ).strip()
                 if not configured_host:
                     # Livox configs use an empty host IP to disable optional
                     # endpoints such as log_data, even when a port is listed.

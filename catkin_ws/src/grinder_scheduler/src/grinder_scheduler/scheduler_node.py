@@ -403,6 +403,10 @@ class SchedulerNode:
         self._task_obstacle_regions = {}
         self._task_obstacle_regions_lock = threading.RLock()
         self._map_registry = {}
+        # Serialize lifecycle transitions with deletion of the active map.
+        # SL-Link dispatch runs deletion separately so slow startup checks do
+        # not starve it or unrelated commands.
+        self._map_mode_delete_lock = threading.RLock()
         self._max_chassis_run_speed = max(
             0.01,
             float(rospy.get_param("~max_chassis_run_speed", 0.2)),
@@ -5908,14 +5912,27 @@ class SchedulerNode:
             map_id = str(record.get("map_id", "")).strip()
             name = str(record.get("name", "")).strip() or map_id
             size_bytes = int(record.get("size_bytes", 0) or 0)
-            try:
-                size_bytes = sum(
-                    os.path.getsize(os.path.join(root, filename))
-                    for root, _dirs, files in os.walk(path)
-                    for filename in files
+            if size_bytes <= 0:
+                # Saved maps already persist the size of their four runtime
+                # assets. For legacy registry entries, stat only those assets
+                # instead of recursively walking large PCD bundles on every
+                # catalog request.
+                asset_paths = (
+                    str(record.get("loc_pcd_path", "")).strip() or os.path.join(path, "loc_map.pcd"),
+                    str(record.get("plan_pcd_path", "")).strip() or os.path.join(path, "plan_map.pcd"),
+                    str(record.get("yaml_path", "")).strip() or os.path.join(path, "map.yaml"),
+                    str(record.get("image_path", "")).strip() or os.path.join(path, "map.pgm"),
                 )
-            except Exception:
-                pass
+                try:
+                    size_bytes = sum(
+                        os.path.getsize(asset_path)
+                        for asset_path in asset_paths
+                        if os.path.isfile(asset_path)
+                    )
+                    if size_bytes > 0:
+                        record["size_bytes"] = int(size_bytes)
+                except Exception:
+                    pass
             total_work_area_m2 = float(record.get("total_work_area_m2", 0.0) or 0.0)
             estimated_time_s = float(record.get("estimated_time_s", -1.0) or -1.0)
             entries.append((name, map_id, path, size_bytes, total_work_area_m2, estimated_time_s))
@@ -10148,6 +10165,10 @@ class SchedulerNode:
         return outputs
 
     def handle_map_mode_request(self, payload):
+        with self._map_mode_delete_lock:
+            return self._handle_map_mode_request_locked(payload)
+
+    def _handle_map_mode_request_locked(self, payload):
         pb = self.sl_link_server.pb
         request = pb.MapModeRequest()
         request.ParseFromString(payload)
@@ -10269,6 +10290,14 @@ class SchedulerNode:
         target_dir = os.path.abspath(self._super_lio_map_root)
         try:
             # Query should return recorded map metadata, not raw folder filenames.
+            catalog_metadata_before = {
+                id(record): (
+                    int(record.get("size_bytes", 0) or 0),
+                    str(record.get("map_revision", "") or "").strip(),
+                )
+                for record in (self._map_registry or {}).values()
+                if isinstance(record, dict)
+            }
             entries = self._iter_recorded_maps(target_dir=target_dir)
             response.total_count = int(len(entries))
             bounded_count, thumbs_attached, thumbs_dropped = fill_map_catalog_response(
@@ -10279,6 +10308,18 @@ class SchedulerNode:
                 max_items=self._map_catalog_max_items,
                 max_thumb_b64_total=self._map_catalog_max_thumbnail_b64_total,
             )
+            if any(
+                catalog_metadata_before.get(id(record))
+                != (
+                    int(record.get("size_bytes", 0) or 0),
+                    str(record.get("map_revision", "") or "").strip(),
+                )
+                for record in (self._map_registry or {}).values()
+                if isinstance(record, dict)
+            ):
+                # Catalog generation backfills legacy metadata once. Persist
+                # the result so future list requests avoid rehashing assets.
+                self._save_map_registry_state()
             response.result = pb.RESULT_SUCCESS
             response.message = "ok"
             max_payload_safe = 65000
@@ -10338,6 +10379,10 @@ class SchedulerNode:
         return response.SerializeToString(), pb.MSG_ID_MAP_CATALOG_RESPONSE, pb.COMP_SCHEDULER
 
     def handle_map_delete_request(self, payload):
+        with self._map_mode_delete_lock:
+            return self._handle_map_delete_request_locked(payload)
+
+    def _handle_map_delete_request_locked(self, payload):
         pb = self.sl_link_server.pb
         request = pb.MapDeleteRequest()
         request.ParseFromString(payload)
@@ -10358,6 +10403,34 @@ class SchedulerNode:
                 raise RuntimeError("map_id is empty")
             record = self._find_recorded_map_by_id(requested_map_id)
             if record is None:
+                # The APP can retry while a previous delete response is
+                # delayed. Make repeated DELETE requests safe after the
+                # first request has already removed the bundle and registry.
+                candidate_path = os.path.abspath(
+                    os.path.join(self._super_lio_map_root, requested_map_id)
+                )
+                try:
+                    candidate_is_safe = (
+                        os.path.basename(requested_map_id) == requested_map_id
+                        and candidate_path != self._super_lio_map_root
+                        and os.path.commonpath(
+                            [candidate_path, self._super_lio_map_root]
+                        ) == self._super_lio_map_root
+                    )
+                except Exception:
+                    candidate_is_safe = False
+                if candidate_is_safe and not os.path.exists(candidate_path):
+                    response.map_id = requested_map_id
+                    response.deleted = True
+                    response.result = pb.RESULT_SUCCESS
+                    response.message = "map already deleted locally"
+                    if hasattr(response, "local_deleted"):
+                        response.local_deleted = True
+                    rospy.loginfo(
+                        "Map delete is already complete locally: map_id=%s",
+                        requested_map_id,
+                    )
+                    return response.SerializeToString(), pb.MSG_ID_MAP_DELETE_RESPONSE, pb.COMP_SCHEDULER
                 raise RuntimeError("map_id not found: {}".format(requested_map_id))
             target_path_value = str(record.get("bundle_dir", "") or "").strip()
             if not target_path_value:
@@ -10437,6 +10510,11 @@ class SchedulerNode:
                     ).format(remote_message)
                     if hasattr(response, "remote_deleted"):
                         response.remote_deleted = False
+                    rospy.logwarn(
+                        "Map delete completed locally but remote delete failed: map_id=%s error=%s",
+                        record_id,
+                        remote_message,
+                    )
                     return response.SerializeToString(), pb.MSG_ID_MAP_DELETE_RESPONSE, pb.COMP_SCHEDULER
             else:
                 remote_pending, remote_message = self.platform_file_sync.enqueue_map_delete(
@@ -10471,6 +10549,19 @@ class SchedulerNode:
         except Exception as exc:
             response.result = pb.RESULT_FAILED
             response.message = str(exc)
+            rospy.logerr(
+                "Map delete failed: map_id=%s error=%s",
+                requested_map_id or "<empty>",
+                exc,
+            )
+        else:
+            rospy.loginfo(
+                "Map delete completed: map_id=%s local_deleted=%s remote_deleted=%s remote_pending=%s",
+                response.map_id,
+                bool(getattr(response, "local_deleted", response.deleted)),
+                bool(getattr(response, "remote_deleted", False)),
+                bool(getattr(response, "remote_delete_pending", False)),
+            )
         return response.SerializeToString(), pb.MSG_ID_MAP_DELETE_RESPONSE, pb.COMP_SCHEDULER
 
     def handle_live_map_cache_clear_request(self, payload):

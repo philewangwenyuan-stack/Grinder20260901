@@ -2,11 +2,13 @@
 
 import os
 import queue
+import struct
 import sys
 import tempfile
 import threading
 import types
 import unittest
+from collections import deque
 
 
 def _stub_module(name, **attributes):
@@ -32,6 +34,7 @@ _stub_module(
 )
 _stub_module(
     "rospy",
+    AnyMsg=_Dummy,
     ServiceException=RuntimeError,
     is_shutdown=lambda: False,
     logerr=lambda *_args: None,
@@ -42,7 +45,7 @@ _stub_module(
 _stub_module("nav_msgs")
 _stub_module("nav_msgs.msg", OccupancyGrid=_Dummy, Odometry=_Dummy)
 _stub_module("sensor_msgs")
-_stub_module("sensor_msgs.msg", Imu=_Dummy, PointCloud2=_Dummy)
+_stub_module("sensor_msgs.msg", Imu=_Dummy)
 _stub_module("geometry_msgs")
 _stub_module("geometry_msgs.msg", PoseWithCovarianceStamped=_Dummy)
 _stub_module("diagnostic_msgs")
@@ -69,6 +72,40 @@ from grinder_scheduler.super_lio_mode_manager import (  # noqa: E402
     SuperLioModeManager,
     SuperLioShutdownTimeout,
 )
+
+
+class SuperLioRawLidarStampTest(unittest.TestCase):
+    @staticmethod
+    def _message(payload, message_type="livox_ros_driver2/CustomMsg"):
+        return types.SimpleNamespace(
+            _buff=payload,
+            _connection_header={"type": message_type},
+        )
+
+    def test_reads_header_without_deserializing_points(self):
+        payload = struct.pack("<IIII", 7, 123, 456, 3) + b"lid" + b"point data"
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._health_lock = threading.Lock()
+        manager._stream_samples = {"/livox/lidar": deque(maxlen=10)}
+
+        manager._lidar_callback(self._message(payload))
+
+        self.assertEqual(len(manager._stream_samples["/livox/lidar"]), 1)
+        self.assertAlmostEqual(manager._stream_samples["/livox/lidar"][0][1], 123.000000456)
+
+    def test_rejects_wrong_type_or_invalid_header(self):
+        valid = struct.pack("<IIII", 7, 123, 456, 3) + b"lid"
+        self.assertEqual(
+            SuperLioModeManager._livox_raw_stamp(self._message(valid, "sensor_msgs/PointCloud2")),
+            0.0,
+        )
+        self.assertEqual(
+            SuperLioModeManager._livox_raw_stamp(self._message(valid[:12])), 0.0
+        )
+        invalid_nsec = struct.pack("<IIII", 7, 123, 1_000_000_000, 0)
+        self.assertEqual(
+            SuperLioModeManager._livox_raw_stamp(self._message(invalid_nsec)), 0.0
+        )
 
 
 class SuperLioAssetValidationTest(unittest.TestCase):
