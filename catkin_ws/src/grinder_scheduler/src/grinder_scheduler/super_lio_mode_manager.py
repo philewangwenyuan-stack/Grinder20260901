@@ -115,6 +115,7 @@ class SuperLioModeManager:
         self._last_quality_stamp = 0.0
         self._last_good_pose = None
         self._last_good_pose_stamp = 0.0
+        self._localization_world_frame = "map"
         self._map_metadata = None
         self._map_root = os.path.abspath(os.path.expanduser(rospy.get_param(
             "~super_lio_map_root", "/home/neardi/work/Grinder/maps"
@@ -490,7 +491,7 @@ class SuperLioModeManager:
         position = pose.position
         valid = (
             self._stamp_is_fresh(stamp)
-            and str(odom.header.frame_id) == "map"
+            and str(odom.header.frame_id) == self._localization_world_frame
             and all(math.isfinite(float(value)) for value in (position.x, position.y, position.z))
             and self._quaternion_is_valid(pose.orientation)
             and len(covariance) >= 36
@@ -1087,6 +1088,14 @@ class SuperLioModeManager:
             except SuperLioShutdownTimeout:
                 raise
             raise startup_error
+        localization_world_frame = str(
+            rospy.get_param("/lio/ros/world_frame", "map") or "map"
+        ).strip()
+        self._localization_world_frame = localization_world_frame or "map"
+        rospy.loginfo(
+            "Super-LIO localization odometry frame: %s",
+            self._localization_world_frame,
+        )
         self._residual_nodes = []
         self._state = self.LOCALIZING
         self._message = "localization starting; map loaded; initial pose required"
