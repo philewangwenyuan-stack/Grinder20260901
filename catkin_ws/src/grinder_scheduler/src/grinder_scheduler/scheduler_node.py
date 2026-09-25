@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import struct
+import secrets
 import threading
 import time
 import zlib
@@ -2529,7 +2530,7 @@ class SchedulerNode:
         target_map_id = str(map_id or "").strip()
         yaml_path, image_path = self._saved_raw_grid_paths_for_map(target_map_id)
         if not yaml_path or not os.path.isfile(yaml_path):
-            raise RuntimeError("saved raw grid yaml not found for map_id={}: {}".format(target_map_id, yaml_path))
+            raise FileNotFoundError("saved raw grid yaml not found for map_id={}: {}".format(target_map_id, yaml_path))
         meta = self._load_raw_grid_yaml(yaml_path)
         image_name = str(meta.get("image", "") or "").strip()
         if image_name:
@@ -2538,7 +2539,7 @@ class SchedulerNode:
                 candidate = os.path.join(os.path.dirname(yaml_path), candidate)
             image_path = candidate
         if not image_path or not os.path.isfile(image_path):
-            raise RuntimeError("saved raw grid image not found for map_id={}: {}".format(target_map_id, image_path))
+            raise FileNotFoundError("saved raw grid image not found for map_id={}: {}".format(target_map_id, image_path))
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         if image is None:
             raise RuntimeError("failed to read saved raw grid image: {}".format(image_path))
@@ -8830,6 +8831,9 @@ class SchedulerNode:
         request = pb.MapRequest()
         request.ParseFromString(payload)
         requested_map_id = str(getattr(request, "map_id", "") or "").strip()
+        result = pb.MapRequestResult()
+        result.request_id = int(request.request_id)
+        result.map_id = requested_map_id or DEFAULT_LIVE_MAP_ID
         with metrics.timer("map_load_ms"):
             if self._is_live_map_id(requested_map_id):
                 raw_map = self.aurora_bridge.get_map()
@@ -8841,7 +8845,17 @@ class SchedulerNode:
                     rospy.loginfo("MapRequest using saved raw grid: map_id=%s", requested_map_id)
                 except Exception as exc:
                     rospy.logwarn("MapRequest failed to load saved raw grid: map_id=%s error=%s", requested_map_id, exc)
-                    return []
+                    result.status = (
+                        pb.MAP_REQUEST_STATUS_NOT_FOUND
+                        if isinstance(exc, FileNotFoundError)
+                        else pb.MAP_REQUEST_STATUS_ERROR
+                    )
+                    result.message = (
+                        "saved map was not found"
+                        if isinstance(exc, FileNotFoundError)
+                        else "saved map could not be loaded"
+                    )
+                    return result.SerializeToString(), []
         if raw_map is None:
             rospy.logwarn_throttle(
                 2.0,
@@ -8849,7 +8863,17 @@ class SchedulerNode:
                 requested_map_id or "<empty>",
                 raw_map_source,
             )
-            return []
+            result.status = (
+                pb.MAP_REQUEST_STATUS_NOT_READY
+                if raw_map_source == "live"
+                else pb.MAP_REQUEST_STATUS_NOT_FOUND
+            )
+            if raw_map_source == "live":
+                result.retry_after_ms = 500
+                result.message = "live map is not ready"
+            else:
+                result.message = "saved map was not found"
+            return result.SerializeToString(), []
 
         # SL-LinkA uses a uint16 payload length. A 4 KiB data chunk plus
         # MapChunk metadata stays well below that limit and cuts frame count.
@@ -8932,6 +8956,12 @@ class SchedulerNode:
                     len(data),
                 )
         total = max(1, int(math.ceil(len(data) / float(chunk_size))))
+        snapshot_id = secrets.randbits(64) or 1
+        result.status = pb.MAP_REQUEST_STATUS_READY
+        result.snapshot_id = snapshot_id
+        result.total_chunks = total
+        result.payload_size = len(data)
+        result.payload_crc32 = zlib.crc32(data) & 0xFFFFFFFF
         if raw_map_source == "live":
             map_version = self.map_service.get_map_version()
         else:
@@ -8979,6 +9009,8 @@ class SchedulerNode:
                 chunk.preview_scale_x = float(preview_scale_x)
                 chunk.preview_scale_y = float(preview_scale_y)
                 chunk.map_version = max(0, int(map_version))
+                chunk.request_id = int(request.request_id)
+                chunk.snapshot_id = snapshot_id
                 self._apply_localization_covariance(chunk)
                 self._apply_alignment_yaw_to_response(
                     chunk,
@@ -8989,7 +9021,7 @@ class SchedulerNode:
                 chunk.data = data[index * chunk_size : (index + 1) * chunk_size]
                 outputs.append((chunk.SerializeToString(), pb.MSG_ID_MAP_CHUNK, pb.COMP_MEDIA))
         metrics.counter("map_chunks_built").inc(len(outputs))
-        return outputs
+        return result.SerializeToString(), outputs
 
     def handle_map_sync_request(self, payload):
         pb = self.sl_link_server.pb

@@ -23,6 +23,7 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_CAMERA_FRAME_CHUNK = 771,
     sl_link_MessageId_MSG_ID_MAP_REQUEST = 772,
     sl_link_MessageId_MSG_ID_MAP_CHUNK = 773,
+    sl_link_MessageId_MSG_ID_MAP_REQUEST_RESULT = 774,
     sl_link_MessageId_MSG_ID_CONTROL_COMMAND = 1025,
     sl_link_MessageId_MSG_ID_CONTROL_COMMAND_RESPONSE = 1026,
     sl_link_MessageId_MSG_ID_TASK_CONFIG = 1280,
@@ -213,6 +214,14 @@ typedef enum _sl_link_MapModeType {
     sl_link_MapModeType_MAP_MODE_MAPPING = 1,
     sl_link_MapModeType_MAP_MODE_LOCALIZATION = 2
 } sl_link_MapModeType;
+
+typedef enum _sl_link_MapRequestStatus {
+    sl_link_MapRequestStatus_MAP_REQUEST_STATUS_UNKNOWN = 0,
+    sl_link_MapRequestStatus_MAP_REQUEST_STATUS_READY = 1,
+    sl_link_MapRequestStatus_MAP_REQUEST_STATUS_NOT_READY = 2,
+    sl_link_MapRequestStatus_MAP_REQUEST_STATUS_NOT_FOUND = 3,
+    sl_link_MapRequestStatus_MAP_REQUEST_STATUS_ERROR = 4
+} sl_link_MapRequestStatus;
 
 /* Struct definitions */
 typedef struct _sl_link_WifiConfig {
@@ -463,7 +472,21 @@ typedef struct _sl_link_MapRequest {
     /* Empty or LIVE_MAP selects the live radar map; otherwise load the saved
  offline raw grid associated with this map ID. */
     pb_callback_t map_id;
+    /* Unique within the APP session; echoed by the result and every chunk. */
+    uint64_t request_id;
 } sl_link_MapRequest;
+
+typedef struct _sl_link_MapRequestResult {
+    uint64_t request_id;
+    sl_link_MapRequestStatus status;
+    pb_callback_t map_id;
+    uint64_t snapshot_id;
+    uint32_t total_chunks;
+    uint32_t payload_size;
+    uint32_t payload_crc32;
+    uint32_t retry_after_ms;
+    pb_callback_t message;
+} sl_link_MapRequestResult;
 
 typedef struct _sl_link_MapChunk {
     uint32_t map_id;
@@ -488,6 +511,8 @@ typedef struct _sl_link_MapChunk {
     float rotation_alignment_delta_deg;
     /* Same region/edit version semantics as MapPreviewResponse.map_version. */
     uint32_t map_version;
+    uint64_t request_id;
+    uint64_t snapshot_id;
 } sl_link_MapChunk;
 
 typedef struct _sl_link_PathPoint2D {
@@ -1313,6 +1338,10 @@ extern "C" {
 #define _sl_link_MapModeType_MAX sl_link_MapModeType_MAP_MODE_LOCALIZATION
 #define _sl_link_MapModeType_ARRAYSIZE ((sl_link_MapModeType)(sl_link_MapModeType_MAP_MODE_LOCALIZATION+1))
 
+#define _sl_link_MapRequestStatus_MIN sl_link_MapRequestStatus_MAP_REQUEST_STATUS_UNKNOWN
+#define _sl_link_MapRequestStatus_MAX sl_link_MapRequestStatus_MAP_REQUEST_STATUS_ERROR
+#define _sl_link_MapRequestStatus_ARRAYSIZE ((sl_link_MapRequestStatus)(sl_link_MapRequestStatus_MAP_REQUEST_STATUS_ERROR+1))
+
 
 #define sl_link_WifiStatusReport_result_ENUMTYPE sl_link_WifiResult
 
@@ -1339,6 +1368,8 @@ extern "C" {
 
 #define sl_link_CameraFrameChunk_codec_ENUMTYPE sl_link_CameraCodec
 
+
+#define sl_link_MapRequestResult_status_ENUMTYPE sl_link_MapRequestStatus
 
 #define sl_link_MapChunk_encoding_ENUMTYPE sl_link_MapEncoding
 
@@ -1472,8 +1503,9 @@ extern "C" {
 #define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0}
 #define sl_link_CameraFrameRequest_init_default  {0, 0}
 #define sl_link_CameraFrameChunk_init_default    {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
-#define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}}
-#define sl_link_MapChunk_init_default            {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0}
+#define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}, 0}
+#define sl_link_MapRequestResult_init_default    {0, _sl_link_MapRequestStatus_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_MapChunk_init_default            {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, 0, 0}
 #define sl_link_PathPoint2D_init_default         {0, 0, {{NULL}, NULL}}
 #define sl_link_RegionRepeatItem_init_default    {{{NULL}, NULL}, 0}
 #define sl_link_TaskConfig_init_default          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1562,8 +1594,9 @@ extern "C" {
 #define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0}
 #define sl_link_CameraFrameRequest_init_zero     {0, 0}
 #define sl_link_CameraFrameChunk_init_zero       {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
-#define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}}
-#define sl_link_MapChunk_init_zero               {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0}
+#define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}, 0}
+#define sl_link_MapRequestResult_init_zero       {0, _sl_link_MapRequestStatus_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_MapChunk_init_zero               {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, 0, 0}
 #define sl_link_PathPoint2D_init_zero            {0, 0, {{NULL}, NULL}}
 #define sl_link_RegionRepeatItem_init_zero       {{{NULL}, NULL}, 0}
 #define sl_link_TaskConfig_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1796,6 +1829,16 @@ extern "C" {
 #define sl_link_MapRequest_snapshot_tag          1
 #define sl_link_MapRequest_max_chunk_size_tag    2
 #define sl_link_MapRequest_map_id_tag            3
+#define sl_link_MapRequest_request_id_tag        4
+#define sl_link_MapRequestResult_request_id_tag  1
+#define sl_link_MapRequestResult_status_tag      2
+#define sl_link_MapRequestResult_map_id_tag      3
+#define sl_link_MapRequestResult_snapshot_id_tag 4
+#define sl_link_MapRequestResult_total_chunks_tag 5
+#define sl_link_MapRequestResult_payload_size_tag 6
+#define sl_link_MapRequestResult_payload_crc32_tag 7
+#define sl_link_MapRequestResult_retry_after_ms_tag 8
+#define sl_link_MapRequestResult_message_tag     9
 #define sl_link_MapChunk_map_id_tag              1
 #define sl_link_MapChunk_utc_time_tag            2
 #define sl_link_MapChunk_encoding_tag            3
@@ -1814,6 +1857,8 @@ extern "C" {
 #define sl_link_MapChunk_app_rotation_deg_tag    16
 #define sl_link_MapChunk_rotation_alignment_delta_deg_tag 17
 #define sl_link_MapChunk_map_version_tag         18
+#define sl_link_MapChunk_request_id_tag          19
+#define sl_link_MapChunk_snapshot_id_tag         20
 #define sl_link_PathPoint2D_x_tag                1
 #define sl_link_PathPoint2D_y_tag                2
 #define sl_link_PathPoint2D_path_type_tag        3
@@ -2506,9 +2551,23 @@ X(a, CALLBACK, SINGULAR, BYTES,    data,              8)
 #define sl_link_MapRequest_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     snapshot,          1) \
 X(a, STATIC,   SINGULAR, UINT32,   max_chunk_size,    2) \
-X(a, CALLBACK, SINGULAR, STRING,   map_id,            3)
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            3) \
+X(a, STATIC,   SINGULAR, UINT64,   request_id,        4)
 #define sl_link_MapRequest_CALLBACK pb_default_field_callback
 #define sl_link_MapRequest_DEFAULT NULL
+
+#define sl_link_MapRequestResult_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT64,   request_id,        1) \
+X(a, STATIC,   SINGULAR, UENUM,    status,            2) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            3) \
+X(a, STATIC,   SINGULAR, UINT64,   snapshot_id,       4) \
+X(a, STATIC,   SINGULAR, UINT32,   total_chunks,      5) \
+X(a, STATIC,   SINGULAR, UINT32,   payload_size,      6) \
+X(a, STATIC,   SINGULAR, UINT32,   payload_crc32,     7) \
+X(a, STATIC,   SINGULAR, UINT32,   retry_after_ms,    8) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           9)
+#define sl_link_MapRequestResult_CALLBACK pb_default_field_callback
+#define sl_link_MapRequestResult_DEFAULT NULL
 
 #define sl_link_MapChunk_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UINT32,   map_id,            1) \
@@ -2528,7 +2587,9 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  localization_covariance,  14) \
 X(a, STATIC,   SINGULAR, FLOAT,    alignment_yaw_deg,  15) \
 X(a, STATIC,   SINGULAR, FLOAT,    app_rotation_deg,  16) \
 X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  17) \
-X(a, STATIC,   SINGULAR, UINT32,   map_version,      18)
+X(a, STATIC,   SINGULAR, UINT32,   map_version,      18) \
+X(a, STATIC,   SINGULAR, UINT64,   request_id,       19) \
+X(a, STATIC,   SINGULAR, UINT64,   snapshot_id,      20)
 #define sl_link_MapChunk_CALLBACK pb_default_field_callback
 #define sl_link_MapChunk_DEFAULT NULL
 #define sl_link_MapChunk_origin_MSGTYPE sl_link_Pose2D
@@ -3336,6 +3397,7 @@ extern const pb_msgdesc_t sl_link_DeviceStatusReport_msg;
 extern const pb_msgdesc_t sl_link_CameraFrameRequest_msg;
 extern const pb_msgdesc_t sl_link_CameraFrameChunk_msg;
 extern const pb_msgdesc_t sl_link_MapRequest_msg;
+extern const pb_msgdesc_t sl_link_MapRequestResult_msg;
 extern const pb_msgdesc_t sl_link_MapChunk_msg;
 extern const pb_msgdesc_t sl_link_PathPoint2D_msg;
 extern const pb_msgdesc_t sl_link_RegionRepeatItem_msg;
@@ -3428,6 +3490,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_CameraFrameRequest_fields &sl_link_CameraFrameRequest_msg
 #define sl_link_CameraFrameChunk_fields &sl_link_CameraFrameChunk_msg
 #define sl_link_MapRequest_fields &sl_link_MapRequest_msg
+#define sl_link_MapRequestResult_fields &sl_link_MapRequestResult_msg
 #define sl_link_MapChunk_fields &sl_link_MapChunk_msg
 #define sl_link_PathPoint2D_fields &sl_link_PathPoint2D_msg
 #define sl_link_RegionRepeatItem_fields &sl_link_RegionRepeatItem_msg
@@ -3513,6 +3576,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_DeviceStatusReport_size depends on runtime parameters */
 /* sl_link_CameraFrameChunk_size depends on runtime parameters */
 /* sl_link_MapRequest_size depends on runtime parameters */
+/* sl_link_MapRequestResult_size depends on runtime parameters */
 /* sl_link_MapChunk_size depends on runtime parameters */
 /* sl_link_PathPoint2D_size depends on runtime parameters */
 /* sl_link_RegionRepeatItem_size depends on runtime parameters */

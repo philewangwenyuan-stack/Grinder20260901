@@ -24,6 +24,7 @@ enum MessageId {
   MSG_ID_CAMERA_FRAME_CHUNK = 0x0303;
   MSG_ID_MAP_REQUEST = 0x0304;
   MSG_ID_MAP_CHUNK = 0x0305;
+  MSG_ID_MAP_REQUEST_RESULT = 0x0306;
 
   MSG_ID_CONTROL_COMMAND = 0x0401;
   MSG_ID_CONTROL_COMMAND_RESPONSE = 0x0402;
@@ -448,6 +449,28 @@ message MapRequest {
   // Empty or LIVE_MAP selects the live radar map; otherwise load the saved
   // offline raw grid associated with this map ID.
   string map_id = 3;
+  // Unique within the APP session; echoed by the result and every chunk.
+  uint64 request_id = 4;
+}
+
+enum MapRequestStatus {
+  MAP_REQUEST_STATUS_UNKNOWN = 0;
+  MAP_REQUEST_STATUS_READY = 1;
+  MAP_REQUEST_STATUS_NOT_READY = 2;
+  MAP_REQUEST_STATUS_NOT_FOUND = 3;
+  MAP_REQUEST_STATUS_ERROR = 4;
+}
+
+message MapRequestResult {
+  uint64 request_id = 1;
+  MapRequestStatus status = 2;
+  string map_id = 3;
+  uint64 snapshot_id = 4;
+  uint32 total_chunks = 5;
+  uint32 payload_size = 6;
+  uint32 payload_crc32 = 7;
+  uint32 retry_after_ms = 8;
+  string message = 9;
 }
 
 message MapChunk {
@@ -471,6 +494,8 @@ message MapChunk {
   float rotation_alignment_delta_deg = 17;
   // Same region/edit version semantics as MapPreviewResponse.map_version.
   uint32 map_version = 18;
+  uint64 request_id = 19;
+  uint64 snapshot_id = 20;
 }
 
 message PathPoint2D {

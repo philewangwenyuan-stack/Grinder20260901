@@ -65,6 +65,7 @@
 | `0x0303` | `CameraFrameChunk` | `LOWER -> APP` | `COMP_MEDIA` | 返回相机画面分片 |
 | `0x0304` | `MapRequest` | `APP -> LOWER` | `COMP_MEDIA` | 请求地图快照 |
 | `0x0305` | `MapChunk` | `LOWER -> APP` | `COMP_MEDIA` | 返回地图分片 |
+| `0x0306` | `MapRequestResult` | `LOWER -> APP` | `COMP_MEDIA` | 返回就绪、未就绪或错误状态；成功时先于分片 |
 | `0x0401` | `ControlCommand` | `APP -> LOWER` | `COMP_CONTROL` | 下发控制指令 |
 | `0x0402` | `ControlCommandResponse` | `LOWER -> APP` | `COMP_CONTROL` | 返回控制结果 |
 
@@ -151,7 +152,7 @@
 | 请求 | 响应 | 说明 |
 |---|---|---|
 | `CameraFrameRequest` | `CameraFrameChunk` | 相机画面通过分片回传 |
-| `MapRequest` | `MapChunk` | 地图快照通过分片回传 |
+| `MapRequest` | `MapRequestResult`、`MapChunk` | 先返回请求结果；就绪时按请求 ID 和快照 ID 分片回传 |
 | `RadarSystemStatusRequest` | `RadarSystemStatusResponse` | 返回雷达 `/slamware_ros_sdk_server_node/system_status` 最新状态 |
 | `RadarMapSyncRequest` | `RadarMapSyncResponse` | 向雷达 `/slamware_ros_sdk_server_node/sync_map` 发布一次同步请求 |
 

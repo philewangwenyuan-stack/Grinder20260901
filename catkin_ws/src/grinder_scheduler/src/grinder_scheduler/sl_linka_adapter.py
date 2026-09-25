@@ -501,17 +501,36 @@ class SlLinkAServer:
                 )
 
             def _log_dropped_job(self, queue_name, dropped):
-                if dropped is None or rospy is None:
+                if dropped is None:
                     return
                 _, args = dropped
                 frame = args[0] if args else None
-                rospy.logwarn_throttle(
-                    1.0,
-                    "SL-LinkA %s queue full; dropped stale msg_id=0x%04X seq=%d and kept newest request.",
-                    queue_name,
-                    int(getattr(frame, "msg_id", 0)),
-                    int(getattr(frame, "seq", 0)),
-                )
+                if rospy is not None:
+                    rospy.logwarn_throttle(
+                        1.0,
+                        "SL-LinkA %s queue full; dropped stale msg_id=0x%04X seq=%d and kept newest request.",
+                        queue_name,
+                        int(getattr(frame, "msg_id", 0)),
+                        int(getattr(frame, "seq", 0)),
+                    )
+                if frame is not None and int(frame.msg_id) == int(outer.pb.MSG_ID_MAP_REQUEST):
+                    try:
+                        request = outer.pb.MapRequest()
+                        request.ParseFromString(frame.payload)
+                        result = outer.pb.MapRequestResult()
+                        result.request_id = int(request.request_id)
+                        result.map_id = str(request.map_id or "LIVE_MAP")
+                        result.status = outer.pb.MAP_REQUEST_STATUS_NOT_READY
+                        result.retry_after_ms = 500
+                        result.message = "map request queue was full"
+                        self._send_payload(
+                            result.SerializeToString(),
+                            outer.pb.MSG_ID_MAP_REQUEST_RESULT,
+                            comp_id=outer.pb.COMP_MEDIA,
+                            ack_seq=frame.seq,
+                        )
+                    except Exception:
+                        pass
 
             def _dispatch_ordered(self, frame, received_at, queue_name="ordered"):
                 queue_delay_ms = (time.monotonic() - float(received_at)) * 1000.0
@@ -791,8 +810,14 @@ class SlLinkAServer:
             send_started = None
             socket_send_total_ms = 0.0
             try:
-                chunks = self._handler.build_map_chunks(frame.payload)
+                result_payload, chunks = self._handler.build_map_chunks(frame.payload)
                 send_started = time.monotonic()
+                request_handler._send_payload(
+                    result_payload,
+                    pb.MSG_ID_MAP_REQUEST_RESULT,
+                    comp_id=pb.COMP_MEDIA,
+                    ack_seq=frame.seq,
+                )
                 for payload, msg_id, comp_id in chunks:
                     sent = request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
                     if sent is not None:
@@ -811,8 +836,25 @@ class SlLinkAServer:
                         (time.monotonic() - request_started) * 1000.0,
                     )
             except Exception:
-                if send_started is None and self._map_build_failures is not None:
-                    self._map_build_failures.inc()
+                if send_started is None:
+                    if self._map_build_failures is not None:
+                        self._map_build_failures.inc()
+                    try:
+                        request = pb.MapRequest()
+                        request.ParseFromString(frame.payload)
+                        result = pb.MapRequestResult()
+                        result.request_id = int(request.request_id)
+                        result.map_id = str(request.map_id or "LIVE_MAP")
+                        result.status = pb.MAP_REQUEST_STATUS_ERROR
+                        result.message = "map preparation failed"
+                        request_handler._send_payload(
+                            result.SerializeToString(),
+                            pb.MSG_ID_MAP_REQUEST_RESULT,
+                            comp_id=pb.COMP_MEDIA,
+                            ack_seq=frame.seq,
+                        )
+                    except Exception:
+                        pass
                 elif send_started is not None and self._map_send_failures is not None:
                     self._map_send_failures.inc()
                 raise

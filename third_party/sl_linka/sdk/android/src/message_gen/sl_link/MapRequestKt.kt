@@ -87,6 +87,31 @@ public object MapRequestKt {
     public fun clearMapId() {
       _builder.clearMapId()
     }
+
+    /**
+     * <pre>
+     * Unique within the APP session; echoed by the result and every chunk.
+     * </pre>
+     *
+     * <code>uint64 request_id = 4;</code>
+     */
+    public var requestId: kotlin.Long
+      @JvmName("getRequestId")
+      get() = _builder.getRequestId()
+      @JvmName("setRequestId")
+      set(value) {
+        _builder.setRequestId(value)
+      }
+    /**
+     * ```
+     * Unique within the APP session; echoed by the result and every chunk.
+     * ```
+     *
+     * `uint64 request_id = 4;`
+     */
+    public fun clearRequestId() {
+      _builder.clearRequestId()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapRequest.copy(block: `sl_link`.MapRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapRequest =

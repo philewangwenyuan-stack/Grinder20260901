@@ -57,6 +57,9 @@ PB_BIND(sl_link_CameraFrameChunk, sl_link_CameraFrameChunk, AUTO)
 PB_BIND(sl_link_MapRequest, sl_link_MapRequest, AUTO)
 
 
+PB_BIND(sl_link_MapRequestResult, sl_link_MapRequestResult, AUTO)
+
+
 PB_BIND(sl_link_MapChunk, sl_link_MapChunk, AUTO)
 
 
@@ -274,6 +277,8 @@ PB_BIND(sl_link_ControlCommand, sl_link_ControlCommand, AUTO)
 
 
 PB_BIND(sl_link_ControlCommandResponse, sl_link_ControlCommandResponse, AUTO)
+
+
 
 
 

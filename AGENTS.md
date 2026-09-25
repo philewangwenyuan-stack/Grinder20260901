@@ -33,7 +33,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 路径规划输入/输出适配 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/planner_adapter.py` | `third_party/path_planner/mst27/mst27.py`、`mst27/cpp/mst27_cpp.cpp` |
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
 | 板端日志采样与指标导出 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/metrics_registry.py` | `metrics_exporter.py`、`grinder_metrics_node.py`、`launch/scheduler.launch` |
-| 协议定义与说明 | `third_party/sl_linka/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl_linka/sl-link.md`、`scripts/generate_proto.sh` |
+| 协议定义与说明、地图请求结果/快照分片 | `third_party/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl-link.md`、`third_party/sl_linka/scripts/generate_proto.sh` |
 | Aurora 地图、位姿和双目图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/aurora_bridge.py` | `catkin_ws/src/2-dnavigation-package/slamware_ros_sdk/` |
 | 地图目录响应 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_catalog_response.py` | `scheduler_node.py` 中 `handle_map_catalog_request` |
 | RTSP / FFmpeg 视频链路 | `local_rtsp_server.py`、`media_streamer.py`（均在 scheduler 模块目录） | `runtime/mediamtx`、`temp/mediamtx.generated.yml` |

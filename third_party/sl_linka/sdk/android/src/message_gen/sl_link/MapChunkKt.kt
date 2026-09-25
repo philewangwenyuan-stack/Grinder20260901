@@ -369,6 +369,40 @@ public object MapChunkKt {
     public fun clearMapVersion() {
       _builder.clearMapVersion()
     }
+
+    /**
+     * <code>uint64 request_id = 19;</code>
+     */
+    public var requestId: kotlin.Long
+      @JvmName("getRequestId")
+      get() = _builder.getRequestId()
+      @JvmName("setRequestId")
+      set(value) {
+        _builder.setRequestId(value)
+      }
+    /**
+     * `uint64 request_id = 19;`
+     */
+    public fun clearRequestId() {
+      _builder.clearRequestId()
+    }
+
+    /**
+     * <code>uint64 snapshot_id = 20;</code>
+     */
+    public var snapshotId: kotlin.Long
+      @JvmName("getSnapshotId")
+      get() = _builder.getSnapshotId()
+      @JvmName("setSnapshotId")
+      set(value) {
+        _builder.setSnapshotId(value)
+      }
+    /**
+     * `uint64 snapshot_id = 20;`
+     */
+    public fun clearSnapshotId() {
+      _builder.clearSnapshotId()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapChunk.copy(block: `sl_link`.MapChunkKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapChunk =

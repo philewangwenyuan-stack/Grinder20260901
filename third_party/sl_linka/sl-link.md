@@ -219,10 +219,15 @@ message PolygonRegion {
 |--------|------|------|------|
 | `0x0304` | `MapRequest` | `APP -> LOWER` | 请求地图快照 |
 | `0x0305` | `MapChunk` | `LOWER -> APP` | 返回地图分片 |
+| `0x0306` | `MapRequestResult` | `LOWER -> APP` | 地图请求结果；成功时先于分片发送 |
 
 说明：
 - 当前按“快照 + 分片回传”定义
 - `MapRequest.map_id` 可选；空值或 `LIVE_MAP` 表示请求实时原始地图，非空历史地图 ID 表示读取该地图保存的离线原始栅格并分片返回
+- `MapRequest.request_id` 由 APP 为每次请求生成；`MapRequestResult` 和每个 `MapChunk` 原样回传。APP 每条连接最多保持一个地图请求在途。
+- 板端对每个请求先返回 `MapRequestResult`：`READY` 后发送分片；实时 `/map` 尚未到达时返回 `NOT_READY + retry_after_ms`；保存地图缺失返回 `NOT_FOUND`；构建失败返回 `ERROR`。非 `READY` 结果不发送分片。
+- 每个 `READY` 响应分配新的 `snapshot_id`，其 `total_chunks/payload_size/payload_crc32` 描述同一张完整图。APP 只组合同一 `request_id + snapshot_id` 的分片，并在大小及 CRC32 校验通过后显示；超时、切图、断线时丢弃未完成组包。
+- `MapChunk.map_id` 为版本或时间戳与几何计算的 32 位标识，不代表每次请求唯一；`utc_time` 也不能代替 `snapshot_id`。
 - `MapRequest.snapshot` 表示请求当前地图快照；`max_chunk_size` 控制单个分片大小，默认 `4096`，有效范围 `256~4096`；`map_id` 为字符串地图 ID
 - `MapRequest` 返回原始 `map` 坐标系栅格，不应用 `alignment_yaw`、APP 旋转角或二者差值；PNG 按 `preview_max_edge_cap` 等比例缩小，默认最大边为 `640px`，小图不放大
 - `MapPreviewRequest` 同样基于原始 `map` 坐标生成图片，可按请求叠加区域，但不应用三个旋转角；三个角度字段仅作为元数据返回给 APP
