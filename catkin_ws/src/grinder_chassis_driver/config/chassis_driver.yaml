@@ -6,8 +6,14 @@ baudrate: 19200
 slave_id: 1
 # 每次 Modbus 读写超时时间（秒）
 timeout: 0.1
-# 状态轮询频率（Hz）
-poll_rate_hz: 5
+# 0x4017/0x4018 有符号实际轮速轮询频率（Hz）
+poll_rate_hz: 10
+# 0x4012~0x4016 普通状态轮询频率（Hz），在轮速轮询节拍中执行
+status_poll_rate_hz: 2
+# 诊断发布频率（Hz）
+diagnostics_rate_hz: 1
+# 合并读取 0x4012~0x4018；控制器返回非法地址/数值时自动退回分段读取
+status_combined_read: true
 # 指令超时保护时间（秒），超过后底盘直接触发零速保护
 command_timeout: 5.0
 # 写入后是否进行回读校验
@@ -48,12 +54,6 @@ manual_wheel_deadband_rpm: 30
 manual_wheel_hyst_enter_rpm: 60
 # 手动轮速输入迟滞-退出阈值（rpm），从运动到静止降到该值以下
 manual_wheel_hyst_exit_rpm: 30
-# 回读速度允许偏差（驱动原始单位）
-#max_echo_deviation: 200
-max_echo_deviation: 2000
-# 连续回读异常达到该次数后触发容错
-#max_echo_failures: 2
-max_echo_failures: 20
 # 连续错误时的安全停机触发间隔（秒）
 #safe_stop_on_error_interval: 1.0
 safe_stop_on_error_interval: 2.0

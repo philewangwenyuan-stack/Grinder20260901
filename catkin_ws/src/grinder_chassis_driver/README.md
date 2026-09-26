@@ -69,11 +69,11 @@
 - `0x4017` 左电机实时速度（只读，`int16`，默认按 rpm）
 - `0x4018` 右电机实时速度（只读，`int16`，默认按 rpm）
 
-实现假设：
+寄存器使用方式：
 
-- 这段寄存器既可写也可读
-- 前 3 个寄存器是有符号 `int16`
-- 其余控制寄存器按 `uint16` 处理
+- `0x4010/0x4011` 保留轮速命令写入；其回显不携带可靠的运动方向，不用于实际轮速判断
+- `0x4012` 按有符号 `int16` 读取；`0x4013 ~ 0x4016` 按 `uint16` 读取
+- `0x4017/0x4018` 按有符号 `int16` 读取，用于轮速反馈和 `/odom_wheel`
 
 如果厂家的“读寄存器地址表”与这份假设不一致，需要同步调整 [register_map.py](/home/chersxir/work/Grinder/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py) 和状态轮询逻辑。
 
@@ -88,8 +88,8 @@
 1. 节点启动后读取 ROS 参数并初始化串口
 2. 如果启用了 `startup_zero_output`，启动时先下发安全值
 3. 订阅 `/chassis/...` 控制话题，将命令写入对应寄存器
-4. 按 `poll_rate_hz` 周期性读取 `0x4010 ~ 0x4016`，并读取 `0x4017 ~ 0x4018` 的实际电机速度
-5. 将回读结果发布到状态话题、诊断话题和 `/odom_wheel`
+4. 按 `poll_rate_hz` 读取 `0x4017 ~ 0x4018` 的有符号实际电机速度；按 `status_poll_rate_hz` 将 `0x4012 ~ 0x4016` 状态与当次轮速合并读取
+5. 轮速状态与 `/odom_wheel` 跟随轮速轮询发布，普通状态与诊断分别按配置频率发布
 6. 如果超过 `command_timeout` 未收到新的轮速命令，则自动停轮
 7. 如果通信连续失败，节点标记为掉线并尝试进入安全状态
 
@@ -312,6 +312,12 @@
   默认 `0.1`
 - `~poll_rate_hz`
   默认 `20.0`
+- `~status_poll_rate_hz`
+  默认 `2.0`，普通状态读取频率，不高于轮速轮询频率
+- `~diagnostics_rate_hz`
+  默认 `1.0`
+- `~status_combined_read`
+  默认 `true`；合并读返回非法地址或非法数值时自动退回分段读取
 - `~command_timeout`
   默认 `0.5`
 - `~write_verify`
@@ -336,10 +342,6 @@
   默认 `32767`
 - `~max_cmd_step_rpm`
   默认 `50`
-- `~max_echo_deviation`
-  默认 `200`
-- `~max_echo_failures`
-  默认 `2`
 - `~safe_stop_on_error_interval`
   默认 `1.0`
 - `~wheel_odom_topic`
@@ -365,10 +367,8 @@
   节点启动时是否先发送安全零输出
 - `max_cmd_step_rpm`
   左右轮每次下发允许变化的最大步进（斜坡限制）
-- `max_echo_deviation`
-  下发轮速与寄存器回读轮速允许的最大偏差
-- `max_echo_failures`
-  连续回显偏差超限次数，超限后触发安全停车
+- `status_combined_read`
+  一次读取 `0x4012 ~ 0x4018`；不支持时分别读取普通状态和实际轮速
 - `safe_stop_on_error_interval`
   通信异常触发“安全全量写入”的最小时间间隔（秒），用于避免总线刷屏
 
@@ -382,8 +382,6 @@
 | `MAX_INPUT_W` | `~cmd_vel_max_input_w` | `0.1` | 角速度输入限幅（rad/s） |
 | `MAX_ABS_WHEEL_RPM` | `~cmd_vel_max_abs_wheel_rpm` | `1500.0` | 左右轮目标转速绝对值限幅（rpm） |
 | `MAX_CMD_STEP_RPM` | `~max_cmd_step_rpm` | `50` | 每次控制周期轮速步进上限（斜坡限制） |
-| `MAX_ECHO_DEVIATION` | `~max_echo_deviation` | `200` | 命令与回显允许偏差上限（rpm） |
-| `MAX_ECHO_FAILURE_COUNT` | `~max_echo_failures` | `2` | 连续回显偏差超限触发安全停车阈值 |
 | `WHEEL_BASE` | `~cmd_vel_wheel_track_m` | `0.5` | 左右轮中心距（m） |
 | `WHEEL_RADIUS` | `~cmd_vel_wheel_radius_m` | `0.1` | 轮半径（m） |
 | `GEAR_RATIO` | `~cmd_vel_gear_ratio` | `60.0` | 轮速换算齿比 |

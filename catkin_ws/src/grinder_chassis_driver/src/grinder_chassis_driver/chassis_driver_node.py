@@ -18,7 +18,11 @@ from grinder_chassis_driver.srv import (
     EnableChassis,
     EnableChassisResponse,
 )
-from grinder_chassis_driver.modbus_transport import ModbusTransport, ModbusTransportError
+from grinder_chassis_driver.modbus_transport import (
+    ModbusExceptionResponse,
+    ModbusTransport,
+    ModbusTransportError,
+)
 from grinder_chassis_driver.register_map import (
     DISC_ENABLE_OFF,
     DISC_ENABLE_ON,
@@ -29,8 +33,10 @@ from grinder_chassis_driver.register_map import (
     INT16_MIN,
     LIGHT_OFF,
     LIGHT_ON,
-    READ_BLOCK_COUNT,
     READ_BLOCK_START,
+    STATUS_AND_ACTUAL_READ_COUNT,
+    STATUS_READ_COUNT,
+    STATUS_READ_START,
     REGISTER_DISC_ENABLE,
     REGISTER_DISC_LIFT,
     REGISTER_DISC_SPEED,
@@ -56,6 +62,8 @@ class ChassisDriverNode:
         self.actual_left_motor_speed = 0
         self.actual_right_motor_speed = 0
         self.actual_speed_valid = False
+        self._last_actual_read_monotonic = 0.0
+        self._last_status_read_monotonic = 0.0
         self.enabled = True
         self.connected = False
         self.last_error = ""
@@ -63,7 +71,6 @@ class ChassisDriverNode:
         self.last_command_time = rospy.Time.now()
         self.last_sent_left_wheel_speed = 0
         self.last_sent_right_wheel_speed = 0
-        self.echo_failure_count = 0
         self._last_written_block = None
         self._last_written_registers = {}
         self._last_safe_stop_on_error_time = 0.0
@@ -74,6 +81,11 @@ class ChassisDriverNode:
         self.slave_id = rospy.get_param("~slave_id", 1)
         self.timeout = rospy.get_param("~timeout", 0.1)
         self.poll_rate_hz = rospy.get_param("~poll_rate_hz", 20.0)
+        self.status_poll_rate_hz = float(rospy.get_param("~status_poll_rate_hz", 2.0))
+        self.diagnostics_rate_hz = float(rospy.get_param("~diagnostics_rate_hz", 1.0))
+        self.status_combined_read = bool(rospy.get_param("~status_combined_read", True))
+        self._next_status_poll_monotonic = 0.0
+        self._next_diagnostics_monotonic = 0.0
         self.command_timeout = rospy.get_param("~command_timeout", 0.5)
         self.write_verify = rospy.get_param("~write_verify", False)
         self.max_retries = rospy.get_param("~max_retries", 3)
@@ -88,8 +100,6 @@ class ChassisDriverNode:
         self.disc_lift_supported = bool(rospy.get_param("~disc_lift_supported", True))
         self.max_cmd_step_rpm = int(rospy.get_param("~max_cmd_step_rpm", 50))
         self.enable_cmd_ramp_limit = bool(rospy.get_param("~enable_cmd_ramp_limit", True))
-        self.max_echo_deviation = int(rospy.get_param("~max_echo_deviation", 200))
-        self.max_echo_failures = int(rospy.get_param("~max_echo_failures", 2))
         self.safe_stop_on_error_interval = float(rospy.get_param("~safe_stop_on_error_interval", 1.0))
         self.enable_safe_stop_on_comm_error = bool(rospy.get_param("~enable_safe_stop_on_comm_error", True))
         self.rs485_raw_log_enabled = bool(rospy.get_param("~rs485_raw_log_enabled", False))
@@ -692,25 +702,60 @@ class ChassisDriverNode:
 
     def _poll_once(self, _event):
         self._enforce_command_timeout()
+        now_monotonic = time.monotonic()
+        status_due = now_monotonic >= self._next_status_poll_monotonic
+        diagnostics_due = now_monotonic >= self._next_diagnostics_monotonic
+        if status_due:
+            status_interval = 1.0 / max(0.1, min(self.status_poll_rate_hz, float(self.poll_rate_hz)))
+            self._next_status_poll_monotonic = now_monotonic + status_interval
+        if diagnostics_due:
+            diagnostics_interval = 1.0 / max(0.1, self.diagnostics_rate_hz)
+            self._next_diagnostics_monotonic = now_monotonic + diagnostics_interval
+
+        status_fresh = False
         try:
-            registers = self.transport.read_register_block(
-                READ_BLOCK_START,
-                READ_BLOCK_COUNT,
-                signed_indices=(0, 1, 2),
-            )
-            actual_speed_registers = self.transport.read_register_block(
-                REGISTER_LEFT_MOTOR_ACTUAL_SPEED,
-                ACTUAL_SPEED_READ_COUNT,
-                signed_indices=(0, 1),
-            )
+            status_registers = None
+            if status_due and self.status_combined_read:
+                try:
+                    combined_registers = self.transport.read_register_block(
+                        STATUS_READ_START,
+                        STATUS_AND_ACTUAL_READ_COUNT,
+                        signed_indices=(0, 5, 6),
+                    )
+                except ModbusExceptionResponse as exc:
+                    if exc.exception_code not in (0x02, 0x03):
+                        raise
+                    self.status_combined_read = False
+                    rospy.logwarn(
+                        "Combined chassis status read is unsupported; falling back to separate reads: %s",
+                        exc,
+                    )
+                else:
+                    status_registers = combined_registers[:STATUS_READ_COUNT]
+                    actual_speed_registers = combined_registers[STATUS_READ_COUNT:]
+
+            if status_due and status_registers is None:
+                status_registers = self.transport.read_register_block(
+                    STATUS_READ_START,
+                    STATUS_READ_COUNT,
+                    signed_indices=(0,),
+                )
+            if not status_due or not self.status_combined_read:
+                actual_speed_registers = self.transport.read_register_block(
+                    REGISTER_LEFT_MOTOR_ACTUAL_SPEED,
+                    ACTUAL_SPEED_READ_COUNT,
+                    signed_indices=(0, 1),
+                )
             with self._lock:
-                self.snapshot = RegisterSnapshot.from_registers(registers)
-                snapshot = RegisterSnapshot(**self.snapshot.__dict__)
+                if status_registers is not None:
+                    self.snapshot = RegisterSnapshot.from_status_registers(status_registers)
+                    self._last_status_read_monotonic = time.monotonic()
+                    status_fresh = True
                 self.actual_left_motor_speed = int(actual_speed_registers[0])
                 self.actual_right_motor_speed = int(actual_speed_registers[1])
                 self.actual_speed_valid = True
+                self._last_actual_read_monotonic = time.monotonic()
             self._mark_connected()
-            self._check_echo_deviation(snapshot)
         except ModbusTransportError as exc:
             with self._lock:
                 self.actual_left_motor_speed = 0
@@ -718,8 +763,9 @@ class ChassisDriverNode:
                 self.actual_speed_valid = False
             self._handle_transport_error(exc)
 
-        self._publish_state()
-        self._publish_diagnostics()
+        self._publish_state(publish_status=status_due, status_fresh=status_fresh)
+        if diagnostics_due:
+            self._publish_diagnostics()
 
     def _enforce_command_timeout(self):
         if not self.stop_on_timeout or not self.enabled:
@@ -734,7 +780,7 @@ class ChassisDriverNode:
             rospy.logwarn_throttle(2.0, "Wheel speed command timeout reached. Stopping chassis motion.")
             self._write_motion_registers()
 
-    def _publish_state(self):
+    def _publish_state(self, publish_status=True, status_fresh=True):
         now = rospy.Time.now()
         with self._lock:
             command = ChassisCommand(**self.command.__dict__)
@@ -763,19 +809,20 @@ class ChassisDriverNode:
             connected and actual_speed_valid,
         )
 
-        status_msg = ChassisStatus()
-        status_msg.header.stamp = now
-        status_msg.connected = connected
-        status_msg.enabled = enabled
-        status_msg.work_mode = snapshot.work_mode
-        status_msg.disc_speed_target = command.disc_speed
-        status_msg.disc_speed_feedback = snapshot.disc_speed
-        status_msg.disc_enabled = snapshot.disc_enable == DISC_ENABLE_ON
-        status_msg.disc_lift_state = snapshot.disc_lift
-        status_msg.light_enabled = snapshot.light == LIGHT_ON
-        status_msg.consecutive_failures = consecutive_failures
-        status_msg.last_error = last_error
-        self.status_pub.publish(status_msg)
+        if publish_status:
+            status_msg = ChassisStatus()
+            status_msg.header.stamp = now
+            status_msg.connected = connected and status_fresh
+            status_msg.enabled = enabled
+            status_msg.work_mode = snapshot.work_mode
+            status_msg.disc_speed_target = command.disc_speed
+            status_msg.disc_speed_feedback = snapshot.disc_speed
+            status_msg.disc_enabled = snapshot.disc_enable == DISC_ENABLE_ON
+            status_msg.disc_lift_state = snapshot.disc_lift
+            status_msg.light_enabled = snapshot.light == LIGHT_ON
+            status_msg.consecutive_failures = consecutive_failures
+            status_msg.last_error = last_error or ("status read failed" if not status_fresh else "")
+            self.status_pub.publish(status_msg)
 
     def _publish_wheel_odom(self, stamp, left_motor_rpm, right_motor_rpm, feedback_valid):
         linear_mps = 0.0
@@ -818,11 +865,14 @@ class ChassisDriverNode:
 
     def _publish_diagnostics(self):
         now = rospy.Time.now()
+        now_monotonic = time.monotonic()
         with self._lock:
             connected = self.connected
             level = DiagnosticStatus.OK if connected else DiagnosticStatus.ERROR
             message = "connected" if connected else (self.last_error or "disconnected")
             consecutive_failures = self.consecutive_failures
+            actual_age = now_monotonic - self._last_actual_read_monotonic if self._last_actual_read_monotonic else -1.0
+            status_age = now_monotonic - self._last_status_read_monotonic if self._last_status_read_monotonic else -1.0
 
         diag = DiagnosticStatus()
         diag.name = "grinder_chassis_driver"
@@ -834,6 +884,9 @@ class ChassisDriverNode:
             KeyValue(key="baudrate", value=str(self.baudrate)),
             KeyValue(key="slave_id", value=str(self.slave_id)),
             KeyValue(key="consecutive_failures", value=str(consecutive_failures)),
+            KeyValue(key="actual_speed_age_sec", value="{:.3f}".format(actual_age)),
+            KeyValue(key="status_age_sec", value="{:.3f}".format(status_age)),
+            KeyValue(key="status_combined_read", value=str(self.status_combined_read)),
         ]
 
         array = DiagnosticArray()
@@ -884,41 +937,6 @@ class ChassisDriverNode:
         if delta < -self.max_cmd_step_rpm:
             return int(last_value) - self.max_cmd_step_rpm
         return int(target)
-
-    def _check_echo_deviation(self, snapshot):
-        with self._lock:
-            if not self.enabled:
-                self.echo_failure_count = 0
-                return
-            expected_left = self.last_sent_left_wheel_speed
-            expected_right = self.last_sent_right_wheel_speed
-            max_dev = self.max_echo_deviation
-            max_fail = max(1, self.max_echo_failures)
-
-        left_diff = abs(int(snapshot.left_wheel_speed) - int(expected_left))
-        right_diff = abs(int(snapshot.right_wheel_speed) - int(expected_right))
-        if left_diff <= max_dev and right_diff <= max_dev:
-            with self._lock:
-                self.echo_failure_count = 0
-            return
-
-        with self._lock:
-            self.echo_failure_count += 1
-            echo_failures = self.echo_failure_count
-        rospy.logwarn_throttle(
-            1.0,
-            "Modbus echo deviation warning: left_diff=%d right_diff=%d max=%d count=%d/%d",
-            left_diff,
-            right_diff,
-            max_dev,
-            echo_failures,
-            max_fail,
-        )
-        if echo_failures >= max_fail:
-            rospy.logwarn("Echo deviation protection triggered. Issuing safe stop.")
-            self._issue_safe_stop_on_error()
-            with self._lock:
-                self.echo_failure_count = 0
 
     def _on_shutdown(self):
         try:

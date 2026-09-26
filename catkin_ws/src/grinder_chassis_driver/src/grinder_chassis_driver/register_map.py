@@ -18,6 +18,9 @@ ACTUAL_SPEED_READ_COUNT = 2
 
 READ_BLOCK_START = REGISTER_LEFT_WHEEL_SPEED
 READ_BLOCK_COUNT = 7
+STATUS_READ_START = REGISTER_DISC_SPEED
+STATUS_READ_COUNT = 5
+STATUS_AND_ACTUAL_READ_COUNT = 7
 
 DISC_ENABLE_OFF = 0x0000
 DISC_ENABLE_ON = 0x0001
@@ -133,4 +136,16 @@ class RegisterSnapshot:
             work_mode=registers[4],
             disc_lift=registers[5],
             light=registers[6],
+        )
+
+    @classmethod
+    def from_status_registers(cls, registers):
+        if len(registers) < STATUS_READ_COUNT:
+            raise ValueError("Expected at least 5 status registers in the snapshot")
+        return cls(
+            disc_speed=to_int16(registers[0]),
+            disc_enable=registers[1],
+            work_mode=registers[2],
+            disc_lift=registers[3],
+            light=registers[4],
         )

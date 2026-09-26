@@ -12,6 +12,20 @@ class ModbusTransportError(RuntimeError):
     """Raised when RS485 Modbus communication fails."""
 
 
+class ModbusExceptionResponse(ModbusTransportError):
+    """A valid Modbus exception response returned by the controller."""
+
+    def __init__(self, function_code, exception_code):
+        self.function_code = function_code
+        self.exception_code = exception_code
+        super().__init__(
+            "Modbus exception response: function 0x{:02X}, exception code 0x{:02X}".format(
+                function_code,
+                exception_code,
+            )
+        )
+
+
 class _SerialPort:
     _BAUD_RATES = {
         1200: termios.B1200,
@@ -177,9 +191,10 @@ class ModbusTransport:
                 )
                 self._serial_port.write(frame)
                 self._log_raw_frame("TX", frame)
-                response = self._serial_port.read_exactly(8)
-                self._log_raw_frame("RX", response)
-                self._validate_response(response, expected_function=16)
+                self._read_write_response(16, start_address, len(encoded_values))
+        except ModbusTransportError:
+            self.close()
+            raise
         except Exception as exc:
             self.close()
             raise ModbusTransportError(str(exc))
@@ -202,8 +217,12 @@ class ModbusTransport:
                 if header[1] & 0x80:
                     response = header + self._serial_port.read_exactly(2)
                     self._log_raw_frame("RX", response)
-                    self._raise_for_exception(response)
+                    self._validate_response(response, expected_function=3)
                 byte_count = header[2]
+                if byte_count != count * 2:
+                    raise ModbusTransportError(
+                        "Unexpected Modbus read byte count: expected {}, got {}".format(count * 2, byte_count)
+                    )
                 body = self._serial_port.read_exactly(byte_count + 2)
                 response = header + body
                 self._log_raw_frame("RX", response)
@@ -211,6 +230,9 @@ class ModbusTransport:
                 values = []
                 for index in range(0, byte_count, 2):
                     values.append(int.from_bytes(response[3 + index : 5 + index], byteorder="big", signed=False))
+        except ModbusTransportError:
+            self.close()
+            raise
         except Exception as exc:
             self.close()
             raise ModbusTransportError(str(exc))
@@ -246,9 +268,14 @@ class ModbusTransport:
                     )
                 self._serial_port.write(frame)
                 self._log_raw_frame("TX", frame)
-                response = self._serial_port.read_exactly(8)
-                self._log_raw_frame("RX", response)
-                self._validate_response(response, expected_function=function_code)
+                self._read_write_response(
+                    function_code,
+                    register_address,
+                    1 if function_code == 16 else encoded_value,
+                )
+        except ModbusTransportError:
+            self.close()
+            raise
         except Exception as exc:
             self.close()
             raise ModbusTransportError(str(exc))
@@ -266,6 +293,23 @@ class ModbusTransport:
         crc = self._crc16(frame)
         return frame + crc.to_bytes(2, byteorder="little", signed=False)
 
+    def _read_write_response(self, function_code, register_address, expected_tail):
+        header = self._serial_port.read_exactly(2)
+        response = header + self._serial_port.read_exactly(3 if header[1] & 0x80 else 6)
+        self._log_raw_frame("RX", response)
+        self._validate_response(response, expected_function=function_code)
+        actual_address = int.from_bytes(response[2:4], byteorder="big", signed=False)
+        actual_tail = int.from_bytes(response[4:6], byteorder="big", signed=False)
+        if actual_address != register_address or actual_tail != expected_tail:
+            raise ModbusTransportError(
+                "Unexpected Modbus write acknowledgement: expected 0x{:04X}/0x{:04X}, got 0x{:04X}/0x{:04X}".format(
+                    register_address,
+                    expected_tail,
+                    actual_address,
+                    actual_tail,
+                )
+            )
+
     def _validate_response(self, response, expected_function):
         if len(response) < 5:
             raise ModbusTransportError("Response frame too short")
@@ -273,24 +317,28 @@ class ModbusTransport:
             raise ModbusTransportError(
                 "Unexpected slave id in response: expected {}, got {}".format(self.slave_id, response[0])
             )
-        if response[1] & 0x80:
-            self._raise_for_exception(response)
-        if response[1] != expected_function:
-            raise ModbusTransportError(
-                "Unexpected Modbus function code: expected {}, got {}".format(expected_function, response[1])
-            )
         received_crc = int.from_bytes(response[-2:], byteorder="little", signed=False)
         calculated_crc = self._crc16(response[:-2])
         if received_crc != calculated_crc:
             raise ModbusTransportError(
                 "CRC mismatch: expected 0x{:04X}, got 0x{:04X}".format(calculated_crc, received_crc)
             )
+        if response[1] & 0x80:
+            if response[1] != (expected_function | 0x80):
+                raise ModbusTransportError(
+                    "Unexpected Modbus exception function code: expected 0x{:02X}, got 0x{:02X}".format(
+                        expected_function | 0x80,
+                        response[1],
+                    )
+                )
+            self._raise_for_exception(response)
+        if response[1] != expected_function:
+            raise ModbusTransportError(
+                "Unexpected Modbus function code: expected {}, got {}".format(expected_function, response[1])
+            )
 
     def _raise_for_exception(self, response):
-        exception_code = response[2]
-        raise ModbusTransportError(
-            "Modbus exception response: function 0x{:02X}, exception code 0x{:02X}".format(response[1], exception_code)
-        )
+        raise ModbusExceptionResponse(response[1], response[2])
 
     @staticmethod
     def _crc16(payload):
