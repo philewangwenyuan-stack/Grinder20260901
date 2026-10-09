@@ -1,0 +1,26 @@
+<launch>
+
+  <arg name="rviz" default="true" />
+  <!-- Measured base_link -> base_laser_link mounting transform. -->
+  <arg name="base_to_laser_x" default="0.0" />
+  <arg name="base_to_laser_y" default="0.0" />
+  <arg name="base_to_laser_z" default="0.0" />
+  <arg name="base_to_laser_roll" default="0.0" />
+  <arg name="base_to_laser_pitch" default="0.0" />
+  <arg name="base_to_laser_yaw" default="0.0" />
+
+  <rosparam file="$(find super_lio)/config/livox_360.yaml" command="load"/>
+
+  <!-- Launch Nodes -->
+  <node pkg="super_lio" type="super_lio_node" name="super_lio_node" output="log"/>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_laser"
+        args="$(arg base_to_laser_x) $(arg base_to_laser_y) $(arg base_to_laser_z) $(arg base_to_laser_yaw) $(arg base_to_laser_pitch) $(arg base_to_laser_roll) base_link base_laser_link"/>
+
+  <!-- Optional RViz -->
+  <group if="$(arg rviz)">
+		<node pkg="rviz" type="rviz" name="super_lio" args="-d $(find super_lio)/rviz/lio.rviz" />
+	</group>
+
+
+</launch>

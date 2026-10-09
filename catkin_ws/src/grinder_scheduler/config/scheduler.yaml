@@ -1,0 +1,351 @@
+# Public scheduler defaults. Keep credentials and device service endpoints in
+# scheduler.local.yaml (ignored); see scheduler.local.example.yaml.
+# External services are disabled until explicitly enabled by a local override.
+
+# Aurora 雷达主机 IP 地址
+aurora_ip_address: 192.168.0.114
+
+# 地图话题名（OccupancyGrid）
+map_topic: /slamware_ros_sdk_server_node/map
+# 里程计话题名（Odometry）
+odom_topic: /slamware_ros_sdk_server_node/odom
+# 左相机图像话题名
+left_image_topic: /slamware_ros_sdk_server_node/left_image_raw
+# 右相机图像话题名
+right_image_topic: /slamware_ros_sdk_server_node/right_image_raw
+# 是否使用深度彩色图像（替代左右可见光）
+use_depth_colorized_image: false
+# 深度彩色图像话题名
+depth_image_colorized_topic: /slamware_ros_sdk_server_node/depth_image_colorized
+
+# 首帧图像保存目录
+first_frame_save_dir: temp
+# 启动时是否保存首帧图像
+save_first_frame_on_startup: false
+
+# 初始地图预览图保存目录
+initial_map_preview_dir: temp
+# 启动后是否自动保存一次初始地图预览图
+initial_map_preview_enabled: false
+# 预览图最大边长上限（像素，所有 preview 类请求都会受此限制）
+preview_max_edge_cap: 640
+# 初始地图预览图最大边长（像素）
+initial_map_preview_max_edge: 512
+# 初始地图预览图格式（jpg/png）
+initial_map_preview_format: jpg
+
+# 路径规划预览图保存目录
+planned_path_preview_dir: temp
+# 路径规划预览图最大边长（像素）
+planned_path_preview_max_edge: 512
+# 路径规划预览图格式（jpg/png）
+planned_path_preview_format: jpg
+# 是否在路径规划内部立即保存预览图。
+# false 时由 PathPlanResponse 统一生成并保存，避免一次请求生成/保存两次预览。
+planned_path_preview_save_on_plan: false
+# PathPlanResponse 返回预览图时，是否额外保存 latest 文件。
+# false 不影响响应里的图片数据，可减少写文件耗时。
+planned_path_preview_save_response_file: false
+# 是否尝试使用 RK3588 RGA 加速预览图 resize/crop/rotate。
+# 当前 Python 调度程序会先检测 RGA 环境；未接入可用 Python 后端时自动回退 OpenCV。
+preview_rga_enabled: false
+# RGA 后端类型：auto/librga。当前建议保持 auto。
+preview_rga_backend: auto
+# 是否保存路径规划 debug json（路径点多时写 JSON 会明显拖慢 PathPlanRequest，默认关闭）
+planned_path_debug_enabled: false
+# 路径规划 debug json 保存目录（仅 planned_path_debug_enabled=true 时写入）
+planned_path_debug_dir: temp/path_debug
+# 路径预览图是否叠加区域/路径等覆盖层
+planned_path_preview_include_overlay: true
+# 路径预览图是否绘制方向箭头
+planned_path_preview_show_direction: true
+# 路径预览图方向箭头采样步长（每 N 个点画一个）
+planned_path_preview_arrow_step: 10
+# 路径预览图方向箭头长度（像素）
+planned_path_preview_arrow_len_px: 12
+# 区域绘制时是否显示区域ID（false 时仅显示区域名称）
+draw_region_id_on_preview: true
+# 区域绘制时是否显示区域名称（false 时名称与ID都不显示）
+draw_region_label_on_preview: false
+
+# 是否开启调度状态持久化
+persist_state_enabled: true
+# 调度状态持久化目录
+persist_state_dir: temp/grinder_scheduler_state
+# 路径规划成功后是否立即保存 scheduler_state。
+# 默认关闭，任务配置/地图编辑已经单独持久化，关闭可减少 PathPlanRequest 耗时。
+save_state_on_plan_success: false
+
+# 建造平台认证与 Super-LIO 地图资产包上传。
+# 平台密码优先从 GRINDER_PLATFORM_PASSWORD 读取。
+platform_base_url: ""
+platform_username: ""
+platform_password: ""
+# 账号只有一个项目时自动选择；账号有多个项目时必须填写目标 projectId。
+platform_project_id: ""
+platform_http_timeout_sec: 30
+file_server_base_url: ""
+file_upload_on_map_save: false
+file_remote_root_name: GrinderProject
+# 地图删除默认以本地删除成功为准，平台目录删除进入后台重试队列。
+# 仅在需要兼容旧的“远端失败即失败”策略时才设为 true。
+map_delete_require_remote_success: false
+map_delete_retry_sec: 30
+map_delete_retry_max_sec: 1800
+
+# 物联网 MQTT 上下线和综合设备状态上报。
+# 与 TileCarrier 一致：username/password 对应平台 accessKey/accessSecret。
+# 仅当这里留空时，才回退读取 MQTT_USERNAME/MQTT_PASSWORD 或
+# MQTT_ACCESS_KEY/MQTT_ACCESS_SECRET 环境变量。
+mqtt_enabled: false
+mqtt_broker_host: localhost
+mqtt_broker_port: 1883
+mqtt_dev_code: ""
+mqtt_username: ""
+mqtt_password: ""
+mqtt_keepalive_sec: 60
+mqtt_qos: 1
+mqtt_status_period_sec: 3.0
+# 后台 ICMP 测量工控机到 MQTT broker 的往返延迟，不阻塞控制线程。
+mqtt_network_latency_enabled: false
+mqtt_network_latency_period_sec: 5.0
+mqtt_network_latency_timeout_ms: 1000
+
+# SLINK 心跳中左右轮/整车速度由底盘电机真实 rpm 换算得到。
+wheel_speed_feedback_radius_m: 0.1475
+wheel_speed_feedback_gear_ratio: 60.0
+# 底盘驱动发布的轮式里程计，用于上报整车移动速度。
+wheel_odom_topic: /odom_wheel
+# 超过该时间未收到轮式里程计，速度按不可用和 0 处理。
+wheel_odom_timeout_sec: 1.0
+
+# 是否开启实时预览图输出
+# 关闭后不再定时生成 temp/aurora_map_preview_latest.jpg；
+# 地图预览请求、路径规划预览请求仍会按需生成图片。
+live_preview_enabled: false
+# 实时预览图更新频率（Hz）
+live_preview_hz: 1.0
+# 实时预览图最大边长（像素）
+live_preview_max_edge: 512
+# 实时预览图格式（jpg/png）
+live_preview_format: jpg
+# 实时预览图输出文件路径
+live_preview_file: temp/aurora_map_preview_latest.jpg
+
+# 是否开启实时地图周期落盘；关闭后地图请求、保存和规划仍按需处理
+live_map_enabled: false
+# 实时地图保存频率（Hz）
+live_map_hz: 1.0
+# 实时地图目录
+live_map_dir: temp/live_map
+# 实时地图 yaml 文件名
+live_map_yaml_name: map.yaml
+# 实时地图图像文件名（pgm）
+live_map_image_name: map1.pgm
+# LIVE_MAP 缓存清理策略：all(清理持久化+文件缓存) / memory_only(仅清理内存态覆盖层)
+live_map_cache_clear_mode: all
+live_map_align_to_initial_yaw: true
+live_map_source_frame: map
+live_map_aligned_frame: map_aligned
+# APP 按原始 map 下发点位；mst27 在原始地图上按规划角直接生成路径。
+sl_link_input_points_frame: map
+live_map_align_yaw_timeout: 0.05
+
+# 导航栈使用的地图 yaml 路径
+navigation_map_yaml_path: catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/maps/map.yaml
+radar_relocalization_status_topic: /slamware_ros_sdk_server_node/relocalization_status
+localization_quality_position_reference_m: 0.1
+localization_quality_heading_reference_deg: 10.0
+# 雷达驱动在协方差不可用时使用 1000000 作为哨兵值。
+localization_quality_unavailable_variance: 1000000.0
+# Android/SL-LinkA initial-pose covariance defaults. Used when the request does
+# not include a valid LocalizationCovariance block (m^2 and rad^2).
+initial_pose_position_variance: 0.25
+initial_pose_yaw_variance: 0.06853891945200942
+# 切换地图服务名
+change_map_service: /change_map
+# 查询雷达初始化、地图优化和重定位状态的话题
+radar_system_status_topic: /slamware_ros_sdk_server_node/system_status
+
+# Super-LIO is the only supported map backend. The mode manager owns mapping
+# and relocation roslaunch processes; the scheduler only calls its services.
+localization_backend: super_lio
+super_lio_map_root: /home/neardi/work/Grinder/maps
+super_lio_service_timeout_sec: 30.0
+super_lio_startup_timeout_sec: 20.0
+super_lio_shutdown_timeout_sec: 8.0
+super_lio_loop_closure: false
+super_lio_autosave: false
+
+# 路径规划脚本路径
+planner_script_path: third_party/path_planner/mst27/mst27.py
+
+# 机器人宽度（米），影响路径间距计算
+vehicle_width: 0.8
+# 机器人长度（米），用于转弯半径计算
+vehicle_length: 1.4
+footprint: [[-0.60, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.60, -0.47]]
+base_laser_x: 0.0
+base_laser_y: 0.0
+base_laser_z: 0.0
+base_laser_roll_deg: 0.0
+base_laser_pitch_deg: 0.0
+base_laser_yaw_deg: 0.0
+# 默认路径间距（米），建议为车宽的 80%-90%
+default_path_spacing: 0.7
+# 转弯半径（米），影响路径平滑
+turn_radius: 0.1
+# 重叠比例（0-1），建议 0.1-0.2
+overlap_ratio: 0
+# 膨胀半径（米），建议为宽度的 40%-60%
+inflation_radius: 0.6
+# 扫掠线起止点距作业边界的留边（米）
+endpoint_margin: 2.0
+# 最终输出路径的补点间距（米），0 表示关闭补点
+output_point_spacing: 0.3
+# 角度对齐后的柱子外接矩形膨胀距离（米）
+aligned_obstacle_inflation: 0.7
+# 柱子识别的最大边长（米），超过后按墙体处理
+aligned_obstacle_max_extent: 3.0
+# 绕柱外推锚点的进入/退出角度（度）
+obstacle_corner_angle_deg: 45.0
+# 柱子膨胀范围外追加的避让距离（米）
+obstacle_avoidance_distance: 0.0
+
+# 任务运行轨迹固定采样周期（秒）；静止和移动都记录，保存为整数缩放 Protobuf 流
+task_trajectory_sample_interval_sec: 1.0
+# 单次任务最长轨迹时长（秒），4小时
+task_trajectory_max_duration_sec: 14400
+# 轨迹查询默认/最大返回点数，超出时使用 start_index 分页
+task_trajectory_default_max_points: 3600
+task_trajectory_max_points: 14400
+
+# SL-LinkA Python SDK 目录
+sl_linka_python_sdk_dir: third_party/sl_linka/sdk/python
+# SL-LinkA 监听地址
+sl_linka_host: 0.0.0.0
+# SL-LinkA 监听端口
+sl_linka_port: 8002
+# 生产默认每秒采样一帧，并按周期汇总接收量；排查问题时才开启逐帧帧头日志。
+sl_linka_rx_diagnostic_logging: false
+sl_linka_rx_sample_interval_sec: 1.0
+sl_linka_rx_stats_interval_sec: 60.0
+
+# 是否由调度包内部启动 Aurora 驱动
+start_aurora_driver: false
+# Aurora 是否输出原始图像
+aurora_raw_image_on: true
+# Aurora 是否关闭预览图输出
+aurora_no_preview_image: false
+
+# 是否启用本地 RTSP 推流
+local_rtsp_enabled: true
+# 本地 RTSP 监听地址
+local_rtsp_host: 0.0.0.0
+# 外部访问 RTSP 时公布的主机地址（auto 表示自动推断）
+local_rtsp_public_host: auto
+# 本地 RTSP 端口
+local_rtsp_port: 8554
+# RTSP 推流帧率
+local_rtsp_fps: 15
+# RTSP 推流宽度（像素）
+local_rtsp_width: 640
+# 是否由调度包启动 mediamtx 服务
+local_rtsp_start_server: true
+# RTSP 编码器：RK3588 优先使用 Rockchip MPP 硬件编码；不可用时自动回退 FFmpeg。
+local_rtsp_encoder: auto
+# MPP 硬件编码码率（kbps）和关键帧间隔（帧）
+local_rtsp_bitrate_kbps: 800
+local_rtsp_keyframe_interval: 15
+# mediamtx 可执行文件路径
+local_rtsp_mediamtx_path: tools/mediamtx/mediamtx
+# RTSP 相关日志目录
+local_rtsp_log_dir: temp
+
+# 调度主循环频率（Hz）
+scheduler_tick_hz: 5
+# SL-Link SettingsWrite.chassis.run_speed 默认值和允许上限（m/s）。
+default_chassis_run_speed: 0.2
+max_chassis_run_speed: 0.2
+# 收到 run_speed 后同步更新 TEB 动态参数。
+navigation_speed_reconfigure_namespace: /move_base/RegulatedPurePursuitController
+navigation_speed_reconfigure_parameter: desired_linear_vel
+navigation_speed_reconfigure_timeout: 1.0
+# RPP defaults are persisted here only as a path; live values are owned by
+# move_base/RegulatedPurePursuitController and can be changed temporarily via
+# dynamic_reconfigure.
+rpp_config_yaml_path: catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/rpp_local_planner_params.yaml
+# Active navigation segment path. The full display path is published once when
+# planning/start/resume changes its lifecycle and remains available via latch.
+active_segment_plan_topic: /grinder/navigation/active_segment_plan
+active_segment_publish_hz: 3.0
+active_segment_goal_refresh_s: 8.0
+active_segment_progress_epsilon_m: 0.03
+path_segment_switch_distance_m: 2.8
+path_segment_short_progress_ratio: 0.85
+path_segment_next_lane_leadin_m: 0.7
+path_segment_overlap_behind_m: 0.3
+# 目标点到达阈值（米）：小于该值判定“到达当前 goal”，建议小于路径点间距（如 0.03）
+path_goal_reach_dist: 0.5
+# 当前段目标超时时间（秒）：超过后重发当前段终点（不切下一段）
+path_segment_timeout: 10.0
+# 是否在几字形转弯的短平段中间插入一个额外目标点，引导车边走边转
+path_corner_mid_enabled: true
+# 短平段长度下限（米）：小于该长度不插 corner_mid，避免在噪声点上加目标
+path_corner_mid_min_length: 0.05
+# 短平段判定比例：短平段长度需要小于前后长直段较短者的该比例
+path_corner_mid_short_ratio: 0.6
+# 前后长直段方向允许偏差（度）：小于该角度或接近 180 度时认为是同一组平行覆盖线
+path_corner_mid_parallel_threshold_deg: 35.0
+# 短平段与长直段的最小转角（度）：大于该角度才认为是几字形转弯连接段
+path_corner_mid_turn_min_angle_deg: 45.0
+# 是否启用磨盘运动保护：cmd_vel 长时间接近 0 时只停磨盘，不发抬盘命令
+disc_motion_guard_enabled: true
+# 无升降机型跨区域或非任务手动行走时是否保持磨盘低速旋转。
+# 默认 false，保持原机型原有逻辑；无升降机型设为 true。
+disc_travel_spin_enabled: true
+# 非研磨行走时的磨盘转速（rpm），仅在 disc_travel_spin_enabled=true 时生效。
+disc_travel_speed_rpm: 300
+# 当前机型是否支持磨盘升降；无升降机型设为 false 后拒绝 SL-Link 升降控制。
+disc_lift_supported: false
+# 判断“停住”的线速度阈值（m/s）：linear 小于该值才开始累计静止时间
+disc_stop_linear_threshold: 0.01
+# 判断“停住”的角速度阈值（rad/s）：angular 小于该值才开始累计静止时间
+disc_stop_angular_threshold: 0.01
+# 判断“恢复运动”的线速度阈值（m/s）：linear 大于该值则允许恢复磨盘
+disc_resume_linear_threshold: 0.02
+# 判断“恢复运动”的角速度阈值（rad/s）：angular 大于该值则允许恢复磨盘
+disc_resume_angular_threshold: 0.03
+# 静止保持时间（秒）：连续静止超过该时间才关闭磨盘
+disc_stop_hold_sec: 1.0
+# 磨盘最小启停间隔（秒）：避免短暂停顿导致频繁启停
+disc_switch_min_interval: 2.0
+# cmd_vel 超时时间（秒）：超过该时间没收到 cmd_vel，则按静止处理
+disc_cmd_vel_stale_sec: 1.0
+# 导航碰撞预警为 true 时，运行中的任务自动暂停并停止底盘、磨盘。
+collision_imminent_topic: /rpp/collision_imminent
+# PathPlanRequest 是否按“所有已选区域”规划（true=有几个区域规划几次；false=仅按当前激活区域）
+path_plan_request_use_all_regions: true
+# TaskConfig 是否立即自动触发路径规划。
+# Android 通常会在 TaskConfig 后再发 PathPlanRequest，默认关闭可避免同一次操作规划两遍。
+task_config_auto_plan_enabled: false
+# 手动控制换向保护时间（秒）：前进/后退/左右切换时先发 0 速，避免驱动瞬时反转报错
+manual_reverse_guard_sec: 1.0
+# 手动摇杆指令看门狗（秒）：超过该时间没有新指令，调度立即发布左右轮零速
+manual_command_timeout_sec: 2.0
+
+# 视频流推送循环频率（Hz）
+stream_push_hz: 20
+# 是否启用视频流推送
+stream_enabled: false
+# SRS 流名称。auto 表示使用 mqtt_dev_code。
+stream_name: auto
+# SRS RTMP 推流地址和 HTTP-FLV 播放地址，支持 {stream} 占位符。
+stream_url: ""
+stream_play_url: ""
+# 推流帧率
+stream_fps: 10
+# 推流最大宽度（像素）、码率（kbps）和关键帧间隔（帧）
+stream_width: 640
+stream_bitrate_kbps: 800
+stream_keyframe_interval: 20

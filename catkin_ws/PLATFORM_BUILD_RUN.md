@@ -2,6 +2,16 @@
 
 本工程支持在 `x86_64` 和 `aarch64(RK3588)` 上按平台自动编译与启动。
 
+新克隆已包含 Super-LIO 源码和不含凭据的 `grinder_scheduler/config/scheduler.yaml`。
+Super-LIO 无子模块拉取步骤，上游版本见
+`src/localization/Super-LIO/UPSTREAM.md`。
+设备服务配置请从 `src/grinder_scheduler/config/scheduler.local.example.yaml`
+复制为被忽略的 `scheduler.local.yaml`；两个真实启动脚本自动发现该文件，
+也可通过 `GRINDER_SCHEDULER_LOCAL_CONFIG` 指定绝对路径（显式为空表示不用本地覆盖）。
+配置预检需要 Python 3 的 PyYAML（Ubuntu 包 `python3-yaml`）。
+仿真脚本默认只用受控配置，平台上传、MQTT 和远端推流均关闭。
+直接 roslaunch 可传 `scheduler_local_config:=/absolute/path/device.yaml`。
+
 ## 1. 编译（自动识别平台）
 
 脚本：

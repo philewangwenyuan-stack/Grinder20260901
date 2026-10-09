@@ -1,0 +1,7 @@
+int32 cmd_id
+bool enable_filter
+string map_dir
+string map_name
+---
+bool success
+float32[] map_data

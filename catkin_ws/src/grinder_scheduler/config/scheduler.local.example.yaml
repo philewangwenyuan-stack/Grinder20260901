@@ -1,0 +1,28 @@
+# Copy to scheduler.local.yaml (ignored) and fill only device-specific values.
+# Device startup scripts discover scheduler.local.yaml automatically.
+# Direct roslaunch: scheduler_local_config:=/absolute/path/scheduler.local.yaml
+# Keep this file and the public scheduler.yaml free of real credentials.
+
+# Explicitly enable services only after supplying endpoints and credentials.
+file_upload_on_map_save: false
+platform_base_url: ""
+file_server_base_url: ""
+platform_username: ""
+platform_password: ""  # alternatively GRINDER_PLATFORM_PASSWORD
+platform_project_id: ""
+
+mqtt_enabled: false
+mqtt_broker_host: localhost
+mqtt_broker_port: 1883
+mqtt_dev_code: ""
+mqtt_username: ""  # alternatively MQTT_USERNAME / MQTT_ACCESS_KEY
+mqtt_password: ""  # alternatively MQTT_PASSWORD / MQTT_ACCESS_SECRET
+
+stream_enabled: false
+stream_url: ""
+stream_play_url: ""
+
+# Examples of non-secret device overrides:
+# local_rtsp_encoder: mpph264enc
+# manual_command_timeout_sec: 0.5
+# Pass sensor topics/IP and map root through the corresponding launch arguments.

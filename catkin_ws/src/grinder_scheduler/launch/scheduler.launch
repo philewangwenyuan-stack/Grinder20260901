@@ -1,4 +1,6 @@
 <launch>
+  <arg name="scheduler_config" default="$(find grinder_scheduler)/config/scheduler.yaml" />
+  <arg name="scheduler_local_config" default="$(optenv GRINDER_SCHEDULER_LOCAL_CONFIG)" />
   <arg name="aurora_ip_address" default="192.168.0.114" />
   <arg name="aurora_raw_image_on" default="true" />
   <arg name="aurora_no_preview_image" default="false" />
@@ -30,6 +32,7 @@
         name="super_lio_mode_manager"
         output="screen">
     <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
+    <rosparam if="$(eval bool(arg('scheduler_local_config')))" command="load" file="$(arg scheduler_local_config)" />
     <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
     <param name="metrics_export_enabled" value="$(arg metrics_export_enabled)" />
     <param name="metrics_export_dir" value="$(arg metrics_export_dir)" />
@@ -40,8 +43,9 @@
         type="scheduler_node.py"
         name="grinder_scheduler"
         output="screen">
-    <rosparam command="load" file="$(find grinder_scheduler)/config/scheduler.yaml" />
+    <rosparam command="load" file="$(arg scheduler_config)" />
     <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
+    <rosparam if="$(eval bool(arg('scheduler_local_config')))" command="load" file="$(arg scheduler_local_config)" />
     <param name="aurora_ip_address" value="$(arg aurora_ip_address)" />
     <param name="aurora_raw_image_on" value="$(arg aurora_raw_image_on)" />
     <param name="aurora_no_preview_image" value="$(arg aurora_no_preview_image)" />

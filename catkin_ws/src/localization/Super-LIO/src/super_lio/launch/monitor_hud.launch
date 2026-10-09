@@ -1,0 +1,36 @@
+<launch>
+  <arg name="odom_topic"        default="/lio/odom"/>
+
+  <!-- MCD -->
+  <!-- <arg name="imu_topic"         default="/vn100/imu"/> -->
+
+  <!-- NTU -->
+  <!-- <arg name="imu_topic"         default="/imu/imu"/> -->
+
+  <!-- Livox -->
+  <!-- <arg name="imu_topic"         default="/livox/imu"/> -->
+  
+  <!-- M2DGR -->
+  <!-- <arg name="imu_topic"         default="/handsfree/imu"/> -->
+
+  <!-- NCLT -->
+  <arg name="imu_topic"         default="/imu_raw"/>
+
+  <arg name="proc_time_topic"   default="/lio/processing_time"/>
+  <arg name="process_name"      default="super_lio_node"/>
+  <arg name="cpu_interval"      default="0.01"/>
+  <arg name="cpu_window"        default="50"/>
+  <arg name="cpu_base_percent"  default="1600"/>
+
+  <!-- 节点 -->
+  <node pkg="super_lio" type="monitor_hud.py" name="sys_monitor_hud" output="screen">
+    <param name="odom_topic"        value="$(arg odom_topic)"/>
+    <param name="imu_topic"         value="$(arg imu_topic)"/>
+    <param name="proc_time_topic"   value="$(arg proc_time_topic)"/>
+    <param name="process_name"      value="$(arg process_name)"/>
+    <param name="cpu_interval"      value="$(arg cpu_interval)"/>
+    <param name="cpu_window"        value="$(arg cpu_window)"/>
+    <param name="cpu_base_percent"  value="$(arg cpu_base_percent)"/>
+  </node>
+
+</launch>

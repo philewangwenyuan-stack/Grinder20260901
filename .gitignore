@@ -21,8 +21,8 @@ temp/
 **/temp/
 *.log
 
-# Device-local credentials (use a sanitized template for version control)
-catkin_ws/src/grinder_scheduler/config/scheduler.yaml
+# Device-local credentials and deployment overrides; scheduler.yaml is public.
+catkin_ws/src/grinder_scheduler/config/scheduler.local.yaml
 
 # Generated native extensions and object files
 *.so

@@ -3,6 +3,8 @@ set -euo pipefail
 
 WORKSPACE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${WORKSPACE}"
+source "${WORKSPACE}/scripts/scheduler_config.sh"
+configure_scheduler_config "${WORKSPACE}" sim
 
 if [[ ! -f /opt/ros/noetic/setup.bash ]]; then
   echo "[ERROR] ROS Noetic is not installed at /opt/ros/noetic" >&2

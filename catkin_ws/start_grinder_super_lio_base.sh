@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="${WORKSPACE:-${SCRIPT_DIR}}"
+source "${SCRIPT_DIR}/scripts/scheduler_config.sh"
+configure_scheduler_config "${WORKSPACE}" device
 LIVOX_SETUP="${LIVOX_SETUP:-}"
 START_LIVOX="${START_LIVOX:-1}"
 START_CHASSIS="${START_CHASSIS:-1}"

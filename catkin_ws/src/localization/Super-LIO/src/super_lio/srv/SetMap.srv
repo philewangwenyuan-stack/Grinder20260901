@@ -1,0 +1,9 @@
+# ===== 请求 =====
+string map_path        # 地图文件保存目录，如 /home/user/maps
+string map_name        # 地图名，如 office_floor1（不带扩展名）
+bool   create_dir      # 目录不存在时是否自动创建
+---
+# ===== 响应 =====
+bool   success         # 设置是否成功
+string message         # 失败原因 / 实际生效的完整路径
+string full_path       # 服务端回显的最终路径，方便客户端核对

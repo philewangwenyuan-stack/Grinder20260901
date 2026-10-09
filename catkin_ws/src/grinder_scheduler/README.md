@@ -38,6 +38,10 @@ grinder_scheduler/
 ## 3.2 config/
 
 - 调度程序 YAML 配置目录。
+- `scheduler.yaml`：受控公共默认配置，外部服务默认关闭。
+- `scheduler.local.example.yaml`：无凭据的设备覆盖示例。
+- `scheduler.local.yaml`：可选的本地覆盖，被 Git 忽略且不随 Catkin 安装；
+  真实启动脚本自动发现，直接 roslaunch 使用 `scheduler_local_config:=绝对路径`。
 - 典型内容：
   - 机器人参数（宽度、长度、路径间距、转弯半径等）；
   - 运行时策略参数（话题名、频率、功能开关、持久化路径等）。

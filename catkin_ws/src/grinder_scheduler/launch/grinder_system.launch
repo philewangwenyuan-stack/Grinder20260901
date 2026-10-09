@@ -1,5 +1,7 @@
 <launch>
   <!-- global args -->
+  <arg name="scheduler_config" default="$(find grinder_scheduler)/config/scheduler.yaml" />
+  <arg name="scheduler_local_config" default="$(optenv GRINDER_SCHEDULER_LOCAL_CONFIG)" />
   <arg name="aurora_ip_address" default="192.168.11.1" />
   <arg name="aurora_raw_image_on" default="true" />
   <arg name="aurora_no_preview_image" default="false" />
@@ -31,6 +33,8 @@
 
   <!-- 3) scheduler and Super-LIO mode manager -->
   <include file="$(find grinder_scheduler)/launch/scheduler.launch">
+    <arg name="scheduler_config" value="$(arg scheduler_config)" />
+    <arg name="scheduler_local_config" value="$(arg scheduler_local_config)" />
     <arg name="aurora_ip_address" value="$(arg aurora_ip_address)" />
     <arg name="aurora_raw_image_on" value="$(arg aurora_raw_image_on)" />
     <arg name="aurora_no_preview_image" value="$(arg aurora_no_preview_image)" />

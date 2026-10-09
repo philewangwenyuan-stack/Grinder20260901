@@ -1,0 +1,15 @@
+.vscode
+build
+devel
+./logs
+install
+.catkin_workspace
+.catkin_tools
+src/CMakeLists.txt
+
+# Local analysis outputs are not part of the vendored source snapshot.
+__pycache__/
+*.pyc
+src/super_lio/scripts/*.png
+src/super_lio/scripts/*.pcd
+src/super_lio/scripts/*.npy

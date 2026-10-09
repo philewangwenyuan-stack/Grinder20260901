@@ -1,4 +1,6 @@
 <launch>
+  <arg name="scheduler_config" default="$(find grinder_scheduler)/config/scheduler.yaml" />
+  <arg name="scheduler_local_config" default="$(optenv GRINDER_SCHEDULER_LOCAL_CONFIG)" />
   <arg name="local_rtsp_enabled" default="true" />
   <arg name="sl_linka_port" default="8002" />
 
@@ -6,11 +8,11 @@
         type="scheduler_node.py"
         name="grinder_scheduler"
         output="screen">
-    <rosparam command="load" file="$(find grinder_scheduler)/config/scheduler.yaml" />
+    <rosparam command="load" file="$(arg scheduler_config)" />
+    <rosparam if="$(eval bool(arg('scheduler_local_config')))" command="load" file="$(arg scheduler_local_config)" />
     <rosparam command="load" file="$(find grinder_gazebo)/config/scheduler_sim_overrides.yaml" />
     <param name="local_rtsp_enabled" value="$(arg local_rtsp_enabled)" />
     <param name="local_rtsp_start_server" value="$(arg local_rtsp_enabled)" />
     <param name="sl_linka_port" value="$(arg sl_linka_port)" />
   </node>
 </launch>
-

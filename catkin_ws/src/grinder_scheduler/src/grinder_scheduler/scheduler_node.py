@@ -788,7 +788,7 @@ class SchedulerNode:
             width=rospy.get_param("~stream_width", 640),
             bitrate_kbps=rospy.get_param("~stream_bitrate_kbps", 800),
             keyframe_interval=rospy.get_param("~stream_keyframe_interval", 20),
-            enabled=rospy.get_param("~stream_enabled", True),
+            enabled=rospy.get_param("~stream_enabled", False),
         )
         self.local_stream_server = LocalRtspStreamServer(
             host=rospy.get_param("~local_rtsp_host", "0.0.0.0"),
@@ -893,13 +893,13 @@ class SchedulerNode:
         if not platform_password:
             platform_password = os.environ.get("GRINDER_PLATFORM_PASSWORD", "").strip()
         self.platform_file_sync = PlatformFileSync(
-            platform_base_url=rospy.get_param("~platform_base_url", "http://14.18.103.194:19001"),
-            username=rospy.get_param("~platform_username", "WangYaLing"),
+            platform_base_url=rospy.get_param("~platform_base_url", ""),
+            username=rospy.get_param("~platform_username", ""),
             password=platform_password,
             configured_project_id=rospy.get_param("~platform_project_id", ""),
-            file_base_url=rospy.get_param("~file_server_base_url", "http://14.18.103.194:19001"),
+            file_base_url=rospy.get_param("~file_server_base_url", ""),
             remote_root_name=rospy.get_param("~file_remote_root_name", "GrinderProject"),
-            enabled=rospy.get_param("~file_upload_on_map_save", True),
+            enabled=rospy.get_param("~file_upload_on_map_save", False),
             timeout_sec=rospy.get_param("~platform_http_timeout_sec", 30.0),
             map_delete_retry_sec=rospy.get_param("~map_delete_retry_sec", 30.0),
             map_delete_retry_max_sec=rospy.get_param("~map_delete_retry_max_sec", 1800.0),
@@ -917,8 +917,8 @@ class SchedulerNode:
         if not mqtt_password:
             mqtt_password = os.environ.get("MQTT_PASSWORD", os.environ.get("MQTT_ACCESS_SECRET", "")).strip()
         self.mqtt_reporter = MqttDeviceReporter(
-            enabled=rospy.get_param("~mqtt_enabled", True),
-            broker_host=rospy.get_param("~mqtt_broker_host", "14.18.91.10"),
+            enabled=rospy.get_param("~mqtt_enabled", False),
+            broker_host=rospy.get_param("~mqtt_broker_host", "localhost"),
             broker_port=rospy.get_param("~mqtt_broker_port", 1883),
             dev_code=rospy.get_param("~mqtt_dev_code", ""),
             username=mqtt_username,
@@ -927,7 +927,7 @@ class SchedulerNode:
             keepalive_sec=rospy.get_param("~mqtt_keepalive_sec", 60),
             qos=rospy.get_param("~mqtt_qos", 1),
             status_period_sec=rospy.get_param("~mqtt_status_period_sec", 3.0),
-            network_latency_enabled=rospy.get_param("~mqtt_network_latency_enabled", True),
+            network_latency_enabled=rospy.get_param("~mqtt_network_latency_enabled", False),
             network_latency_period_sec=rospy.get_param("~mqtt_network_latency_period_sec", 5.0),
             network_latency_timeout_ms=rospy.get_param("~mqtt_network_latency_timeout_ms", 1000),
         )

@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="${WORKSPACE:-${SCRIPT_DIR}}"
+source "${SCRIPT_DIR}/scripts/scheduler_config.sh"
+configure_scheduler_config "${WORKSPACE}" device
 LOG_DIR="${WORKSPACE}/logs/startup_latest"
 rm -rf "${LOG_DIR}"
 mkdir -p "${LOG_DIR}"

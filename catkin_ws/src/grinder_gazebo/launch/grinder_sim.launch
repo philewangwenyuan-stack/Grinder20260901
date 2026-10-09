@@ -1,4 +1,6 @@
 <launch>
+  <arg name="scheduler_config" default="$(find grinder_scheduler)/config/scheduler.yaml" />
+  <arg name="scheduler_local_config" default="$(optenv GRINDER_SCHEDULER_LOCAL_CONFIG)" />
   <arg name="gui" default="true" />
   <arg name="paused" default="false" />
   <arg name="visual_mesh" default="false" />
@@ -49,6 +51,8 @@
   </node>
 
   <include file="$(find grinder_gazebo)/launch/scheduler_sim.launch">
+    <arg name="scheduler_config" value="$(arg scheduler_config)" />
+    <arg name="scheduler_local_config" value="$(arg scheduler_local_config)" />
     <arg name="local_rtsp_enabled" value="$(arg local_rtsp_enabled)" />
     <arg name="sl_linka_port" value="$(arg sl_linka_port)" />
   </include>

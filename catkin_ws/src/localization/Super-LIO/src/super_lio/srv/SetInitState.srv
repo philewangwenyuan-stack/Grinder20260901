@@ -1,0 +1,5 @@
+int32 cmd_id
+float32[] pose
+float32[] map_data
+---
+bool success

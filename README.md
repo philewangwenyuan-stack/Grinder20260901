@@ -80,6 +80,38 @@ Grinder/
 Super-LIO 模式、地图根目录和启停超时位于
 `catkin_ws/src/grinder_scheduler/config/super_lio.yaml`；该文件不包含设备凭据，可随代码部署。
 
+### 默认配置与设备本地覆盖
+
+`scheduler.yaml` 是受 Git 管理的公共默认配置，不含设备凭据；平台上传、
+MQTT 和远端视频推流默认关闭。设备端复制
+`catkin_ws/src/grinder_scheduler/config/scheduler.local.example.yaml` 为同目录的
+`scheduler.local.yaml`，只填写设备差异、服务地址和凭据，并显式打开所需服务。
+`scheduler.local.yaml` 被 Git 忽略，Catkin 安装也不携带该文件。
+
+`start_grinder_stack.sh` 和 `start_grinder_super_lio_base.sh` 自动发现该本地文件，
+启动前检查 YAML。可通过 `GRINDER_SCHEDULER_LOCAL_CONFIG=/absolute/path/device.yaml`
+选择其他覆盖文件；显式设置为空字符串可使用纯默认配置。
+`start_grinder_sim.sh` 不自动发现设备文件，仿真配置强制关闭平台上传、MQTT 和远端推流。
+
+直接使用 roslaunch 时，按需传入覆盖文件：
+
+```bash
+roslaunch grinder_scheduler scheduler.launch \
+  scheduler_local_config:=/absolute/path/scheduler.local.yaml
+```
+
+不传覆盖参数且没有 `GRINDER_SCHEDULER_LOCAL_CONFIG` 环境变量时，只加载公共配置。
+顺序为公共配置、Super-LIO 配置（真实启动）、本地覆盖、显式 launch 参数；
+仿真在本地覆盖之后加载仿真配置。显式传入的文件缺失或 YAML 无效会阻止启动。
+密码也可由 `GRINDER_PLATFORM_PASSWORD`、`MQTT_USERNAME`/`MQTT_PASSWORD` 等环境变量提供；
+只有本地配置显式启用相应服务后才会连接。
+
+### Super-LIO 源码恢复
+
+`catkin_ws/src/localization/Super-LIO` 已按普通文件纳入根仓库，保留了本地集成改动。
+新克隆无需初始化子模块；上游地址、基准版本和导入说明见该目录的 `UPSTREAM.md`，
+原有 GPL-3.0 许可证和第三方声明随源码保留。
+
 ## ROS Noetic 安装、工业级编译与正式启动
 
 以下流程面向 Ubuntu 20.04（focal）+ ROS Noetic，支持 x86_64 和 RK3588/aarch64，

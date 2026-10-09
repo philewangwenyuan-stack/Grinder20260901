@@ -28,7 +28,9 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 要修改/排查的内容 | 首选文件 | 相关文件 |
 | --- | --- | --- |
 | 调度入口、任务状态机、协议处理函数 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` | `models.py`、`scripts/scheduler_node.py` |
-| 调度参数 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` | `config/super_lio.yaml`、`launch/scheduler.launch`、`launch/grinder_system.launch` |
+| 调度参数与设备覆盖 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` | `config/scheduler.local.example.yaml`、被忽略的 `scheduler.local.yaml`；`config/super_lio.yaml`、`launch/scheduler.launch` |
+| 调度配置启动预检 | `catkin_ws/scripts/check_scheduler_config.py` | `scripts/scheduler_config.sh`、`start_grinder_stack.sh`、`start_grinder_super_lio_base.sh`、`start_grinder_sim.sh` |
+| Super-LIO 源码与上游版本 | `catkin_ws/src/localization/Super-LIO/UPSTREAM.md` | 同目录 `LICENSE`、`src/super_lio/`、`src/basic/`；普通源码，无子模块初始化步骤 |
 | 地图编辑、区域叠加、预览、持久化 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_service.py` | `scheduler_node.py` 中 `handle_map_*`、`_map_*` |
 | 路径规划输入/输出适配 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/planner_adapter.py` | `third_party/path_planner/mst27/mst27.py`、`mst27/cpp/mst27_cpp.cpp` |
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
