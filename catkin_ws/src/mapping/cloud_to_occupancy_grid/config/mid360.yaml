@@ -15,8 +15,8 @@ cloud_to_occupancy_grid:
   keyframe_service: /super_lio_loop/get_keyframe
 
   resolution: 0.05
-  map_width: 150.0
-  map_height: 150.0
+  map_width: 120.0
+  map_height: 120.0
   origin_x: -75.0
   origin_y: -75.0
 

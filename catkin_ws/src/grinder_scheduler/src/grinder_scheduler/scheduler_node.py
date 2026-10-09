@@ -64,6 +64,7 @@ from grinder_scheduler.models import (
 )
 from grinder_scheduler.msg import MapPreviewMetadata, SchedulerStatus
 from grinder_scheduler.planner_adapter import PlannerAdapter
+from grinder_scheduler.task_continuation import coverage_continuation
 from grinder_scheduler.platform_integration import MqttDeviceReporter, PlatformFileSync
 from grinder_scheduler.sl_linka_adapter import SlLinkAServer
 from grinder_scheduler.metrics_registry import MetricsRegistry
@@ -220,6 +221,7 @@ class SchedulerNode:
         self.last_error = ""
         self.replan_requested = False
         self.current_path = None
+        self._continuation_checkpoint = None
         self.current_path_index = 0
         self._path_arc_lengths = []
         self._active_segments = []
@@ -1472,7 +1474,16 @@ class SchedulerNode:
         if not self._active_segments:
             self._rebuild_active_segments()
         pose = self.aurora_bridge.get_pose()
-        projection = self._project_pose_to_path_progress(float(pose.get("x", 0.0)), float(pose.get("y", 0.0)))
+        checkpoint = getattr(self, "_continuation_checkpoint", None)
+        if checkpoint and checkpoint["path"] is self.current_path:
+            segment_index = min(checkpoint["segment_index"], len(self._active_segments) - 1)
+            segment = self._active_segments[segment_index]
+            projection = self._project_pose_to_path_progress(
+                float(pose.get("x", 0.0)), float(pose.get("y", 0.0)),
+                min_s=max(float(segment["start_s"]), checkpoint["progress_s"] - 0.05),
+                max_s=float(segment["end_s"]))
+        else:
+            projection = self._project_pose_to_path_progress(float(pose.get("x", 0.0)), float(pose.get("y", 0.0)))
         progress_s = float(projection.get("progress_s", 0.0))
         target_index = len(self._active_segments) - 1 if self._active_segments else 0
         for idx, segment in enumerate(self._active_segments):
@@ -1516,6 +1527,7 @@ class SchedulerNode:
         return True
 
     def _finish_path_execution(self, stop_reason="completed"):
+        self._continuation_checkpoint = None
         if self.current_path is None or not self.current_path.points:
             return
         self._mark_current_region_repeat_done()
@@ -4836,6 +4848,7 @@ class SchedulerNode:
                 current_pose=current_pose,
                 start_pose=request_start_pose or {},
                 end_pose=request_end_pose or {},
+                continuation=self._planning_continuation(current_pose, request_start_pose, request_end_pose),
             )
             planning_map = composed_map
             planning_map_info = map_info
@@ -4905,6 +4918,12 @@ class SchedulerNode:
             rospy.loginfo("Skip prepending current pose point because has_task_info=false")
         t_plan_prepend = time.perf_counter()
         self._rebuild_active_segments()
+        if plan_task_config.continuation:
+            checkpoint = self._continuation_checkpoint
+            checkpoint.update(path=self.current_path, progress_s=0.0, segment_index=0,
+                              map_stamp=self._continuation_map_stamp(map_info))
+        elif self.task_config.task_id:
+            self._continuation_checkpoint = None
         t_plan_segments = time.perf_counter()
         self.current_path.nav_path.header.stamp = rospy.Time.now()
         for pose in self.current_path.nav_path.poses:
@@ -5953,6 +5972,87 @@ class SchedulerNode:
         message.frame_id = map_info["frame_id"]
         self.preview_meta_pub.publish(message)
 
+    def _continuation_identity(self):
+        config = asdict(self.task_config)
+        for key in ("current_pose", "start_pose", "end_pose", "active_work_region_id", "continuation", "planning_angle_deg"):
+            config.pop(key, None)
+        return (json.dumps(config, sort_keys=True),
+                self._alignment_yaw_deg_for_sl_link_report(self._current_map_id()),
+                self._rotation_alignment_delta_deg_for_map_id(self._current_map_id()))
+
+    @staticmethod
+    def _continuation_map_stamp(map_info):
+        return tuple(map_info.get(key) for key in (
+            "map_version", "frame_id", "resolution", "width", "height", "origin_x", "origin_y"))
+
+    def _planning_continuation(self, pose, request_start=None, request_end=None):
+        checkpoint = getattr(self, "_continuation_checkpoint", None)
+        if not checkpoint or checkpoint["identity"] != self._continuation_identity():
+            return {}
+        # A relocated robot or a newly selected endpoint is a fresh plan. Do
+        # not silently join an old execution using only its task ID.
+        def near(a, b):
+            return math.hypot(float(a.get("x", 0.0)) - float(b.get("x", 0.0)),
+                              float(a.get("y", 0.0)) - float(b.get("y", 0.0))) <= 0.5
+        if not near(pose, checkpoint["pose"]):
+            return {}
+        if request_start and not near(request_start, checkpoint["pose"]):
+            return {}
+        continuation = dict(checkpoint["continuation"])
+        if request_end and not near(request_end, continuation["end_pose"]):
+            return {}
+        map_info = self.map_service.get_map_info() or {}
+        if map_info.get("frame_id") != checkpoint["map_stamp"][1]:
+            return {}
+        return continuation
+
+    def _capture_task_continuation(self):
+        if self.current_path is None or not self.current_path.points:
+            return
+        if not self.task_config.task_id or self.current_path.task_id != self.task_config.task_id:
+            self._continuation_checkpoint = None
+            return
+        pose = self.aurora_bridge.get_pose()
+        projection = self._project_robot_to_active_segment()
+        continuation = coverage_continuation(
+            self.current_path.points, projection["progress_s"], self.task_config.work_regions,
+            self.task_config.global_direction,
+            self._alignment_yaw_deg_for_sl_link_report(self._current_map_id())
+            + self._rotation_alignment_delta_deg_for_map_id(self._current_map_id()))
+        if not continuation:
+            self._continuation_checkpoint = None
+            return
+        self._continuation_checkpoint = {
+            "identity": self._continuation_identity(), "path": self.current_path,
+            "pose": dict(pose), "progress_s": float(projection["progress_s"]),
+            "segment_index": int(self._active_segment_index), "continuation": continuation,
+            "repeat_done": dict(self._exec_region_repeat_done),
+            "map_stamp": self._continuation_map_stamp(self.map_service.get_map_info() or {}),
+        }
+        rospy.loginfo("Task continuation captured: region=%s lap=%d direction=%s progress_s=%.3f",
+                      continuation["region_id"], continuation["lap"], continuation["direction"],
+                      float(projection["progress_s"]))
+
+    def _prepare_task_continuation_start(self):
+        checkpoint = getattr(self, "_continuation_checkpoint", None)
+        if not checkpoint:
+            return
+        pose = self.aurora_bridge.get_pose()
+        if not self._planning_continuation(pose):
+            self._continuation_checkpoint = None
+            self.current_path = None
+            return
+        map_info = self.map_service.get_map_info() or {}
+        if checkpoint["map_stamp"] == self._continuation_map_stamp(map_info):
+            self.current_path = checkpoint["path"]
+            self._rebuild_active_segments()
+            rospy.loginfo("Task continuation: reuse saved path and execution cursor")
+        else:
+            # Keep direction/progress intent, but let the planner validate the
+            # remaining coverage against the new occupancy/obstacles.
+            self.current_path = None
+            rospy.loginfo("Task continuation: map changed, replan remaining coverage")
+
     def _start_execution(self):
         if float(self._chassis_settings.get("run_speed", 0.0)) <= 0.0:
             self._safe_stop_motion()
@@ -5992,6 +6092,8 @@ class SchedulerNode:
             mark("validate_super_lio_localization_failed")
             rospy.logwarn("Task start blocked: Super-LIO localization is not ready: %s", exc)
             return False, "Super-LIO localization is not ready: {}".format(exc)
+        self._sync_task_regions_from_overlay()
+        self._prepare_task_continuation_start()
         if self.current_path is None and not self._plan_current_task():
             mark("plan_current_task_failed")
             return False, "Failed to plan task"
@@ -6002,6 +6104,11 @@ class SchedulerNode:
         self._sync_task_regions_from_overlay()
         self._exec_region_order = self._sorted_work_region_ids()
         active_id = (self.task_config.active_work_region_id or "").strip()
+        checkpoint = getattr(self, "_continuation_checkpoint", None)
+        if checkpoint:
+            continuation = checkpoint["continuation"]
+            active_id = continuation["region_id"]
+            self.task_config.active_work_region_id = "{}__lap_{}".format(active_id, continuation["lap"])
         if active_id and active_id in self._exec_region_order:
             self._exec_region_index = self._exec_region_order.index(active_id)
         elif self._exec_region_order:
@@ -6023,7 +6130,9 @@ class SchedulerNode:
         mark("init_segment_cursor")
         self._exec_active = True
         self._exec_publish_start_pose_once = False
-        self._exec_region_repeat_done = {}
+        checkpoint = getattr(self, "_continuation_checkpoint", None)
+        self._exec_region_repeat_done = dict(checkpoint["repeat_done"]) if checkpoint else {}
+        self._continuation_checkpoint = None
         self._task_stop_reason = ""
         self._set_cmd_vel_forward_runtime_active(True, publish_zero=False, reason="task_start_nav_cmd_vel_forward")
         mark("enable_task_cmd_vel")
@@ -6154,18 +6263,24 @@ class SchedulerNode:
         return True, "Task resumed"
 
     def _stop_execution(self):
+        was_active = self._exec_active or self.state == SchedulerState.PAUSED
         self._exec_active = False
         self._disc_auto_cover_desired = False
         self._reset_disc_motion_guard()
-        self._mark_current_region_repeat_done()
         self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="task_stop")
         self._safe_stop_motion()
         self.disc_enable_pub.publish(Bool(data=False))
         self.light_pub.publish(Bool(data=False))
         self._set_chassis_enabled(False)
+        self.state = SchedulerState.STOPPED
+        if was_active:
+            try:
+                self._capture_task_continuation()
+            except Exception as exc:
+                self._continuation_checkpoint = None
+                rospy.logwarn("Could not capture task continuation: %s", exc)
         self._exec_region_order = []
         self._exec_region_index = -1
-        self.state = SchedulerState.STOPPED
         self._task_stop_reason = "stopped_by_command"
         self._finalize_task_result(stop_reason=self._task_stop_reason)
         return True, "Task stopped"

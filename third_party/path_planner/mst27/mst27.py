@@ -15,7 +15,7 @@ import json
 import os
 import sys
 import time
-from collections import deque
+from collections import OrderedDict, deque
 from dataclasses import dataclass, asdict
 from typing import List, Optional, Tuple
 from matplotlib.path import Path as MplPath
@@ -1857,6 +1857,90 @@ def export_path_to_json(path, filename='path_output.json', output_dir=None):
 # 多阶段规划器（带参数打印）
 # ============================================================
 
+class PreparedPlanningMap:
+    """Immutable binary map and bounded, request-local preprocessing cache.
+
+    A context is never reused across adapter requests. Exact angles and pixel
+    clearances identify derived grids; no map-version-only invalidation or
+    angle rounding can accidentally reuse a different obstacle geometry.
+    """
+
+    def __init__(self, grid_map, parameters, max_cache_bytes=128 * 1024 * 1024):
+        source = np.asarray(grid_map)
+        if source.ndim != 2 or not all(source.shape):
+            raise ValueError("prepared planning map must be a nonempty 2D grid")
+        if np.any((source != 0) & (source != 1)):
+            raise ValueError("prepared planning map must contain only 0 and 1")
+        self.parameters = parameters
+        self.raw_grid = np.array(source, dtype=np.uint8, order='C', copy=True)
+        self.raw_grid.setflags(write=False)
+        self.occupied_cells = int(np.count_nonzero(self.raw_grid))
+        self.inflated_grid = self._readonly(
+            ObstacleProcessor.inflate_obstacles(self.raw_grid, parameters[1]),
+            np.uint8)
+        self._mandatory_bytes = self.raw_grid.nbytes + self.inflated_grid.nbytes
+        self._cache_limit = max(0, int(max_cache_bytes) - self._mandatory_bytes)
+        self._cache = OrderedDict()
+        self._cache_bytes = 0
+        self._hits = 0
+        self._misses = 0
+
+    @staticmethod
+    def _readonly(grid, dtype):
+        result = np.ascontiguousarray(grid, dtype=dtype)
+        result.setflags(write=False)
+        return result
+
+    def _cached(self, key, build):
+        result = self._cache.get(key)
+        if result is not None:
+            self._hits += 1
+            self._cache.move_to_end(key)
+            return result
+        self._misses += 1
+        result = build()
+        # Oversize results remain usable by this call but are not retained.
+        if result.nbytes <= self._cache_limit:
+            while self._cache_bytes + result.nbytes > self._cache_limit:
+                _, removed = self._cache.popitem(last=False)
+                self._cache_bytes -= removed.nbytes
+            self._cache[key] = result
+            self._cache_bytes += result.nbytes
+        return result
+
+    def stage_grid(self, angle_deg):
+        angle = float(angle_deg)
+        if not math.isfinite(angle):
+            raise ValueError("planning angle must be finite")
+        _, base_radius, aligned_radius, max_extent = self.parameters
+        return self._cached(
+            ('angle', angle),
+            lambda: self._readonly(
+                ObstacleProcessor.build_angle_aligned_inflated(
+                    self.raw_grid, angle, aligned_radius,
+                    base_inflation_pixels=base_radius,
+                    max_component_extent_pixels=max_extent), np.uint8))
+
+    def cpp_inflated_grid(self):
+        return self._cached(
+            ('cpp_base',),
+            lambda: self._readonly(self.inflated_grid, np.int32))
+
+    def cpp_stage_grid(self, angle_deg, stage_grid):
+        return self._cached(
+            ('cpp_angle', float(angle_deg)),
+            lambda: self._readonly(stage_grid, np.int32))
+
+    def stats(self):
+        return {
+            'base_grid_bytes': self._mandatory_bytes,
+            'cached_bytes': self._cache_bytes,
+            'cache_limit_bytes': self._cache_limit,
+            'cache_hits': self._hits,
+            'cache_misses': self._misses,
+        }
+
+
 class MultiStagePathPlanner:
     def __init__(self, robot_config: RobotConfig):
         self.robot_config = robot_config
@@ -1884,6 +1968,25 @@ class MultiStagePathPlanner:
             raise ValueError("obstacle_corner_angle_deg must be between 0 and 90")
         if self.robot_config.obstacle_avoidance_distance < 0:
             raise ValueError("obstacle_avoidance_distance must be >= 0")
+
+    def _preprocessing_parameters(self, real_to_grid_ratio):
+        return (
+            float(real_to_grid_ratio),
+            int(self.robot_config.inflation_radius * real_to_grid_ratio),
+            max(0, int(round(self.robot_config.aligned_obstacle_inflation * real_to_grid_ratio))),
+            max(1, int(round(self.robot_config.aligned_obstacle_max_extent * real_to_grid_ratio))),
+        )
+
+    def prepare_map(self, grid_map, real_to_grid_ratio,
+                    max_cache_bytes=128 * 1024 * 1024):
+        return PreparedPlanningMap(
+            grid_map, self._preprocessing_parameters(real_to_grid_ratio),
+            max_cache_bytes=max_cache_bytes)
+
+    @staticmethod
+    def _stage_angle(stage):
+        return (float(stage.direction_angle) if stage.direction_angle is not None
+                else (0.0 if _direction_axis(stage.direction) == 'x' else 90.0))
 
     @staticmethod
     def _densify_path(path, spacing_pixels):
@@ -1930,12 +2033,14 @@ class MultiStagePathPlanner:
         return True
 
     def _plan_with_cpp_backend(self, inflated_grid, stages, real_to_grid_ratio,
-                               effective_spacing, stage_planning_grids=None):
+                               effective_spacing, stage_planning_grids=None,
+                               prepared_map=None):
         if _mst27_cpp is None or os.environ.get("MST27_DISABLE_CPP") == "1":
             return None
 
         spacing_pixels = max(1, int(round(effective_spacing * real_to_grid_ratio)))
-        grid_for_cpp = np.ascontiguousarray(inflated_grid, dtype=np.int32)
+        grid_for_cpp = (prepared_map.cpp_inflated_grid() if prepared_map is not None
+                        else np.ascontiguousarray(inflated_grid, dtype=np.int32))
         stage_specs = []
 
         for stage_index, stage in enumerate(stages):
@@ -1968,8 +2073,11 @@ class MultiStagePathPlanner:
                 "region_mask": np.ascontiguousarray(region_mask, dtype=np.bool_)
             }
             if stage_planning_grids is not None:
-                spec["planning_grid"] = np.ascontiguousarray(
-                    stage_planning_grids[stage_index], dtype=np.int32)
+                spec["planning_grid"] = (
+                    prepared_map.cpp_stage_grid(
+                        self._stage_angle(stage), stage_planning_grids[stage_index])
+                    if prepared_map is not None else np.ascontiguousarray(
+                        stage_planning_grids[stage_index], dtype=np.int32))
             stage_specs.append(spec)
 
         try:
@@ -1990,10 +2098,19 @@ class MultiStagePathPlanner:
     def plan(self, grid_map, global_work_area, stages, real_to_grid_ratio,
              global_start_point=None, global_end_point=None,
              global_direction='x', global_path_spacing=None,
-             global_obstacle_polygons=None):
+             global_obstacle_polygons=None, prepared_map=None):
         """
         多阶段路径规划
         """
+
+        if prepared_map is not None:
+            if not isinstance(prepared_map, PreparedPlanningMap):
+                raise TypeError("prepared_map must be a PreparedPlanningMap")
+            if (grid_map is not prepared_map.raw_grid or
+                    prepared_map.parameters != self._preprocessing_parameters(real_to_grid_ratio)):
+                raise ValueError("prepared map does not match input grid or clearances")
+            if global_obstacle_polygons or any(stage.obstacle_polygons for stage in (stages or [])):
+                raise ValueError("apply polygon obstacles before preparing the map")
 
         # ============================================================
         # 打印所有输入参数到控制台
@@ -2008,8 +2125,12 @@ class MultiStagePathPlanner:
         if hasattr(grid_map, 'shape'):
             print(f"  ├─ 形状: {grid_map.shape} (高×宽 = {grid_map.shape[0]}×{grid_map.shape[1]})")
             print(f"  ├─ 数据类型: {grid_map.dtype}")
-            print(f"  ├─ 障碍物格子数: {np.sum(grid_map)}")
-            print(f"  └─ 可用格子数: {np.sum(grid_map == 0)}")
+            occupied_cells = (prepared_map.occupied_cells if prepared_map is not None
+                              else np.sum(grid_map))
+            print(f"  ├─ 障碍物格子数: {occupied_cells}")
+            free_cells = (grid_map.size - occupied_cells if prepared_map is not None
+                          else np.sum(grid_map == 0))
+            print(f"  └─ 可用格子数: {free_cells}")
         else:
             print(f"  └─ ⚠️  非numpy数组")
 
@@ -2208,12 +2329,14 @@ class MultiStagePathPlanner:
             print(f"  无阶段特定障碍物")
 
         # 保留原始轮廓图：用于机器人本体安全半径膨胀及最终碰撞复检。
-        raw_obstacle_grid = np.asarray(grid_map, dtype=int).copy()
+        raw_obstacle_grid = (prepared_map.raw_grid if prepared_map is not None
+                             else np.asarray(grid_map, dtype=int).copy())
         inflation_pixels = int(self.robot_config.inflation_radius * real_to_grid_ratio)
         print(f"\n[参数] 机器人宽度: {self.robot_config.width}m, 长度: {self.robot_config.length}m")
         print(f"[参数] 膨胀半径: {self.robot_config.inflation_radius}m ({inflation_pixels}像素)")
 
-        inflated_grid = ObstacleProcessor.inflate_obstacles(grid_map, inflation_pixels)
+        inflated_grid = (prepared_map.inflated_grid if prepared_map is not None
+                         else ObstacleProcessor.inflate_obstacles(grid_map, inflation_pixels))
 
         aligned_inflation_pixels = max(0, int(round(
             self.robot_config.aligned_obstacle_inflation * real_to_grid_ratio)))
@@ -2228,15 +2351,12 @@ class MultiStagePathPlanner:
               f"{self.robot_config.obstacle_avoidance_distance}m")
         stage_planning_grids = []
         for stage in stages:
-            stage_angle = (float(stage.direction_angle)
-                           if stage.direction_angle is not None
-                           else (0.0 if _direction_axis(stage.direction) == 'x' else 90.0))
-            stage_grid = ObstacleProcessor.build_angle_aligned_inflated(
-                raw_obstacle_grid,
-                stage_angle,
-                aligned_inflation_pixels,
-                base_inflation_pixels=inflation_pixels,
-                max_component_extent_pixels=aligned_max_extent_pixels)
+            stage_angle = self._stage_angle(stage)
+            stage_grid = (prepared_map.stage_grid(stage_angle) if prepared_map is not None
+                          else ObstacleProcessor.build_angle_aligned_inflated(
+                              raw_obstacle_grid, stage_angle, aligned_inflation_pixels,
+                              base_inflation_pixels=inflation_pixels,
+                              max_component_extent_pixels=aligned_max_extent_pixels))
             stage_planning_grids.append(stage_grid)
 
         effective_spacing = self.robot_config.path_spacing * (1 - self.robot_config.overlap_ratio)
@@ -2250,7 +2370,8 @@ class MultiStagePathPlanner:
             stages,
             real_to_grid_ratio,
             effective_spacing,
-            stage_planning_grids
+            stage_planning_grids,
+            prepared_map=prepared_map
         )
         if cpp_path is not None:
             if not self._path_collision_free(cpp_path, inflated_grid):

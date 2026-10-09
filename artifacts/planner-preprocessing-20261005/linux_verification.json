@@ -1,0 +1,9 @@
+{
+  "python": "3.8.10 (default, Mar 18 2025, 20:04:55) \n[GCC 9.4.0]",
+  "native_module": "/mnt/e/CODE/C++/Grinder/artifacts/planner-preprocessing-20261005/native/_mst27_cpp.cpython-38-x86_64-linux-gnu.so",
+  "tests": 17,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "passed": true
+}

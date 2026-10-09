@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import importlib.util
 import io
 import math
@@ -122,7 +123,7 @@ class PlannerAdapter:
             else:
                 work_regions = [self._build_full_map_region(composed_grid.shape, resolution, map_info)]
                 rospy.logwarn("No work region provided and free-space contour extraction failed. Fallback to full-map region.")
-        grid_map = np.where(composed_grid != 0, 1, 0).astype(int)
+        grid_map = np.asarray(composed_grid != 0, dtype=np.uint8)
         occupied_before_regions = int(np.count_nonzero(grid_map))
         self._apply_erase_regions_to_grid_map(
             grid_map,
@@ -169,7 +170,16 @@ class PlannerAdapter:
         )
         planner = module.MultiStagePathPlanner(robot_config)
         inflation_pixels = int(max(0.0, float(robot_config.inflation_radius)) * ratio)
-        inflated_for_connection = module.ObstacleProcessor.inflate_obstacles(grid_map, inflation_pixels)
+        prepared_map = None
+        if callable(getattr(planner, "prepare_map", None)):
+            # Own an immutable snapshot for this request only. Overlay/crop edits
+            # were applied above; later requests always prepare their own map.
+            with contextlib.redirect_stdout(io.StringIO()):
+                prepared_map = planner.prepare_map(grid_map, ratio)
+            grid_map = prepared_map.raw_grid
+            inflated_for_connection = prepared_map.inflated_grid
+        else:
+            inflated_for_connection = module.ObstacleProcessor.inflate_obstacles(grid_map, inflation_pixels)
         t2_inflate = time.perf_counter()
         path_points = []
         current_pose = getattr(task_config, "current_pose", {}) or {}
@@ -210,6 +220,8 @@ class PlannerAdapter:
             str(bool(has_task_info)).lower(),
         )
         planned_region_segments = []
+        continuation = dict(getattr(task_config, "continuation", {}) or {})
+        continuation_region = str(continuation.get("region_id", ""))
         for index, region in enumerate(work_regions, start=1):
             region_id = str(region.get("region_id", "")).strip() if isinstance(region, dict) else ""
             region_tag = region_id if region_id else "region_{}".format(index)
@@ -300,6 +312,15 @@ class PlannerAdapter:
                 obstacle_polygons=None,
                 direction_angle=region_angle_deg,
             )
+            if region_id == continuation_region:
+                # Only the interrupted lap is shortened; later repeats must
+                # still cover the original full region from its own endpoints.
+                full_start = continuation["full_start_pose"]
+                full_end = continuation["full_end_pose"]
+                single_stage.start_point = self._world_to_point(
+                    module, full_start["x"], full_start["y"], map_info, ratio)
+                single_stage.end_point = self._world_to_point(
+                    module, full_end["x"], full_end["y"], map_info, ratio)
             rospy.loginfo(
                 "Region planning direction: region_idx=%d region_id=%s direction=%s direction_angle_deg=%s",
                 index,
@@ -326,14 +347,17 @@ class PlannerAdapter:
                     start_source,
                 )
             planner_console = io.StringIO()
+            planner_kwargs = {"global_obstacle_polygons": None}
+            if prepared_map is not None:
+                planner_kwargs["prepared_map"] = prepared_map
             with contextlib.redirect_stdout(planner_console):
                 t_region_plan_start = time.perf_counter()
                 region_points = planner.plan(
-                    grid_map.copy(),
+                    grid_map if prepared_map is not None else grid_map.copy(),
                     boundary,
                     [single_stage],
                     ratio,
-                    global_obstacle_polygons=None,
+                    **planner_kwargs
                 )
                 t_region_plan_end = time.perf_counter()
             planner_output = planner_console.getvalue()
@@ -391,6 +415,24 @@ class PlannerAdapter:
             )
             if not region_points:
                 continue
+            partial_points = None
+            if region_id == continuation_region:
+                partial_stage = copy.deepcopy(single_stage)
+                resume_start = continuation["start_pose"]
+                resume_end = continuation["end_pose"]
+                partial_stage.start_point = self._world_to_point(
+                    module, resume_start["x"], resume_start["y"], map_info, ratio)
+                partial_stage.end_point = self._world_to_point(
+                    module, resume_end["x"], resume_end["y"], map_info, ratio)
+                partial_stage.direction = normalize_planning_direction(continuation["direction"])
+                with contextlib.redirect_stdout(io.StringIO()):
+                    partial_points = planner.plan(
+                        grid_map if prepared_map is not None else grid_map.copy(),
+                        boundary, [partial_stage], ratio, **planner_kwargs)
+                partial_points = [p for p in partial_points if cv2.pointPolygonTest(
+                    region_polygon, (float(p.col), float(p.row)), False) >= 0]
+                if not partial_points:
+                    raise ValueError("Interrupted coverage could not be replanned safely")
             normalized_region_points = []
             for point in region_points:
                 try:
@@ -413,6 +455,7 @@ class PlannerAdapter:
                     "region_tag": region_tag,
                     "region_index": index,
                     "points": region_points,
+                    "partial_points": partial_points,
                 }
             )
             rospy.loginfo(
@@ -454,6 +497,11 @@ class PlannerAdapter:
                 len(ordered_segments),
             )
             last_end = None
+            if continuation_region:
+                ids = [str(s.get("region_id", "")) for s in ordered_segments]
+                if continuation_region not in ids:
+                    raise ValueError("Interrupted region missing from planning scope")
+                ordered_segments = ordered_segments[ids.index(continuation_region):]
             for seg_idx, segment in enumerate(ordered_segments, start=1):
                 base_points = list(segment.get("points", []) or [])
                 if not base_points:
@@ -465,8 +513,11 @@ class PlannerAdapter:
                 except Exception:
                     repeat = 1
                 repeat = max(1, repeat)
-                for lap in range(1, repeat + 1):
-                    lap_points = list(base_points if (lap % 2 == 1) else list(reversed(base_points)))
+                first_lap = int(continuation.get("lap", 1)) if region_id == continuation_region else 1
+                for lap in range(first_lap, repeat + 1):
+                    partial = segment.get("partial_points") if lap == first_lap else None
+                    lap_points = copy.deepcopy(partial if partial is not None else (
+                        base_points if (lap % 2 == 1) else list(reversed(base_points))))
                     for p in lap_points:
                         p.path_type = "{}__lap_{}".format(region_id, lap)
                     conn_goal = module.Point(
@@ -479,7 +530,7 @@ class PlannerAdapter:
                             row=int(round(float(last_end.row))),
                             col=int(round(float(last_end.col))),
                         )
-                    elif seg_idx == 1 and lap == 1:
+                    elif seg_idx == 1 and lap == first_lap:
                         if has_request_start:
                             robot_start = self._world_to_point(module, start_x, start_y, map_info, ratio)
                         else:
@@ -763,6 +814,13 @@ class PlannerAdapter:
             )
 
         t4_compose = time.perf_counter()
+        if prepared_map is not None:
+            prep_stats = prepared_map.stats()
+            rospy.loginfo(
+                "Planner preprocessing cache: scope=request base_bytes=%d cached_bytes=%d limit_bytes=%d hits=%d misses=%d",
+                prep_stats["base_grid_bytes"], prep_stats["cached_bytes"],
+                prep_stats["cache_limit_bytes"], prep_stats["cache_hits"], prep_stats["cache_misses"],
+            )
         self._path_version += 1
         ros_path = NavPath()
         ros_path.header.frame_id = map_info["frame_id"] or "map"

@@ -1,0 +1,87 @@
+{
+  "size": 1000,
+  "regions": 10,
+  "repeats": 3,
+  "platform": "linux",
+  "python": "3.8.10 (default, Mar 18 2025, 20:04:55) \n[GCC 9.4.0]",
+  "medians_ms": {
+    "baseline": 6523.531100999996,
+    "optimized": 782.7830780000013
+  },
+  "time_reduction_pct": 88.0006231919396,
+  "path_records_equal": true,
+  "records": [
+    {
+      "mode": "baseline",
+      "backend": "cpp",
+      "elapsed_ms": 6536.619520000002,
+      "peak_rss_bytes": 233713664,
+      "path_points": 2451,
+      "path_digest": "72cded371499db9332fc8f2110a0c1d5bd6d4e2832d6e2fc552d0e2fbf90e399",
+      "cache": null
+    },
+    {
+      "mode": "optimized",
+      "backend": "cpp",
+      "elapsed_ms": 782.7830780000013,
+      "peak_rss_bytes": 194174976,
+      "path_points": 2451,
+      "path_digest": "72cded371499db9332fc8f2110a0c1d5bd6d4e2832d6e2fc552d0e2fbf90e399",
+      "cache": {
+        "base_grid_bytes": 2000000,
+        "cached_bytes": 9000000,
+        "cache_limit_bytes": 132217728,
+        "cache_hits": 27,
+        "cache_misses": 3
+      }
+    },
+    {
+      "mode": "baseline",
+      "backend": "cpp",
+      "elapsed_ms": 6523.531100999996,
+      "peak_rss_bytes": 233607168,
+      "path_points": 2451,
+      "path_digest": "72cded371499db9332fc8f2110a0c1d5bd6d4e2832d6e2fc552d0e2fbf90e399",
+      "cache": null
+    },
+    {
+      "mode": "optimized",
+      "backend": "cpp",
+      "elapsed_ms": 788.3614739999985,
+      "peak_rss_bytes": 194007040,
+      "path_points": 2451,
+      "path_digest": "72cded371499db9332fc8f2110a0c1d5bd6d4e2832d6e2fc552d0e2fbf90e399",
+      "cache": {
+        "base_grid_bytes": 2000000,
+        "cached_bytes": 9000000,
+        "cache_limit_bytes": 132217728,
+        "cache_hits": 27,
+        "cache_misses": 3
+      }
+    },
+    {
+      "mode": "baseline",
+      "backend": "cpp",
+      "elapsed_ms": 6502.516452999998,
+      "peak_rss_bytes": 234000384,
+      "path_points": 2451,
+      "path_digest": "72cded371499db9332fc8f2110a0c1d5bd6d4e2832d6e2fc552d0e2fbf90e399",
+      "cache": null
+    },
+    {
+      "mode": "optimized",
+      "backend": "cpp",
+      "elapsed_ms": 782.7717150000026,
+      "peak_rss_bytes": 193871872,
+      "path_points": 2451,
+      "path_digest": "72cded371499db9332fc8f2110a0c1d5bd6d4e2832d6e2fc552d0e2fbf90e399",
+      "cache": {
+        "base_grid_bytes": 2000000,
+        "cached_bytes": 9000000,
+        "cache_limit_bytes": 132217728,
+        "cache_hits": 27,
+        "cache_misses": 3
+      }
+    }
+  ]
+}

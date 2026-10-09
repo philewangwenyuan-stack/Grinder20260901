@@ -61,6 +61,8 @@ class TaskConfigModel:
     current_pose: Dict = field(default_factory=dict)
     start_pose: Dict = field(default_factory=dict)
     end_pose: Dict = field(default_factory=dict)
+    # Runtime-only checkpoint for a single interrupted region/lap; not protocol config.
+    continuation: Dict = field(default_factory=dict)
 
 
 @dataclass

@@ -1,0 +1,10 @@
+{
+  "python38_files": [
+    "third_party/path_planner/mst27/mst27.py",
+    "catkin_ws/src/grinder_scheduler/src/grinder_scheduler/planner_adapter.py",
+    "third_party/path_planner/mst27/test/test_preprocessing.py",
+    "catkin_ws/src/grinder_scheduler/test/test_planner_preprocessing.py",
+    "artifacts/planner-preprocessing-20261005/benchmark.py"
+  ],
+  "syntax_errors": []
+}
