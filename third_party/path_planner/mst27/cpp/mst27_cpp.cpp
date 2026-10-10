@@ -1183,7 +1183,7 @@ static std::vector<FPoint> plan_subregion_oriented(
             const int max_inset = std::max(2, std::min(24,
                 static_cast<int>(std::lround(0.8 * path_spacing))));
 
-            for (int inset_i = 2; inset_i <= max_inset; ++inset_i) {
+            for (int inset_i = 0; inset_i <= max_inset; ++inset_i) {
                 const double inset = static_cast<double>(inset_i);
                 const double turn_t = side_max ? turn_cap - inset : turn_cap + inset;
                 const FPoint turn_a{turn_t * dy + a_s * ny,

@@ -14,6 +14,9 @@
 #include <diagnostic_msgs/KeyValue.h>
 #include <cmath>
 #include <string>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 
 
@@ -816,6 +819,55 @@ void SuperLIOReLoc::Output(){
   add_value("inlier_ratio", std::to_string(registration_inlier_ratio_));
   add_value("valid_correspondences", std::to_string(registration_valid_correspondences_));
   add_value("converged", registration_converged_ ? "true" : "false");
+  const auto& update = kf_->GetLastUpdateDiagnostic();
+  const auto number = [](double value) {
+    std::ostringstream stream;
+    stream << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    return stream.str();
+  };
+  const char* components[] = {
+      "rotation_x", "rotation_y", "rotation_z", "position_x", "position_y", "position_z",
+      "velocity_x", "velocity_y", "velocity_z", "gyro_bias_x", "gyro_bias_y", "gyro_bias_z",
+      "accel_bias_x", "accel_bias_y", "accel_bias_z", "gravity_x", "gravity_y", "gravity_z"};
+  const char* blocks[] = {"rotation", "position", "velocity", "gyro_bias", "accel_bias", "gravity"};
+  const auto component_name = [&components](int index) -> std::string {
+    return index >= 0 && index < 18 ? components[index] : "none";
+  };
+  const bool iteration_limit = !registration_converged_ && update.max_iterations > 0 &&
+      update.iterations.size() >= static_cast<std::size_t>(update.max_iterations);
+  const std::string reason = update.iterations.empty() ? "no_iterations" :
+      !update.updates_finite ? "non_finite_update" :
+      registration_converged_ ? "threshold_reached" : "iteration_limit";
+  add_value("kf_iterations", std::to_string(update.iterations.size()));
+  add_value("kf_max_iterations", std::to_string(update.max_iterations));
+  add_value("kf_quit_eps", number(update.quit_eps));
+  add_value("kf_iteration_limit_reached", iteration_limit ? "true" : "false");
+  add_value("kf_updates_finite", update.updates_finite ? "true" : "false");
+  add_value("kf_convergence_reason", reason);
+  for (std::size_t i = 0; i < update.iterations.size(); ++i) {
+    const auto& iteration = update.iterations[i];
+    const std::string prefix = "kf_iteration_" + std::to_string(i + 1);
+    add_value(prefix + "_update_inf", number(iteration.update_inf));
+    add_value(prefix + "_max_component", component_name(iteration.max_component));
+    add_value(prefix + "_max_component_value", number(iteration.max_component_value));
+    add_value(prefix + "_update_finite", iteration.update_finite ? "true" : "false");
+  }
+  if (!update.iterations.empty()) {
+    const auto& last = update.iterations.back();
+    add_value("kf_final_update_inf", number(last.update_inf));
+    add_value("kf_final_max_component", component_name(last.max_component));
+    for (int block = 0; block < 6; ++block) {
+      add_value(std::string("kf_final_") + blocks[block] + "_update_inf",
+                number(last.block_update_inf[block]));
+    }
+    if (!registration_converged_) {
+      ROS_WARN_STREAM_THROTTLE(1.0, "Super-LIO iteration diagnostic: stamp="
+          << number(state.timestamp) << " reason=" << reason
+          << " iterations=" << update.iterations.size() << "/" << update.max_iterations
+          << " update_inf=" << number(last.update_inf) << " quit_eps=" << number(update.quit_eps)
+          << " max_component=" << component_name(last.max_component));
+    }
+  }
   diagnostics.status.push_back(registration);
   pub_registration_diag_.publish(diagnostics);
   flg_re_path_ = false;

@@ -81,7 +81,9 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_TASK_EXECUTION_DELETE_REQUEST = 1332,
     sl_link_MessageId_MSG_ID_TASK_EXECUTION_DELETE_RESPONSE = 1333,
     sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 1334,
-    sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335
+    sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335,
+    sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST = 1336,
+    sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337
 } sl_link_MessageId;
 
 typedef enum _sl_link_DeviceId {
@@ -191,14 +193,12 @@ typedef enum _sl_link_TaskCommandType {
 typedef enum _sl_link_MapEditOperation {
     sl_link_MapEditOperation_MAP_EDIT_OP_UNKNOWN = 0,
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_WORK_REGION = 1,
-    /* Keep legacy obstacle upsert for backward compatibility. */
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_OBSTACLE_REGION = 2,
     sl_link_MapEditOperation_MAP_EDIT_OP_DELETE_REGION = 3,
     sl_link_MapEditOperation_MAP_EDIT_OP_PAINT_FREE = 4,
     sl_link_MapEditOperation_MAP_EDIT_OP_PAINT_OCCUPIED = 5,
     sl_link_MapEditOperation_MAP_EDIT_OP_PAINT_UNKNOWN = 6,
     sl_link_MapEditOperation_MAP_EDIT_OP_CLEAR_OVERLAY_PATCH = 7,
-    /* New explicit operations to avoid overloading UPSERT_OBSTACLE_REGION. */
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_ERASE_REGION = 8,
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_CROP_REGION = 9
 } sl_link_MapEditOperation;
@@ -248,20 +248,14 @@ typedef struct _sl_link_PolygonRegion {
     uint32_t color_argb;
     bool closed;
     sl_link_RegionType region_type;
-    /* Region-specific planning direction: "x", "-x", "y", or "-y".
- Empty means LOWER-side default policy. */
     pb_callback_t global_direction;
 } sl_link_PolygonRegion;
 
 typedef struct _sl_link_ChassisSettings {
-    /* Requested speed in m/s for task/navigation and manual command generation.
- Manual output is additionally capped by the chassis manual speed limit. */
     float run_speed;
     uint32_t disc_speed_rpm;
     bool disc_enabled;
     sl_link_WorkMode work_mode;
-    /* Default steering/differential speed ratio for manual drive, in (0, 1].
- Zero means keep the current LOWER-side default. */
     float max_turn_speed_ratio;
 } sl_link_ChassisSettings;
 
@@ -274,19 +268,13 @@ typedef struct _sl_link_MapSettings {
     float inflation_radius;
     pb_callback_t obstacle_regions;
     pb_callback_t work_regions;
-    /* Robot footprint vertices expressed in the base_link frame, ordered around
- the polygon. Empty keeps the currently configured footprint. */
     pb_callback_t footprint;
-    /* base_link -> base_laser_link extrinsic. Geometry is persisted by the
- scheduler; static TF consumers apply it after their next restart/mode load. */
     float base_laser_x;
     float base_laser_y;
     float base_laser_z;
     float base_laser_roll_deg;
     float base_laser_pitch_deg;
     float base_laser_yaw_deg;
-    /* Global path-planner parameters used by the MST27 planner. Optional keeps
- older geometry-only writes from overwriting values they do not edit. */
     bool has_endpoint_margin;
     float endpoint_margin;
     bool has_output_point_spacing;
@@ -328,7 +316,6 @@ typedef struct _sl_link_RppSettings {
     bool allow_reversing;
     bool use_fixed_curvature_lookahead;
     bool use_regulated_linear_velocity_scaling;
-    /* Additional high-impact tracking/collision controls exposed by the board. */
     bool use_fixed_distance_collision_detection;
     float collision_stop_distance_m;
     float collision_scan_half_angle_rad;
@@ -381,12 +368,8 @@ typedef struct _sl_link_SettingsWriteRequest {
     sl_link_MapSettings map;
     bool has_rpp;
     sl_link_RppSettings rpp;
-    /* Apply RPP through dynamic_reconfigure immediately; it is not persistent
- unless save_rpp_default is also true. */
     bool apply_rpp_temporarily;
     bool save_rpp_default;
-    /* Optional partial-update mask for RppSettings. Bit N selects the field
- number N+1; zero means the message is a complete settings snapshot. */
     uint64_t rpp_field_mask;
 } sl_link_SettingsWriteRequest;
 
@@ -411,9 +394,7 @@ typedef struct _sl_link_Pose2D {
 } sl_link_Pose2D;
 
 typedef struct _sl_link_LocalizationCovariance {
-    /* True when covariance values come from the latest odometry pose covariance. */
     bool valid;
-    /* 2D pose covariance components in the same coordinate frame as the reported pose/map. */
     float x_variance;
     float y_variance;
     float yaw_variance;
@@ -441,12 +422,9 @@ typedef struct _sl_link_DeviceStatusReport {
     sl_link_LocalizationCovariance localization_covariance;
     bool localization_quality_available;
     uint32_t localization_quality;
-    /* True when navigation reports imminent collision on /rpp/collision_imminent. */
     bool collision_imminent;
-    /* Latest laser/radar system status from /slamware_ros_sdk_server_node/system_status. */
     bool radar_system_status_available;
     pb_callback_t radar_system_status;
-    /* Vehicle linear speed computed from left/right wheel feedback, in m/s. */
     float vehicle_speed;
 } sl_link_DeviceStatusReport;
 
@@ -469,10 +447,7 @@ typedef struct _sl_link_CameraFrameChunk {
 typedef struct _sl_link_MapRequest {
     bool snapshot;
     uint32_t max_chunk_size;
-    /* Empty or LIVE_MAP selects the live radar map; otherwise load the saved
- offline raw grid associated with this map ID. */
     pb_callback_t map_id;
-    /* Unique within the APP session; echoed by the result and every chunk. */
     uint64_t request_id;
 } sl_link_MapRequest;
 
@@ -505,11 +480,9 @@ typedef struct _sl_link_MapChunk {
     float preview_scale_y;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
-    /* Rotation from source map frame to the returned map image frame, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
-    /* Same region/edit version semantics as MapPreviewResponse.map_version. */
     uint32_t map_version;
     uint64_t request_id;
     uint64_t snapshot_id;
@@ -556,6 +529,27 @@ typedef struct _sl_link_TaskCommandResponse {
     pb_callback_t task_id;
 } sl_link_TaskCommandResponse;
 
+typedef struct _sl_link_TaskRuntimeSettingsRequest {
+    pb_callback_t task_id;
+    bool has_run_speed;
+    float run_speed;
+    bool has_disc_speed_rpm;
+    uint32_t disc_speed_rpm;
+} sl_link_TaskRuntimeSettingsRequest;
+
+typedef struct _sl_link_TaskRuntimeSettingsResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    pb_callback_t task_id;
+    bool has_run_speed;
+    float run_speed;
+    bool has_disc_speed_rpm;
+    uint32_t disc_speed_rpm;
+    float max_run_speed;
+    uint32_t max_disc_speed_rpm;
+    bool temporary;
+} sl_link_TaskRuntimeSettingsResponse;
+
 typedef struct _sl_link_TaskStatusReport {
     pb_callback_t task_id;
     sl_link_TaskState state;
@@ -579,20 +573,15 @@ typedef struct _sl_link_TaskStatusReport {
 } sl_link_TaskStatusReport;
 
 typedef struct _sl_link_PathPointPlanRequest {
-    /* Non-empty: plan with the matching task configuration and its temporary
- obstacles. Empty: plan only with current-map work/public obstacle regions. */
     pb_callback_t task_id;
     uint32_t max_chunk_size;
     pb_callback_t request_id;
     bool force_replan;
-    /* Optional planning endpoints. Omitted endpoints use planner defaults. */
     bool has_start_pose;
     sl_link_Pose2D start_pose;
     bool has_end_pose;
     sl_link_Pose2D end_pose;
-    /* Optional planning direction: x, -x, y, or -y. */
     pb_callback_t global_direction;
-    /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
 } sl_link_PathPointPlanRequest;
 
@@ -638,18 +627,14 @@ typedef struct _sl_link_MapPreviewResponse {
     float preview_scale_y;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
-    /* Saved rotation angle for this map, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
     pb_callback_t map_id;
-    /* SHA-256 revision of immutable saved assets; distinct from map_version (region edits). */
     pb_callback_t map_revision;
 } sl_link_MapPreviewResponse;
 
-/* Lightweight map annotation query. It does not render or return an image. */
 typedef struct _sl_link_MapRegionPointRequest {
-    /* Empty means the currently active map; LIVE_MAP means the realtime map. */
     pb_callback_t map_id;
 } sl_link_MapRegionPointRequest;
 
@@ -734,9 +719,7 @@ typedef struct _sl_link_PathPlanRequest {
     sl_link_Pose2D start_pose;
     bool has_end_pose;
     sl_link_Pose2D end_pose;
-    /* Optional planning direction: x, -x, y, or -y. */
     pb_callback_t global_direction;
-    /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
 } sl_link_PathPlanRequest;
 
@@ -765,7 +748,6 @@ typedef struct _sl_link_PathPlanResponse {
     float estimated_time_s;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
-    /* Saved rotation angle used by the returned path preview, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
@@ -773,9 +755,6 @@ typedef struct _sl_link_PathPlanResponse {
 
 typedef struct _sl_link_MapSyncRequest {
     sl_link_MapSyncOperation operation;
-    /* Map-id-only mode:
- - DOWNLOAD_FROM_AURORA: map_id 可为空（自动生成新地图ID）
- - UPLOAD_TO_AURORA: map_id 必填（从本地已记录地图中查找并上传） */
     pb_callback_t map_id;
     bool update_navigation_map;
 } sl_link_MapSyncRequest;
@@ -828,9 +807,6 @@ typedef struct _sl_link_MapModeResponse {
 
 typedef struct _sl_link_MapAlignmentRequest {
     pb_callback_t map_id;
-    /* APP planning/display rotation relative to the map X axis, in degrees.
- It is stored independently; planning uses alignment_yaw plus the saved
- rotation difference, but alignment_yaw itself is never overwritten. */
     float rotation_deg;
 } sl_link_MapAlignmentRequest;
 
@@ -888,9 +864,6 @@ typedef struct _sl_link_MapDeleteResponse {
 typedef struct _sl_link_MapSaveRequest {
     pb_callback_t map_name;
     pb_callback_t map_id;
-    /* Optional map rotation angle relative to the positive X axis, in degrees;
- positive values rotate clockwise in APP image coordinates.
- Set has_rotation_deg=true when rotation_deg should override the saved value. */
     bool has_rotation_deg;
     float rotation_deg;
 } sl_link_MapSaveRequest;
@@ -982,7 +955,6 @@ typedef struct _sl_link_TaskResultResponse {
     pb_callback_t region_results;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
-    /* Saved rotation angle used by the returned result image, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
@@ -997,7 +969,6 @@ typedef struct _sl_link_TaskResultResponse {
 typedef struct _sl_link_TaskExecutionHistoryRequest {
     pb_callback_t map_id;
     pb_callback_t task_id;
-    /* Inclusive execution start-time range, epoch seconds. Zero means unbounded. */
     uint64_t start_time;
     uint64_t end_time;
     uint32_t max_chunk_size;
@@ -1015,7 +986,6 @@ typedef struct _sl_link_TaskExecutionHistoryChunk {
 } sl_link_TaskExecutionHistoryChunk;
 
 typedef struct _sl_link_TaskExecutionDeleteRequest {
-    /* Unique ID returned by TaskExecutionHistoryChunk records[].execution_id. */
     pb_callback_t execution_id;
 } sl_link_TaskExecutionDeleteRequest;
 
@@ -1030,10 +1000,8 @@ typedef struct _sl_link_TaskExecutionDeleteResponse {
 } sl_link_TaskExecutionDeleteResponse;
 
 typedef struct _sl_link_TaskTrajectoryRequest {
-    /* Prefer execution_id. If empty, task_id selects its latest execution. */
     pb_callback_t execution_id;
     pb_callback_t task_id;
-    /* Inclusive point timestamp range, epoch seconds. Zero means unbounded. */
     uint64_t start_time;
     uint64_t end_time;
     uint32_t start_index;
@@ -1044,7 +1012,6 @@ typedef struct _sl_link_TaskTrajectoryRequest {
 
 typedef struct _sl_link_TaskTrajectoryPoint {
     uint32_t index;
-    /* Milliseconds relative to TaskTrajectoryChunk.started_at_ms. */
     uint32_t offset_ms;
     int32_t x_mm;
     int32_t y_mm;
@@ -1078,7 +1045,6 @@ typedef struct _sl_link_TaskTrajectoryChunk {
     bool map_available;
     pb_callback_t map_message;
     uint32_t map_version;
-    /* Source occupancy-grid dimensions before preview scaling. */
     uint32_t map_source_width;
     uint32_t map_source_height;
     float map_resolution;
@@ -1090,7 +1056,6 @@ typedef struct _sl_link_TaskTrajectoryChunk {
     uint32_t map_image_height;
     float map_preview_scale_x;
     float map_preview_scale_y;
-    /* Raw map preview without region/point/path overlays. */
     pb_callback_t map_image_data;
     uint32_t map_image_chunk_index;
     uint32_t map_image_total_chunks;
@@ -1111,7 +1076,6 @@ typedef struct _sl_link_LiveMapCacheClearResponse {
 typedef struct _sl_link_SystemCacheClearRequest {
     bool clear_memory_cache;
     bool clear_temporary_files;
-    /* Includes catkin_ws/logs and ~/.ros/log. */
     bool clear_logs;
 } sl_link_SystemCacheClearRequest;
 
@@ -1158,16 +1122,11 @@ typedef struct _sl_link_RadarMapSyncResponse {
 } sl_link_RadarMapSyncResponse;
 
 typedef struct _sl_link_RadarRelocalizationRequest {
-    /* Required for Super-LIO. The pose is expressed in the ROS map frame.
- x/y use metres and heading_deg uses degrees counter-clockwise from map X. */
     bool initial_pose_available;
     bool has_initial_pose;
     sl_link_Pose2D initial_pose;
-    /* Optional uncertainty for the initial guess. When valid=false, LOWER uses
- its configured defaults. */
     bool has_initial_pose_covariance;
     sl_link_LocalizationCovariance initial_pose_covariance;
-    /* Must match the currently active immutable saved map. */
     pb_callback_t map_id;
     pb_callback_t map_revision;
 } sl_link_RadarRelocalizationRequest;
@@ -1175,7 +1134,6 @@ typedef struct _sl_link_RadarRelocalizationRequest {
 typedef struct _sl_link_RadarRelocalizationResponse {
     sl_link_ResultCode result;
     pb_callback_t message;
-    /* True means the radar accepted the asynchronous relocalization request. */
     bool accepted;
     pb_callback_t status;
     pb_callback_t map_id;
@@ -1229,9 +1187,7 @@ typedef struct _sl_link_ManualDriveControl {
     float speed_ratio;
     float remote_x;
     float remote_y;
-    /* Optional maximum straight-line speed for this command, in m/s. */
     float max_speed_mps;
-    /* Optional steering/differential speed ratio in (0, 1]. Zero keeps legacy behavior. */
     float max_turn_speed_ratio;
 } sl_link_ManualDriveControl;
 
@@ -1267,8 +1223,8 @@ extern "C" {
 
 /* Helper constants for enums */
 #define _sl_link_MessageId_MIN sl_link_MessageId_MSG_ID_UNKNOWN
-#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE
-#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE+1))
+#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE
+#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE+1))
 
 #define _sl_link_DeviceId_MIN sl_link_DeviceId_DEVICE_RESERVED
 #define _sl_link_DeviceId_MAX sl_link_DeviceId_DEVICE_BROADCAST
@@ -1381,6 +1337,9 @@ extern "C" {
 #define sl_link_TaskCommand_command_ENUMTYPE sl_link_TaskCommandType
 
 #define sl_link_TaskCommandResponse_result_ENUMTYPE sl_link_ResultCode
+
+
+#define sl_link_TaskRuntimeSettingsResponse_result_ENUMTYPE sl_link_ResultCode
 
 #define sl_link_TaskStatusReport_state_ENUMTYPE sl_link_TaskState
 
@@ -1512,6 +1471,8 @@ extern "C" {
 #define sl_link_TaskConfigResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_default         {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, false, 0, false, 0}
+#define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_default    {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default}
 #define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
@@ -1603,6 +1564,8 @@ extern "C" {
 #define sl_link_TaskConfigResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_zero            {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, false, 0, false, 0}
+#define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_zero       {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero}
 #define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
@@ -1882,6 +1845,17 @@ extern "C" {
 #define sl_link_TaskCommandResponse_result_tag   1
 #define sl_link_TaskCommandResponse_message_tag  2
 #define sl_link_TaskCommandResponse_task_id_tag  3
+#define sl_link_TaskRuntimeSettingsRequest_task_id_tag 1
+#define sl_link_TaskRuntimeSettingsRequest_run_speed_tag 2
+#define sl_link_TaskRuntimeSettingsRequest_disc_speed_rpm_tag 3
+#define sl_link_TaskRuntimeSettingsResponse_result_tag 1
+#define sl_link_TaskRuntimeSettingsResponse_message_tag 2
+#define sl_link_TaskRuntimeSettingsResponse_task_id_tag 3
+#define sl_link_TaskRuntimeSettingsResponse_run_speed_tag 4
+#define sl_link_TaskRuntimeSettingsResponse_disc_speed_rpm_tag 5
+#define sl_link_TaskRuntimeSettingsResponse_max_run_speed_tag 6
+#define sl_link_TaskRuntimeSettingsResponse_max_disc_speed_rpm_tag 7
+#define sl_link_TaskRuntimeSettingsResponse_temporary_tag 8
 #define sl_link_TaskStatusReport_task_id_tag     1
 #define sl_link_TaskStatusReport_state_tag       2
 #define sl_link_TaskStatusReport_progress_tag    3
@@ -2645,6 +2619,25 @@ X(a, CALLBACK, SINGULAR, STRING,   task_id,           3)
 #define sl_link_TaskCommandResponse_CALLBACK pb_default_field_callback
 #define sl_link_TaskCommandResponse_DEFAULT NULL
 
+#define sl_link_TaskRuntimeSettingsRequest_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           1) \
+X(a, STATIC,   OPTIONAL, FLOAT,    run_speed,         2) \
+X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    3)
+#define sl_link_TaskRuntimeSettingsRequest_CALLBACK pb_default_field_callback
+#define sl_link_TaskRuntimeSettingsRequest_DEFAULT NULL
+
+#define sl_link_TaskRuntimeSettingsResponse_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, CALLBACK, SINGULAR, STRING,   task_id,           3) \
+X(a, STATIC,   OPTIONAL, FLOAT,    run_speed,         4) \
+X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    5) \
+X(a, STATIC,   SINGULAR, FLOAT,    max_run_speed,     6) \
+X(a, STATIC,   SINGULAR, UINT32,   max_disc_speed_rpm,   7) \
+X(a, STATIC,   SINGULAR, BOOL,     temporary,         8)
+#define sl_link_TaskRuntimeSettingsResponse_CALLBACK pb_default_field_callback
+#define sl_link_TaskRuntimeSettingsResponse_DEFAULT NULL
+
 #define sl_link_TaskStatusReport_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           1) \
 X(a, STATIC,   SINGULAR, UENUM,    state,             2) \
@@ -3405,6 +3398,8 @@ extern const pb_msgdesc_t sl_link_TaskConfig_msg;
 extern const pb_msgdesc_t sl_link_TaskConfigResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskCommand_msg;
 extern const pb_msgdesc_t sl_link_TaskCommandResponse_msg;
+extern const pb_msgdesc_t sl_link_TaskRuntimeSettingsRequest_msg;
+extern const pb_msgdesc_t sl_link_TaskRuntimeSettingsResponse_msg;
 extern const pb_msgdesc_t sl_link_TaskStatusReport_msg;
 extern const pb_msgdesc_t sl_link_PathPointPlanRequest_msg;
 extern const pb_msgdesc_t sl_link_PathPointPlanResponse_msg;
@@ -3498,6 +3493,8 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_TaskConfigResponse_fields &sl_link_TaskConfigResponse_msg
 #define sl_link_TaskCommand_fields &sl_link_TaskCommand_msg
 #define sl_link_TaskCommandResponse_fields &sl_link_TaskCommandResponse_msg
+#define sl_link_TaskRuntimeSettingsRequest_fields &sl_link_TaskRuntimeSettingsRequest_msg
+#define sl_link_TaskRuntimeSettingsResponse_fields &sl_link_TaskRuntimeSettingsResponse_msg
 #define sl_link_TaskStatusReport_fields &sl_link_TaskStatusReport_msg
 #define sl_link_PathPointPlanRequest_fields &sl_link_PathPointPlanRequest_msg
 #define sl_link_PathPointPlanResponse_fields &sl_link_PathPointPlanResponse_msg
@@ -3584,6 +3581,8 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_TaskConfigResponse_size depends on runtime parameters */
 /* sl_link_TaskCommand_size depends on runtime parameters */
 /* sl_link_TaskCommandResponse_size depends on runtime parameters */
+/* sl_link_TaskRuntimeSettingsRequest_size depends on runtime parameters */
+/* sl_link_TaskRuntimeSettingsResponse_size depends on runtime parameters */
 /* sl_link_TaskStatusReport_size depends on runtime parameters */
 /* sl_link_PathPointPlanRequest_size depends on runtime parameters */
 /* sl_link_PathPointPlanResponse_size depends on runtime parameters */

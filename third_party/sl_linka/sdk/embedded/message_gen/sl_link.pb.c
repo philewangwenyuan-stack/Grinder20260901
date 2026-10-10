@@ -81,6 +81,12 @@ PB_BIND(sl_link_TaskCommand, sl_link_TaskCommand, AUTO)
 PB_BIND(sl_link_TaskCommandResponse, sl_link_TaskCommandResponse, AUTO)
 
 
+PB_BIND(sl_link_TaskRuntimeSettingsRequest, sl_link_TaskRuntimeSettingsRequest, AUTO)
+
+
+PB_BIND(sl_link_TaskRuntimeSettingsResponse, sl_link_TaskRuntimeSettingsResponse, AUTO)
+
+
 PB_BIND(sl_link_TaskStatusReport, sl_link_TaskStatusReport, AUTO)
 
 

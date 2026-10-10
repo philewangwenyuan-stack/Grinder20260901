@@ -65,6 +65,7 @@ from grinder_scheduler.models import (
 from grinder_scheduler.msg import MapPreviewMetadata, SchedulerStatus
 from grinder_scheduler.planner_adapter import PlannerAdapter
 from grinder_scheduler.task_continuation import coverage_continuation
+from grinder_scheduler.task_runtime_parameters import TaskRuntimeParameters
 from grinder_scheduler.platform_integration import MqttDeviceReporter, PlatformFileSync
 from grinder_scheduler.sl_linka_adapter import SlLinkAServer
 from grinder_scheduler.metrics_registry import MetricsRegistry
@@ -448,6 +449,10 @@ class SchedulerNode:
             "run_speed": max(0.0, min(self._max_chassis_run_speed, default_run_speed)),
             "max_turn_speed_ratio": 1.0,
         }
+        self._task_runtime_parameters = TaskRuntimeParameters()
+        self._task_runtime_max_disc_speed_rpm = max(0, min(32767, int(
+            rospy.get_param("~task_runtime_max_disc_speed_rpm", 1500)
+        )))
         self._live_map_id = str(rospy.get_param("~live_map_id", DEFAULT_LIVE_MAP_ID)).strip() or DEFAULT_LIVE_MAP_ID
         self._active_map_id = self._live_map_id
         self._last_seen_map_id = ""
@@ -6054,6 +6059,12 @@ class SchedulerNode:
             rospy.loginfo("Task continuation: map changed, replan remaining coverage")
 
     def _start_execution(self):
+        runtime_parameters = getattr(self, "_task_runtime_parameters", None)
+        if runtime_parameters is not None:
+            try:
+                runtime_parameters.clear(self)
+            except Exception as exc:
+                return False, "Cannot restore previous task runtime settings: {}".format(exc)
         if float(self._chassis_settings.get("run_speed", 0.0)) <= 0.0:
             self._safe_stop_motion()
             return False, "Cannot start task while run_speed is zero"
@@ -6910,6 +6921,11 @@ class SchedulerNode:
         )
 
     def _configured_disc_speed_rpm(self):
+        runtime_parameters = getattr(self, "_task_runtime_parameters", None)
+        if runtime_parameters is not None and self.state in (SchedulerState.RUNNING, SchedulerState.PAUSED):
+            return runtime_parameters.disc_speed(
+                self.task_config.task_id, int(self._chassis_settings.get("disc_speed_rpm", 1200))
+            )
         return max(
             0,
             min(32767, int(self._chassis_settings.get("disc_speed_rpm", 1200))),
@@ -7678,6 +7694,12 @@ class SchedulerNode:
             return ""
 
     def _finalize_task_result(self, stop_reason=""):
+        runtime_parameters = getattr(self, "_task_runtime_parameters", None)
+        if runtime_parameters is not None:
+            try:
+                runtime_parameters.clear(self)
+            except Exception as exc:
+                rospy.logwarn("Task runtime speed restore pending until next start: %s", exc)
         try:
             map_id = str(self._current_map_id() or self.task_config.map_id or "").strip()
             task_id = str(self.task_config.task_id or "task").strip() or "task"
@@ -8647,6 +8669,33 @@ class SchedulerNode:
         response.message = "Task config accepted"
         response.task_id = self.task_config.task_id
         return response.SerializeToString(), pb.MSG_ID_TASK_CONFIG_RESPONSE, pb.COMP_SCHEDULER
+
+    def _publish_task_runtime_disc_speed(self, rpm):
+        self.disc_speed_pub.publish(Int16(data=int(rpm)))
+
+    def handle_task_runtime_settings(self, payload):
+        pb = self.sl_link_server.pb
+        request = pb.TaskRuntimeSettingsRequest()
+        request.ParseFromString(payload)
+        response = pb.TaskRuntimeSettingsResponse(task_id=request.task_id, temporary=True)
+        try:
+            values = self._task_runtime_parameters.execute(
+                self, request.task_id,
+                float(request.run_speed) if request.HasField("run_speed") else None,
+                int(request.disc_speed_rpm) if request.HasField("disc_speed_rpm") else None,
+            )
+            for name, value in values.items():
+                setattr(response, name, value)
+            response.result = pb.RESULT_SUCCESS
+            response.message = "Task runtime settings confirmed (temporary)"
+        except ValueError as exc:
+            response.result = pb.RESULT_INVALID_PARAM
+            response.message = str(exc)
+        except Exception as exc:
+            response.result = pb.RESULT_FAILED
+            response.message = str(exc)
+        rospy.loginfo("Task runtime settings: task=%s result=%s message=%s", request.task_id, response.result, response.message)
+        return response.SerializeToString(), pb.MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE, pb.COMP_SCHEDULER
 
     def handle_task_command(self, payload):
         pb = self.sl_link_server.pb

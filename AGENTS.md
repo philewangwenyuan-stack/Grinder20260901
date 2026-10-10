@@ -31,10 +31,12 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 调度参数与设备覆盖 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` | `config/scheduler.local.example.yaml`、被忽略的 `scheduler.local.yaml`；`config/super_lio.yaml`、`launch/scheduler.launch` |
 | 调度配置启动预检 | `catkin_ws/scripts/check_scheduler_config.py` | `scripts/scheduler_config.sh`、`start_grinder_stack.sh`、`start_grinder_super_lio_base.sh`、`start_grinder_sim.sh` |
 | Super-LIO 源码与上游版本 | `catkin_ws/src/localization/Super-LIO/UPSTREAM.md` | 同目录 `LICENSE`、`src/super_lio/`、`src/basic/`；普通源码，无子模块初始化步骤 |
+| Super-LIO 每帧迭代收敛诊断 | `catkin_ws/src/localization/Super-LIO/src/super_lio/src/lio/ESKF.cpp` | `include/lio/ESKF.h` 保存迭代记录；`src/apps/relocation.cpp` 输出 `/super_lio/registration_diagnostics`；字段说明见 `UPSTREAM.md` |
 | 地图编辑、区域叠加、预览、持久化 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_service.py` | `scheduler_node.py` 中 `handle_map_*`、`_map_*` |
 | 路径规划输入/输出适配、请求内共享预处理 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/planner_adapter.py` | `third_party/path_planner/mst27/mst27.py` 中 `PreparedPlanningMap`、`mst27/cpp/mst27_cpp.cpp`；离线回归 `mst27/test/test_preprocessing.py`、scheduler `test/test_planner_preprocessing.py` |
 | 手动停止后的任务续跑、作业线方向与轮次 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_continuation.py` | `scheduler_node.py` 中 `_capture_task_continuation` / `_prepare_task_continuation_start`；`planner_adapter.py`；离线回归 `test/test_task_continuation.py`、`test/test_planner_continuation.py` |
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
+| 当前任务临时直行速度与磨盘转速 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_runtime_parameters.py` | `scheduler_node.py` 中 `handle_task_runtime_settings`；协议 `0x0538/0x0539`；`test/test_task_runtime_parameters.py` |
 | 板端日志采样与指标导出 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/metrics_registry.py` | `metrics_exporter.py`、`grinder_metrics_node.py`、`launch/scheduler.launch` |
 | 协议定义与说明、地图请求结果/快照分片 | `third_party/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl-link.md`、`third_party/sl_linka/scripts/generate_proto.sh` |
 | Aurora 地图、位姿和双目图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/aurora_bridge.py` | `catkin_ws/src/2-dnavigation-package/slamware_ros_sdk/` |

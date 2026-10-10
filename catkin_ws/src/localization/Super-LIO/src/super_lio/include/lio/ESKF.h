@@ -2,6 +2,8 @@
 #define ESKF_HPP_
 
 #include <nav_msgs/Odometry.h>
+#include <array>
+#include <vector>
 
 #include "basic/alias.h"
 #include "basic/Manifold.h"
@@ -40,6 +42,22 @@ public:
     BASIC::SE3  pose;
   };
 
+  struct IterationDiagnostic {
+    double update_inf = 0.0;
+    int max_component = -1;
+    double max_component_value = 0.0;
+    bool update_finite = true;
+    // R, p, v, gyro bias, accelerometer bias, gravity; infinity norms.
+    std::array<double, 6> block_update_inf{};
+  };
+
+  struct UpdateDiagnostic {
+    int max_iterations = 0;
+    double quit_eps = 0.0;
+    bool updates_finite = true;
+    std::vector<IterationDiagnostic> iterations;
+  };
+
 
   ESKF(Options option = Options()) : options_(option) { BuildNoise(option); }
 
@@ -59,6 +77,7 @@ public:
   using ObsFunc = std::function<void(const KFState& kf_state, BASIC::M6& HT_Vinv_H, BASIC::V6& HT_Vinv_r)>;
   bool UpdateObserve(ObsFunc obs);
   bool DidLastUpdateConverge() const { return last_update_converged_; }
+  const UpdateDiagnostic& GetLastUpdateDiagnostic() const { return last_update_diagnostic_; }
 
   double GetTime() const { return current_time_; }
 
@@ -94,6 +113,7 @@ private:
   
   bool  need_converge_  = true;
   bool  last_update_converged_ = false;
+  UpdateDiagnostic last_update_diagnostic_;
   float imu_scale_ = 1.0;
   IMUData last_imu_;
   double current_time_ = 0.0;

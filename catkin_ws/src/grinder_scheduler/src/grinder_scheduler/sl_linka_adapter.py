@@ -230,6 +230,7 @@ class SlLinkAServer:
             ("MSG_ID_CONTROL_COMMAND", "ControlCommand"),
             ("MSG_ID_TASK_CONFIG", "TaskConfig"),
             ("MSG_ID_TASK_COMMAND", "TaskCommand"),
+            ("MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST", "TaskRuntimeSettingsRequest"),
             ("MSG_ID_PATH_POINT_PLAN_REQUEST", "PathPointPlanRequest"),
             ("MSG_ID_CAMERA_FRAME_REQUEST", "CameraFrameRequest"),
             ("MSG_ID_MAP_REQUEST", "MapRequest"),
@@ -779,6 +780,10 @@ class SlLinkAServer:
             return
         if frame.msg_id == pb.MSG_ID_TASK_COMMAND:
             payload, msg_id, comp_id = self._handler.handle_task_command(frame.payload)
+            request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if frame.msg_id == pb.MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST:
+            payload, msg_id, comp_id = self._handler.handle_task_runtime_settings(frame.payload)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_PATH_POINT_PLAN_REQUEST:

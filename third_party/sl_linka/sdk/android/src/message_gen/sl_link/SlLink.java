@@ -300,6 +300,14 @@ public final class SlLink {
      * <code>MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335;</code>
      */
     MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE(1335),
+    /**
+     * <code>MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST = 1336;</code>
+     */
+    MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST(1336),
+    /**
+     * <code>MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337;</code>
+     */
+    MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE(1337),
     UNRECOGNIZED(-1),
     ;
 
@@ -587,6 +595,14 @@ public final class SlLink {
      * <code>MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335;</code>
      */
     public static final int MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE_VALUE = 1335;
+    /**
+     * <code>MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST = 1336;</code>
+     */
+    public static final int MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST_VALUE = 1336;
+    /**
+     * <code>MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337;</code>
+     */
+    public static final int MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE_VALUE = 1337;
 
 
     @java.lang.Override
@@ -681,6 +697,8 @@ public final class SlLink {
         case 1333: return MSG_ID_TASK_EXECUTION_DELETE_RESPONSE;
         case 1334: return MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST;
         case 1335: return MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE;
+        case 1336: return MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST;
+        case 1337: return MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE;
         default: return null;
       }
     }
@@ -24584,6 +24602,1331 @@ public final class SlLink {
     private static volatile com.google.protobuf.Parser<TaskCommandResponse> PARSER;
 
     public static com.google.protobuf.Parser<TaskCommandResponse> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface TaskRuntimeSettingsRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskRuntimeSettingsRequest)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The taskId.
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The bytes for taskId.
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return Whether the runSpeed field is set.
+     */
+    boolean hasRunSpeed();
+    /**
+     * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return The runSpeed.
+     */
+    float getRunSpeed();
+
+    /**
+     * <code>optional uint32 disc_speed_rpm = 3;</code>
+     * @return Whether the discSpeedRpm field is set.
+     */
+    boolean hasDiscSpeedRpm();
+    /**
+     * <code>optional uint32 disc_speed_rpm = 3;</code>
+     * @return The discSpeedRpm.
+     */
+    int getDiscSpeedRpm();
+  }
+  /**
+   * <pre>
+   * Empty optional fields query the current task's effective setpoints and limits.
+   * Updates apply only to this task; no persistent configuration or enable state changes.
+   * </pre>
+   *
+   * Protobuf type {@code sl_link.TaskRuntimeSettingsRequest}
+   */
+  public  static final class TaskRuntimeSettingsRequest extends
+      com.google.protobuf.GeneratedMessageLite<
+          TaskRuntimeSettingsRequest, TaskRuntimeSettingsRequest.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskRuntimeSettingsRequest)
+      TaskRuntimeSettingsRequestOrBuilder {
+    private TaskRuntimeSettingsRequest() {
+      taskId_ = "";
+    }
+    private int bitField0_;
+    public static final int TASK_ID_FIELD_NUMBER = 1;
+    private java.lang.String taskId_;
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The taskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskId() {
+      return taskId_;
+    }
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The bytes for taskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(taskId_);
+    }
+    /**
+     * <code>string task_id = 1;</code>
+     * @param value The taskId to set.
+     */
+    private void setTaskId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+  
+      taskId_ = value;
+    }
+    /**
+     * <code>string task_id = 1;</code>
+     */
+    private void clearTaskId() {
+
+      taskId_ = getDefaultInstance().getTaskId();
+    }
+    /**
+     * <code>string task_id = 1;</code>
+     * @param value The bytes for taskId to set.
+     */
+    private void setTaskIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      taskId_ = value.toStringUtf8();
+
+    }
+
+    public static final int RUN_SPEED_FIELD_NUMBER = 2;
+    private float runSpeed_;
+    /**
+     * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return Whether the runSpeed field is set.
+     */
+    @java.lang.Override
+    public boolean hasRunSpeed() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return The runSpeed.
+     */
+    @java.lang.Override
+    public float getRunSpeed() {
+      return runSpeed_;
+    }
+    /**
+     * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @param value The runSpeed to set.
+     */
+    private void setRunSpeed(float value) {
+      bitField0_ |= 0x00000001;
+      runSpeed_ = value;
+    }
+    /**
+     * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     */
+    private void clearRunSpeed() {
+      bitField0_ = (bitField0_ & ~0x00000001);
+      runSpeed_ = 0F;
+    }
+
+    public static final int DISC_SPEED_RPM_FIELD_NUMBER = 3;
+    private int discSpeedRpm_;
+    /**
+     * <code>optional uint32 disc_speed_rpm = 3;</code>
+     * @return Whether the discSpeedRpm field is set.
+     */
+    @java.lang.Override
+    public boolean hasDiscSpeedRpm() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional uint32 disc_speed_rpm = 3;</code>
+     * @return The discSpeedRpm.
+     */
+    @java.lang.Override
+    public int getDiscSpeedRpm() {
+      return discSpeedRpm_;
+    }
+    /**
+     * <code>optional uint32 disc_speed_rpm = 3;</code>
+     * @param value The discSpeedRpm to set.
+     */
+    private void setDiscSpeedRpm(int value) {
+      bitField0_ |= 0x00000002;
+      discSpeedRpm_ = value;
+    }
+    /**
+     * <code>optional uint32 disc_speed_rpm = 3;</code>
+     */
+    private void clearDiscSpeedRpm() {
+      bitField0_ = (bitField0_ & ~0x00000002);
+      discSpeedRpm_ = 0;
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskRuntimeSettingsRequest prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * <pre>
+     * Empty optional fields query the current task's effective setpoints and limits.
+     * Updates apply only to this task; no persistent configuration or enable state changes.
+     * </pre>
+     *
+     * Protobuf type {@code sl_link.TaskRuntimeSettingsRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.TaskRuntimeSettingsRequest, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskRuntimeSettingsRequest)
+        sl_link.SlLink.TaskRuntimeSettingsRequestOrBuilder {
+      // Construct using sl_link.SlLink.TaskRuntimeSettingsRequest.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string task_id = 1;</code>
+       * @return The taskId.
+       */
+      @java.lang.Override
+      public java.lang.String getTaskId() {
+        return instance.getTaskId();
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @return The bytes for taskId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        return instance.getTaskIdBytes();
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @param value The taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setTaskId(value);
+        return this;
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskId() {
+        copyOnWrite();
+        instance.clearTaskId();
+        return this;
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @param value The bytes for taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setTaskIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return Whether the runSpeed field is set.
+       */
+      @java.lang.Override
+      public boolean hasRunSpeed() {
+        return instance.hasRunSpeed();
+      }
+      /**
+       * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return The runSpeed.
+       */
+      @java.lang.Override
+      public float getRunSpeed() {
+        return instance.getRunSpeed();
+      }
+      /**
+       * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @param value The runSpeed to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRunSpeed(float value) {
+        copyOnWrite();
+        instance.setRunSpeed(value);
+        return this;
+      }
+      /**
+       * <code>optional float run_speed = 2 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRunSpeed() {
+        copyOnWrite();
+        instance.clearRunSpeed();
+        return this;
+      }
+
+      /**
+       * <code>optional uint32 disc_speed_rpm = 3;</code>
+       * @return Whether the discSpeedRpm field is set.
+       */
+      @java.lang.Override
+      public boolean hasDiscSpeedRpm() {
+        return instance.hasDiscSpeedRpm();
+      }
+      /**
+       * <code>optional uint32 disc_speed_rpm = 3;</code>
+       * @return The discSpeedRpm.
+       */
+      @java.lang.Override
+      public int getDiscSpeedRpm() {
+        return instance.getDiscSpeedRpm();
+      }
+      /**
+       * <code>optional uint32 disc_speed_rpm = 3;</code>
+       * @param value The discSpeedRpm to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDiscSpeedRpm(int value) {
+        copyOnWrite();
+        instance.setDiscSpeedRpm(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 disc_speed_rpm = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDiscSpeedRpm() {
+        copyOnWrite();
+        instance.clearDiscSpeedRpm();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskRuntimeSettingsRequest)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.TaskRuntimeSettingsRequest();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "taskId_",
+              "runSpeed_",
+              "discSpeedRpm_",
+            };
+            java.lang.String info =
+                "\u0000\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0208\u0002\u1001" +
+                "\u0000\u0003\u100b\u0001";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.TaskRuntimeSettingsRequest> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.TaskRuntimeSettingsRequest.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.TaskRuntimeSettingsRequest>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskRuntimeSettingsRequest)
+    private static final sl_link.SlLink.TaskRuntimeSettingsRequest DEFAULT_INSTANCE;
+    static {
+      TaskRuntimeSettingsRequest defaultInstance = new TaskRuntimeSettingsRequest();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        TaskRuntimeSettingsRequest.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<TaskRuntimeSettingsRequest> PARSER;
+
+    public static com.google.protobuf.Parser<TaskRuntimeSettingsRequest> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface TaskRuntimeSettingsResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.TaskRuntimeSettingsResponse)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The result.
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>string task_id = 3;</code>
+     * @return The taskId.
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 3;</code>
+     * @return The bytes for taskId.
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return Whether the runSpeed field is set.
+     */
+    boolean hasRunSpeed();
+    /**
+     * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return The runSpeed.
+     */
+    float getRunSpeed();
+
+    /**
+     * <code>optional uint32 disc_speed_rpm = 5;</code>
+     * @return Whether the discSpeedRpm field is set.
+     */
+    boolean hasDiscSpeedRpm();
+    /**
+     * <code>optional uint32 disc_speed_rpm = 5;</code>
+     * @return The discSpeedRpm.
+     */
+    int getDiscSpeedRpm();
+
+    /**
+     * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return The maxRunSpeed.
+     */
+    float getMaxRunSpeed();
+
+    /**
+     * <code>uint32 max_disc_speed_rpm = 7;</code>
+     * @return The maxDiscSpeedRpm.
+     */
+    int getMaxDiscSpeedRpm();
+
+    /**
+     * <code>bool temporary = 8;</code>
+     * @return The temporary.
+     */
+    boolean getTemporary();
+  }
+  /**
+   * Protobuf type {@code sl_link.TaskRuntimeSettingsResponse}
+   */
+  public  static final class TaskRuntimeSettingsResponse extends
+      com.google.protobuf.GeneratedMessageLite<
+          TaskRuntimeSettingsResponse, TaskRuntimeSettingsResponse.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.TaskRuntimeSettingsResponse)
+      TaskRuntimeSettingsResponseOrBuilder {
+    private TaskRuntimeSettingsResponse() {
+      message_ = "";
+      taskId_ = "";
+    }
+    private int bitField0_;
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    @java.lang.Override
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ResultCode getResult() {
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.forNumber(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @param value The enum numeric value on the wire for result to set.
+     */
+    private void setResultValue(int value) {
+        result_ = value;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @param value The result to set.
+     */
+    private void setResult(sl_link.SlLink.ResultCode value) {
+      result_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    private void clearResult() {
+
+      result_ = 0;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private java.lang.String message_;
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      return message_;
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(message_);
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @param value The message to set.
+     */
+    private void setMessage(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+  
+      message_ = value;
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    private void clearMessage() {
+
+      message_ = getDefaultInstance().getMessage();
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @param value The bytes for message to set.
+     */
+    private void setMessageBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      message_ = value.toStringUtf8();
+
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 3;
+    private java.lang.String taskId_;
+    /**
+     * <code>string task_id = 3;</code>
+     * @return The taskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskId() {
+      return taskId_;
+    }
+    /**
+     * <code>string task_id = 3;</code>
+     * @return The bytes for taskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(taskId_);
+    }
+    /**
+     * <code>string task_id = 3;</code>
+     * @param value The taskId to set.
+     */
+    private void setTaskId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+  
+      taskId_ = value;
+    }
+    /**
+     * <code>string task_id = 3;</code>
+     */
+    private void clearTaskId() {
+
+      taskId_ = getDefaultInstance().getTaskId();
+    }
+    /**
+     * <code>string task_id = 3;</code>
+     * @param value The bytes for taskId to set.
+     */
+    private void setTaskIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      taskId_ = value.toStringUtf8();
+
+    }
+
+    public static final int RUN_SPEED_FIELD_NUMBER = 4;
+    private float runSpeed_;
+    /**
+     * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return Whether the runSpeed field is set.
+     */
+    @java.lang.Override
+    public boolean hasRunSpeed() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return The runSpeed.
+     */
+    @java.lang.Override
+    public float getRunSpeed() {
+      return runSpeed_;
+    }
+    /**
+     * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @param value The runSpeed to set.
+     */
+    private void setRunSpeed(float value) {
+      bitField0_ |= 0x00000001;
+      runSpeed_ = value;
+    }
+    /**
+     * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     */
+    private void clearRunSpeed() {
+      bitField0_ = (bitField0_ & ~0x00000001);
+      runSpeed_ = 0F;
+    }
+
+    public static final int DISC_SPEED_RPM_FIELD_NUMBER = 5;
+    private int discSpeedRpm_;
+    /**
+     * <code>optional uint32 disc_speed_rpm = 5;</code>
+     * @return Whether the discSpeedRpm field is set.
+     */
+    @java.lang.Override
+    public boolean hasDiscSpeedRpm() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional uint32 disc_speed_rpm = 5;</code>
+     * @return The discSpeedRpm.
+     */
+    @java.lang.Override
+    public int getDiscSpeedRpm() {
+      return discSpeedRpm_;
+    }
+    /**
+     * <code>optional uint32 disc_speed_rpm = 5;</code>
+     * @param value The discSpeedRpm to set.
+     */
+    private void setDiscSpeedRpm(int value) {
+      bitField0_ |= 0x00000002;
+      discSpeedRpm_ = value;
+    }
+    /**
+     * <code>optional uint32 disc_speed_rpm = 5;</code>
+     */
+    private void clearDiscSpeedRpm() {
+      bitField0_ = (bitField0_ & ~0x00000002);
+      discSpeedRpm_ = 0;
+    }
+
+    public static final int MAX_RUN_SPEED_FIELD_NUMBER = 6;
+    private float maxRunSpeed_;
+    /**
+     * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @return The maxRunSpeed.
+     */
+    @java.lang.Override
+    public float getMaxRunSpeed() {
+      return maxRunSpeed_;
+    }
+    /**
+     * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     * @param value The maxRunSpeed to set.
+     */
+    private void setMaxRunSpeed(float value) {
+      
+      maxRunSpeed_ = value;
+    }
+    /**
+     * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+     */
+    private void clearMaxRunSpeed() {
+
+      maxRunSpeed_ = 0F;
+    }
+
+    public static final int MAX_DISC_SPEED_RPM_FIELD_NUMBER = 7;
+    private int maxDiscSpeedRpm_;
+    /**
+     * <code>uint32 max_disc_speed_rpm = 7;</code>
+     * @return The maxDiscSpeedRpm.
+     */
+    @java.lang.Override
+    public int getMaxDiscSpeedRpm() {
+      return maxDiscSpeedRpm_;
+    }
+    /**
+     * <code>uint32 max_disc_speed_rpm = 7;</code>
+     * @param value The maxDiscSpeedRpm to set.
+     */
+    private void setMaxDiscSpeedRpm(int value) {
+      
+      maxDiscSpeedRpm_ = value;
+    }
+    /**
+     * <code>uint32 max_disc_speed_rpm = 7;</code>
+     */
+    private void clearMaxDiscSpeedRpm() {
+
+      maxDiscSpeedRpm_ = 0;
+    }
+
+    public static final int TEMPORARY_FIELD_NUMBER = 8;
+    private boolean temporary_;
+    /**
+     * <code>bool temporary = 8;</code>
+     * @return The temporary.
+     */
+    @java.lang.Override
+    public boolean getTemporary() {
+      return temporary_;
+    }
+    /**
+     * <code>bool temporary = 8;</code>
+     * @param value The temporary to set.
+     */
+    private void setTemporary(boolean value) {
+      
+      temporary_ = value;
+    }
+    /**
+     * <code>bool temporary = 8;</code>
+     */
+    private void clearTemporary() {
+
+      temporary_ = false;
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.TaskRuntimeSettingsResponse prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.TaskRuntimeSettingsResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.TaskRuntimeSettingsResponse, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.TaskRuntimeSettingsResponse)
+        sl_link.SlLink.TaskRuntimeSettingsResponseOrBuilder {
+      // Construct using sl_link.SlLink.TaskRuntimeSettingsResponse.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return The enum numeric value on the wire for result.
+       */
+      @java.lang.Override
+      public int getResultValue() {
+        return instance.getResultValue();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultValue(int value) {
+        copyOnWrite();
+        instance.setResultValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return The result.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ResultCode getResult() {
+        return instance.getResult();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @param value The enum numeric value on the wire for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        copyOnWrite();
+        instance.setResult(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        copyOnWrite();
+        instance.clearResult();
+        return this;
+      }
+
+      /**
+       * <code>string message = 2;</code>
+       * @return The message.
+       */
+      @java.lang.Override
+      public java.lang.String getMessage() {
+        return instance.getMessage();
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return The bytes for message.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        return instance.getMessageBytes();
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMessage(value);
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        copyOnWrite();
+        instance.clearMessage();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMessageBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string task_id = 3;</code>
+       * @return The taskId.
+       */
+      @java.lang.Override
+      public java.lang.String getTaskId() {
+        return instance.getTaskId();
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       * @return The bytes for taskId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        return instance.getTaskIdBytes();
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       * @param value The taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setTaskId(value);
+        return this;
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskId() {
+        copyOnWrite();
+        instance.clearTaskId();
+        return this;
+      }
+      /**
+       * <code>string task_id = 3;</code>
+       * @param value The bytes for taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setTaskIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return Whether the runSpeed field is set.
+       */
+      @java.lang.Override
+      public boolean hasRunSpeed() {
+        return instance.hasRunSpeed();
+      }
+      /**
+       * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return The runSpeed.
+       */
+      @java.lang.Override
+      public float getRunSpeed() {
+        return instance.getRunSpeed();
+      }
+      /**
+       * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @param value The runSpeed to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRunSpeed(float value) {
+        copyOnWrite();
+        instance.setRunSpeed(value);
+        return this;
+      }
+      /**
+       * <code>optional float run_speed = 4 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRunSpeed() {
+        copyOnWrite();
+        instance.clearRunSpeed();
+        return this;
+      }
+
+      /**
+       * <code>optional uint32 disc_speed_rpm = 5;</code>
+       * @return Whether the discSpeedRpm field is set.
+       */
+      @java.lang.Override
+      public boolean hasDiscSpeedRpm() {
+        return instance.hasDiscSpeedRpm();
+      }
+      /**
+       * <code>optional uint32 disc_speed_rpm = 5;</code>
+       * @return The discSpeedRpm.
+       */
+      @java.lang.Override
+      public int getDiscSpeedRpm() {
+        return instance.getDiscSpeedRpm();
+      }
+      /**
+       * <code>optional uint32 disc_speed_rpm = 5;</code>
+       * @param value The discSpeedRpm to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDiscSpeedRpm(int value) {
+        copyOnWrite();
+        instance.setDiscSpeedRpm(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 disc_speed_rpm = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDiscSpeedRpm() {
+        copyOnWrite();
+        instance.clearDiscSpeedRpm();
+        return this;
+      }
+
+      /**
+       * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return The maxRunSpeed.
+       */
+      @java.lang.Override
+      public float getMaxRunSpeed() {
+        return instance.getMaxRunSpeed();
+      }
+      /**
+       * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @param value The maxRunSpeed to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMaxRunSpeed(float value) {
+        copyOnWrite();
+        instance.setMaxRunSpeed(value);
+        return this;
+      }
+      /**
+       * <code>float max_run_speed = 6 [(.sl_link.unit) = "m/s", (.sl_link.scale) = 1];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMaxRunSpeed() {
+        copyOnWrite();
+        instance.clearMaxRunSpeed();
+        return this;
+      }
+
+      /**
+       * <code>uint32 max_disc_speed_rpm = 7;</code>
+       * @return The maxDiscSpeedRpm.
+       */
+      @java.lang.Override
+      public int getMaxDiscSpeedRpm() {
+        return instance.getMaxDiscSpeedRpm();
+      }
+      /**
+       * <code>uint32 max_disc_speed_rpm = 7;</code>
+       * @param value The maxDiscSpeedRpm to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMaxDiscSpeedRpm(int value) {
+        copyOnWrite();
+        instance.setMaxDiscSpeedRpm(value);
+        return this;
+      }
+      /**
+       * <code>uint32 max_disc_speed_rpm = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMaxDiscSpeedRpm() {
+        copyOnWrite();
+        instance.clearMaxDiscSpeedRpm();
+        return this;
+      }
+
+      /**
+       * <code>bool temporary = 8;</code>
+       * @return The temporary.
+       */
+      @java.lang.Override
+      public boolean getTemporary() {
+        return instance.getTemporary();
+      }
+      /**
+       * <code>bool temporary = 8;</code>
+       * @param value The temporary to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTemporary(boolean value) {
+        copyOnWrite();
+        instance.setTemporary(value);
+        return this;
+      }
+      /**
+       * <code>bool temporary = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTemporary() {
+        copyOnWrite();
+        instance.clearTemporary();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.TaskRuntimeSettingsResponse)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.TaskRuntimeSettingsResponse();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "result_",
+              "message_",
+              "taskId_",
+              "runSpeed_",
+              "discSpeedRpm_",
+              "maxRunSpeed_",
+              "maxDiscSpeedRpm_",
+              "temporary_",
+            };
+            java.lang.String info =
+                "\u0000\b\u0000\u0001\u0001\b\b\u0000\u0000\u0000\u0001\f\u0002\u0208\u0003\u0208" +
+                "\u0004\u1001\u0000\u0005\u100b\u0001\u0006\u0001\u0007\u000b\b\u0007";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.TaskRuntimeSettingsResponse> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.TaskRuntimeSettingsResponse.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.TaskRuntimeSettingsResponse>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.TaskRuntimeSettingsResponse)
+    private static final sl_link.SlLink.TaskRuntimeSettingsResponse DEFAULT_INSTANCE;
+    static {
+      TaskRuntimeSettingsResponse defaultInstance = new TaskRuntimeSettingsResponse();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        TaskRuntimeSettingsResponse.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.TaskRuntimeSettingsResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<TaskRuntimeSettingsResponse> PARSER;
+
+    public static com.google.protobuf.Parser<TaskRuntimeSettingsResponse> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

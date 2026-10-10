@@ -85,6 +85,8 @@ enum MessageId {
   MSG_ID_TASK_EXECUTION_DELETE_RESPONSE = 0x0535;
   MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 0x0536;
   MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 0x0537;
+  MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST = 0x0538;
+  MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 0x0539;
 }
 
 enum DeviceId {
@@ -537,6 +539,25 @@ message TaskCommandResponse {
   ResultCode result = 1;
   string message = 2;
   string task_id = 3;
+}
+
+// Empty optional fields query the current task's effective setpoints and limits.
+// Updates apply only to this task; no persistent configuration or enable state changes.
+message TaskRuntimeSettingsRequest {
+  string task_id = 1;
+  optional float run_speed = 2 [(unit) = "m/s", (scale) = 1];
+  optional uint32 disc_speed_rpm = 3;
+}
+
+message TaskRuntimeSettingsResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string task_id = 3;
+  optional float run_speed = 4 [(unit) = "m/s", (scale) = 1];
+  optional uint32 disc_speed_rpm = 5;
+  float max_run_speed = 6 [(unit) = "m/s", (scale) = 1];
+  uint32 max_disc_speed_rpm = 7;
+  bool temporary = 8;
 }
 
 message TaskStatusReport {

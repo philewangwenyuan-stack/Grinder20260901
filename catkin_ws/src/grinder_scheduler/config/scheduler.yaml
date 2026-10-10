@@ -270,6 +270,7 @@ max_chassis_run_speed: 0.2
 # 收到 run_speed 后同步更新 TEB 动态参数。
 navigation_speed_reconfigure_namespace: /move_base/RegulatedPurePursuitController
 navigation_speed_reconfigure_parameter: desired_linear_vel
+task_runtime_max_disc_speed_rpm: 1500
 navigation_speed_reconfigure_timeout: 1.0
 # RPP defaults are persisted here only as a path; live values are owned by
 # move_base/RegulatedPurePursuitController and can be changed temporarily via

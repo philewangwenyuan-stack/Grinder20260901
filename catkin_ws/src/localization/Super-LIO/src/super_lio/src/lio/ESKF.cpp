@@ -1,4 +1,5 @@
 #include "lio/ESKF.h"
+#include <limits>
 
 using namespace BASIC;
 
@@ -246,6 +247,10 @@ bool ESKF::UpdateObserve(ESKF::ObsFunc obs) {
 
   need_converge_ = false;
   last_update_converged_ = false;
+  last_update_diagnostic_.max_iterations = options_.num_iterations_;
+  last_update_diagnostic_.quit_eps = options_.quit_eps_;
+  last_update_diagnostic_.updates_finite = true;
+  last_update_diagnostic_.iterations.clear();
   for (int iter = 0; iter < options_.num_iterations_; ++iter) {
     if(iter > 2){
       need_converge_ = true;
@@ -290,6 +295,36 @@ bool ESKF::UpdateObserve(ESKF::ObsFunc obs) {
     error_dx.head(6) = HTVr;
 
     dx_ = Qk * error_dx;
+
+    // Capture before Update() and the final dx_.setZero(); diagnostics do not
+    // alter the filter update or its existing convergence decision.
+    IterationDiagnostic diagnostic;
+    diagnostic.update_finite = dx_.allFinite();
+    diagnostic.update_inf = diagnostic.update_finite
+        ? static_cast<double>(dx_.lpNorm<Eigen::Infinity>())
+        : std::numeric_limits<double>::infinity();
+    for (int component = 0; component < STATE_DIM; ++component) {
+      const double value = static_cast<double>(dx_[component]);
+      if (!std::isfinite(value)) {
+        diagnostic.max_component = component;
+        diagnostic.max_component_value = value;
+        break;
+      }
+      if (diagnostic.max_component < 0 ||
+          std::abs(value) > std::abs(diagnostic.max_component_value)) {
+        diagnostic.max_component = component;
+        diagnostic.max_component_value = value;
+      }
+    }
+    for (int block = 0; block < 6; ++block) {
+      const auto update = dx_.segment<3>(block * 3);
+      diagnostic.block_update_inf[block] = update.allFinite()
+          ? static_cast<double>(update.lpNorm<Eigen::Infinity>())
+          : std::numeric_limits<double>::infinity();
+    }
+    last_update_diagnostic_.updates_finite =
+        last_update_diagnostic_.updates_finite && diagnostic.update_finite;
+    last_update_diagnostic_.iterations.push_back(diagnostic);
 
     // update norm state
     Update();
