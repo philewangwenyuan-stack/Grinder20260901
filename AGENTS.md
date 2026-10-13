@@ -54,6 +54,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | Super-LIO 生命周期/定位质量/地图版本 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/super_lio_mode_manager.py`、`map_asset_revision.py` | `launch/super_lio_*_managed.launch`、`srv/*SuperLio*.srv`、`config/super_lio.yaml` |
 | Super-LIO 回环检测、位姿图和协方差 | `catkin_ws/src/super_lio_loop/` | `config/mid360_loop.yaml`、`launch/loop_closure.launch` |
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh`、`catkin_ws/start_grinder_super_lio_base.sh` | Livox UDP 端口预检：`catkin_ws/scripts/check_livox_udp_ports.py`；`catkin_ws/PLATFORM_BUILD_RUN.md` |
+| 板端整套开机自启、配置与 systemd 管理 | `catkin_ws/scripts/grinder-service`、`catkin_ws/install_grinder_service.sh` | 板端 `/etc/grinder/startup.conf`；`start_grinder_super_lio_base.sh` 先启动灯带并监督子进程；离线验证 `scripts/test_grinder_service.py`；根 README 第 12 节 |
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |
 
 `scheduler_node.py` 约 9000 行，不要整文件加载。先用符号搜索定位，例如：

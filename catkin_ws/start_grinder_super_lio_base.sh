@@ -9,8 +9,19 @@ LIVOX_SETUP="${LIVOX_SETUP:-}"
 START_LIVOX="${START_LIVOX:-1}"
 START_CHASSIS="${START_CHASSIS:-1}"
 START_NAV="${START_NAV:-1}"
+START_INDICATOR="${START_INDICATOR:-0}"
+INDICATOR_BACKEND="${INDICATOR_BACKEND:-serial}"
+INDICATOR_USB_SERIAL_NUMBER="${INDICATOR_USB_SERIAL_NUMBER:-}"
+INDICATOR_DEVICE="${INDICATOR_DEVICE:-}"
 NAV_MAP_YAML="${NAV_MAP_YAML:-/home/neardi/work/Grinder/maps/grinder_map.yaml}"
+SUPER_LIO_MAP_ROOT="${SUPER_LIO_MAP_ROOT:-${WORKSPACE}/../maps}"
 SL_LINKA_PORT="${SL_LINKA_PORT:-8002}"
+mkdir -p "${WORKSPACE}/logs"
+exec 9>"${WORKSPACE}/logs/super_lio_base.lock"
+if ! flock -n 9; then
+  echo "[ERROR] Super-LIO stack is already running in this workspace." >&2
+  exit 1
+fi
 LOG_DIR="${WORKSPACE}/logs/super_lio_base_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "${LOG_DIR}"
 
@@ -40,6 +51,7 @@ PIDS=()
 PGIDS=()
 
 cleanup() {
+  trap - EXIT INT TERM
   echo
   echo "[INFO] stopping Super-LIO base services..."
   for pgid in "${PGIDS[@]:-}"; do
@@ -53,18 +65,23 @@ cleanup() {
       kill -9 -- "-${pgid}" 2>/dev/null || true
     fi
   done
+  for pid in "${PIDS[@]}"; do
+    wait "${pid}" 2>/dev/null || true
+  done
 }
 
-trap 'cleanup; exit 130' INT
-trap 'cleanup; exit 143' TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 launch_bg() {
   local name="$1"
-  local command="$2"
+  shift
   local logfile="${LOG_DIR}/${name}.log"
   echo "[INFO] launch ${name}"
-  setsid bash -lc "source /opt/ros/noetic/setup.bash; if [[ -f '${LIVOX_SETUP}' ]]; then source '${LIVOX_SETUP}'; fi; source '${WORKSPACE}/devel/setup.bash'; ${command}" \
-    >"${logfile}" 2>&1 &
+  # The environment is already sourced. Preserve each argument and release
+  # the launcher lock in children; only the supervising shell owns it.
+  setsid "$@" 9>&- >"${logfile}" 2>&1 &
   local pid=$!
   PIDS+=("${pid}")
   PGIDS+=("${pid}")
@@ -94,9 +111,15 @@ fi
 echo "[INFO] logs: ${LOG_DIR}"
 
 if ! pgrep -f "roscore" >/dev/null 2>&1; then
-  launch_bg "roscore" "roscore"
+  launch_bg "roscore" roscore
 fi
 wait_for_master
+
+if [[ "${START_INDICATOR}" == "1" ]]; then
+  launch_bg "indicator" roslaunch grinder_scheduler status_indicator.launch \
+    "backend:=${INDICATOR_BACKEND}" "usb_serial_number:=${INDICATOR_USB_SERIAL_NUMBER}" \
+    "device:=${INDICATOR_DEVICE}"
+fi
 
 if [[ "${START_LIVOX}" == "1" ]]; then
   if ! detect_livox_setup; then
@@ -113,22 +136,27 @@ if [[ "${START_LIVOX}" == "1" ]]; then
   fi
   echo "[INFO] Livox driver package: ${local_livox_package}"
   python3 "${SCRIPT_DIR}/scripts/check_livox_udp_ports.py" "${local_livox_package}" "${local_livox_launch}"
-  launch_bg "livox" "roslaunch livox_ros_driver2 msg_MID360s.launch"
+  launch_bg "livox" roslaunch livox_ros_driver2 msg_MID360s.launch
 fi
 
 if [[ "${START_CHASSIS}" == "1" ]]; then
-  launch_bg "chassis" "roslaunch grinder_chassis_driver chassis_driver.launch"
+  launch_bg "chassis" roslaunch grinder_chassis_driver chassis_driver.launch
 fi
 
 if [[ "${START_NAV}" == "1" ]]; then
-  launch_bg "move_base_rpp" "roslaunch teb_local_planner_tutorials robot_diff_drive.launch local_planner:=rpp"
+  launch_bg "move_base_rpp" roslaunch teb_local_planner_tutorials robot_diff_drive.launch local_planner:=rpp
 fi
 
-launch_bg "scheduler" "roslaunch grinder_scheduler scheduler.launch odom_topic:=/lio/odom map_topic:=/map navigation_map_yaml_path:=${NAV_MAP_YAML} super_lio_map_root:=/home/neardi/work/Grinder/maps"
+launch_bg "scheduler" roslaunch grinder_scheduler scheduler.launch odom_topic:=/lio/odom map_topic:=/map \
+  "navigation_map_yaml_path:=${NAV_MAP_YAML}" "super_lio_map_root:=${SUPER_LIO_MAP_ROOT}"
 
 echo
 echo "[INFO] Super-LIO base services started."
 echo "[INFO] Started: Livox (optional), chassis (optional), RPP move_base (optional), scheduler/SL-LinkA/RTSP and Super-LIO mode manager."
 echo "[INFO] Mapping, relocation and map_server are intentionally not started."
 echo "[INFO] Press Ctrl+C to stop processes started by this script."
-wait
+# A required process exiting (even successfully) means the stack is incomplete.
+# EXIT cleanup tears down the other processes and systemd reports failure.
+wait -n || true
+echo "[ERROR] A supervised process exited; stopping the stack." >&2
+exit 1

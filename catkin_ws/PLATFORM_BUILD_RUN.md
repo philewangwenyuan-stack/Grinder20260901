@@ -6,6 +6,12 @@
 烧录、模拟验证及启用参数见 [`firmware/status_strip/README.md`](../firmware/status_strip/README.md)。
 新增灯带入口后需执行 `PROFILE=runtime ./build_grinder_platform.sh`。
 
+MID-360 + Super-LIO 主系统与灯带支持统一 systemd 开机自启：在任务停止且已有启动脚本退出后，
+执行 `sudo bash ./install_grinder_service.sh <运行用户>`，编辑 `/etc/grinder/startup.conf`，
+再执行 `sudo grinder-service apply`。首次安装默认关闭，重装保留配置。
+`enable` / `disable` 只切换下次开机；`start` / `stop` / `restart` 操作当前节点。
+完整配置、安装、日志与验收步骤见 [根 README 的板端开机自启说明](../README.md#12-板端开机自启主系统与灯带统一开关)。
+
 新克隆已包含 Super-LIO 源码和不含凭据的 `grinder_scheduler/config/scheduler.yaml`。
 Super-LIO 无子模块拉取步骤，上游版本见
 `src/localization/Super-LIO/UPSTREAM.md`。

@@ -1,0 +1,4 @@
+Read startup chain and deployment docs. Implementing standalone Python 3.8 manager and shell installer; tests will use temporary paths and mocked systemctl.
+Implemented manager, installer, launcher lock/argument arrays/EXIT cleanup/first-child-exit supervision, and deployment docs.
+Eight initial tests: seven passed; systemd-analyze unavailable on WSL due to missing cgroup controllers. Split static unit checks from environment-dependent systemd verification and added an explicit skip for that condition.
+Final validation: three mock launcher cases passed; eight service/config/command cases passed; one systemd verification case skipped for absent WSL cgroups after static unit checks. Bash syntax, Python 3.8 execution and git diff --check passed. No target service installed, real ROS launch or hardware tests performed. README/PLATFORM/AGENTS/firmware documentation updated.

@@ -98,6 +98,8 @@ roslaunch grinder_scheduler status_indicator.launch backend:=serial device:=/dev
 也可以在 `scheduler.launch` 传入 `enable_status_indicator:=true`
 和 `indicator_backend:=serial`、`indicator_usb_serial_number:=实际序列号`。
 默认不开启；单独 launch 默认 mock，不接硬件。
+MID-360 + Super-LIO 整套开机自启通过 `grinder.service` 统一管理；安装和配置步骤见
+[根 README](../../README.md#12-板端开机自启主系统与灯带统一开关)。服务已经启动灯带时，不要另开独立 launch。
 配置位于 `grinder_scheduler/config/status_indicator.yaml`，控制器数量固定 3，
 实际灯珠数量变更需修改固件并重新烧录。
 

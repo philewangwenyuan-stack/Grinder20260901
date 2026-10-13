@@ -1,0 +1,1 @@
+Existing Super-LIO script sources ROS and starts roscore as needed. No systemd integration exists. String-built child commands break paths containing spaces; EXIT does not clean children and wait does not detect the first failure.

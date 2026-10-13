@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""Install/manage the board service. Configuration is data, never shell code."""
+import argparse
+import contextlib
+import fcntl
+import os
+from pathlib import Path
+import pwd
+import shlex
+import subprocess
+import sys
+import tempfile
+
+CONFIG = Path('/etc/grinder/startup.conf')
+UNIT = Path('/etc/systemd/system/grinder.service')
+PROGRAM = Path('/usr/local/lib/grinder/grinder-service')
+COMMAND = Path('/usr/local/bin/grinder-service')
+KEYS = ('AUTOSTART', 'RUN_USER', 'WORKSPACE', 'LIVOX_SETUP', 'NAV_MAP_YAML',
+        'INDICATOR_USB_SERIAL_NUMBER', 'INDICATOR_DEVICE')
+
+
+def read_config():
+    values = {}
+    for number, line in enumerate(CONFIG.read_text().splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        key, separator, value = line.partition('=')
+        key = key.strip()
+        if not separator or key not in KEYS or key in values:
+            raise ValueError('Invalid/duplicate config key on line {}'.format(number))
+        tokens = shlex.split(value, comments=True)
+        if len(tokens) > 1:
+            raise ValueError('Quote paths containing spaces on line {}'.format(number))
+        values[key] = tokens[0] if tokens else ''
+    if set(values) != set(KEYS):
+        raise ValueError('Config must contain: ' + ', '.join(KEYS))
+    if values['AUTOSTART'] not in ('0', '1'):
+        raise ValueError('AUTOSTART must be 0 or 1')
+    account = pwd.getpwnam(values['RUN_USER'])
+    if account.pw_uid == 0:
+        raise ValueError('RUN_USER must be an ordinary user')
+    for key in KEYS:
+        if any(char in values[key] for char in ('\n', '\r', '\x00')):
+            raise ValueError('Invalid control character: ' + key)
+    for key in ('WORKSPACE', 'NAV_MAP_YAML'):
+        if not Path(values[key]).is_absolute():
+            raise ValueError(key + ' must be an absolute path')
+    if values['LIVOX_SETUP'] and not Path(values['LIVOX_SETUP']).is_absolute():
+        raise ValueError('LIVOX_SETUP must be absolute or empty')
+    return values, account
+
+
+def check_runtime(values):
+    workspace = Path(values['WORKSPACE'])
+    for path in (Path('/opt/ros/noetic/setup.bash'), workspace / 'devel/setup.bash',
+                 workspace / 'start_grinder_super_lio_base.sh', Path(values['NAV_MAP_YAML'])):
+        if not path.is_file():
+            raise ValueError('Required file missing: ' + str(path))
+    if values['LIVOX_SETUP'] and not Path(values['LIVOX_SETUP']).is_file():
+        raise ValueError('LIVOX_SETUP file missing')
+    serial, device = values['INDICATOR_USB_SERIAL_NUMBER'], values['INDICATOR_DEVICE']
+    if bool(serial) == bool(device):
+        raise ValueError('Set exactly one indicator USB serial number or stable device path')
+    if device and not device.startswith('/dev/serial/by-id/'):
+        raise ValueError('INDICATOR_DEVICE must be a /dev/serial/by-id/ path')
+
+
+def atomic_write(path, content, mode=0o644):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(dir=str(path.parent), prefix='.' + path.name)
+    try:
+        with os.fdopen(descriptor, 'w') as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, mode)
+        os.replace(temporary, str(path))
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def save_config(values):
+    atomic_write(CONFIG, '# Grinder board startup; edit then sudo grinder-service apply.\n' +
+                 ''.join('{}={}\n'.format(key, shlex.quote(values[key])) for key in KEYS))
+
+
+def unit_quote(value):
+    return '"' + value.replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%') + '"'
+
+
+def unit_text(values, account):
+    return '''[Unit]
+Description=Grinder MID-360 Super-LIO stack and status strip
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={user}
+SupplementaryGroups=dialout
+Environment={home}
+ExecStart={program} run
+Restart=no
+KillMode=control-group
+TimeoutStopSec=20
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+'''.format(user=account.pw_name, home=unit_quote('HOME=' + account.pw_dir),
+           program=unit_quote(str(PROGRAM)))
+
+
+def systemctl(*arguments):
+    subprocess.run(['systemctl'] + list(arguments), check=True)
+
+
+def apply(values, account):
+    if values['AUTOSTART'] == '1':
+        check_runtime(values)
+    atomic_write(UNIT, unit_text(values, account))
+    systemctl('daemon-reload')
+    systemctl('enable' if values['AUTOSTART'] == '1' else 'disable', 'grinder.service')
+
+
+@contextlib.contextmanager
+def management_lock():
+    with open('/run/lock/grinder-service.lock', 'a') as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX)
+        yield
+
+
+def install(workspace, user):
+    if not CONFIG.exists():
+        workspace = Path(workspace).resolve()
+        values = dict.fromkeys(KEYS, '')
+        values.update(AUTOSTART='0', RUN_USER=user, WORKSPACE=str(workspace),
+                      NAV_MAP_YAML=str(workspace.parent / 'maps/grinder_map.yaml'))
+        save_config(values)
+    values, account = read_config()
+    atomic_write(PROGRAM, Path(__file__).read_text(), 0o755)
+    atomic_write(COMMAND, '#!/bin/sh\nexec /usr/local/lib/grinder/grinder-service "$@"\n', 0o755)
+    apply(values, account)
+    print('Installed; existing config preserved. Edit {}, then apply. No nodes started.'.format(CONFIG))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=('install', 'enable', 'disable', 'apply', 'start',
+                                          'stop', 'restart', 'status', 'logs', 'run'))
+    parser.add_argument('--workspace')
+    parser.add_argument('--user')
+    args = parser.parse_args()
+    if args.action in ('status', 'logs'):
+        command = (['systemctl', 'status', 'grinder.service', '--no-pager'] if args.action == 'status'
+                   else ['journalctl', '-u', 'grinder.service', '-n', '100', '-f'])
+        return subprocess.call(command)
+    if args.action == 'run':
+        values, account = read_config()
+        if os.getuid() != account.pw_uid:
+            raise ValueError('Service user differs from config; run apply after changing RUN_USER')
+        check_runtime(values)
+        environment = os.environ.copy()
+        environment.update(values)
+        environment.update(HOME=account.pw_dir, START_INDICATOR='1', INDICATOR_BACKEND='serial',
+                           START_LIVOX='1', START_CHASSIS='1', START_NAV='1')
+        os.chdir(values['WORKSPACE'])
+        os.execvpe('bash', ['bash', str(Path(values['WORKSPACE']) /
+                                       'start_grinder_super_lio_base.sh')], environment)
+    if os.geteuid() != 0:
+        raise ValueError('Use sudo for service management')
+    with management_lock():
+        if args.action == 'install':
+            if not args.workspace or not args.user:
+                raise ValueError('install requires --workspace and --user')
+            install(args.workspace, args.user)
+            return 0
+        if args.action == 'stop':
+            systemctl('stop', 'grinder.service')
+            return 0
+        values, account = read_config()
+        if args.action in ('enable', 'disable'):
+            values['AUTOSTART'] = '1' if args.action == 'enable' else '0'
+            if args.action == 'enable':
+                check_runtime(values)
+            save_config(values)
+            apply(values, account)
+        elif args.action == 'apply':
+            apply(values, account)
+        else:
+            check_runtime(values)
+            # Apply unit changes without changing the configured boot policy.
+            apply(values, account)
+            systemctl(args.action, 'grinder.service')
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
+        print('grinder-service: {}'.format(error), file=sys.stderr)
+        sys.exit(1)

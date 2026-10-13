@@ -547,7 +547,8 @@ roslaunch grinder_scheduler status_indicator.launch \
 默认不启用真实硬件；若直接使用 `scheduler.launch`，可传入
 `enable_status_indicator:=true indicator_backend:=serial`
 及 `indicator_usb_serial_number:=实际序列号`。
-使用上文一键脚本时，先独立启动灯带节点；验收后可将该独立 launch 加入现有自动启动流程。
+MID-360 + Super-LIO 的整套开机启动使用下文统一服务；手动运行启动脚本默认不启动灯带，
+需要时设置 `START_INDICATOR=1` 并提供灯带 USB 身份。不要同时运行独立灯带 launch 和统一服务。
 
 状态指示灯对照表（3 颗灯珠同步显示，默认亮度 20%）：
 
@@ -886,6 +887,75 @@ python3 third_party/sl_linka/sdk/python/tools/sl_linka_pyqt_debugger.py
 
 - Host：调度程序IP（本机可 `127.0.0.1`）
 - Port：`8002`
+
+### 12. 板端开机自启：主系统与灯带统一开关
+
+MID-360 + Super-LIO 链路使用 `grinder.service` 管理 ROS master、Livox、底盘、RPP、
+调度和灯带。开机只启动节点，任务仍需明确下发启动指令。
+服务以安装时指定的普通用户运行，并使用该用户的 HOME 保存急停提示记录。
+
+完成构建、灯带固件烧录和手动联调后，先停止任务，再退出已运行的启动脚本及独立灯带节点。
+在板端安装（将用户名替换为实际运行用户，工作区从脚本位置自动确定）：
+
+~~~bash
+cd "$GRINDER_WS"
+sudo bash ./install_grinder_service.sh neardi
+sudo nano /etc/grinder/startup.conf
+~~~
+
+首次安装默认 `AUTOSTART=0`，不会启动节点。重新安装保留已有配置和自启设置。
+配置为 `KEY=VALUE`，包含空格的值需用引号包裹；不展开 `$HOME`、`~` 或 shell 命令。
+示例中的路径、运行用户、USB 序列号必须按板端实际情况填写：
+
+~~~ini
+AUTOSTART=0
+RUN_USER=neardi
+WORKSPACE=/home/neardi/work/Grinder/catkin_ws
+LIVOX_SETUP=/home/neardi/Livox/ws_livox/devel/setup.bash
+NAV_MAP_YAML=/home/neardi/work/Grinder/maps/grinder_map.yaml
+INDICATOR_USB_SERIAL_NUMBER=实际USB序列号
+INDICATOR_DEVICE=''
+~~~
+
+`LIVOX_SETUP` 可留空，由启动脚本从项目环境和常见 Livox 工作区查找。
+灯带 USB 序列号与 `INDICATOR_DEVICE=/dev/serial/by-id/实际设备` 二选一。
+服务默认使用真实串口后端，自动获得 `dialout` 补充组权限；USB 未插入时灯带节点持续重连。
+导航地图必须存在，工作区必须已构建。
+
+~~~bash
+# 修改配置后应用；不会启动、停止或重启当前节点
+sudo grinder-service apply
+
+# 保存 AUTOSTART 并切换下次开机行为；不改变当前运行状态
+sudo grinder-service enable
+sudo grinder-service disable
+
+# 立即操作整套节点，不改变自启配置
+sudo grinder-service start
+sudo grinder-service stop
+sudo grinder-service restart
+
+grinder-service status
+sudo grinder-service logs
+~~~
+
+维护时先通过现有任务接口停止任务，再执行 `sudo grinder-service stop`。
+若下次开机也不希望启动，再执行 `sudo grinder-service disable`。
+更改运行用户、路径或 USB 身份后先 `apply`，再在任务停止后 `restart`。
+服务启动失败或受监督进程退出时清理整套子进程，默认不自动重启整套服务。
+灯带 launch 保留自身 `respawn`；同一工作区的重复启动由启动脚本锁拒绝。
+服务启动成功只代表进程已启动，ROS 状态是否完整应查看灯带与 `/indicator/state`。
+
+管理日志见 journal；各节点详细日志位于 `$GRINDER_WS/logs/super_lio_base_*`。
+自启关闭且从未通信时，ESP32 通电显示启动黄灯；已经通信后停止节点且 USB 保持供电，
+固件通信超时显示红灯，急停提示仍优先。USB 断电则熄灭。
+板端验收包括开启／关闭后分别重启、完整状态变绿、USB 断连重连，以及停止后无残留节点。
+
+离线验证（Linux，不连接硬件）：
+
+~~~bash
+python3 catkin_ws/scripts/test_grinder_service.py -v
+~~~
 
 ## 协议库生成
 
