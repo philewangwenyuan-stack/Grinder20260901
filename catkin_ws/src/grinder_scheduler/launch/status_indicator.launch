@@ -1,0 +1,13 @@
+<launch>
+  <arg name="config" default="$(find grinder_scheduler)/config/status_indicator.yaml" />
+  <arg name="backend" default="" />
+  <arg name="usb_serial_number" default="" />
+  <arg name="device" default="" />
+  <node pkg="grinder_scheduler" type="status_indicator_node.py" name="grinder_status_indicator"
+        output="screen" respawn="true" respawn_delay="2">
+    <rosparam command="load" file="$(arg config)" />
+    <param if="$(eval bool(arg('backend')))" name="backend" value="$(arg backend)" />
+    <param if="$(eval bool(arg('usb_serial_number')))" name="usb_serial_number" value="$(arg usb_serial_number)" />
+    <param if="$(eval bool(arg('device')))" name="device" value="$(arg device)" />
+  </node>
+</launch>

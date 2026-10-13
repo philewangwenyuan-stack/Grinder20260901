@@ -44,6 +44,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | RTSP / FFmpeg 视频链路 | `local_rtsp_server.py`、`media_streamer.py`（均在 scheduler 模块目录） | `runtime/mediamtx`、`temp/mediamtx.generated.yml` |
 | 平台文件上传、鉴权和 MQTT 上报 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/platform_integration.py` | `mqtt_interface.md`、`scheduler.yaml` |
 | 底盘 ROS 节点、`/cmd_vel`、任务使能 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py` | `config/chassis_driver.yaml`、`launch/chassis_driver.launch` |
+| RK3588 控制盒状态灯带、USB 协议与急停提示 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/status_indicator.py`、`status_indicator_node.py` | `launch/status_indicator.launch`、`config/status_indicator.yaml`；scheduler `_pause_execution(reason)` 区分人为/碰撞暂停；底盘 `indicator_emergency.py`；ESP32 固件、接线与烧录见 `firmware/status_strip/README.md` |
 | Modbus 帧、串口、CRC | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py` | `test/test_modbus_transport.py` |
 | 寄存器地址、编解码、底盘命令模型 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py` | `test/test_register_map.py`、`doc/底盘485指令.png` |
 | ROS 消息/服务 | 两个自研包各自的 `msg/`、`srv/` | 对应 `CMakeLists.txt`、`package.xml` |

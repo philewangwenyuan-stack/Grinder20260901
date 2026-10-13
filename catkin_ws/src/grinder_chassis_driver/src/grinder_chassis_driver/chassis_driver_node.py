@@ -12,6 +12,7 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, Float32, Int16, UInt16
 
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
+from grinder_chassis_driver.indicator_emergency import EmergencyIndicatorSource
 from grinder_chassis_driver.srv import (
     ClearFault,
     ClearFaultResponse,
@@ -194,6 +195,9 @@ class ChassisDriverNode:
         self.wheel_odom_pub = rospy.Publisher(self.wheel_odom_topic, Odometry, queue_size=10)
         self.status_pub = rospy.Publisher("/chassis/status", ChassisStatus, queue_size=10)
         self.diagnostics_pub = rospy.Publisher("/diagnostics", DiagnosticArray, queue_size=10)
+        self._indicator_emergency = EmergencyIndicatorSource(
+            "/chassis", "~/.ros/grinder_indicator/chassis_emergency.json"
+        )
 
         rospy.Subscriber("/chassis/wheel_speed_cmd", WheelSpeedCommand, self._handle_wheel_speed_cmd, queue_size=10)
         if self.cmd_vel_enabled:
@@ -495,6 +499,7 @@ class ChassisDriverNode:
     def _handle_emergency_stop_cmd(self, msg):
         if not bool(msg.data):
             return
+        self._indicator_emergency.observe()
         rospy.logwarn("Chassis emergency stop command received. Issuing safe stop immediately.")
         with self._lock:
             self.task_enable = False

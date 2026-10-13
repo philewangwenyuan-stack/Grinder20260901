@@ -2,6 +2,9 @@
 # scheduler.local.yaml (ignored); see scheduler.local.example.yaml.
 # External services are disabled until explicitly enabled by a local override.
 
+# Display-only emergency record; never resets or enables motion.
+indicator_emergency_file: "~/.ros/grinder_indicator/scheduler_emergency.json"
+
 # Aurora 雷达主机 IP 地址
 aurora_ip_address: 192.168.0.114
 

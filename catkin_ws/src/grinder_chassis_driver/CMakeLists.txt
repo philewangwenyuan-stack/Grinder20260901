@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   rospy
   std_msgs
+  std_srvs
 )
 
 catkin_python_setup()
@@ -30,7 +31,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS diagnostic_msgs message_runtime nav_msgs rospy std_msgs
+  CATKIN_DEPENDS diagnostic_msgs message_runtime nav_msgs rospy std_msgs std_srvs
 )
 
 catkin_install_python(PROGRAMS

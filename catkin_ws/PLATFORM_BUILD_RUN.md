@@ -2,6 +2,10 @@
 
 本工程支持在 `x86_64` 和 `aarch64(RK3588)` 上按平台自动编译与启动。
 
+控制盒 USB 状态灯带默认关闭。ESP32-S3-Zero + 10 cm WS2812B 的接线、
+烧录、模拟验证及启用参数见 [`firmware/status_strip/README.md`](../firmware/status_strip/README.md)。
+新增灯带入口后需执行 `PROFILE=runtime ./build_grinder_platform.sh`。
+
 新克隆已包含 Super-LIO 源码和不含凭据的 `grinder_scheduler/config/scheduler.yaml`。
 Super-LIO 无子模块拉取步骤，上游版本见
 `src/localization/Super-LIO/UPSTREAM.md`。

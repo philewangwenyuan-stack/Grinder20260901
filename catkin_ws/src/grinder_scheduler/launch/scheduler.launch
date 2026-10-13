@@ -16,6 +16,16 @@
   <arg name="metrics_export_dir" default="/tmp/grinder_metrics" />
   <arg name="metrics_export_interval_sec" default="10.0" />
   <arg name="sl_linka_rx_diagnostic_logging" default="false" />
+  <arg name="enable_status_indicator" default="false" />
+  <arg name="indicator_backend" default="mock" />
+  <arg name="indicator_usb_serial_number" default="" />
+  <arg name="indicator_device" default="" />
+
+  <include if="$(arg enable_status_indicator)" file="$(find grinder_scheduler)/launch/status_indicator.launch">
+    <arg name="backend" value="$(arg indicator_backend)" />
+    <arg name="usb_serial_number" value="$(arg indicator_usb_serial_number)" />
+    <arg name="device" value="$(arg indicator_device)" />
+  </include>
 
   <!-- 可选系统采样节点：1 Hz 内存采样，后台每 10 秒写一次有界 JSON 快照。 -->
   <node if="$(arg enable_metrics_node)"

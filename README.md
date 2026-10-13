@@ -496,6 +496,82 @@ rosparam get /super_lio_mode_manager/super_lio_loop_closure
 rosnode list | grep -E 'super_lio_loop|super_lio_node|relocation_node|map_server'
 ~~~
 
+### 7.1 控制盒状态灯带：板端安装与启用（可选）
+
+硬件采用微雪 ESP32-S3-Zero + 10 cm、3 颗灯珠的 5V WS2812B 灯带，
+通过 RK3588 的 USB 同时通信和供电。接线、ESP32 固件编译与烧录详见
+[状态灯带部署说明](firmware/status_strip/README.md)。ESP32 固件可在开发电脑上烧录，
+工控机只需要安装 ROS 节点依赖，不需要安装 PlatformIO。
+
+同步本次源码后，先停止运行中的任务，再在板端安装依赖并重新构建。
+虽然灯带节点主要是 Python，新增的 Catkin 安装入口和依赖仍需更新；
+本机应已具备上文的完整项目依赖，包括 slamware_ros_sdk 和 super_lio：
+
+~~~bash
+sudo apt install -y python3-serial
+cd "$GRINDER_WS"
+source /opt/ros/noetic/setup.bash
+PROFILE=runtime ./build_grinder_platform.sh
+source "$GRINDER_WS/devel/setup.bash"
+~~~
+
+构建成功后，重启底盘和调度节点，使新增的状态话题生效。
+先在独立终端运行模拟后端，不会打开 USB 或发送运动控制命令：
+
+~~~bash
+source /opt/ros/noetic/setup.bash
+source "$GRINDER_WS/devel/setup.bash"
+roslaunch grinder_scheduler status_indicator.launch backend:=mock
+~~~
+
+在另一个同样加载工作区环境的终端查看 `rostopic echo /indicator/state`。
+接入已烧录的 ESP32 后，查询 USB 身份；运行用户需有串口访问权限：
+
+~~~bash
+python3 -m serial.tools.list_ports -v
+# 若当前用户没有 dialout 权限，执行后重新登录：
+sudo usermod -aG dialout "$USER"
+~~~
+
+停止模拟灯带节点，再填写实际 USB 序列号启动真实后端，勿同时运行两个灯带节点：
+
+~~~bash
+roslaunch grinder_scheduler status_indicator.launch \
+  backend:=serial usb_serial_number:=实际序列号
+# 也可用稳定设备路径替代序列号：
+# roslaunch grinder_scheduler status_indicator.launch \
+#   backend:=serial device:=/dev/serial/by-id/实际设备
+~~~
+
+灯带配置位于 `catkin_ws/src/grinder_scheduler/config/status_indicator.yaml`。
+默认不启用真实硬件；若直接使用 `scheduler.launch`，可传入
+`enable_status_indicator:=true indicator_backend:=serial`
+及 `indicator_usb_serial_number:=实际序列号`。
+使用上文一键脚本时，先独立启动灯带节点；验收后可将该独立 launch 加入现有自动启动流程。
+
+状态指示灯对照表（3 颗灯珠同步显示，默认亮度 20%）：
+
+| 运行状态 | 灯带颜色与效果 | 含义 |
+| --- | --- | --- |
+| ESP32 已供电，ROS 必需状态尚不完整 | 黄色常亮 | 启动或等待节点就绪 |
+| 必需节点就绪、待机、准备、正常停止 | 绿色常亮 | 软件状态正常 |
+| 路径规划 | 绿色常亮 | 不设置独立规划灯效 |
+| 自动任务执行 | 蓝色呼吸，周期 2 秒 | 自动任务运行中 |
+| 自动任务人为暂停 | 蓝色慢闪，1 Hz | 等待明确恢复或停止任务 |
+| RPP 碰撞风险触发的暂停 | 黄色慢闪，1 Hz | 检测到前方碰撞风险，任务已进入暂停状态；不表示已经撞击 |
+| 手动控制活动或非自动任务磨盘使能 | 青色常亮 | 手动控制活动或磨盘使能，不表示实测转速 |
+| 自动任务完成 | 绿色闪三次后常亮 | 当前任务完成 |
+| 调度错误、底盘断连、就绪后关键状态超时 | 红色慢闪，1 Hz | 需要检查状态或通信 |
+| 急停提示未清除 | 红色快闪，4 Hz | 急停提示已锁存 |
+| 控制器与灯带失去供电 | 熄灭 | 断电时无法显示故障颜色 |
+
+急停和故障提示优先于运行状态。RPP 障碍信号解除、重复点击暂停，或恢复请求被拒绝时，
+黄色慢闪仍保持；任务成功恢复、新任务成功启动或明确停止后才清除此暂停原因。
+区分人为与 RPP 暂停需要部署新版调度代码并重新烧录 ESP32 固件（新增状态码 8）。
+USB 断开导致控制器掉电时灯会熄灭；控制器仍有供电但 3 秒未收到有效帧时显示异常。
+`/indicator/state` 中 `acknowledged=true` 只表示控制器已响应，不证明灯珠发光或机器安全停车。
+急停灯光提示复位、诊断和实机验收步骤见部署说明。
+
 ### 8. 常见故障
 
 | 现象 | 原因 | 处理 |

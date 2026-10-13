@@ -32,7 +32,8 @@ from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSp
 from grinder_chassis_driver.srv import EnableChassis
 from nav_msgs.msg import OccupancyGrid, Odometry, Path
 from nav_msgs.srv import LoadMap
-from std_msgs.msg import Bool, Int16, UInt16
+from std_msgs.msg import Bool, Int16, UInt16, String
+from grinder_chassis_driver.indicator_emergency import EmergencyIndicatorSource
 from std_srvs.srv import Empty, Trigger, TriggerResponse
 from grinder_scheduler.srv import (
     GetSuperLioStatus,
@@ -205,6 +206,7 @@ class SchedulerNode:
         self._collision_imminent_lock = threading.Lock()
         self._collision_imminent_active = False
         self._collision_pause_latched = False
+        self._indicator_pause_reason = ""
         self.task_config = TaskConfigModel()
         self._load_robot_config_from_params()
         self._robot_footprint = self._normalize_footprint(
@@ -839,6 +841,10 @@ class SchedulerNode:
         self.disc_lift_pub = rospy.Publisher("/chassis/disc_lift_cmd", UInt16, queue_size=10)
         self.light_pub = rospy.Publisher("/chassis/light_cmd", Bool, queue_size=10)
         self.chassis_emergency_stop_pub = rospy.Publisher("/chassis/emergency_stop", Bool, queue_size=1)
+        self.control_activity_pub = rospy.Publisher("/scheduler/control_activity", String, queue_size=1)
+        self._indicator_emergency = EmergencyIndicatorSource(
+            "/scheduler", "~/.ros/grinder_indicator/scheduler_emergency.json"
+        )
 
         rospy.Subscriber("/chassis/status", ChassisStatus, self._chassis_status_callback, queue_size=10)
         rospy.Subscriber("/chassis/wheel_speed_state", WheelSpeedState, self._wheel_speed_state_callback, queue_size=10)
@@ -4024,7 +4030,7 @@ class SchedulerNode:
         if not should_pause:
             return
 
-        success, message = self._pause_execution()
+        success, message = self._pause_execution(reason="collision")
         if success:
             rospy.logerr(
                 "Task automatically paused by navigation collision imminent: "
@@ -6157,6 +6163,7 @@ class SchedulerNode:
         mark("send_active_goal")
         self.state = SchedulerState.RUNNING
         self._begin_task_execution_record()
+        self._indicator_pause_reason = ""
         mark("set_running")
         rospy.loginfo(
             "Task execution started: regions=%s active=%s mode=%s",
@@ -6233,13 +6240,21 @@ class SchedulerNode:
         )
         return success
 
-    def _pause_execution(self):
+    def _pause_execution(self, reason="manual"):
+        # Keep the cause of a collision pause even after RPP reports clear or
+        # the operator sends another PAUSE. Only a successful resume/new start
+        # or stop ends this pause indication. This does not change stop logic.
+        collision_pause = reason == "collision" or (
+            self.state == SchedulerState.PAUSED
+            and getattr(self, "_indicator_pause_reason", "") == "collision"
+        )
         self._exec_active = False
         self._disc_auto_cover_desired = False
         self._reset_disc_motion_guard()
         self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="task_pause")
         self._safe_stop_motion()
         self.disc_enable_pub.publish(Bool(data=False))
+        self._indicator_pause_reason = "collision" if collision_pause else "manual"
         self.state = SchedulerState.PAUSED
         return True, "Task paused"
 
@@ -6271,6 +6286,7 @@ class SchedulerNode:
         self._publish_active_segment_plan(reason="task_resume")
         self._send_active_segment_goal(force=True, reason="task_resume")
         self.state = SchedulerState.RUNNING
+        self._indicator_pause_reason = ""
         return True, "Task resumed"
 
     def _stop_execution(self):
@@ -6284,6 +6300,7 @@ class SchedulerNode:
         self.light_pub.publish(Bool(data=False))
         self._set_chassis_enabled(False)
         self.state = SchedulerState.STOPPED
+        self._indicator_pause_reason = ""
         if was_active:
             try:
                 self._capture_task_continuation()
@@ -7001,6 +7018,14 @@ class SchedulerNode:
         message.pose.theta = math.radians(pose["heading_deg"])
         message.path_point_count = len(self.current_path.points) if self.current_path else 0
         self.status_pub.publish(message)
+        # work_mode=2 is also used during automatic navigation; publish the
+        # actual command source instead of inferring manual mode from it.
+        manual_age = time.monotonic() - self._manual_last_command_monotonic
+        self.control_activity_pub.publish(String(data=json.dumps({
+            "automatic_active": bool(self._exec_active and self.state == SchedulerState.RUNNING),
+            "manual_active": bool(self._manual_command_active and 0 <= manual_age <= self._manual_command_timeout_sec),
+            "pause_reason": self._indicator_pause_reason if self.state == SchedulerState.PAUSED else "",
+        })))
 
     def _mqtt_status_snapshot(self):
         pose = self.aurora_bridge.get_pose()
@@ -8344,6 +8369,7 @@ class SchedulerNode:
         if not bool(enabled):
             rospy.loginfo("EmergencyStopControl received with enabled=false, ignored.")
             return
+        self._indicator_emergency.observe()
         # Emergency stop sequence:
         # 1) disable task cmd_vel forwarding before any zero-speed command
         # 2) trigger chassis-driver-level safe stop, bypassing wheel_speed/cmd_vel arbitration
@@ -8360,6 +8386,7 @@ class SchedulerNode:
         self.disc_enable_pub.publish(Bool(data=False))
         self.light_pub.publish(Bool(data=False))
         self.state = SchedulerState.STOPPED
+        self._indicator_pause_reason = ""
         self._task_stop_reason = "emergency_stop"
         rospy.logwarn("Emergency stop applied: task_enable=false, chassis_safe_stop=true, wheels=0, disc=off.")
 

@@ -46,6 +46,7 @@ catkin_install_python(PROGRAMS
   scripts/scheduler_node.py
   scripts/super_lio_mode_manager.py
   scripts/grinder_metrics_node.py
+  scripts/status_indicator_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
