@@ -28,7 +28,7 @@ class ServiceTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.account = pwd.getpwnam('nobody')
         self.values = dict.fromkeys(manager.KEYS, '')
-        self.values.update(AUTOSTART='0', RUN_USER=self.account.pw_name,
+        self.values.update(AUTOSTART='0', START_INDICATOR='1', RUN_USER=self.account.pw_name,
                            WORKSPACE=str(self.root / 'workspace with spaces'),
                            NAV_MAP_YAML=str(self.root / 'map with spaces.yaml'))
 
@@ -44,6 +44,23 @@ class ServiceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             manager.read_config()
 
+    def test_legacy_config_defaults_to_indicator_enabled(self):
+        manager.save_config(self.values)
+        manager.CONFIG.write_text(manager.CONFIG.read_text().replace('START_INDICATOR=1\n', ''))
+        self.assertEqual(manager.read_config()[0]['START_INDICATOR'], '1')
+
+    def test_without_esp32_usb_is_not_required(self):
+        self.values['START_INDICATOR'] = '0'
+        manager.save_config(self.values)
+        with mock.patch.object(Path, 'is_file', return_value=True):
+            manager.check_runtime(manager.read_config()[0])
+
+    def test_invalid_indicator_switch(self):
+        self.values['START_INDICATOR'] = 'false'
+        manager.save_config(self.values)
+        with self.assertRaises(ValueError):
+            manager.read_config()
+
     def test_apply_enable_disable_never_starts(self):
         with mock.patch.object(manager, 'systemctl') as control, \
                 mock.patch.object(manager, 'check_runtime'):
@@ -55,6 +72,9 @@ class ServiceTests(unittest.TestCase):
         unit = manager.UNIT.read_text()
         self.assertIn('Restart=no', unit)
         self.assertIn('KillMode=control-group', unit)
+        self.assertIn('After=network-online.target pm2-' + self.account.pw_name + '.service', unit)
+        self.assertIn('Wants=network-online.target\n', unit)
+        self.assertNotIn('Requires=', unit)
         self.assertIn('HOME=' + self.account.pw_dir, unit)
 
     def test_reinstall_preserves_config(self):
@@ -111,6 +131,7 @@ class ServiceTests(unittest.TestCase):
             control.assert_called_once_with('stop', 'grinder.service')
 
     def test_run_uses_account_home_and_full_stack_environment(self):
+        self.values['START_INDICATOR'] = '0'
         manager.save_config(self.values)
         with mock.patch.object(manager.os, 'getuid', return_value=self.account.pw_uid), \
                 mock.patch.object(manager, 'check_runtime'), \
@@ -122,7 +143,7 @@ class ServiceTests(unittest.TestCase):
             environment = execute.call_args.args[2]
             self.assertEqual(environment['HOME'], self.account.pw_dir)
             self.assertEqual(environment['INDICATOR_BACKEND'], 'serial')
-            self.assertEqual(environment['START_INDICATOR'], '1')
+            self.assertEqual(environment['START_INDICATOR'], '0')
             self.assertEqual(environment['START_LIVOX'], '1')
 
 
@@ -138,8 +159,9 @@ class LauncherTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         (self.root / 'scripts').mkdir()
         (self.root / 'devel').mkdir()
-        (self.root / 'devel/setup.bash').write_text('true\n')
-        (self.root / 'setup.bash').write_text('true\n')
+        # Reproduce ROS setup referencing a variable absent in systemd's env.
+        (self.root / 'devel/setup.bash').write_text('test -z "$MOCK_UNSET_CATKIN"\n')
+        (self.root / 'setup.bash').write_text('test -z "$MOCK_UNSET_ROS"\n')
         (self.root / 'scripts/scheduler_config.sh').write_text('configure_scheduler_config() { true; }\n')
         text = (HERE.parent / 'start_grinder_super_lio_base.sh').read_text()
         text = text.replace('/opt/ros/noetic/setup.bash', shlex.quote(str(self.root / 'setup.bash')))

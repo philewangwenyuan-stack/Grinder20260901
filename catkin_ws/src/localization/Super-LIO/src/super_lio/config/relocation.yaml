@@ -43,6 +43,13 @@ lio:
 
   # Extrinsic Parameters
   extrinsic:
+    # Same measured T_B_L as the launch static TF; metres and radians.
+    base_to_laser_x: 0.0
+    base_to_laser_y: 0.0
+    base_to_laser_z: 0.0
+    base_to_laser_roll: 0.0
+    base_to_laser_pitch: 0.0
+    base_to_laser_yaw: 0.0
     lidar_imu: [-0.011, -0.02329, 0.04412,      # lidar in imu
                 1.0, 0.0, 0.0, 
                 0.0, 1.0, 0.0, 
@@ -92,7 +99,9 @@ lio:
 
   relocation:
     update_map: true
-    init_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # px, py, pz, roll, pitch, yaw 
+    # Standard mode: base_link XYZ in map coordinates; angles here are degrees.
+    # /initialpose uses the same base reference, quaternion orientation, and its supplied z.
+    init_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # px, py, pz, roll, pitch, yaw
     # example: [0.0, 0.0, 1.0, 0.0, 0.0, 90.0]
     # It is recommended to set only the yaw angle.
     # Roll and pitch should be left unset, as they are automatically estimated to maintain level alignment.

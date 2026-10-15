@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
+#include "lio/base_kinematics.h"
 #include "super_lio/CloudPose.h"
 #include "super_lio/CloudPose2.h"
 #include "super_lio/DoubleCloudPose.h"
@@ -76,6 +78,30 @@ void LoadParamFromRos(ros::NodeHandle& nh){
               extrinsic_lidar_imu[2]);
   M3 __R = M3(extrinsic_lidar_imu.data() + 3);
   g_lidar_imu = SE3(__R, __t);  // lidar in imu frame·
+  // The same parameters drive base_link -> base_laser_link static TF.
+  // Unlike odom_robo's historical degree convention, these angles are radians.
+  double mounting[6];
+  const char* mounting_names[] = {"x", "y", "z", "roll", "pitch", "yaw"};
+  for (int i = 0; i < 6; ++i) {
+    nh.param<double>(std::string("/lio/extrinsic/base_to_laser_") + mounting_names[i],
+                     mounting[i], 0.0);
+    if (!std::isfinite(mounting[i])) {
+      throw std::invalid_argument("Non-finite base_to_laser calibration");
+    }
+  }
+  const auto base_laser = base_kinematics::fromXyzRpy(
+      Eigen::Vector3d(mounting[0], mounting[1], mounting[2]),
+      Eigen::Vector3d(mounting[3], mounting[4], mounting[5]));
+  base_kinematics::Transform imu_laser = base_kinematics::Transform::Identity();
+  imu_laser.linear() = g_lidar_imu.R_.cast<double>();
+  imu_laser.translation() = g_lidar_imu.t_.cast<double>();
+  const auto imu_base = imu_laser * base_laser.inverse();
+  const M3 imu_base_rotation = imu_base.linear().cast<scalar>();
+  const V3 imu_base_translation = imu_base.translation().cast<scalar>();
+  g_imu_base = SE3(imu_base_rotation, imu_base_translation);
+  if (g_legacy_tf) {
+    ROS_WARN("legacy_tf=true: odometry/TF retain historical IMU pose; base mounting compensation is disabled");
+  }
   nh.getParam("/lio/extrinsic/odom_robo", extrinsic_odom_robo);     // 3 + 3 x,y,z,r,p,y
   __t = V3(extrinsic_odom_robo[0], 
            extrinsic_odom_robo[1], 
@@ -609,11 +635,52 @@ void ROSWrapper::pub_odom(const NavState& state, bool re_path){
   odom.twist.twist.linear.y = state.v[1];
   odom.twist.twist.linear.z = state.v[2];
 
+  if (!g_legacy_tf) {
+    base_kinematics::Transform world_imu = base_kinematics::Transform::Identity();
+    world_imu.linear() = state.R.R_.cast<double>();
+    world_imu.translation() = state.p.cast<double>();
+    base_kinematics::Transform imu_base = base_kinematics::Transform::Identity();
+    imu_base.linear() = g_imu_base.R_.cast<double>();
+    imu_base.translation() = g_imu_base.t_.cast<double>();
+    base_kinematics::Covariance covariance = base_kinematics::Covariance::Zero();
+    Eigen::Vector3d omega = Eigen::Vector3d::Zero();
+    if (eskf_) {
+      covariance = eskf_->GetCov().cast<double>();
+      omega = eskf_->GetBodyAngularVelocity().cast<double>();
+    }
+    const auto output = base_kinematics::convert(world_imu, imu_base,
+        state.v.cast<double>(), omega, covariance,
+        Eigen::Matrix3d::Identity() * g_imu_ng);
+    odom.pose.pose.position.x = output.pose.translation().x();
+    odom.pose.pose.position.y = output.pose.translation().y();
+    odom.pose.pose.position.z = output.pose.translation().z();
+    const Eigen::Quaterniond quaternion(output.pose.linear());
+    temp_q = quaternion.coeffs().cast<scalar>();
+    odom.pose.pose.orientation.x = quaternion.x();
+    odom.pose.pose.orientation.y = quaternion.y();
+    odom.pose.pose.orientation.z = quaternion.z();
+    odom.pose.pose.orientation.w = quaternion.w();
+    odom.twist.twist.linear.x = output.linear.x();
+    odom.twist.twist.linear.y = output.linear.y();
+    odom.twist.twist.linear.z = output.linear.z();
+    odom.twist.twist.angular.x = output.angular.x();
+    odom.twist.twist.angular.y = output.angular.y();
+    odom.twist.twist.angular.z = output.angular.z();
+    for (int row = 0; row < 6; ++row) {
+      for (int col = 0; col < 6; ++col) {
+        odom.pose.covariance[row * 6 + col] = output.pose_covariance(row, col);
+        odom.twist.covariance[row * 6 + col] = output.twist_covariance(row, col);
+      }
+    }
+  }
+
+  // Historical legacy covariance mapping only. Standard mode above propagates
+  // the full ESKF covariance into world pose and base-frame twist coordinates.
   // ESKF error-state order is [rotation, position, velocity, gyro bias,
   // accelerometer bias, gravity]. ROS pose covariance order is
   // [x, y, z, roll, pitch, yaw], so copy the corresponding blocks instead of
   // publishing the all-zero default (which incorrectly means perfect certainty).
-  if (eskf_) {
+  if (eskf_ && g_legacy_tf) {
     const ESKF::COV covariance = eskf_->GetCov();
     auto finite_covariance = [](const BASIC::scalar value) {
       return std::isfinite(value) ? static_cast<double>(value) : 0.0;
@@ -645,7 +712,8 @@ void ROSWrapper::pub_odom(const NavState& state, bool re_path){
   // Standard mode publishes continuous odom->base motion so a loop backend can
   // own map->odom without creating competing TF authorities.
   tf::Transform tf_tf, tf_tf2;
-  tf_tf.setOrigin(tf::Vector3(state.p[0], state.p[1], state.p[2]));
+  tf_tf.setOrigin(tf::Vector3(odom.pose.pose.position.x,
+      odom.pose.pose.position.y, odom.pose.pose.position.z));
   tf_tf.setRotation(tf::Quaternion(temp_q[0], temp_q[1], temp_q[2], temp_q[3]));
 
   tf_tf2.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
@@ -665,18 +733,23 @@ void ROSWrapper::pub_odom(const NavState& state, bool re_path){
   std_msgs::Float32 odom_x;
   std_msgs::Float32 odom_y;
   std_msgs::Float32 odom_z;
-  odom_x.data = state.p[0];
-  odom_y.data = state.p[1];
-  odom_z.data = state.p[2];
+  odom_x.data = odom.pose.pose.position.x;
+  odom_y.data = odom.pose.pose.position.y;
+  odom_z.data = odom.pose.pose.position.z;
   pub_odom_x_.publish(odom_x);
   pub_odom_y_.publish(odom_y);
   pub_odom_z_.publish(odom_z);
 
   V3 robo_position = state.R.R_ * ( - g_odom_robo.R_ * g_odom_robo.t_) + state.p;
+  if (!g_legacy_tf) {
+    robo_position = V3(odom.pose.pose.position.x, odom.pose.pose.position.y,
+                       odom.pose.pose.position.z);
+  }
 
   if(g_2_robot){
     static ros::Publisher pub_msg2uav_ = nh_.advertise<geometry_msgs::PoseStamped>("/mavros/vision_pose/pose", 10);
     M3 robo_rotation = state.R.R_ * g_odom_robo.R_;
+    if (!g_legacy_tf) robo_rotation = Quat(temp_q[3], temp_q[0], temp_q[1], temp_q[2]).toRotationMatrix();
     msg2uav_.header.stamp = odom.header.stamp;
     msg2uav_.pose.position.x = robo_position[0];
     msg2uav_.pose.position.y = robo_position[1];
@@ -696,6 +769,7 @@ void ROSWrapper::pub_odom(const NavState& state, bool re_path){
     /// nav_msgs::Path
     path_.header.stamp = odom.header.stamp;
     geometry_msgs::PoseStamped point;
+    point.header = odom.header;
     point.pose = odom.pose.pose;
     path_.poses.push_back(point);
     pub_path_.publish(path_);

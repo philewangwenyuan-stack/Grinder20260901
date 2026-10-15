@@ -92,6 +92,8 @@ public:
   Pose_t   GetPoseT() const { return Pose_t(current_time_, R_, p_); }
 
   COV GetCov() const { return P_; }
+  // Prediction-interval gyro average, debiased with the latest posterior bias.
+  BASIC::V3 GetBodyAngularVelocity() const { return raw_body_omega_ - bg_; }
 
   BASIC::SE3 GetSE3() const { return BASIC::SE3(R_, p_); }
 
@@ -130,6 +132,7 @@ private:
   BASIC::V3 g_{0, 0, - (BASIC::scalar)g_gravity_norm};
   BASIC::V3 global_acc_  = BASIC::V3::Zero();
   BASIC::V3 body_omega_  = BASIC::V3::Zero();
+  BASIC::V3 raw_body_omega_ = BASIC::V3::Zero();
 
   // error state
   STATE dx_ = STATE::Zero();

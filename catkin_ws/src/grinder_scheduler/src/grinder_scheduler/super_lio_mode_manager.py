@@ -918,6 +918,13 @@ class SuperLioModeManager:
         self._last_good_pose = None
         self._last_good_pose_stamp = 0.0
 
+    @staticmethod
+    def _base_laser_launch_args():
+        # One calibration source for fixed TF and LIO output in both modes.
+        return ["{}:={}".format(key, rospy.get_param("~" + key, 0.0))
+                for key in ("base_to_laser_x", "base_to_laser_y", "base_to_laser_z",
+                            "base_to_laser_roll", "base_to_laser_pitch", "base_to_laser_yaw")]
+
     def _start_mapping_locked(self):
         self._publish_safe()
         if self._state == self.MAPPING and self._owned_mode == "mapping":
@@ -940,6 +947,7 @@ class SuperLioModeManager:
             "loop_closure:={}".format(str(self._loop_closure).lower()),
             "autosave:={}".format(str(self._autosave).lower()),
         ]
+        args.extend(self._base_laser_launch_args())
         try:
             rospy.loginfo("Starting managed Super-LIO mapping launch")
             launch_started = time.monotonic()
@@ -1063,11 +1071,7 @@ class SuperLioModeManager:
         self._map_event.clear()
         self._clear_health_samples()
         args = ["bundle_dir:={}".format(bundle)]
-        for key in (
-            "base_to_laser_x", "base_to_laser_y", "base_to_laser_z",
-            "base_to_laser_roll", "base_to_laser_pitch", "base_to_laser_yaw",
-        ):
-            args.append("{}:={}".format(key, rospy.get_param("~" + key, 0.0)))
+        args.extend(self._base_laser_launch_args())
         try:
             launch_started = time.monotonic()
             self._start_launch(self._localization_launch, args, "localization")

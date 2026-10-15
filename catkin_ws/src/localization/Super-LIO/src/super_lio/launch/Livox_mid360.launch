@@ -10,6 +10,12 @@
   <arg name="base_to_laser_yaw" default="0.0" />
 
   <rosparam file="$(find super_lio)/config/livox_360.yaml" command="load"/>
+  <param name="/lio/extrinsic/base_to_laser_x" value="$(arg base_to_laser_x)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_y" value="$(arg base_to_laser_y)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_z" value="$(arg base_to_laser_z)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_roll" value="$(arg base_to_laser_roll)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_pitch" value="$(arg base_to_laser_pitch)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_yaw" value="$(arg base_to_laser_yaw)" type="double" />
 
   <!-- Launch Nodes -->
   <node pkg="super_lio" type="super_lio_node" name="super_lio_node" output="log"/>

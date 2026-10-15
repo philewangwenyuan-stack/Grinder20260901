@@ -50,6 +50,13 @@ lio:
 
   # Extrinsic Parameters
   extrinsic:
+    # Same measured T_B_L as the launch static TF; metres and radians.
+    base_to_laser_x: 0.0
+    base_to_laser_y: 0.0
+    base_to_laser_z: 0.0
+    base_to_laser_roll: 0.0
+    base_to_laser_pitch: 0.0
+    base_to_laser_yaw: 0.0
     lidar_imu: [-0.011, -0.02329, 0.04412,      # lidar in imu
                 1.0, 0.0, 0.0, 
                 0.0, 1.0, 0.0, 

@@ -50,6 +50,7 @@ namespace LI2Sup{
   double g_imu_nbg;
 
   SE3 g_lidar_imu;
+  SE3 g_imu_base;
   SE3 g_odom_robo;
   M3  g_lidar_robo_yaw;
 

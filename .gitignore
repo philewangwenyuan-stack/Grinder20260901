@@ -51,3 +51,13 @@ catkin_ws/t-inspect-*
 **/.git.nested-backup*/
 Thumbs.db
 .DS_Store
+
+# Office lock files and macOS archive metadata
+~$*
+__MACOSX/
+._*
+
+# Planner build caches and reproducible audit binaries
+third_party/path_planner/mst27/build-*/
+third_party/path_planner/mst27/build_wsl_*/
+artifacts/repository-app-audit-20261004/*.jar

@@ -16,7 +16,7 @@ UNIT = Path('/etc/systemd/system/grinder.service')
 PROGRAM = Path('/usr/local/lib/grinder/grinder-service')
 COMMAND = Path('/usr/local/bin/grinder-service')
 KEYS = ('AUTOSTART', 'RUN_USER', 'WORKSPACE', 'LIVOX_SETUP', 'NAV_MAP_YAML',
-        'INDICATOR_USB_SERIAL_NUMBER', 'INDICATOR_DEVICE')
+        'INDICATOR_USB_SERIAL_NUMBER', 'INDICATOR_DEVICE', 'START_INDICATOR')
 
 
 def read_config():
@@ -33,10 +33,14 @@ def read_config():
         if len(tokens) > 1:
             raise ValueError('Quote paths containing spaces on line {}'.format(number))
         values[key] = tokens[0] if tokens else ''
+    # Older installations always started the strip; preserve that default.
+    values.setdefault('START_INDICATOR', '1')
     if set(values) != set(KEYS):
         raise ValueError('Config must contain: ' + ', '.join(KEYS))
     if values['AUTOSTART'] not in ('0', '1'):
         raise ValueError('AUTOSTART must be 0 or 1')
+    if values['START_INDICATOR'] not in ('0', '1'):
+        raise ValueError('START_INDICATOR must be 0 or 1')
     account = pwd.getpwnam(values['RUN_USER'])
     if account.pw_uid == 0:
         raise ValueError('RUN_USER must be an ordinary user')
@@ -59,6 +63,8 @@ def check_runtime(values):
             raise ValueError('Required file missing: ' + str(path))
     if values['LIVOX_SETUP'] and not Path(values['LIVOX_SETUP']).is_file():
         raise ValueError('LIVOX_SETUP file missing')
+    if values['START_INDICATOR'] == '0':
+        return
     serial, device = values['INDICATOR_USB_SERIAL_NUMBER'], values['INDICATOR_DEVICE']
     if bool(serial) == bool(device):
         raise ValueError('Set exactly one indicator USB serial number or stable device path')
@@ -94,7 +100,9 @@ def unit_text(values, account):
     return '''[Unit]
 Description=Grinder MID-360 Super-LIO stack and status strip
 Wants=network-online.target
-After=network-online.target
+# If PM2 is already enabled for this user, let its roscore startup finish first.
+# Ordering only: do not enable or require PM2 on boards without it.
+After=network-online.target pm2-{user}.service
 
 [Service]
 Type=simple
@@ -137,7 +145,7 @@ def install(workspace, user):
     if not CONFIG.exists():
         workspace = Path(workspace).resolve()
         values = dict.fromkeys(KEYS, '')
-        values.update(AUTOSTART='0', RUN_USER=user, WORKSPACE=str(workspace),
+        values.update(AUTOSTART='0', START_INDICATOR='1', RUN_USER=user, WORKSPACE=str(workspace),
                       NAV_MAP_YAML=str(workspace.parent / 'maps/grinder_map.yaml'))
         save_config(values)
     values, account = read_config()
@@ -165,7 +173,7 @@ def main():
         check_runtime(values)
         environment = os.environ.copy()
         environment.update(values)
-        environment.update(HOME=account.pw_dir, START_INDICATOR='1', INDICATOR_BACKEND='serial',
+        environment.update(HOME=account.pw_dir, INDICATOR_BACKEND='serial',
                            START_LIVOX='1', START_CHASSIS='1', START_NAV='1')
         os.chdir(values['WORKSPACE'])
         os.execvpe('bash', ['bash', str(Path(values['WORKSPACE']) /

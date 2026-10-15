@@ -172,7 +172,7 @@ class SuperLioLoop {
     private_nh_.param<std::string>("corrected_path_topic", corrected_path_topic_, "/lio/loop_path");
     private_nh_.param<std::string>("map_frame", map_frame_, "map");
     private_nh_.param<std::string>("odom_frame", odom_frame_, "odom");
-    private_nh_.param<std::string>("base_frame", base_frame_, "base_laser_link");
+    private_nh_.param<std::string>("base_frame", base_frame_, "base_link");
     private_nh_.param("publish_tf", publish_tf_, true);
     private_nh_.param("sync_tolerance", sync_tolerance_, 0.03);
     private_nh_.param("keyframe_distance", keyframe_distance_, 0.8);
@@ -304,19 +304,11 @@ class SuperLioLoop {
     pcl::fromROSMsg(*message, *world_cloud);
     if (world_cloud->empty()) return;
 
-    Eigen::Quaternionf quaternion(
-        static_cast<float>(odometry.pose.pose.orientation.w),
-        static_cast<float>(odometry.pose.pose.orientation.x),
-        static_cast<float>(odometry.pose.pose.orientation.y),
-        static_cast<float>(odometry.pose.pose.orientation.z));
-    Eigen::Matrix4f world_from_sensor = Eigen::Matrix4f::Identity();
-    world_from_sensor.block<3, 3>(0, 0) = quaternion.normalized().toRotationMatrix();
-    world_from_sensor(0, 3) = static_cast<float>(odometry.pose.pose.position.x);
-    world_from_sensor(1, 3) = static_cast<float>(odometry.pose.pose.position.y);
-    world_from_sensor(2, 3) = static_cast<float>(odometry.pose.pose.position.z);
-
+    // This backend stores/reprojects planar poses. Use that SAME frame for
+    // local clouds so gravity-aligned height/tilt are not removed then lost.
+    // No mounting transform here: /lio/odom already describes the base.
     CloudPtr local_cloud(new Cloud());
-    pcl::transformPointCloud(*world_cloud, *local_cloud, world_from_sensor.inverse());
+    pcl::transformPointCloud(*world_cloud, *local_cloud, poseMatrix(raw_pose).inverse());
     pcl::VoxelGrid<Point> voxel_filter;
     voxel_filter.setLeafSize(keyframe_voxel_size_, keyframe_voxel_size_, keyframe_voxel_size_);
     voxel_filter.setInputCloud(local_cloud);

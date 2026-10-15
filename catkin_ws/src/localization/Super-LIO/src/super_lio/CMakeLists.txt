@@ -126,3 +126,8 @@ catkin_install_python(PROGRAMS
   scripts/monitor_hud.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+if(CATKIN_ENABLE_TESTING)
+  add_executable(test_base_kinematics test/test_base_kinematics.cpp)
+  add_test(NAME super_lio_base_kinematics COMMAND test_base_kinematics)
+endif()

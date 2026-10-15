@@ -1,10 +1,22 @@
 <launch>
   <arg name="staging_dir" />
+  <arg name="base_to_laser_x" default="0.0" />
+  <arg name="base_to_laser_y" default="0.0" />
+  <arg name="base_to_laser_z" default="0.0" />
+  <arg name="base_to_laser_roll" default="0.0" />
+  <arg name="base_to_laser_pitch" default="0.0" />
+  <arg name="base_to_laser_yaw" default="0.0" />
   <arg name="loop_closure" default="false" />
   <arg name="autosave" default="false" />
 
   <include file="$(find cloud_to_occupancy_grid)/launch/mid360_mapping.launch">
     <arg name="rviz" value="false" />
+    <arg name="base_to_laser_x" value="$(arg base_to_laser_x)" />
+    <arg name="base_to_laser_y" value="$(arg base_to_laser_y)" />
+    <arg name="base_to_laser_z" value="$(arg base_to_laser_z)" />
+    <arg name="base_to_laser_roll" value="$(arg base_to_laser_roll)" />
+    <arg name="base_to_laser_pitch" value="$(arg base_to_laser_pitch)" />
+    <arg name="base_to_laser_yaw" value="$(arg base_to_laser_yaw)" />
     <arg name="save_3d_map" value="true" />
     <arg name="loop_closure" value="$(arg loop_closure)" />
     <arg name="map_directory" value="$(arg staging_dir)" />

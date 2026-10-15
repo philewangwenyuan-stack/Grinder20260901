@@ -12,6 +12,12 @@
   <arg name="base_to_laser_yaw" default="0.0" />
 
   <rosparam file="$(find super_lio)/config/relocation.yaml" command="load"/>
+  <param name="/lio/extrinsic/base_to_laser_x" value="$(arg base_to_laser_x)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_y" value="$(arg base_to_laser_y)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_z" value="$(arg base_to_laser_z)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_roll" value="$(arg base_to_laser_roll)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_pitch" value="$(arg base_to_laser_pitch)" type="double" />
+  <param name="/lio/extrinsic/base_to_laser_yaw" value="$(arg base_to_laser_yaw)" type="double" />
   <param name="/lio/map/save_map" value="false" />
   <param name="/lio/map/save_map_dir" value="$(arg map_dir)" />
   <param name="/lio/map/map_name" value="$(arg map_name)" />

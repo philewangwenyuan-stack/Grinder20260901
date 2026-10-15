@@ -243,7 +243,7 @@ class IndustrialLoopBackend {
     private_nh_.param<std::string>("corrected_path_topic", corrected_path_topic_, "/lio/loop_path");
     private_nh_.param<std::string>("map_frame", map_frame_, "map");
     private_nh_.param<std::string>("odom_frame", odom_frame_, "odom");
-    private_nh_.param<std::string>("base_frame", base_frame_, "base_laser_link");
+    private_nh_.param<std::string>("base_frame", base_frame_, "base_link");
     private_nh_.param("publish_tf", publish_tf_, true);
     private_nh_.param("sync_tolerance", sync_tolerance_, 0.03);
     private_nh_.param("keyframe_distance", keyframe_distance_, 0.8);
@@ -331,6 +331,8 @@ class IndustrialLoopBackend {
     pcl::fromROSMsg(*message, *world);
     if (world->empty()) return;
     CloudPtr local(new Cloud());
+    // raw_pose is the base pose; this inverse already supplies the matching
+    // keyframe coordinates. Do not apply the sensor mounting a second time.
     pcl::transformPointCloud(*world, *local, matrixFromPose(raw_pose.inverse()));
     pcl::VoxelGrid<Point> filter;
     filter.setLeafSize(voxel_size_, voxel_size_, voxel_size_);

@@ -1,5 +1,11 @@
 <launch>
   <arg name="rviz" default="true"/>
+  <arg name="base_to_laser_x" default="0.0" />
+  <arg name="base_to_laser_y" default="0.0" />
+  <arg name="base_to_laser_z" default="0.0" />
+  <arg name="base_to_laser_roll" default="0.0" />
+  <arg name="base_to_laser_pitch" default="0.0" />
+  <arg name="base_to_laser_yaw" default="0.0" />
   <arg name="mapper_config" default="$(find cloud_to_occupancy_grid)/config/mid360.yaml"/>
   <arg name="save_3d_map" default="false"/>
   <arg name="loop_closure" default="true"/>
@@ -11,6 +17,12 @@
   <!-- Start the Livox driver separately before this launch file. -->
   <include file="$(find super_lio)/launch/Livox_mid360.launch">
     <arg name="rviz" value="false"/>
+    <arg name="base_to_laser_x" value="$(arg base_to_laser_x)" />
+    <arg name="base_to_laser_y" value="$(arg base_to_laser_y)" />
+    <arg name="base_to_laser_z" value="$(arg base_to_laser_z)" />
+    <arg name="base_to_laser_roll" value="$(arg base_to_laser_roll)" />
+    <arg name="base_to_laser_pitch" value="$(arg base_to_laser_pitch)" />
+    <arg name="base_to_laser_yaw" value="$(arg base_to_laser_yaw)" />
   </include>
 
   <!-- The 2D mapper owns persistent mapping in this mode. Disabling Super-LIO's

@@ -25,8 +25,18 @@ fi
 LOG_DIR="${WORKSPACE}/logs/super_lio_base_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "${LOG_DIR}"
 
-source /opt/ros/noetic/setup.bash
-source "${WORKSPACE}/devel/setup.bash"
+# Catkin/ROS setup files legitimately read unset environment variables in a
+# fresh systemd session. Keep strict checking for our code, not their setup.
+source_ros_setup() {
+  local setup_status=0
+  set +u
+  source "$1" || setup_status=$?
+  set -u
+  return "${setup_status}"
+}
+
+source_ros_setup /opt/ros/noetic/setup.bash
+source_ros_setup "${WORKSPACE}/devel/setup.bash"
 
 detect_livox_setup() {
   if rospack find livox_ros_driver2 >/dev/null 2>&1; then
@@ -40,7 +50,7 @@ detect_livox_setup() {
     "/home/neardi/livox_ws/devel/setup.bash"; do
     if [[ -n "${candidate}" && -f "${candidate}" ]]; then
       LIVOX_SETUP="${candidate}"
-      source "${LIVOX_SETUP}"
+      source_ros_setup "${LIVOX_SETUP}" || return $?
       rospack find livox_ros_driver2 >/dev/null 2>&1 && return 0
     fi
   done

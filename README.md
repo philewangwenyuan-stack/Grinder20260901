@@ -894,6 +894,11 @@ MID-360 + Super-LIO 链路使用 `grinder.service` 管理 ROS master、Livox、�
 调度和灯带。开机只启动节点，任务仍需明确下发启动指令。
 服务以安装时指定的普通用户运行，并使用该用户的 HOME 保存急停提示记录。
 
+2026-10-14 已在 LPA3588（用户 `neardi`）完成重启后的主系统自启验证：
+服务显示 `enabled`、`active (running)`，Livox、底盘、RPP/move_base、调度器、
+Super-LIO 模式管理器及 mediamtx 进程已启动。本次未接 ESP32，使用 `START_INDICATOR=0`；
+此结果验证开机启动流程，不代表灯带、底盘运动、定位或视频链路的实机验收。
+
 完成构建、灯带固件烧录和手动联调后，先停止任务，再退出已运行的启动脚本及独立灯带节点。
 在板端安装（将用户名替换为实际运行用户，工作区从脚本位置自动确定）：
 
@@ -904,11 +909,14 @@ sudo nano /etc/grinder/startup.conf
 ~~~
 
 首次安装默认 `AUTOSTART=0`，不会启动节点。重新安装保留已有配置和自启设置。
+若 nano 提示 `/etc/grinder` 目录不存在，应先完成安装；若安装提示缺少
+`scripts/grinder-service`，请将该文件同步到板端同名路径（文件无 `.py` 后缀）后重试。
 配置为 `KEY=VALUE`，包含空格的值需用引号包裹；不展开 `$HOME`、`~` 或 shell 命令。
 示例中的路径、运行用户、USB 序列号必须按板端实际情况填写：
 
 ~~~ini
 AUTOSTART=0
+START_INDICATOR=1
 RUN_USER=neardi
 WORKSPACE=/home/neardi/work/Grinder/catkin_ws
 LIVOX_SETUP=/home/neardi/Livox/ws_livox/devel/setup.bash
@@ -918,6 +926,10 @@ INDICATOR_DEVICE=''
 ~~~
 
 `LIVOX_SETUP` 可留空，由启动脚本从项目环境和常见 Livox 工作区查找。
+还没有 ESP32 时设置 `START_INDICATOR=0`，两个 USB 身份字段留空，先验证主系统开机自启。
+拿到并烧录 ESP32 后，设置 `START_INDICATOR=1` 并填写 USB 身份，再应用配置、在任务停止后重启服务。
+旧配置没有此字段时默认 `1`，保持原有灯带启动行为；旧版管理命令需先更新并重新运行安装脚本。
+仅复制 `catkin_ws/scripts/grinder-service` 不会更新系统已安装的管理命令，必须重新执行安装脚本。
 灯带 USB 序列号与 `INDICATOR_DEVICE=/dev/serial/by-id/实际设备` 二选一。
 服务默认使用真实串口后端，自动获得 `dialout` 补充组权限；USB 未插入时灯带节点持续重连。
 导航地图必须存在，工作区必须已构建。
@@ -939,10 +951,37 @@ grinder-service status
 sudo grinder-service logs
 ~~~
 
+常用开关与重启命令（逐条执行）：
+
+| 操作 | 命令 | 生效范围 |
+| --- | --- | --- |
+| 开启开机自启 | `sudo grinder-service enable` | 保存 `AUTOSTART=1`，下次开机自动启动；当前节点不变 |
+| 关闭开机自启 | `sudo grinder-service disable` | 保存 `AUTOSTART=0`，下次开机不自动启动；当前节点不变 |
+| 立即启动节点 | `sudo grinder-service start` | 启动当前整套节点，不改变自启开关 |
+| 立即停止节点 | `sudo grinder-service stop` | 停止当前整套节点，不改变自启开关 |
+| 重启整套节点 | `sudo grinder-service restart` | 停止后重新启动当前整套节点，不重启板端 |
+| 重启板端 | `sudo reboot` | 重启 RK3588，节点是否自动启动取决于自启开关 |
+| 查看服务与自启状态 | `grinder-service status` | `enabled` / `disabled` 为自启状态，`active (running)` 为运行状态 |
+| 编辑启动配置 | `sudo nano /etc/grinder/startup.conf` | 可修改 `AUTOSTART`、`START_INDICATOR`、路径和 USB 身份 |
+| 应用手动修改的配置 | `sudo grinder-service apply` | 同步自启开关及服务定义，不重启当前节点 |
+
+也可直接在配置文件中将 `AUTOSTART` 改为 `1`（自启）或 `0`（不自启），保存后执行
+`sudo grinder-service apply`。修改灯带开关、路径或 USB 身份后，还需在任务停止后执行
+`sudo grinder-service restart`，使运行中的节点使用新配置。
+`START_INDICATOR=0` 只关闭灯带节点；`AUTOSTART=0` 关闭整套服务的开机自启。
+执行节点停止、节点重启或板端重启前，先通过现有任务接口停止任务。
+
 维护时先通过现有任务接口停止任务，再执行 `sudo grinder-service stop`。
 若下次开机也不希望启动，再执行 `sudo grinder-service disable`。
 更改运行用户、路径或 USB 身份后先 `apply`，再在任务停止后 `restart`。
 服务启动失败或受监督进程退出时清理整套子进程，默认不自动重启整套服务。
+板端已有启用的 `pm2-<运行用户>.service` 时，Grinder 排在它之后启动，复用它启动的 ROS master，
+避免两套开机流程同时启动 master；此排序不会启用或强制依赖 PM2。
+如果 PM2 在运行期间主动重启 master，ROS 链路仍可能中断，需要单独协调 PM2 的管理策略。
+LPA3588 已有 PM2 管理的 `roscore`、`rosbridge` 等进程，应保留其服务；安装后用
+`systemctl show grinder.service -p After` 确认包含 `pm2-neardi.service`。
+ROS/Catkin 环境加载期间临时关闭未定义变量检查，避免全新 systemd 环境报
+`ROS_DISTRO：未绑定的变量`；项目脚本自身仍保持严格检查。
 灯带 launch 保留自身 `respawn`；同一工作区的重复启动由启动脚本锁拒绝。
 服务启动成功只代表进程已启动，ROS 状态是否完整应查看灯带与 `/indicator/state`。
 
@@ -950,6 +989,25 @@ sudo grinder-service logs
 自启关闭且从未通信时，ESP32 通电显示启动黄灯；已经通信后停止节点且 USB 保持供电，
 固件通信超时显示红灯，急停提示仍优先。USB 断电则熄灭。
 板端验收包括开启／关闭后分别重启、完整状态变绿、USB 断连重连，以及停止后无残留节点。
+
+没有 ESP32 时，可先保持两个 USB 字段为空并设置 `START_INDICATOR=0`，在任务停止、
+旧的手动启动脚本退出后逐条执行：
+
+~~~bash
+sudo grinder-service apply
+sudo grinder-service start
+grinder-service status
+# 确认持续运行后开启自启；确认任务停止后再重启板端
+sudo grinder-service enable
+sudo reboot
+# 重新登录后等待约 20 秒，再检查
+grinder-service status
+~~~
+
+重启后应同时看到 `enabled` 和 `active (running)`。若显示 `failed`，先读取
+`sudo journalctl -u grinder.service -b -n 80 --no-pager`，并检查最新
+`logs/super_lio_base_*/*.log`，保留失败日志后再重试。
+本次板端日志仍有 MPP VP8 编码初始化失败；服务保持运行，但视频链路需另行验证。
 
 离线验证（Linux，不连接硬件）：
 

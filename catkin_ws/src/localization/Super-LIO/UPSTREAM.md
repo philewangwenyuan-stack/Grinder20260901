@@ -21,6 +21,9 @@ directory on the migration workstation; it is not required to build a fresh clon
 
 ## Per-frame localization iteration diagnostics
 
+See also the [base pose and mounting calibration](#base-pose-and-mounting-calibration)
+section below for the navigation coordinate contract.
+
 `/super_lio/registration_diagnostics` retains its existing registration fields
 and adds `kf_*` keys to the `super_lio_registration` status. The array header
 timestamp is the same frame timestamp as localization odometry. This is
@@ -63,3 +66,72 @@ update that remains above the threshold at the iteration limit suggests an
 iteration-budget investigation; oscillating or non-finite updates require
 examining registration inputs and numerical behavior rather than loosening the
 readiness check.
+
+## Base pose and mounting calibration
+
+In standard mode (`lio/ros/legacy_tf: false`), `/lio/odom`, `/lio/path`, position
+outputs and `odom -> base_link` describe the chassis motion center. The ESKF,
+deskewing, matching and world/map point clouds still use the original IMU state.
+With `T_A_B` mapping coordinates in B into A, the output conversion is:
+
+```text
+T_odom_base = T_odom_imu * T_imu_laser * inverse(T_base_laser)
+```
+
+`lio/extrinsic/lidar_imu` supplies `T_imu_laser`, including the MID-360 internal
+sensor offset. The six `base_to_laser_{x,y,z,roll,pitch,yaw}` launch arguments
+provide the measured `T_base_laser`. The launch sets both the fixed
+`base_link -> base_laser_link` TF and `/lio/extrinsic/base_to_laser_*` from the
+same arguments. Translation uses metres; launch and LIO mounting angles use
+radians. Zero mounting means base coincides with the **laser**, not the IMU;
+only identity mounting AND identity internal extrinsics give raw IMU output.
+
+Managed mapping and localization obtain these arguments from the mode manager.
+The scheduler's existing `base_laser_{x,y,z}` and `base_laser_{roll,pitch,yaw}_deg`
+settings remain the calibration source; the scheduler converts degrees to
+radians. Changing calibration takes effect on the next normal mode restart;
+do not add a second static TF publisher or change only the LIO parameters.
+Direct roslaunch users must pass the same measured arguments for both modes.
+
+Standard Odometry twist is expressed in `base_link`. It includes the lever-arm
+velocity `omega cross r`, using the prediction-interval gyro mean corrected by
+the latest gyro bias. Pose covariance uses world position/world small-angle
+rotation errors; twist covariance includes attitude, velocity, bias cross terms
+and gyro measurement variance (the existing `imu_ng` variance convention).
+Legacy mode retains historical navigation odometry/TF and logs a warning that
+mounting compensation is disabled. The existing IMU-rate `/lio/robo/odom`
+debug stream remains a historical interface; navigation uses `/lio/odom`.
+
+`/initialpose` and `lio/relocation/init_pose` represent the **base** position and
+heading in standard mode. The input Z must be the base height in the map frame,
+which need not equal height above the floor for an existing map. Gravity from
+the stationary IMU supplies roll/pitch; mounting rotation is accounted for
+when aligning the base heading. The complete guess is converted to IMU pose
+before NDT/ICP. No sensor height is hardcoded. YAML initial angles remain in
+degrees; `/initialpose` carries a quaternion. Initialize after the chassis has
+settled following a guide-wheel change.
+
+Mapping gravity alignment and the existing internal mapping-origin logic are
+unchanged. Do not rewrite old PCD/occupancy maps to compensate mounting. Check
+old-map alignment by replay/relocalization after rebuilding. Both loop backends
+derive keyframe coordinates from the same raw base odometry used to place them;
+the lightweight backend uses its stored planar pose for both directions so
+world height and tilt are preserved. Neither applies mounting again.
+
+Offline regression (ROS-independent C++ math and Windows-compatible launch tests):
+
+```bash
+g++ -std=c++17 -O0 -I/usr/include/eigen3 \
+  -Icatkin_ws/src/localization/Super-LIO/src/super_lio/include \
+  catkin_ws/src/localization/Super-LIO/src/super_lio/test/test_base_kinematics.cpp \
+  -o /tmp/test_base_kinematics
+/tmp/test_base_kinematics
+PYTHONPATH=catkin_ws/src/grinder_scheduler/src python3 -m unittest discover \
+  -s catkin_ws/src/grinder_scheduler/test -p 'test_super_lio*.py'
+```
+
+The C++ target is also registered with CTest when `CATKIN_ENABLE_TESTING=ON`.
+After a Linux/ROS rebuild, replay a bag with the measured calibration and check
+the TF closure against IMU/laser world points, map/cloud alignment at 0 and 30
+degrees, base-center position during rotation, initial-pose reference, and
+loop-cloud reprojection. Reuse prior maps before considering any remapping.

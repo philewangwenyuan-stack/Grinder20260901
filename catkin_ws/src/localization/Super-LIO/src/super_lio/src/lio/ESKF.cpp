@@ -52,6 +52,7 @@ void ESKF::SetInitialConditions(Options options, const V3& init_bg,
   BuildNoise(options);
   options_ = options;
   bg_ = init_bg;
+  raw_body_omega_ = init_bg;
   ba_ = init_ba;
   g_ = gravity;
   imu_scale_ = imu_scale;
@@ -203,7 +204,8 @@ bool ESKF::Predict(const IMUData& imu) {
   V3 acc = 0.5 * (imu.acc + last_imu_.acc);
   acc = imu_scale_ * acc;
   acc = acc - ba_;
-  body_omega_ = 0.5 * (imu.gyr + last_imu_.gyr) - bg_;
+  raw_body_omega_ = 0.5 * (imu.gyr + last_imu_.gyr);
+  body_omega_ = raw_body_omega_ - bg_;
   M3 Jr_dt = (dt * RightJacobianSO3(body_omega_, dt)).cast<scalar>();   // J_l(-phi) = J_r(phi)
 
   M3 R_m3 = R_.R_;

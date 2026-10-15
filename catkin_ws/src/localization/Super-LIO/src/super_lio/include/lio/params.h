@@ -67,6 +67,7 @@ namespace LI2Sup{
   extern double g_imu_nbg;
 
   extern BASIC::SE3 g_lidar_imu;      // lidar in imu frame
+  extern BASIC::SE3 g_imu_base;       // T_I_B, derived from measured T_B_L
   extern BASIC::SE3 g_odom_robo;     // lidar in robot frame
   extern BASIC::M3  g_lidar_robo_yaw; // lidar in robot frame rotation only yaw
 

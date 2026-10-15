@@ -1,5 +1,6 @@
 
 #include "lio/super_lio_location.h"
+#include "lio/base_kinematics.h"
 
 #include <sys/resource.h>
 #include <tbb/parallel_for.h>
@@ -80,7 +81,7 @@ void SuperLIOReLoc::initialpose_callback(const geometry_msgs::PoseWithCovariance
   V3 init_translation(0, 0, 0);
   init_translation[0] = msg->pose.pose.position.x;
   init_translation[1] = msg->pose.pose.position.y;
-  init_translation[2] = 0.2; // 根据传感器离地高度调整
+  init_translation[2] = msg->pose.pose.position.z;  // base height in map frame
 
   double x,y,z,w;
   x = msg->pose.pose.orientation.x;
@@ -259,6 +260,18 @@ bool SuperLIOReLoc::kf_init(){
 
   M3 init_guess_R_ = re_init_pose_.R_ * rot;
   V3 init_guess_t_ = re_init_pose_.t_;
+  if (!g_legacy_tf) {
+    base_kinematics::Transform requested_base = base_kinematics::Transform::Identity();
+    requested_base.linear() = re_init_pose_.R_.cast<double>();
+    requested_base.translation() = re_init_pose_.t_.cast<double>();
+    base_kinematics::Transform imu_base = base_kinematics::Transform::Identity();
+    imu_base.linear() = g_imu_base.R_.cast<double>();
+    imu_base.translation() = g_imu_base.t_.cast<double>();
+    const auto initial_imu = base_kinematics::initialImuPose(
+        requested_base, init_rot.cast<double>(), imu_base);
+    init_guess_R_ = initial_imu.linear().cast<scalar>();
+    init_guess_t_ = initial_imu.translation().cast<scalar>();
+  }
   M4 init_guess_T = M4::Identity();
   init_guess_T.block<3, 3>(0, 0) = init_guess_R_;
   init_guess_T.block<3, 1>(0, 3) = init_guess_t_;
