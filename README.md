@@ -1,777 +1,1337 @@
-# Grinder 研磨机器人
+# Grinder 研磨机项目说明
 
-Grinder 是基于 ROS 1 的研磨机器人控制工程，包含 MID-360 三维建图与定位、二维地图管理、
-区域作业路径规划、导航、底盘与磨盘控制，以及 APP / 上位机通信。
+本文档用于说明研磨机项目的工程结构、核心链路、启动方式与联调要点。
 
-本指南按首次部署、日常运行和调试的顺序编写。示例使用普通用户 `neardi`，仓库位于
-`/home/neardi/work/Grinder`；部署到其他位置时，统一替换用户和路径。
+## 项目目标
 
-## 目录
+本项目用于实现研磨机的：
 
-- [1. 系统组成](#1-系统组成)
-- [2. 环境与依赖](#2-环境与依赖)
-- [3. 设备与应用配置](#3-设备与应用配置)
-- [4. 编译与产物检查](#4-编译与产物检查)
-- [5. 手工运行与地图操作](#5-手工运行与地图操作)
-- [6. systemd 部署与开机自启](#6-systemd-部署与开机自启)
-- [7. ESP32 状态灯控制器](#7-esp32-状态灯控制器)
-- [8. 调试与验收](#8-调试与验收)
-- [9. 日常维护与开发验证](#9-日常维护与开发验证)
-- [10. 专项文档](#10-专项文档)
+- 地图管理（建图、保存、删除、切图）
+- 区域编辑（工作区/障碍区/擦除区/裁剪区）
+- 路径规划与任务执行（含区域重复执行）
+- 底盘与磨盘控制（手动/自动）
+- 上位机与安卓通过 SL-LinkA 协议通信
 
-## 1. 系统组成
-
-### 1.1 源码目录
+## 目录结构
 
 ```text
 Grinder/
 ├── catkin_ws/
-│   ├── src/grinder_scheduler/       调度、地图、协议、模式管理与状态灯 ROS 节点
-│   ├── src/grinder_chassis_driver/  底盘串口、轮速换算、磨盘控制与状态反馈
-│   ├── src/localization/           Super-LIO、基础库与回环后端
-│   ├── src/mapping/                点云到二维占据栅格
-│   ├── src/2-dnavigation-package/  move_base、RPP、TEB 及 Slamware 适配
-│   ├── src/grinder_gazebo/         Gazebo 仿真
-│   ├── build_grinder_platform.sh   分模块构建入口
-│   ├── start_grinder_super_lio_base.sh  常驻服务启动入口
-│   └── install_grinder_service.sh systemd 安装入口
-├── firmware/status_strip/         ESP32 状态灯固件
-├── third_party/path_planner/      MST27 作业路径规划
-├── third_party/sl_linka/          协议、生成脚本和上位机工具
-├── maps/                          地图资产
-└── AGENTS.md                      开发文件定位索引
+│   ├── src/
+│   │   ├── grinder_scheduler/         # 调度核心：协议处理、任务状态机、地图与路径流程
+│   │   ├── grinder_chassis_driver/    # 底盘驱动：/cmd_vel->轮速、Modbus485读写、状态上报
+│   │   ├── 2-dnavigation-package/     # move_base / teb / 全局路径相关
+│   │   ├── localization/             # Super-LIO 三维里程计、定位及回环
+│   │   ├── mapping/                  # 三维点云到二维占据栅格
+│   │   └── ...
+│   ├── start_grinder_stack.sh         # 一键启动脚本
+│   └── build_grinder_platform.sh      # 构建脚本
+├── third_party/
+│   ├── sl_linka/                      # 协议、SDK、PyQt上位机
+│   └── path_planner/                  # 自适应路径规划器与可视化
+├── tools/
+│   └── mediamtx/                      # 本地RTSP服务工具
+└── README.md
 ```
 
-仓库根目录是唯一 Git 仓库。Super-LIO 源码已纳入根仓库，无需初始化子模块。
-`build/`、`devel/`、`logs/`、`temp/` 和二进制地图等属于构建或运行数据。
+## 核心链路
 
-### 1.2 数据与控制链路
+### 1. 协议链路（APP/上位机 <-> 调度）
+
+- 调度监听 `8002`（SL-LinkA）
+- 地图类：`MapPreview/MapEdit/MapCatalog/MapSave/MapDelete/MapMetrics`
+- 任务类：`TaskConfig/TaskCommand/TaskStatus/TaskResult`
+- 新增：`LiveMapCacheClearRequest/Response (0x051E/0x051F)`
+
+协议说明见：
+[sl-link.md](/home/chersxir/work/Grinder/third_party/sl_linka/sl-link.md)
+
+### 2. 导航与任务链路
+
+- 调度生成/维护全局路径，执行时按段发布目标点
+- 导航输出 `cmd_vel`，底盘驱动按任务使能决定是否接收
+- `/chassis/task_enable`：
+  - `true`：底盘处理 `/cmd_vel`
+  - `false`：底盘忽略 `/cmd_vel`
+
+### 3. 底盘控制链路
+
+- 底盘驱动订阅 `/cmd_vel`（默认）
+- 转换为左右轮速度，做限幅/方向处理后通过 Modbus 写入
+- 配置文件：
+[chassis_driver.yaml](/home/chersxir/work/Grinder/catkin_ws/src/grinder_chassis_driver/config/chassis_driver.yaml)
+
+### 4. MID-360 / Super-LIO 当前完整链路
+
+本节描述当前源码的标准模式：`lio/ros/legacy_tf: false`，导航参考点为
+`base_link`，对应底盘运动中心。MID-360 的 IMU 内置在雷达设备中；两者具有
+固定的内部外参，整台设备相对底盘的安装外参由实际标定提供。
 
 ```text
-MID-360 点云和内置 IMU
+MID-360：三维点云 + 内置 IMU
   -> Livox 驱动：/livox/lidar、/livox/imu
-  -> Super-LIO：同步、重力初始化、预测、去畸变、点云匹配
-       ├─ 三维世界点云 -> 可选回环 -> 二维栅格 /map
-       └─ IMU 状态按安装外参换算 -> 底盘 /lio/odom、/lio/path、TF
+  -> Super-LIO：时间同步、静止重力初始化、IMU 预测、点云去畸变、点云匹配
+       ├─ 内部：估计 IMU 的三维位姿和速度，用于点云及地图计算
+       └─ 输出：利用安装外参换算运动中心的位姿、速度和协方差
+                  -> /lio/odom、/lio/path、odom -> base_link
 
-APP / 上位机 -> SL-LinkA TCP / Protobuf -> grinder_scheduler
-  -> 地图模式管理、区域编辑、MST27 规划、任务状态机
-  -> move_base 目标与路径段 -> RPP 或 TEB -> /cmd_vel
-  -> grinder_chassis_driver：任务使能、限幅、左右轮换算
-  -> Modbus RTU / RS485 -> 底盘与磨盘
+建图模式：三维世界点云 -> 可选回环 -> 二维栅格 /map -> 保存地图资产包
+定位模式：加载三维 PCD + 二维地图 -> 底盘初始位姿 -> 三维配准 -> 定位质量检查
 
-底盘反馈 -> /chassis/status、/odom_wheel -> 调度、导航和诊断
-调度与底盘状态 -> 状态灯 ROS 节点 -> USB -> ESP32 -> 外接灯带
+APP / 上位机 -> SL-LinkA -> grinder_scheduler
+  -> 地图模式管理、区域编辑、作业路径规划、任务状态机
+  -> move_base 目标点 / 路径段
+  -> RPP（常驻启动默认）或 TEB -> /cmd_vel
+  -> grinder_chassis_driver：检查 /chassis/task_enable、速度限幅、左右轮换算
+  -> Modbus RTU / RS485 -> 底盘轮速与磨盘控制
 ```
 
-常驻启动脚本默认选用 RPP；导航控制器支持通过 launch 切换为 TEB。
-底盘运动还受 `/chassis/task_enable` 控制；存在 `/cmd_vel` 不代表已经允许执行。
-暂停、停止和异常处理应保持关闭任务使能、轮速清零及磨盘安全控制。
+`/lio/odom` 是连续的底盘里程计；`/lio/map_cloud` 是世界坐标中的三维点云。
+两者的参考不同：点云仍由 IMU 状态正确变换，输出给导航的位姿则已换算为底盘中心，
+不能再给 `/lio/odom` 额外减一次雷达偏移。历史调试话题 `/lio/robo/odom`
+仍是单独的 IMU 频率接口，正式导航使用 `/lio/odom`。
 
-### 1.3 坐标系与安装外参
+### 5. 建图、保存和定位的两条分支
 
-标准模式采用 `lio/ros/legacy_tf: false`，TF 链为：
+**建图分支**由 `super_lio_mode_manager` 启动 `super_lio_node` 和
+`cloud_to_occupancy_grid`，按配置决定是否启动 `super_lio_loop`：
+
+- 关闭回环时，栅格节点接收 `/lio/map_cloud`，`map -> odom` 是单位变换。
+- 开启回环时，后端接收 `/lio/odom` 和 `/lio/map_cloud`，发布校正点云
+  `/lio/loop_cloud`、校正里程计 `/lio/loop_odom`，并负责 `map -> odom`。
+  栅格节点改为接收 `/lio/loop_cloud`；工业后端接受回环后，支持历史关键帧重投影。
+- 回环后端将世界点云变换到与关键帧位姿一致的局部坐标，重投影时再变回世界坐标。
+  工业后端使用完整三维位姿；轻量后端两次变换都使用其保存的二维位姿，保留点云的
+  世界高度和倾角。这里不再次应用雷达安装外参。
+
+当前 `super_lio.yaml` 的 `super_lio_loop_closure` 默认是 `false`；手工建图示例
+显式指定 `loop_closure:=true loop_backend:=industrial`，两者要区分。
+
+保存时，模式管理器分别调用 `/lio/get_3dmap` 和
+`/cloud_to_occupancy_grid/save_map`，校验文件并写入资产版本，形成独立目录：
 
 ```text
-map -> odom -> base_link -> base_laser_link
+maps/<map_id>/
+  loc_map.pcd       三维定位地图
+  plan_map.pcd      三维规划点云
+  map.yaml         二维地图元信息
+  map.pgm          二维占据栅格
+  map_info.json    地图身份、版本及文件清单
 ```
 
-| 变换 | 发布来源与含义 |
-| --- | --- |
-| `map -> odom` | 回环后端发布校正；无回环建图和固定地图定位使用单位变换 |
-| `odom -> base_link` | Super-LIO 发布底盘运动中心的动态位姿 |
-| `base_link -> base_laser_link` | 根据实测安装外参发布固定变换 |
+保存成功后停止建图，不自动开始定位。当前三维 PCD 的保存入口仍是 Super-LIO 的
+`/lio/get_3dmap`；开启回环时，不能仅凭二维栅格已经校正就认为该入口的三维 PCD
+也已自动完成同样的校正，应核对保存后二维与三维资产的坐标一致性。
 
-LIO 内部估计 IMU 的三维状态，用于点云和地图计算。定义 `T_A_B` 为将 B 坐标转换到
-A 坐标的变换，发布底盘状态时计算：
+**定位分支**加载同一资产包：`map_server` 从 `map.yaml` 发布 `/map`，
+`relocation_node` 从 `loc_map.pcd` 加载三维环境。底盘初始位姿与 IMU 重力方向
+共同形成配准初值，经过 NDT、ICP 和后续 LIO 更新，输出底盘位姿。
+当前固定地图定位 launch 发布单位 `map -> odom`，定位结果直接位于加载地图的坐标中。
+
+模式管理器检查传感器和地图新鲜度、TF、配准质量、位姿协方差及连续稳定帧。
+APP 提交的初始位姿必须匹配当前 `map_id/map_revision`；达到 `READY`
+后才允许开始任务。建图和定位互斥，不同时运行两个 LIO 主节点。
+
+### 6. IMU、雷达、运动中心与 TF 的关系
+
+标准 TF 链为：
+
+```text
+map
+  └─ odom                   回环后端发布校正；无回环建图 / 固定地图定位发布单位变换
+       └─ base_link         Super-LIO 发布运动中心的动态位姿
+            └─ base_laser_link   根据已有标定发布固定安装变换
+```
+
+每条 TF 边只由一个发布者负责。IMU 坐标是 LIO 内部计算参考，并不要求在上述链中
+另加一个公开的 `imu_link`，也不需要额外启动第二个雷达固定 TF 发布者。
+
+定义 `T_A_B` 为将 B 坐标转换到 A 坐标的变换。已有标定给出 `T_base_laser`，
+`lio/extrinsic/lidar_imu` 给出设备内部的 `T_imu_laser`，输出层计算：
 
 ```text
 T_odom_base = T_odom_imu × T_imu_laser × inverse(T_base_laser)
 ```
 
-`T_imu_laser` 来自 MID-360 内部雷达与 IMU 外参，`T_base_laser` 来自安装标定。
-`/lio/odom`、动态 TF 和路径对应运动中心，速度包含转动产生的安装偏移补偿，协方差
-同步传播。move_base 使用该底盘位姿，并通过固定外参转换雷达观测，不再次修正底盘中心。
-每条 TF 边只由一个发布者负责。历史 IMU 频率调试接口 `/lio/robo/odom` 不作为正式导航输入。
+这一步同时处理位置和安装方向。例如 MID-360 位于运动中心前方约 10 cm，
+换算后的 `base_link` 就代表真实运动中心；俯仰和航向变化时，偏移随当前姿态旋转。
+转弯时还补偿安装偏移产生的线速度差，并将线速度和角速度表达在 `base_link` 中，
+同步传播位姿和速度协方差。
 
-重力对齐由建图和定位初始化代码根据 IMU 平均加速度执行，初始化时车辆应静止。
-当前 `kf_align_gravity` 虽被读取，但初始化对齐代码没有以它作为开关判断。
-车身整体俯仰改变不等于安装外参改变；刚性安装关系和运动中心定义不变时，倾斜建图与
-水平定位原则上可共用地图，仍需验证高度、视野和点云重叠变化后的定位效果。
-`base_link` 保留车体三维姿态，不强制变为水平参考系。
+move_base 的全局、局部 costmap 都使用 `robot_base_frame: base_link`。
+它读取上述 TF 链确定运动中心位置，并用固定安装外参转换雷达观测；
+运动中心换算由 Super-LIO 输出层完成，move_base 不重新修改该动态 TF。
+`base_link` 保留车体三维姿态，不因为重力对齐而强制变成一个水平车身坐标系。
 
-## 2. 环境与依赖
+### 7. 安装外参从哪里来、何时生效
 
-### 2.1 平台要求与工作区变量
+托管模式沿用调度器保存的安装标定，参数对应关系为：
 
-| 项目 | 要求 |
-| --- | --- |
-| 目标系统 | Ubuntu 20.04、ROS 1 Noetic |
-| 架构 | x86_64 或 RK3588 / aarch64，构建脚本自动识别 |
-| Python | 保持 Python 3.8 兼容 |
-| 雷达 | MID-360，使用 ROS 1 版 `livox_ros_driver2` |
-| 底盘 | 配套 Modbus RTU 控制器与正确的 RS485 接口 |
-| 可选指示灯 | ESP32-S3-Zero、GPIO4 外接 WS2812B 灯带 |
-
-Windows 工作区可用于编辑源码和烧录 ESP32。ROS 构建及运行在目标 Linux 环境完成，
-不能直接复用另一架构的 `.so`、可执行文件或 Catkin 缓存。
-
-在 Linux 终端设置部署路径，后续命令统一使用这两个变量：
-
-```bash
-export GRINDER_BASE_DIR=/home/neardi/work/Grinder
-export GRINDER_WS="$GRINDER_BASE_DIR/catkin_ws"
-```
-
-这些变量可加入运行用户的 `~/.bashrc`。systemd 的配置文件使用独立的绝对路径，不展开变量。
-
-### 2.2 安装 ROS Noetic
-
-已安装 ROS Noetic 的设备可跳过安装步骤。未安装时，在 Ubuntu 20.04 执行：
-
-```bash
-sudo apt update
-sudo apt install -y curl gnupg2 lsb-release ca-certificates
-curl -fsSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
-  | gpg --dearmor \
-  | sudo tee /usr/share/keyrings/ros-archive-keyring.gpg >/dev/null
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros/ubuntu focal main" \
-  | sudo tee /etc/apt/sources.list.d/ros1.list >/dev/null
-sudo apt update
-sudo apt install -y ros-noetic-desktop-full
-sudo apt install -y python3-rosdep python3-rosinstall python3-rosinstall-generator \
-  python3-wstool python3-catkin-tools build-essential cmake git pkg-config
-```
-
-初始化 rosdep 并加载 ROS 环境：
-
-```bash
-if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
-  sudo rosdep init
-fi
-rosdep update
-source /opt/ros/noetic/setup.bash
-```
-
-### 2.3 安装工程依赖
-
-将完整源码放到工作区后执行。GTSAM 和 fast_gicp 由独立安装脚本处理：
-
-```bash
-cd "$GRINDER_WS"
-source /opt/ros/noetic/setup.bash
-rosdep install --from-paths src --ignore-src --rosdistro noetic \
-  --skip-keys="gtsam fast_gicp" -r -y
-sudo apt install -y libboost-all-dev libeigen3-dev libmetis-dev libpcl-dev \
-  libgoogle-glog-dev libgflags-dev libyaml-cpp-dev \
-  python3-yaml python3-serial python3-protobuf python3-numpy python3-scipy \
-  python3-matplotlib python3-opencv python3-dev pybind11-dev
-```
-
-`grinder_scheduler` 的构建声明仍包含 `slamware_ros_sdk`；即使传感器使用 Super-LIO，
-也应保留这项编译依赖，不要删除依赖或改用 ROS 2 包绕过配置错误。
-
-### 2.4 Livox 驱动与工业回环依赖
-
-准备 ROS 1 版 `livox_ros_driver2`。板端可将其放在
-`catkin_ws/src/drivers/ws_livox/src/livox_ros_driver2/`，也可使用独立驱动工作区。
-确认部署驱动提供 `msg_MID360s.launch` 和相应设备 JSON 配置。
-独立工作区构建完成后，使用其实际 `devel/setup.bash` 加载环境。
-
-工业回环依赖通过工程脚本安装：
-
-```bash
-cd "$GRINDER_WS"
-JOBS=2 bash ./install_super_lio_loop_deps.sh
-```
-
-脚本固定 GTSAM 4.2.2 与 fast_gicp 提交，默认安装到 `/usr/local`，不替换 ROS 的 PCL。
-工业图优化要求 GTSAM；缺少 fast_gicp 时使用较慢的 PCL-GICP，并在构建时提示。
-`mapping` 构建 profile 强制要求工业后端依赖，与运行时是否开启回环无关。
-
-## 3. 设备与应用配置
-
-### 3.1 配置文件职责
-
-| 文件 | 用途 |
-| --- | --- |
-| [scheduler.yaml](catkin_ws/src/grinder_scheduler/config/scheduler.yaml) | 调度公共默认配置、规划、机器人尺寸与标定默认值 |
-| [scheduler.local.example.yaml](catkin_ws/src/grinder_scheduler/config/scheduler.local.example.yaml) | 设备本地配置示例 |
-| [super_lio.yaml](catkin_ws/src/grinder_scheduler/config/super_lio.yaml) | 模式生命周期、地图根目录、定位质量门限与回环开关 |
-| [chassis_driver.yaml](catkin_ws/src/grinder_chassis_driver/config/chassis_driver.yaml) | 串口、波特率、轮径轮距、方向、超时和磨盘能力 |
-| [livox_360.yaml](catkin_ws/src/localization/Super-LIO/src/super_lio/config/livox_360.yaml) | LIO 建图、雷达与 IMU 参数 |
-| [relocation.yaml](catkin_ws/src/localization/Super-LIO/src/super_lio/config/relocation.yaml) | 三维地图定位参数 |
-| [status_indicator.yaml](catkin_ws/src/grinder_scheduler/config/status_indicator.yaml) | 灯带通信和状态超时配置 |
-
-公共配置不保存设备凭据。首次部署时复制本地配置示例，已有文件则直接编辑：
-
-```bash
-cd "$GRINDER_BASE_DIR"
-if [ ! -f catkin_ws/src/grinder_scheduler/config/scheduler.local.yaml ]; then
-  cp catkin_ws/src/grinder_scheduler/config/scheduler.local.example.yaml \
-    catkin_ws/src/grinder_scheduler/config/scheduler.local.yaml
-fi
-```
-
-`scheduler.local.yaml` 被 Git 忽略，不随 Catkin 安装分发。平台上传、MQTT 和外部视频推流
-按需在本地配置中显式开启；凭据也可使用对应环境变量提供。
-真实设备启动脚本会发现该文件，配置顺序为公共默认、Super-LIO 配置、本地覆盖、
-显式 launch 参数。可用 `GRINDER_SCHEDULER_LOCAL_CONFIG` 指向另一份绝对路径配置；
-设置为空字符串表示不加载本地覆盖。直接 roslaunch 时使用
-`scheduler_local_config:=/absolute/path/device.yaml`。
-
-### 3.2 雷达网络和底盘串口
-
-雷达直连网口与上联网口应使用可区分的网段。检查网卡、路由与驱动配置中的
-`host_ip`、雷达 IP、UDP 端口是否一致：
-
-```bash
-ip -br addr
-ip route
-# 将下面变量替换为实际雷达 IP，再检查对应出口网卡
-LIVOX_IP=192.168.1.100
-ip route get "$LIVOX_IP"
-```
-
-底盘默认配置为 `/dev/ttyS0`、19200 波特率、Modbus 地址 1；部署前必须核对真实设备。
-ESP32 的 USB 串口与底盘 RS485 串口是两个独立设备。串口访问权限可通过 `dialout` 组提供：
-
-```bash
-sudo usermod -aG dialout "$USER"
-```
-
-更改用户组后重新登录。单独启动底盘节点会访问真实控制器，节点默认先输出零速，
-任务使能默认关闭；调试时保留超时和急停保护。
-
-### 3.3 安装标定、地图与导航参数
-
-APP 保存的底盘—雷达标定由调度器传给模式管理器，建图和定位共用同一组参数：
-
-| 调度参数 | 模式启动 / LIO 参数末尾名称 | 单位 |
+| 调度标定参数 | 模式启动参数及 LIO 参数末尾名称 | 单位 |
 | --- | --- | --- |
 | `base_laser_x/y/z` | `base_to_laser_x/y/z` | 米 |
 | `base_laser_roll_deg` | `base_to_laser_roll` | 调度为度，启动 / LIO 为弧度 |
 | `base_laser_pitch_deg` | `base_to_laser_pitch` | 调度为度，启动 / LIO 为弧度 |
 | `base_laser_yaw_deg` | `base_to_laser_yaw` | 调度为度，启动 / LIO 为弧度 |
 
-launch 同时用这组参数发布固定 TF 并配置 `/lio/extrinsic/base_to_laser_*`。
-例如雷达在运动中心前方 0.2 m，X 应为 `0.2`；Y、Z 和安装角仍按实测填写。
-车身对地面的倾角不是安装外参。修改标定后通过正常流程停止并重启地图模式，使
-固定 TF 和 LIO 同时加载新值。手工启动 LIO 时必须自己传入同一组标定参数。
+参数传递链为：
 
-`super_lio_map_root` 指定托管地图目录。`super_lio_loop_closure` 默认 `false`，
-需要工业回环时在设备配置中显式设为 `true`；手工建图 launch 默认开启工业回环。
-`super_lio_autosave` 默认 `false`，由 APP 明确保存地图。
+```text
+调度器已有标定 / 设备配置
+  -> 调度器将角度转换为弧度，写入模式管理器参数
+  -> 模式管理器在建图或定位启动时传入同一组 base_to_laser_* 参数
+  -> launch 同时配置：
+       ① base_link -> base_laser_link 固定 TF
+       ② /lio/extrinsic/base_to_laser_*，供 LIO 输出及初始定位换算
+```
 
-导航全局与局部 costmap 使用 `base_link`。RPP 控制器使用底盘反馈 `/odom_wheel`；
-LIO 的 `/lio/odom` 提供底盘定位输入。参数位于导航包的 `cfg/diff_drive/`，
-修改前先确认启动的是 RPP 还是 TEB。
+因此，修改已有标定后应通过正常流程停止并重新启动地图模式，确保固定 TF 和
+LIO 同时使用新参数。更换代码后还需先在 Linux / ROS Noetic 环境重新构建。
+不要仅改其中一处，也不要把“约 10 cm”硬编码进算法。
 
-## 4. 编译与产物检查
+手工 roslaunch 不会自动读取调度器已保存的标定；建图和定位命令都必须显式传入
+实际 `base_to_laser_*`。本 README 命令中的 `0.0` 为示例占位值，不代表设备实测值。
+全零底盘—雷达标定表示两者坐标重合，不能消除 MID-360 内部雷达与 IMU 的固定差异。
+旧 `legacy_tf: true` 模式仍保持历史里程计 / TF 行为，并提示未启用本节的底盘补偿。
 
-### 4.1 首次构建
+### 8. 30° 行走模式建图与 0° 工作模式定位
 
-在 `catkin_ws` 根目录运行构建，不进入 Super-LIO 源码目录单独 make。
-驱动源码在同一工作区时，先构建 ROS 1 Livox 包：
+车身整体倾斜会同时改变 MID-360 点云和内置 IMU 的姿态。
+建图、定位初始化代码都用 IMU 平均加速度估计重力方向，再计算对齐旋转；
+建图不会直接将车身起始的 30° 倾角当作整张地图的倾角。
+定位则按当前 0° 姿态重新估计重力方向，再与三维地图配准。
+
+这部分处理写在 `super_lio.cpp` 和 `relocation.cpp` 的初始化代码中。
+虽然配置中存在 `kf_align_gravity`，当前实现读取该参数，但上述初始化对齐代码
+没有用它作为开关判断。因此无需把 30° 写进配置来开启补偿，也不能依赖将该参数
+设为 `false` 来关闭当前初始化对齐。
+
+在设备与车身刚性关系不变、实际运动中心定义不变的前提下，30° 建图与 0° 定位
+可以共用环境地图及安装外参。拆装导向轮后应先放稳车辆，再开始初始化；
+高度和视野变化会影响配准初值与可见点云重叠，需要通过回放和实车定位验收确认效果。
+
+`/initialpose` 在标准模式中表示底盘中心在地图中的位置及航向。
+初始化时结合重力和安装外参换算为 IMU 配准初值，已移除写死的传感器高度 `0.2`。
+输入 Z 是地图坐标中的底盘高度，不一定等于离地高度；当前 APP 的二维重定位请求
+提供 X/Y/航向，调度器发布时 Z 为 `0.0`，RViz 的二维初始位姿也应按地图参考理解。
+有明确高度初值时可通过模式管理器的带三维 Pose 服务提交；最终位姿仍由三维配准优化。
+
+### 9. 任务执行与安全链路
+
+调度器根据当前地图、作业区域、机器人尺寸和任务参数调用路径规划适配层，
+管理路径段、作业轮次、目标点及任务进度。move_base 使用 `/map`、里程计、TF
+和雷达观测生成 `/cmd_vel`，底盘驱动再将线速度 / 角速度换算为左右轮指令。
+任务使能与速度指令是两条独立输入，收到速度并不等于允许底盘执行。
+
+暂停、停止或异常处理继续关闭 `/chassis/task_enable`，清零轮速并执行磨盘安全控制；
+串口超时与急停保护仍由现有安全链路处理。此次位姿修复不改变这些控制条件。
+磨盘中心若不在底盘运动中心，作业工具的固定偏移仍需单独描述；雷达安装标定
+只负责雷达与底盘的关系，不自动定义磨盘中心。
+
+本次坐标修复已通过独立 C++ 数学回归、14 项调度 / 启动链测试及轻量回环节点
+Catkin 编译。完整 Super-LIO 构建在本地 WSL 因缺少 `livox_ros_driver2` 被阻断；
+完整构建、录包回放、旧地图一致性与 30°/0° 实车定位仍需在目标环境验收。
+实现和验证入口见 [Super-LIO 集成说明](catkin_ws/src/localization/Super-LIO/UPSTREAM.md#base-pose-and-mounting-calibration)。
+
+## 关键配置文件
+
+- 调度配置：
+[scheduler.yaml](/home/chersxir/work/Grinder/catkin_ws/src/grinder_scheduler/config/scheduler.yaml)
+- 底盘配置：
+[chassis_driver.yaml](/home/chersxir/work/Grinder/catkin_ws/src/grinder_chassis_driver/config/chassis_driver.yaml)
+- 协议定义：
+[sl_link.proto](/home/chersxir/work/Grinder/third_party/sl_linka/proto/sl_link.proto)
+
+常用调度参数（`scheduler.yaml`）：
+
+- `path_goal_reach_dist`：到点判定距离
+- `path_segment_timeout`：当前段超时重发时间
+- `draw_region_label_on_preview`：区域名称是否绘制
+- `draw_region_id_on_preview`：是否拼接显示区域ID
+- `live_map_cache_clear_mode`：`all` / `memory_only`
+
+Super-LIO 模式、地图根目录和启停超时位于
+`catkin_ws/src/grinder_scheduler/config/super_lio.yaml`；该文件不包含设备凭据，可随代码部署。
+
+### 默认配置与设备本地覆盖
+
+`scheduler.yaml` 是受 Git 管理的公共默认配置，不含设备凭据；平台上传、
+MQTT 和远端视频推流默认关闭。设备端复制
+`catkin_ws/src/grinder_scheduler/config/scheduler.local.example.yaml` 为同目录的
+`scheduler.local.yaml`，只填写设备差异、服务地址和凭据，并显式打开所需服务。
+`scheduler.local.yaml` 被 Git 忽略，Catkin 安装也不携带该文件。
+
+`start_grinder_stack.sh` 和 `start_grinder_super_lio_base.sh` 自动发现该本地文件，
+启动前检查 YAML。可通过 `GRINDER_SCHEDULER_LOCAL_CONFIG=/absolute/path/device.yaml`
+选择其他覆盖文件；显式设置为空字符串可使用纯默认配置。
+`start_grinder_sim.sh` 不自动发现设备文件，仿真配置强制关闭平台上传、MQTT 和远端推流。
+
+直接使用 roslaunch 时，按需传入覆盖文件：
 
 ```bash
+roslaunch grinder_scheduler scheduler.launch \
+  scheduler_local_config:=/absolute/path/scheduler.local.yaml
+```
+
+不传覆盖参数且没有 `GRINDER_SCHEDULER_LOCAL_CONFIG` 环境变量时，只加载公共配置。
+顺序为公共配置、Super-LIO 配置（真实启动）、本地覆盖、显式 launch 参数；
+仿真在本地覆盖之后加载仿真配置。显式传入的文件缺失或 YAML 无效会阻止启动。
+密码也可由 `GRINDER_PLATFORM_PASSWORD`、`MQTT_USERNAME`/`MQTT_PASSWORD` 等环境变量提供；
+只有本地配置显式启用相应服务后才会连接。
+
+### Super-LIO 源码恢复
+
+`catkin_ws/src/localization/Super-LIO` 已按普通文件纳入根仓库，保留了本地集成改动。
+新克隆无需初始化子模块；上游地址、基准版本和导入说明见该目录的 `UPSTREAM.md`，
+原有 GPL-3.0 许可证和第三方声明随源码保留。
+
+## ROS Noetic 安装、工业级编译与正式启动
+
+以下流程面向 Ubuntu 20.04（focal）+ ROS Noetic，支持 x86_64 和 RK3588/aarch64，
+传感器为 Livox MID-360S。工业回环使用 GTSAM 4.2 iSAM2，并优先使用 fast_gicp
+（FastVGICP）；二维地图由 cloud_to_occupancy_grid 增量维护，不使用 GMapping。
+
+工作区路径示例：
+
+~~~bash
+export GRINDER_WS=/home/neardi/work/Grinder/catkin_ws
+cd "$GRINDER_WS"
+~~~
+
+建图和定位互斥：
+
+~~~text
+建图：super_lio_node + super_lio_loop + cloud_to_occupancy_grid
+定位：map_server + relocation_node
+~~~
+
+不要同时运行 super_lio_node 和 relocation_node。
+
+### 1. 安装 ROS Noetic
+
+ROS Noetic 的目标系统是 Ubuntu 20.04。在板端执行：
+
+~~~bash
+sudo apt update
+sudo apt install -y curl gnupg2 lsb-release ca-certificates
+
+curl -fsSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+  | gpg --dearmor \
+  | sudo tee /usr/share/keyrings/ros-archive-keyring.gpg >/dev/null
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+http://packages.ros.org/ros/ubuntu focal main" \
+  | sudo tee /etc/apt/sources.list.d/ros1.list >/dev/null
+
+sudo apt update
+sudo apt install -y ros-noetic-desktop-full
+~~~
+
+如果官方源不可访问，将 /etc/apt/sources.list.d/ros1.list 中的
+packages.ros.org/ros/ubuntu 替换为可用镜像后再执行 sudo apt update。
+
+安装 rosdep、Catkin 和基础工具：
+
+~~~bash
+sudo apt install -y \
+  python3-rosdep python3-rosinstall python3-rosinstall-generator \
+  python3-wstool python3-catkin-tools build-essential cmake git pkg-config
+
+if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+  sudo rosdep init
+fi
+rosdep update
+~~~
+
+每个新终端先加载：
+
+~~~bash
+source /opt/ros/noetic/setup.bash
+source "$GRINDER_WS/devel/setup.bash" 2>/dev/null || true
+~~~
+
+工作区第一次成功编译后，再把这两行加入 ~/.bashrc。
+
+### 2. 安装工作区依赖
+
+~~~bash
 cd "$GRINDER_WS"
 source /opt/ros/noetic/setup.bash
-catkin_make -DCATKIN_WHITELIST_PACKAGES=livox_ros_driver2 \
-  -DCMAKE_BUILD_TYPE=Release -j2 -l2
-source devel/setup.bash
-```
 
-若使用独立 Livox 工作区，先完成该工作区构建并 source 它的 `devel/setup.bash`，
-跳过上面的同工作区驱动构建。随后构建定位建图链和平台主包：
+rosdep install \
+  --from-paths src \
+  --ignore-src \
+  --rosdistro noetic \
+  --skip-keys="gtsam fast_gicp" \
+  -r -y
 
-```bash
-cd "$GRINDER_WS"
-CATKIN_JOBS=2 CATKIN_LOAD=2 PROFILE=mapping bash ./build_grinder_platform.sh
-CATKIN_JOBS=2 CATKIN_LOAD=2 PROFILE=full bash ./build_grinder_platform.sh
-source devel/setup.bash
-```
+sudo apt install -y \
+  libboost-all-dev libeigen3-dev libmetis-dev libpcl-dev \
+  libgoogle-glog-dev libyaml-cpp-dev
+~~~
 
-**`full` 不包含 `mapping`，完整 MID-360 系统需要分别构建这两个 profile。**
-RK3588 建议从两任务并行开始，避免内存不足。脚本会检查工作区路径和架构缓存，
-不匹配时按配置备份处理；正常增量构建不需要删除 `build`、`devel`。
+GTSAM 和 fast_gicp 是外部依赖，按下一节安装；不要用 ROS 2 包解决 ROS 1 依赖。
 
-### 4.2 构建范围选择
+### 2.1 MST27 路径规划依赖
 
-| `PROFILE` | 范围 |
-| --- | --- |
-| `mapping` | Super-LIO、回环、二维栅格及其依赖，强制工业后端依赖检查 |
-| `full` | 底盘、Slamware 适配、调度和导航主包，不包含 mapping |
-| `runtime` | 底盘、Slamware 适配、调度 |
-| `scheduler` | 调度包，要求依赖包已可用 |
-| `chassis` | 底盘驱动包 |
-| `nav` | move_base、RPP / TEB 等导航包 |
-| `aurora` | Slamware 适配包 |
-| `sim` | Gazebo 仿真、调度及对应导航依赖 |
+调度器默认使用：
 
-例如仅修改 LIO 和调度时，分别执行 `PROFILE=mapping` 与 `PROFILE=scheduler`。
-修改 C++、消息、服务或 CMake 后重新构建；普通参数文件修改后重新启动对应节点。
-更新 systemd 管理脚本后还需重新执行服务安装脚本，不能只更新工作区里的副本。
+~~~yaml
+planner_script_path: third_party/path_planner/mst27/mst27.py
+~~~
 
-### 4.3 MST27 C++ 规划内核
+MST27 的 Python 规划器需要 NumPy、SciPy、Matplotlib 和 OpenCV；生产环境还应编译
+同目录下的 C++/pybind11 加速内核。安装依赖：
 
-规划内核是独立 Python 扩展，应使用板端 Python 和架构显式编译：
+~~~bash
+sudo apt install -y \
+  python3-numpy \
+  python3-scipy \
+  python3-matplotlib \
+  python3-opencv \
+  python3-dev \
+  pybind11-dev
+~~~
 
-```bash
+设置仓库根目录，确保调度器能解析相对的 planner_script_path：
+
+~~~bash
+export GRINDER_BASE_DIR=/home/neardi/work/Grinder
+~~~
+
+编译 MST27 C++ 内核（Release）：
+
+MST27 扩展当前使用独立 CMake 工程；不要假设仅执行 catkin_make 就一定会生成该
+Python 扩展，正式部署应显式执行下面的 CMake 命令。
+
+~~~bash
 cd "$GRINDER_BASE_DIR/third_party/path_planner/mst27"
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-  -DPython3_EXECUTABLE="$(command -v python3)"
+cmake \
+  -S . \
+  -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DPython3_EXECUTABLE="$(which python3)"
 cmake --build build --parallel 2
-python3 -c "import numpy, scipy, matplotlib, cv2; import _mst27_cpp; print('MST27 dependencies: OK')"
-```
+~~~
 
-产物为 `mst27.py` 同目录下的 `_mst27_cpp*.so`。日志中的 C++ 后端提示表示使用加速内核；
-Python fallback 表示未加载扩展。更换 CPU 架构或 Python ABI 后重新编译扩展。
+扩展模块应生成在 mst27.py 同目录。验证 Python 依赖和 C++ 内核：
 
-### 4.4 检查构建产物与环境
+~~~bash
+python3 -c "import numpy, scipy, matplotlib, cv2; print('MST27 Python dependencies: OK')"
+python3 -c \
+  "import sys; sys.path.insert(0, '$GRINDER_BASE_DIR/third_party/path_planner/mst27'); import _mst27_cpp; print('MST27 C++ backend: OK')"
+~~~
 
-每个新运行终端都先加载 ROS 和工作区环境；构建完成后可将这些 source 命令加入 `~/.bashrc`：
+调度器启动日志出现 [C++后端] 使用C++规划内核 表示使用加速内核；如果出现
+Python fallback，路径规划仍可运行，但速度会明显下降。若工作区从 x86_64 复制到
+RK3588，先检查扩展架构：
 
-```bash
+~~~bash
+file "$GRINDER_BASE_DIR/third_party/path_planner/mst27/"_mst27_cpp*.so
+~~~
+
+架构不匹配时，只删除该目录下的旧 _mst27_cpp*.so，再在目标板重新编译，不能复用
+x86_64 的 .so。
+
+### 3. 安装工业回环依赖
+
+| 依赖 | 作用 | 要求 |
+| --- | --- | --- |
+| GTSAM 4.2.2 | Pose3 图优化、iSAM2、协方差 | 必需 |
+| fast_gicp | FastVGICP 点云配准 | 推荐 |
+| ROS Noetic PCL 1.10 | 无 fast_gicp 时的 PCL-GICP 降级路径 | 已由 ROS/apt 提供 |
+
+在线安装（推荐）：
+
+~~~bash
+cd "$GRINDER_WS"
+JOBS=2 bash ./install_super_lio_loop_deps.sh
+~~~
+
+RK3588 建议 JOBS=2。脚本固定 GTSAM 4.2.2 和已验证的 fast_gicp 提交，并安装到
+/usr/local，不替换 ROS 自带的 PCL。
+
+GitHub 网络受限时，在电脑上下载以下源码后复制到板端：
+
+- GTSAM 4.2.2：https://github.com/borglab/gtsam/tree/4.2.2
+- fast_gicp：https://github.com/koide3/fast_gicp
+
+~~~bash
+scp gtsam-4.2.2.tar.gz neardi@<板端IP>:/home/neardi/
+~~~
+
+板端编译 GTSAM：
+
+~~~bash
+mkdir -p /home/neardi/deps
+tar -xzf /home/neardi/gtsam-4.2.2.tar.gz -C /home/neardi/deps
+
+cmake \
+  -S /home/neardi/deps/gtsam-4.2.2 \
+  -B /home/neardi/deps/gtsam-build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/usr/local \
+  -DGTSAM_BUILD_TESTS=OFF \
+  -DGTSAM_BUILD_EXAMPLES_ALWAYS=OFF \
+  -DGTSAM_BUILD_UNSTABLE=OFF \
+  -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF \
+  -DGTSAM_USE_SYSTEM_EIGEN=ON
+
+cmake --build /home/neardi/deps/gtsam-build --parallel 2
+sudo cmake --install /home/neardi/deps/gtsam-build
+sudo ldconfig
+find /usr/local -name GTSAMConfig.cmake
+~~~
+
+只安装 GTSAM 也会生成工业图优化节点；缺少 fast_gicp 时会明确降级到较慢的
+PCL-GICP，不会悄悄切换成轻量回环。
+
+### 4. 正式 Release 编译
+
+先编译 ROS 1 Livox 驱动。板端驱动包应位于
+src/drivers/ws_livox/src/livox_ros_driver2；不要混用 ROS 2 的 ament_cmake_auto 工程。
+
+~~~bash
+cd "$GRINDER_WS"
 source /opt/ros/noetic/setup.bash
+catkin_make \
+  -DCATKIN_WHITELIST_PACKAGES=livox_ros_driver2 \
+  -DCMAKE_BUILD_TYPE=Release \
+  -j2 -l2
+~~~
+
+再强制编译工业回环：
+
+~~~bash
+catkin_make \
+  -DCATKIN_WHITELIST_PACKAGES="super_lio;super_lio_loop;cloud_to_occupancy_grid" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DSUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON \
+  -DGTSAM_DIR=/usr/local/lib/cmake/GTSAM \
+  -j2 -l2
+~~~
+
+SUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON 会在 GTSAM 缺失时直接失败，避免误以为已经
+编译成工业版本。确认：
+
+~~~bash
 source "$GRINDER_WS/devel/setup.bash"
+rospack find livox_ros_driver2
+ls -lh "$GRINDER_WS/devel/lib/super_lio_loop/"
+~~~
+
+工业版本必须同时有：
+
+~~~text
+super_lio_loop_node
+super_lio_graph_backend_node
+~~~
+
+也可以使用平台脚本：
+
+~~~bash
+cd "$GRINDER_WS"
+CATKIN_JOBS=2 CATKIN_LOAD=2 PROFILE=mapping ./build_grinder_platform.sh
+~~~
+
+PROFILE=mapping 已自动传入工业后端强制选项。其它 profile：
+
+~~~bash
+PROFILE=runtime ./build_grinder_platform.sh   # 底盘、Aurora、调度器
+PROFILE=nav     ./build_grinder_platform.sh   # move_base、RPP/TEB
+PROFILE=full    ./build_grinder_platform.sh   # 平台主包
+~~~
+
+如果之前只编译过某个包，先检查旧白名单：
+
+~~~bash
+grep CATKIN_WHITELIST_PACKAGES "$GRINDER_WS/build/CMakeCache.txt"
+~~~
+
+必要时执行一次：
+
+~~~bash
+catkin_make -DCATKIN_WHITELIST_PACKAGES="" -DCMAKE_BUILD_TYPE=Release -j2 -l2
+~~~
+
+不要把 -DCMAKE_BUILD_TYPE=Release 粘贴到 CATKIN_WHITELIST_PACKAGES 的引号内部。
+
+### 4.1 编译 Super-LIO
+
+本次修改包含 Super-LIO 的 C++ 位姿输出、初始定位、速度及协方差换算，以及
+回环代码、launch 和调度模式管理器。**必须在目标 Linux / ROS Noetic 环境重新编译，
+再重新启动相关进程；仅更新源码或重新启动 move_base 不会更新正在运行的 LIO。**
+Windows 工作区用于编辑，不能把 Windows 编译产物直接用于 RK3588。
+
+源码与编译产物的位置：
+
+| 内容 | 仓库内位置 / 工作区产物位置 |
+| --- | --- |
+| Super-LIO 源码包 | `catkin_ws/src/localization/Super-LIO/src/super_lio/` |
+| 配套基础库源码 | `catkin_ws/src/localization/Super-LIO/src/basic/` |
+| 回环源码包 | `catkin_ws/src/localization/super_lio_loop/` |
+| 建图可执行文件 | `catkin_ws/devel/lib/super_lio/super_lio_node` |
+| 定位可执行文件 | `catkin_ws/devel/lib/super_lio/relocation_node` |
+| 回环可执行文件 | `catkin_ws/devel/lib/super_lio_loop/` 下的两个后端节点 |
+
+编译命令在仓库的 **`catkin_ws` 工作区根目录**执行，而不是进入 Super-LIO 源码目录
+单独运行 make。`PROFILE=mapping` 会带依赖构建 `super_lio`、`super_lio_loop` 和
+`cloud_to_occupancy_grid`。**当前 `PROFILE=full` 只构建平台主包，不包含 mapping；
+单独运行默认构建脚本不能替代下面的 mapping 构建。**
+
+更新代码前先通过 APP / 现有任务接口停止任务。使用 systemd 管理整套程序的板端，
+再执行 `sudo grinder-service stop`；手工启动的程序应先正常退出原启动脚本和地图模式。
+下面是已有依赖的板端更新构建方法，路径按实际部署位置调整：
+
+~~~bash
+export GRINDER_WS=/home/neardi/work/Grinder/catkin_ws
+cd "$GRINDER_WS"
+source /opt/ros/noetic/setup.bash
+
+# 先更新 LIO、定位、回环及二维建图包
+CATKIN_JOBS=2 CATKIN_LOAD=2 PROFILE=mapping bash ./build_grinder_platform.sh
+
+# 再更新本次一起修改的调度模式管理器及相关启动资源
+CATKIN_JOBS=2 CATKIN_LOAD=2 PROFILE=scheduler bash ./build_grinder_platform.sh
+
+# 当前终端使用本工作区的包与新产物
+source "$GRINDER_WS/devel/setup.bash"
+~~~
+
+已有构建缓存与当前路径、架构一致时可以增量编译，不需要先删除 `build` 或 `devel`。
+平台脚本会检查路径和架构不匹配的缓存并按其配置备份处理。
+无需重新生成 SL-LinkA SDK，也无需为此次更新单独重编译 move_base；协议和导航源码
+没有因本次运动中心换算而改变。
+
+首次部署或依赖不完整时，先完成本章前面的 ROS、Livox 和工业回环依赖安装。
+`PROFILE=mapping` 强制要求工业回环依赖，即使运行配置暂时关闭回环也一样。
+缺少 `livox_ros_driver2` 时，先确认板端 ROS 1 驱动源码存在并按第 4 节构建驱动；
+不要改成 ROS 2 工程或删除这个依赖来绕过错误。驱动若在独立工作区，构建前还需
+source 该工作区的 `devel/setup.bash`，使其进入当前依赖搜索路径。
+
+构建成功后，在同一终端检查实际使用的包和产物：
+
+~~~bash
 rospack find super_lio
 rospack find livox_ros_driver2
 ls -lh "$GRINDER_WS/devel/lib/super_lio/super_lio_node"
 ls -lh "$GRINDER_WS/devel/lib/super_lio/relocation_node"
 ls -lh "$GRINDER_WS/devel/lib/super_lio_loop/super_lio_loop_node"
 ls -lh "$GRINDER_WS/devel/lib/super_lio_loop/super_lio_graph_backend_node"
-```
+~~~
 
-`rospack find` 应指向预期部署目录。工业构建应同时具有轻量节点和工业图优化节点；
-仅存在轻量节点不能视为工业后端构建完成。
+确认 `rospack find super_lio` 指向当前部署仓库，而不是旧工作区。
+systemd 部署在构建成功后执行 `sudo grinder-service start`；手工部署则重新运行
+`./start_grinder_super_lio_base.sh`。常驻服务启动后地图模式为 `IDLE`，还需通过 APP
+重新选择地图并启动定位、提交底盘中心初始位姿；达到 `READY` 后再恢复任务。
+既有标定沿原参数链加载，已有地图保留，先做定位一致性验证再决定是否需要重建。
 
-## 5. 手工运行与地图操作
+底盘静止并完成定位初始化后，可只读检查：
 
-### 5.1 启动常驻服务
+~~~bash
+rosparam get /lio/ros/legacy_tf
+rosparam get /lio/extrinsic/base_to_laser_x
+rosparam get /lio/extrinsic/base_to_laser_y
+rosparam get /lio/extrinsic/base_to_laser_z
+rosparam get /lio/extrinsic/base_to_laser_roll
+rosparam get /lio/extrinsic/base_to_laser_pitch
+rosparam get /lio/extrinsic/base_to_laser_yaw
+rostopic echo -n 1 /lio/odom
+rosrun tf tf_echo odom base_link
+rosrun tf tf_echo base_link base_laser_link
+~~~
 
-先确认设备配置、串口、雷达网络和构建产物正常。手工启动与 systemd 部署二选一，
-不要让两套流程重复启动 Livox、底盘、导航或灯带节点：
+标准模式下 `legacy_tf` 应为 `false`，`/lio/odom` 的 `header.frame_id` 为 `odom`、
+`child_frame_id` 为 `base_link`；LIO 的六个安装参数应与固定 TF 对应的实测外参一致。
+这些检查用于确认配置与发布坐标系，不能单靠帧名证明底盘中心数值准确，仍需核对
+实际安装偏移、点云与地图重合程度及转动时的运动中心位置。
+独立数学回归和启动链测试方法见
+[Super-LIO 集成验证说明](catkin_ws/src/localization/Super-LIO/UPSTREAM.md#base-pose-and-mounting-calibration)。
 
-```bash
-cd "$GRINDER_WS"
+### 5. MID-360S 网络和驱动验证
+
+雷达直连网口和路由器网口不要使用相同网段，否则 Linux 可能把雷达数据发到错误网卡：
+
+~~~bash
+ip -br addr
+ip route
+ip route get <雷达IP>
+~~~
+
+最后一条必须显示连接雷达的网卡（例如 eth0），不能显示 lo 或路由器网卡。
+host_ip、雷达 ip 和端口必须与 livox_ros_driver2/config/MID360s_config.json 一致。
+
+~~~bash
 source /opt/ros/noetic/setup.bash
-source devel/setup.bash
-bash ./start_grinder_super_lio_base.sh
-```
+source "$GRINDER_WS/devel/setup.bash"
+roslaunch livox_ros_driver2 msg_MID360s.launch
+rostopic hz /livox/lidar
+rostopic hz /livox/imu
+~~~
 
-该脚本启动或复用 ROS master，启动 Livox、底盘、RPP、调度器和模式管理器。
-地图模式初始为 `IDLE`，不会自动建图或定位，更不会自动执行任务。
-脚本监督子进程并记录日志，同一工作区通过锁拒绝重复启动。
+不需要录制 LVX 数据时：
 
-| 环境变量 | 用途 / 默认值 |
-| --- | --- |
-| `START_LIVOX` | 是否启动 Livox，默认 `1` |
-| `START_CHASSIS` | 是否启动真实底盘驱动，默认 `1` |
-| `START_NAV` | 是否启动 RPP 导航，默认 `1` |
-| `START_INDICATOR` | 是否启动灯带通信服务，默认 `0` |
-| `LIVOX_SETUP` | 独立 Livox 工作区环境路径，空时尝试发现驱动 |
-| `NAV_MAP_YAML` | 导航地图路径，按设备部署填写 |
-| `SUPER_LIO_MAP_ROOT` | 托管地图根目录，默认仓库 `maps/` |
+~~~bash
+roslaunch livox_ros_driver2 msg_MID360s.launch \
+  enable_lidar_bag:=false \
+  enable_imu_bag:=false
+~~~
 
-首次只联调传感器和 APP、不接底盘时，可关闭底盘与导航；此模式不用于执行真实任务：
+Release 编译不会关闭 ROS 日志；上面的参数只关闭雷达/IMU bag 录制。
 
-```bash
-cd "$GRINDER_WS"
-START_CHASSIS=0 START_NAV=0 bash ./start_grinder_super_lio_base.sh
-```
+### 6. 工业级手工建图和定位
 
-独立驱动工作区通过 `LIVOX_SETUP=/absolute/path/devel/setup.bash` 传入。
-启动后先检查服务状态和协议监听：
+驱动正常后，另一个终端启动工业建图：
 
-```bash
-rosservice call /super_lio_mode/get_status
-rosnode info /grinder_scheduler
-ss -lntp | grep 8002
-```
-
-### 5.2 APP 连接与地图生命周期
-
-APP / 上位机通过 TCP 连接工控机 IP 和 SL-LinkA 端口 `8002`。地图与任务操作由调度器
-分发给模式管理器。推荐流程：
-
-1. 启动常驻服务，确认地图模式为 `IDLE`。
-2. 请求建图，模式进入 `MAPPING`，按现场流程采集环境。
-3. 在 `MAPPING` 仍活动时提交 `MapSaveRequest`，不要先切换定位。
-4. 保存成功取得正式 `map_id` 和 `map_revision`；建图停止，定位不会自动启动。
-5. 选择已保存地图，启动定位，并提交身份匹配的初始位姿。
-6. 轮询定位状态，只有达到 `READY` 后才开始作业任务。
-
-`LIVE_MAP` 是实时建图源保留 ID，不是正式资产目录名。保存后每张地图独立存储：
-
-```text
-maps/<map_id>/
-├── loc_map.pcd       三维定位点云
-├── plan_map.pcd      三维规划点云
-├── map.yaml         二维地图元信息
-├── map.pgm          二维占据栅格
-└── map_info.json    地图身份、版本和文件清单
-```
-
-保存通过 `/lio/get_3dmap` 和栅格保存服务获取资产，校验后原子提交目录。
-保存失败时建图保持运行，可排查后重试。开启回环时，三维保存入口仍属于 Super-LIO，
-应核对保存后的三维 PCD 与校正二维栅格坐标一致，不能只检查实时二维地图。
-
-定位使用 `map_server` 发布二维地图、`relocation_node` 加载三维 PCD。
-`/initialpose` 表示地图坐标中的底盘中心位置和航向，结合重力及安装外参换算为 IMU 配准初值。
-输入 Z 是地图坐标高度，不一定等于离地高度；APP 二维请求目前发布 Z 为零，
-需要明确三维高度时使用模式管理器的三维 Pose 服务。定位通过 NDT / ICP 和后续 LIO 更新，
-经新鲜度、配准质量、协方差和稳定帧检查后进入 `READY`。
-
-### 5.3 按组件调试
-
-只在常驻服务和托管地图模式未运行对应组件时单独启动。每个终端先 source 环境，
-需要时先运行 `roscore`。下表命令分别在独立终端执行：
-
-| 组件 | 启动命令 |
-| --- | --- |
-| Livox | `roslaunch livox_ros_driver2 msg_MID360s.launch` |
-| 底盘 | `roslaunch grinder_chassis_driver chassis_driver.launch` |
-| RPP 导航 | `roslaunch teb_local_planner_tutorials robot_diff_drive.launch local_planner:=rpp` |
-| TEB 导航 | `roslaunch teb_local_planner_tutorials robot_diff_drive.launch local_planner:=teb` |
-| 调度与模式管理器 | `roslaunch grinder_scheduler scheduler.launch odom_topic:=/lio/odom map_topic:=/map` |
-
-直接启动调度 launch 时，按需增加 `scheduler_local_config` 和 `super_lio_map_root` 参数。
-Livox 的 bag 录制可用 `enable_lidar_bag:=false enable_imu_bag:=false` 关闭，
-这不会关闭 ROS 日志。
-
-需要绕过模式管理器单独调试建图或定位时，先在各终端设置相同的实测安装参数。
-以下零值仅为占位，不能直接当作设备标定：
-
-```bash
-BASE_TO_LASER_X=0.0
-BASE_TO_LASER_Y=0.0
-BASE_TO_LASER_Z=0.0
-BASE_TO_LASER_ROLL=0.0
-BASE_TO_LASER_PITCH=0.0
-BASE_TO_LASER_YAW=0.0
-```
-
-单独建图：
-
-```bash
+~~~bash
+source /opt/ros/noetic/setup.bash
+source "$GRINDER_WS/devel/setup.bash"
 roslaunch cloud_to_occupancy_grid mid360_mapping.launch \
   rviz:=true save_3d_map:=true loop_closure:=true loop_backend:=industrial \
-  base_to_laser_x:="$BASE_TO_LASER_X" base_to_laser_y:="$BASE_TO_LASER_Y" \
-  base_to_laser_z:="$BASE_TO_LASER_Z" base_to_laser_roll:="$BASE_TO_LASER_ROLL" \
-  base_to_laser_pitch:="$BASE_TO_LASER_PITCH" base_to_laser_yaw:="$BASE_TO_LASER_YAW"
-```
+  base_to_laser_x:=0.0 base_to_laser_y:=0.0 base_to_laser_z:=0.0 \
+  base_to_laser_roll:=0.0 base_to_laser_pitch:=0.0 base_to_laser_yaw:=0.0
+~~~
 
-关闭回环时使用 `loop_closure:=false`，栅格输入改为 `/lio/map_cloud`；开启回环时为
-`/lio/loop_cloud`，工业后端负责 `map -> odom` 并支持历史栅格重投影。
-`loop_backend:=lightweight` 用于诊断，其二维位姿图不替代工业后端。
-
-单独定位时，将 `MAP_DIR` 替换为实际资产目录。二维地图和三维定位分别在两个终端启动：
-
-```bash
-MAP_DIR="$GRINDER_BASE_DIR/maps/实际地图ID"
-rosrun map_server map_server "$MAP_DIR/map.yaml"
-```
-
-```bash
-MAP_DIR="$GRINDER_BASE_DIR/maps/实际地图ID"
-roslaunch super_lio relocation.launch rviz:=true map_dir:="$MAP_DIR" map_name:=loc_map.pcd \
-  base_to_laser_x:="$BASE_TO_LASER_X" base_to_laser_y:="$BASE_TO_LASER_Y" \
-  base_to_laser_z:="$BASE_TO_LASER_Z" base_to_laser_roll:="$BASE_TO_LASER_ROLL" \
-  base_to_laser_pitch:="$BASE_TO_LASER_PITCH" base_to_laser_yaw:="$BASE_TO_LASER_YAW"
-```
-
-在 RViz 使用 `2D Pose Estimate` 提交初值。建图节点与定位节点互斥，禁止同时运行。
-手工产生的地图文件不自动具有托管资产身份，正式地图保存优先使用 APP 生命周期。
-
-## 6. systemd 部署与开机自启
-
-<a id="12-板端开机自启主系统与灯带统一开关"></a>
-
-### 6.1 安装服务
-
-完成构建和手工联调后，先停止任务并正常退出原启动脚本及独立节点，再安装服务：
-
-```bash
-cd "$GRINDER_WS"
-sudo bash ./install_grinder_service.sh neardi
-sudo nano /etc/grinder/startup.conf
-```
-
-首次安装默认关闭自启且不启动节点；重新安装保留已有配置。服务以指定普通用户运行。
-若提示 `/etc/grinder` 不存在，先完成安装；若缺少 `scripts/grinder-service`，
-先同步完整服务脚本。管理命令是安装副本，更新其源码后需要重新执行安装脚本。
-
-### 6.2 配置启动参数
-
-`/etc/grinder/startup.conf` 是 `KEY=VALUE` 文件，不是 YAML，不展开 `$HOME`、`~`
-或 shell 命令。用户和文件路径须真实存在；`NAV_MAP_YAML` 必须指向有效地图文件。
-没有正式地图时，先按手工流程建图保存，再配置 systemd。未接 ESP32 的基本配置示例：
-
-```ini
-AUTOSTART=0
-RUN_USER=neardi
-WORKSPACE=/home/neardi/work/Grinder/catkin_ws
-LIVOX_SETUP=''
-NAV_MAP_YAML=/home/neardi/work/Grinder/maps/实际地图ID/map.yaml
-INDICATOR_USB_SERIAL_NUMBER=''
-INDICATOR_DEVICE=''
-START_INDICATOR=0
-```
-
-| 字段 | 说明 |
-| --- | --- |
-| `AUTOSTART` | `1` 下次开机启动整套服务，`0` 不自启；不等于自动执行任务 |
-| `RUN_USER` | 已存在的普通运行用户 |
-| `WORKSPACE` | 已构建的 Catkin 工作区绝对路径 |
-| `LIVOX_SETUP` | 独立 Livox 环境路径；驱动已可发现时可留空 |
-| `NAV_MAP_YAML` | 存在的二维地图 YAML 文件 |
-| `START_INDICATOR` | `1` 启动板端灯带通信服务，`0` 不启动；不控制 ESP32 USB 供电 |
-| `INDICATOR_USB_SERIAL_NUMBER` | ESP32 的实际 USB 序列号 |
-| `INDICATOR_DEVICE` | 可替代序列号的 `/dev/serial/by-id/` 稳定路径 |
-
-启用 ESP32 时设置 `START_INDICATOR=1`，两种 USB 身份仅填写一种。
-只有 ESP32、没有外接灯带也可开启通信测试。没有 ESP32 时保持 `START_INDICATOR=0`。
-旧配置缺省该字段时保留历史默认 `1`，维护时建议显式填写。
-
-### 6.3 管理命令
-
-```bash
-sudo grinder-service apply
-sudo grinder-service start
-grinder-service status
-```
-
-确认服务持续运行后按需执行 `sudo grinder-service enable` 开启自启。
-地图模式仍由 APP 显式操作，服务启动不表示定位就绪。
-
-| 操作 | 命令 | 效果 |
-| --- | --- | --- |
-| 应用配置 | `sudo grinder-service apply` | 更新服务定义与自启开关，不重启当前节点 |
-| 开启自启 | `sudo grinder-service enable` | 保存开机启动设置，当前节点不变 |
-| 关闭自启 | `sudo grinder-service disable` | 关闭下次开机启动，当前节点不变 |
-| 启动节点 | `sudo grinder-service start` | 启动当前服务 |
-| 停止节点 | `sudo grinder-service stop` | 停止当前服务，不改变自启设置 |
-| 重启节点 | `sudo grinder-service restart` | 重新启动整套节点，不重启工控机 |
-| 查看状态 | `grinder-service status` | 查看自启与运行状态 |
-| 查看日志 | `sudo grinder-service logs` | 查看服务日志 |
-
-修改配置后先 `apply`，需要更新运行中参数时，在停止任务后 `restart`。
-服务失败或受监督子进程退出会清理整套子进程，默认不自动重启整套服务。
-同一工作区不要再单独启动另一套导航或灯带节点。
-
-已有 PM2 管理 ROS master 的设备，服务会按已有用户 PM2 服务排序，避免重复启动 master；
-不会自动启用或接管 PM2。如果 PM2 在运行期间重启 master，需要协调两个管理流程。
-执行工控机重启前先停止任务，再确认自启配置。重新登录后检查 `enabled` 与
-`active (running)`，并继续完成定位和设备状态检查。
-
-## 7. ESP32 状态灯控制器
-
-### 7.1 固件与接线
-
-固件在 [firmware/status_strip](firmware/status_strip/README.md)，适配微雪 ESP32-S3-Zero
-4 MB Flash。Type-C USB 同时提供供电和通信；GPIO4 经电平转换驱动外接 3 颗 WS2812B。
-固件不驱动 GPIO21 板载 RGB 灯，因此板载灯不亮不能用于判断程序是否运行。
-完整接线、电源和缓冲芯片引脚以固件 README 为准。
-
-在 Windows PowerShell 编译并烧录，端口替换为实际 ESP32 COM 号：
-
-```powershell
-python -m pip install platformio==6.1.18
-cd 'E:\CODE\C++\Grinder\firmware\status_strip'
-python -m platformio device list
-python -m platformio run -e esp32-s3-zero
-python -m platformio run -e esp32-s3-zero -t upload --upload-port COM9
-```
-
-首次烧录连接失败时，按住 BOOT 进入下载模式，按 RESET 或重新连接 USB 后重试。
-烧录端口必须是 ESP32，不能使用底盘控制串口。上电黄灯和其他灯效均指外接灯带。
-
-### 7.2 板端识别与通信检查
-
-```bash
-python3 -m serial.tools.list_ports -v
-```
-
-将实际 USB 序列号填到启动配置。没有运行统一服务时，也可单独启动：
-
-```bash
-roslaunch grinder_scheduler status_indicator.launch \
-  backend:=serial usb_serial_number:=实际USB序列号
-```
-
-单独 launch 默认 `mock`，只有指定 `serial` 并提供设备身份才访问 USB。
-统一服务默认使用真实串口后端，自动提供 `dialout` 补充组权限。
 检查：
 
-```bash
-rostopic echo -n 3 /indicator/state
-```
+~~~bash
+rosnode list | grep -E 'super_lio_node|super_lio_loop|cloud_to_occupancy_grid'
+rostopic hz /lio/odom
+rostopic hz /lio/loop_cloud
+rostopic hz /map
+rostopic echo -n 1 /super_lio_loop/status
+rosrun tf tf_echo map base_link
+~~~
 
-`backend: serial`、`acknowledged: true`、`error: ""` 表示真实 USB 协议通信成功，
-没有灯带也能完成这项验证。ACK 不证明灯珠发光或机器已安全停车。
+应看到 /super_lio_node、/super_lio_loop 和 /cloud_to_occupancy_grid。
+保存 PCD、PGM 和 YAML：
 
-### 7.3 状态含义
+~~~bash
+mkdir -p /home/neardi/work/Grinder/maps
+rosservice call /lio/get_3dmap "cmd_id: 1
+enable_filter: true
+map_dir: '/home/neardi/work/Grinder/maps'
+map_name: 'grinder_map'"
+rosservice call /cloud_to_occupancy_grid/save_map
+~~~
 
-| 状态 | 外接灯带效果 |
-| --- | --- |
-| 启动、状态来源不完整 | 黄色常亮 |
-| 待机、准备、正常停止、规划 | 绿色常亮 |
-| 自动任务 | 蓝色呼吸 |
-| 人为暂停 | 蓝色慢闪 |
-| 碰撞风险暂停 | 黄色慢闪 |
-| 手动控制或非自动磨盘活动 | 青色常亮 |
-| 完成 | 绿色闪三次后常亮 |
-| `FAULT` | 红色慢闪 |
-| 急停提示 | 红色快闪，优先于其他状态 |
+定位模式不启动回环，而是加载二维地图和三维 PCD：
 
-机器人状态与 USB 通信是两项独立检查。底盘 `connected: false`、调度 `ERROR` 或
-就绪后状态来源超时等情况会产生 `FAULT`，即使 ACK 完全正常。
-未接底盘的联调环境可能显示该状态，没有灯带本身不会触发故障。
+~~~bash
+rosrun map_server map_server /home/neardi/work/Grinder/maps/grinder_map.yaml
+roslaunch super_lio relocation.launch \
+  rviz:=true map_dir:=/home/neardi/work/Grinder/maps \
+  map_name:=loc_grinder_map.pcd \
+  base_to_laser_x:=0.0 base_to_laser_y:=0.0 base_to_laser_z:=0.0 \
+  base_to_laser_roll:=0.0 base_to_laser_pitch:=0.0 base_to_laser_yaw:=0.0
+~~~
 
-急停灯光提示复位接口为 `/indicator/clear_emergency`，只清除显示记录，
-不复位真实急停、不清除底盘故障、不使能运动。接口和持久化机制见固件 README。
+### 7. 正式环境一键启动
 
-## 8. 调试与验收
+start_grinder_super_lio_base.sh 启动 Livox、底盘（可选）、RPP move_base（可选）、
+调度器和 super_lio_mode_manager，但不会自动进入建图或定位：
 
-### 8.1 检查顺序
+~~~bash
+cd "$GRINDER_WS"
+GRINDER_BASE_DIR=/home/neardi/work/Grinder \
+LIVOX_SETUP="$GRINDER_WS/devel/setup.bash" \
+START_LIVOX=1 START_CHASSIS=1 START_NAV=1 \
+./start_grinder_super_lio_base.sh
+~~~
 
-按服务、传感器、地图定位、TF、导航、底盘、外设逐层检查。
-`rostopic hz`、`tf_echo` 和持续日志命令用 `Ctrl+C` 结束。
-以下检查只读取状态；真实运动和磨盘验收应在现场安全条件下通过既有任务接口执行。
+如果 Livox 在独立工作区：
 
-**服务与节点：**
+~~~bash
+LIVOX_SETUP=/home/neardi/Livox/ws_livox/devel/setup.bash \
+./start_grinder_super_lio_base.sh
+~~~
 
-```bash
-grinder-service status
-rosnode list
+工业配置应保持以下值（文件：catkin_ws/src/grinder_scheduler/config/super_lio.yaml
+和 scheduler.yaml）：
+
+~~~yaml
+super_lio_loop_closure: true
+super_lio_autosave: false
+~~~
+
+修改 YAML 不需要重新编译，但必须重启调度器。启动后切换地图模式：
+
+~~~bash
 rosservice call /super_lio_mode/get_status
+rosservice call /super_lio_mode/start_mapping "{}"
+rosparam get /super_lio_mode_manager/super_lio_loop_closure
+rosnode list | grep -E 'super_lio_loop|super_lio_node|relocation_node|map_server'
+~~~
+
+### 7.1 控制盒状态灯带：板端安装与启用（可选）
+
+硬件采用微雪 ESP32-S3-Zero + 10 cm、3 颗灯珠的 5V WS2812B 灯带，
+通过 RK3588 的 USB 同时通信和供电。接线、ESP32 固件编译与烧录详见
+[状态灯带部署说明](firmware/status_strip/README.md)。ESP32 固件可在开发电脑上烧录，
+工控机只需要安装 ROS 节点依赖，不需要安装 PlatformIO。
+
+同步本次源码后，先停止运行中的任务，再在板端安装依赖并重新构建。
+虽然灯带节点主要是 Python，新增的 Catkin 安装入口和依赖仍需更新；
+本机应已具备上文的完整项目依赖，包括 slamware_ros_sdk 和 super_lio：
+
+~~~bash
+sudo apt install -y python3-serial
+cd "$GRINDER_WS"
+source /opt/ros/noetic/setup.bash
+PROFILE=runtime ./build_grinder_platform.sh
+source "$GRINDER_WS/devel/setup.bash"
+~~~
+
+构建成功后，重启底盘和调度节点，使新增的状态话题生效。
+先在独立终端运行模拟后端，不会打开 USB 或发送运动控制命令：
+
+~~~bash
+source /opt/ros/noetic/setup.bash
+source "$GRINDER_WS/devel/setup.bash"
+roslaunch grinder_scheduler status_indicator.launch backend:=mock
+~~~
+
+在另一个同样加载工作区环境的终端查看 `rostopic echo /indicator/state`。
+接入已烧录的 ESP32 后，查询 USB 身份；运行用户需有串口访问权限：
+
+~~~bash
+python3 -m serial.tools.list_ports -v
+# 若当前用户没有 dialout 权限，执行后重新登录：
+sudo usermod -aG dialout "$USER"
+~~~
+
+停止模拟灯带节点，再填写实际 USB 序列号启动真实后端，勿同时运行两个灯带节点：
+
+~~~bash
+roslaunch grinder_scheduler status_indicator.launch \
+  backend:=serial usb_serial_number:=实际序列号
+# 也可用稳定设备路径替代序列号：
+# roslaunch grinder_scheduler status_indicator.launch \
+#   backend:=serial device:=/dev/serial/by-id/实际设备
+~~~
+
+灯带配置位于 `catkin_ws/src/grinder_scheduler/config/status_indicator.yaml`。
+默认不启用真实硬件；若直接使用 `scheduler.launch`，可传入
+`enable_status_indicator:=true indicator_backend:=serial`
+及 `indicator_usb_serial_number:=实际序列号`。
+MID-360 + Super-LIO 的整套开机启动使用下文统一服务；手动运行启动脚本默认不启动灯带，
+需要时设置 `START_INDICATOR=1` 并提供灯带 USB 身份。不要同时运行独立灯带 launch 和统一服务。
+
+状态指示灯对照表（3 颗灯珠同步显示，默认亮度 20%）：
+
+| 运行状态 | 灯带颜色与效果 | 含义 |
+| --- | --- | --- |
+| ESP32 已供电，ROS 必需状态尚不完整 | 黄色常亮 | 启动或等待节点就绪 |
+| 必需节点就绪、待机、准备、正常停止 | 绿色常亮 | 软件状态正常 |
+| 路径规划 | 绿色常亮 | 不设置独立规划灯效 |
+| 自动任务执行 | 蓝色呼吸，周期 2 秒 | 自动任务运行中 |
+| 自动任务人为暂停 | 蓝色慢闪，1 Hz | 等待明确恢复或停止任务 |
+| RPP 碰撞风险触发的暂停 | 黄色慢闪，1 Hz | 检测到前方碰撞风险，任务已进入暂停状态；不表示已经撞击 |
+| 手动控制活动或非自动任务磨盘使能 | 青色常亮 | 手动控制活动或磨盘使能，不表示实测转速 |
+| 自动任务完成 | 绿色闪三次后常亮 | 当前任务完成 |
+| 调度错误、底盘断连、就绪后关键状态超时 | 红色慢闪，1 Hz | 需要检查状态或通信 |
+| 急停提示未清除 | 红色快闪，4 Hz | 急停提示已锁存 |
+| 控制器与灯带失去供电 | 熄灭 | 断电时无法显示故障颜色 |
+
+急停和故障提示优先于运行状态。RPP 障碍信号解除、重复点击暂停，或恢复请求被拒绝时，
+黄色慢闪仍保持；任务成功恢复、新任务成功启动或明确停止后才清除此暂停原因。
+区分人为与 RPP 暂停需要部署新版调度代码并重新烧录 ESP32 固件（新增状态码 8）。
+USB 断开导致控制器掉电时灯会熄灭；控制器仍有供电但 3 秒未收到有效帧时显示异常。
+`/indicator/state` 中 `acknowledged=true` 只表示控制器已响应，不证明灯珠发光或机器安全停车。
+急停灯光提示复位、诊断和实机验收步骤见部署说明。
+
+### 8. 常见故障
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| GTSAM 4.2 not found | GTSAM 未安装或 CMake 找不到 | 检查 GTSAMConfig.cmake，重跑工业编译并传入 -DGTSAM_DIR=/usr/local/lib/cmake/GTSAM |
+| 只有 super_lio_loop_node | 只生成了轻量回环 | 安装 GTSAM 后用 SUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON 重编译 |
+| unknown node /super_lio_loop | 未进入建图或工业节点启动失败 | 检查 rosnode list、回环日志和工业可执行文件 |
+| ament_cmake_auto 找不到 | 混用了 ROS 2 Livox 工程 | 使用 ROS 1 Noetic 的 livox_ros_driver2，不要 source ROS 2 |
+| /livox/lidar 没有数据 | 网卡、雷达 IP 或 host_ip 不匹配 | 检查 ip route get <雷达IP> 必须走雷达网卡 |
+| 建图和定位冲突 | 同时运行两种模式 | 先调用 /super_lio_mode/stop，再切换模式 |
+
+## 手工操作参考（完成上面的安装和编译后）
+
+MID-360S + Super-LIO 的固定内存实时二维建图见
+`catkin_ws/src/2-dnavigation-package/cloud_to_occupancy_grid/README.md`。该流程直接使用 LIO 位姿和
+当前配准点云生成 `/map`，不再叠加 GMapping。
+
+### 1. 已完成编译后的手工操作
+
+```bash
+cd ~/work/Grinder/catkin_ws
+# 工业正式编译请按上文第 4 节执行；这里仅加载已生成的工作区
+source devel/setup.bash
 ```
 
-刚启动地图状态为 `IDLE` 正常。经 APP 选择地图和初始定位后，期望 `state: READY`、
-`localization_ready: true`、`registration_quality_valid: true`。
+### 2. 每个终端的基础环境
 
-**传感器与地图：**
+板端每开一个新终端都先执行：
+
+```bash
+source /opt/ros/noetic/setup.bash
+source /home/neardi/work/Grinder/catkin_ws/devel/setup.bash
+```
+
+以下命令假定工作区位于 `/home/neardi/work/Grinder/catkin_ws`。建图与重定位
+是互斥模式，不要同时运行 `super_lio_node` 和 `relocation_node`。
+
+### 3. 启动 MID-360S 驱动
+
+```bash
+roslaunch livox_ros_driver2 msg_MID360s.launch
+```
+
+验证：
 
 ```bash
 rostopic hz /livox/lidar
 rostopic hz /livox/imu
+```
+
+### 4. 建图模式（手工调试）
+
+启动 Super-LIO、回环后端和固定尺寸二维栅格地图：
+
+```bash
+roslaunch cloud_to_occupancy_grid mid360_mapping.launch \
+  rviz:=true \
+  save_3d_map:=true \
+  loop_closure:=true \
+  loop_backend:=industrial \
+  base_to_laser_x:=0.0 base_to_laser_y:=0.0 base_to_laser_z:=0.0 \
+  base_to_laser_roll:=0.0 base_to_laser_pitch:=0.0 base_to_laser_yaw:=0.0
+```
+```bash
+roslaunch cloud_to_occupancy_grid mid360_mapping.launch \
+  rviz:=true \
+  save_3d_map:=true \
+  loop_closure:=false \
+  base_to_laser_x:=0.0 base_to_laser_y:=0.0 base_to_laser_z:=0.0 \
+  base_to_laser_roll:=0.0 base_to_laser_pitch:=0.0 base_to_laser_yaw:=0.0
+```
+
+Super-LIO 只在位移、旋转、时间间隔和点数满足关键帧准入条件时向三维地图
+追加点云；设备静止时不会逐帧重复累计。关键帧参数位于
+`Super-LIO/src/super_lio/config/livox_360.yaml`。
+
+验证建图输出：
+
+```bash
 rostopic hz /lio/odom
-rostopic echo -n 1 /map/info
-```
-
-只有启动建图或定位后才应期待 LIO 输出；托管定位还需要有效初始位姿。
-工业回环建图时额外检查 `/lio/loop_cloud` 和 `/super_lio_loop/status`。
-
-**安装参数与 TF：**
-
-```bash
-rosparam get /lio/ros/legacy_tf
-rosparam get /lio/extrinsic
-rostopic echo -n 1 /lio/odom
+rostopic hz /lio/map_cloud
+rostopic hz /map
 rosrun tf tf_echo map base_link
-rosrun tf tf_echo base_link base_laser_link
 ```
 
-标准模式 `legacy_tf` 为 `false`，里程计帧为 `odom`、子帧为 `base_link`。
-LIO 的安装参数与固定 TF 应对应同一实测结果，角度注意度与弧度转换。
-固定 TF 时间显示 `0.000` 正常；帧名正确不等于数值已标定，需同时核对位置与地图点云。
-固定地图定位时 map 与 odom 重合；有回环时不能把 odom 位姿直接当成 map 位姿。
-
-**底盘与调度：**
+保存三维定位地图：
 
 ```bash
-rostopic echo -n 1 /chassis/status
-rostopic echo -n 1 /scheduler/status
-rostopic echo -n 1 /chassis/task_enable
+mkdir -p /home/neardi/maps
+rosservice call /lio/get_3dmap \
+  "cmd_id: 1
+enable_filter: true
+map_dir: '/home/neardi/work/Grinder/maps'
+map_name: 'grinder_map'
+```
+
+正常生成：
+
+```text
+/home/neardi/maps/loc_grinder_map.pcd
+/home/neardi/maps/plan_grinder_map.pcd
+```
+
+保存二维导航地图：
+
+```bash
+rosservice call /cloud_to_occupancy_grid/save_map
+```
+
+二维地图的实际输出目录和文件名由
+`cloud_to_occupancy_grid/config/mid360.yaml` 配置。确认 PCD、PGM 和 YAML 均已
+成功生成后再停止建图节点：
+
+```bash
+rosnode kill /super_lio_node
+rosnode kill /super_lio_loop
+rosnode kill /cloud_to_occupancy_grid
+```
+
+Livox 驱动可以继续运行，供重定位使用。
+
+### 5. 旧地图重定位模式（手工调试）
+
+先启动二维静态地图。路径必须替换为本次保存的 YAML：
+
+```bash
+rosrun map_server map_server /home/neardi/work/Grinder/maps/grinder_map.yaml
+```
+
+再启动固定三维地图重定位：
+
+```bash
+roslaunch super_lio relocation.launch \
+  rviz:=true \
+  map_dir:=/home/neardi/work/Grinder/maps \
+  map_name:=loc_grinder_map.pcd \
+  base_to_laser_x:=0.0 \
+  base_to_laser_y:=0.0 \
+  base_to_laser_z:=0.0 \
+  base_to_laser_roll:=0.0 \
+  base_to_laser_pitch:=0.0 \
+  base_to_laser_yaw:=0.0
+```
+
+`base_to_laser_*` 必须按实际安装外参填写。重定位模式由 launch 强制设置
+`/lio/map/save_map=false`，不累计保存点云；固定地图定位还应保持
+`/lio/relocation/update_map=false`。
+
+首次启动后可在 RViz 使用 `2D Pose Estimate` 发布 `/initialpose` 做人工联调；正式 APP
+链路通过 `RadarRelocalizationRequest (0x052A)` 一并传入当前 `map_id/map_revision` 和
+`x/y/heading_deg`。调度器只在身份匹配后调用模式管理器发布 `/initialpose`。验证：
+
+```bash
+rostopic hz /lio/odom
+rostopic hz /scan
+rostopic echo -n 1 /map/info
+rosrun tf tf_echo map base_link
+```
+
+### 6. 启动 move_base
+
+旧地图和重定位均正常后启动导航。RPP 使用底盘反馈 `/odom_wheel`：
+
+```bash
+roslaunch teb_local_planner_tutorials robot_diff_drive.launch \
+  local_planner:=rpp
+```
+
+如需 TEB：
+
+```bash
+roslaunch teb_local_planner_tutorials robot_diff_drive.launch \
+  local_planner:=teb
+```
+
+验证代价地图和速度输出：
+
+```bash
+rostopic hz /move_base/global_costmap/costmap
+rostopic hz /move_base/local_costmap/costmap
+rostopic hz /cmd_vel
+```
+
+### 7. 启动底盘驱动
+
+启动前检查 `grinder_chassis_driver/config/chassis_driver.yaml` 中的串口、波特率、
+轮距、轮径和方向参数。真实底盘启动会访问 Modbus 硬件：
+
+```bash
+ls -l /dev/ttyS0
+roslaunch grinder_chassis_driver chassis_driver.launch
+```
+
+默认 `task_enable_default=false`，节点启动时先下发零速。验证：
+
+```bash
+rosnode info /chassis_driver
 rostopic hz /odom_wheel
-rostopic info /cmd_vel
+rostopic echo /chassis/task_enable
 ```
 
-底盘连接以 `connected` 为准，`enabled: true` 不表示串口通信成功。
-导航还可检查 `/move_base/global_costmap/costmap`、`/move_base/local_costmap/costmap`
-和 `/grinder/navigation/active_segment_plan`。
+### 8. 启动调度器和 Super-LIO 模式管理器
 
-### 8.2 日志位置
+使用 Super-LIO 时，显式把调度定位输入设为 `/lio/odom`。move_base 已经单独
+启动时，只启动 `scheduler.launch`，不要再启动一个包含导航的系统 launch：
 
 ```bash
-sudo journalctl -u grinder.service -b -n 100 --no-pager
+roslaunch grinder_scheduler scheduler.launch \
+  odom_topic:=/lio/odom \
+  map_topic:=/map \
+  super_lio_map_root:=/home/neardi/work/Grinder/maps
 ```
 
-常驻脚本各节点日志在 `$GRINDER_WS/logs/super_lio_base_*`，ROS 日志在运行用户的
-`~/.ros/log/`。定位匹配和滤波迭代诊断可查看：
+验证：
 
 ```bash
-rostopic echo /super_lio/registration_diagnostics
+rosnode info /grinder_scheduler
+rosnode info /super_lio_mode_manager
+rostopic info /grinder/navigation/active_segment_plan
+rostopic echo /chassis/task_enable
+ss -lntp | grep 8002
 ```
 
-服务显示运行只代表进程存活；地图、定位、视频和底盘状态应分别验收。
+完整导航链路为：
 
-### 8.3 常见问题
+```text
+grinder_scheduler
+  -> /grinder/navigation/active_segment_plan
+  -> move_base
+  -> /cmd_vel
+  -> grinder_chassis_driver
+  -> 底盘
+```
 
-| 现象 | 检查与处理 |
-| --- | --- |
-| 找不到 `livox_ros_driver2` | 检查 ROS 1 驱动是否已构建；独立工作区是否已 source；服务的 `LIVOX_SETUP` 是否正确 |
-| 缺少 GTSAM 或工业节点 | 执行工业依赖安装脚本，再以 `PROFILE=mapping` 构建；检查 `GTSAMConfig.cmake` 搜索路径 |
-| 编译后仍运行旧代码 | 检查 `rospack find`、当前 source 环境和服务 `WORKSPACE`，停止任务后重启对应进程 |
-| 雷达端口占用 | 检查是否存在另一套 Livox、ROS2 驱动或手工节点；启动脚本会预检 UDP 端口 |
-| 模式一直 `LOCALIZING` | 核对地图身份、初始位姿、传感器频率、配准诊断、协方差与 TF；不要直接放宽就绪条件 |
-| 底盘 `Serial read timeout` | 核对底盘电源、串口、RS485 接线、波特率、校验位与从站地址 |
-| 有速度但底盘不走 | 检查任务使能、底盘连接、急停和超时；不要绕过使能保护测试 |
-| ESP32 不亮 | 区分板载灯与 GPIO4 外接灯带；先查 USB ACK，再检查灯带供电和接线 |
-| 灯带 `FAULT` 但 ACK 正常 | 查 `/chassis/status`、`/scheduler/status` 和状态来源新鲜度；USB 不是故障来源 |
-| `Failed to load Python extension for LZ4 support` | 提示缺少可选压缩支持；与串口 ACK、底盘连通性分开判断 |
-| 视频 MPP 编码错误 | 查调度 / mediamtx 日志、编码器能力和设备本地视频配置；节点存活不等于视频可用 |
-| 白名单残留导致漏包 | 查 `build/CMakeCache.txt` 的 `CATKIN_WHITELIST_PACKAGES`，优先用对应构建 profile |
-
-## 9. 日常维护与开发验证
-
-### 9.1 更新与重新构建
-
-1. 停止任务，通过正常流程停止服务或手工节点。
-2. 同步源码，保留设备本地配置、标定、地图和必要运行记录。
-3. 根据修改范围选择构建 profile；不跨架构复制二进制产物。
-4. 更新管理脚本时重新安装服务；修改启动配置后执行 `apply`。
-5. 重启节点，重新完成地图选择、定位及状态验收，再允许作业。
-
-修改 `msg/`、`srv/`、`package.xml` 或 CMake 必须 Catkin 构建。
-修改 `sl_link.proto` 后从仓库根目录重新生成相关 SDK，不只改生成文件：
+### 9. 一键启动 Super-LIO 常驻服务
 
 ```bash
-cd "$GRINDER_BASE_DIR"
+cd /home/neardi/work/Grinder/catkin_ws
+chmod +x start_grinder_super_lio_base.sh
+./start_grinder_super_lio_base.sh
+```
+
+该脚本启动 Livox、底盘、RPP move_base、调度器和
+`super_lio_mode_manager`。启动后地图模式为 `IDLE`，不会自动启动建图或重定位。
+
+正式运行时由 APP 的 `MapModeRequest` 和 `MapSaveRequest` 控制地图生命周期：
+
+```text
+MAP_MODE_MAPPING enabled=true
+  -> 启动 Super-LIO + cloud_to_occupancy_grid
+
+MapSaveRequest map_id="" 或 map_id="LIVE_MAP"
+  -> 保存 PCD 与 PGM/YAML
+  -> LOWER 生成唯一正式 map_id，并在响应中返回
+  -> 停止并复查建图节点
+  -> 返回 map_revision、mapping_stopped、localization_started=false
+
+MAP_MODE_LOCALIZATION enabled=true
+  -> 返回 STARTING，再进入 LOCALIZING，等待带 map_id/map_revision 的初始位姿
+  -> APP 轮询 0x052D；只有 lifecycle_state=READY 才允许开始任务
+```
+
+APP 必须在 `MAPPING` 仍处于活动状态时发送 `MapSaveRequest`，不要先发送
+`MAP_MODE_LOCALIZATION`。`LIVE_MAP` 只是实时建图源的保留 ID，不会作为资产目录名；
+保存成功后响应中的新 `map_id/map_revision` 才是后续地图选择和重定位使用的身份。地图
+保存成功不表示定位已经启动或已达到 `READY`。
+
+每张地图保存为独立资产包：
+
+```text
+/home/neardi/work/Grinder/maps/<map_id>/
+├── loc_map.pcd
+├── plan_map.pcd
+├── map.yaml
+├── map.pgm
+└── map_info.json
+```
+
+可直接检查模式管理器：
+
+```bash
+rosservice call /super_lio_mode/get_status
+rosservice call /super_lio_mode/start_mapping
+rosservice call /super_lio_mode/stop
+```
+
+手工调用保存服务仅用于联调，`map_id` 不得与已有资产包重复：
+
+```bash
+rosservice call /super_lio_mode/save_map "map_id: 'test_001'
+map_name: '测试地图'"
+```
+
+保存任一环节失败时建图保持运行，可以再次保存。地图已保存但重定位启动失败时，
+资产包仍保留，底盘任务使能保持关闭。
+
+### 10. 单独启动调度
+
+```bash
+cd ~/work/Grinder/catkin_ws
+source devel/setup.bash
+roslaunch grinder_scheduler scheduler.launch \
+  odom_topic:=/lio/odom \
+  map_topic:=/map \
+  super_lio_map_root:=/home/neardi/work/Grinder/maps
+```
+
+### 11. 上位机启动（PyQt）
+
+```bash
+cd ~/work/Grinder
+python3 third_party/sl_linka/sdk/python/tools/sl_linka_pyqt_debugger.py
+```
+
+连接参数：
+
+- Host：调度程序IP（本机可 `127.0.0.1`）
+- Port：`8002`
+
+### 12. 板端开机自启：主系统与灯带统一开关
+
+MID-360 + Super-LIO 链路使用 `grinder.service` 管理 ROS master、Livox、底盘、RPP、
+调度和灯带。开机只启动节点，任务仍需明确下发启动指令。
+服务以安装时指定的普通用户运行，并使用该用户的 HOME 保存急停提示记录。
+
+2026-10-14 已在 LPA3588（用户 `neardi`）完成重启后的主系统自启验证：
+服务显示 `enabled`、`active (running)`，Livox、底盘、RPP/move_base、调度器、
+Super-LIO 模式管理器及 mediamtx 进程已启动。本次未接 ESP32，使用 `START_INDICATOR=0`；
+此结果验证开机启动流程，不代表灯带、底盘运动、定位或视频链路的实机验收。
+
+完成构建、灯带固件烧录和手动联调后，先停止任务，再退出已运行的启动脚本及独立灯带节点。
+在板端安装（将用户名替换为实际运行用户，工作区从脚本位置自动确定）：
+
+~~~bash
+cd "$GRINDER_WS"
+sudo bash ./install_grinder_service.sh neardi
+sudo nano /etc/grinder/startup.conf
+~~~
+
+首次安装默认 `AUTOSTART=0`，不会启动节点。重新安装保留已有配置和自启设置。
+若 nano 提示 `/etc/grinder` 目录不存在，应先完成安装；若安装提示缺少
+`scripts/grinder-service`，请将该文件同步到板端同名路径（文件无 `.py` 后缀）后重试。
+配置为 `KEY=VALUE`，包含空格的值需用引号包裹；不展开 `$HOME`、`~` 或 shell 命令。
+示例中的路径、运行用户、USB 序列号必须按板端实际情况填写：
+
+~~~ini
+AUTOSTART=0
+START_INDICATOR=1
+RUN_USER=neardi
+WORKSPACE=/home/neardi/work/Grinder/catkin_ws
+LIVOX_SETUP=/home/neardi/Livox/ws_livox/devel/setup.bash
+NAV_MAP_YAML=/home/neardi/work/Grinder/maps/grinder_map.yaml
+INDICATOR_USB_SERIAL_NUMBER=实际USB序列号
+INDICATOR_DEVICE=''
+~~~
+
+`LIVOX_SETUP` 可留空，由启动脚本从项目环境和常见 Livox 工作区查找。
+还没有 ESP32 时设置 `START_INDICATOR=0`，两个 USB 身份字段留空，先验证主系统开机自启。
+拿到并烧录 ESP32 后，设置 `START_INDICATOR=1` 并填写 USB 身份，再应用配置、在任务停止后重启服务。
+旧配置没有此字段时默认 `1`，保持原有灯带启动行为；旧版管理命令需先更新并重新运行安装脚本。
+仅复制 `catkin_ws/scripts/grinder-service` 不会更新系统已安装的管理命令，必须重新执行安装脚本。
+灯带 USB 序列号与 `INDICATOR_DEVICE=/dev/serial/by-id/实际设备` 二选一。
+服务默认使用真实串口后端，自动获得 `dialout` 补充组权限；USB 未插入时灯带节点持续重连。
+导航地图必须存在，工作区必须已构建。
+
+~~~bash
+# 修改配置后应用；不会启动、停止或重启当前节点
+sudo grinder-service apply
+
+# 保存 AUTOSTART 并切换下次开机行为；不改变当前运行状态
+sudo grinder-service enable
+sudo grinder-service disable
+
+# 立即操作整套节点，不改变自启配置
+sudo grinder-service start
+sudo grinder-service stop
+sudo grinder-service restart
+
+grinder-service status
+sudo grinder-service logs
+~~~
+
+常用开关与重启命令（逐条执行）：
+
+| 操作 | 命令 | 生效范围 |
+| --- | --- | --- |
+| 开启开机自启 | `sudo grinder-service enable` | 保存 `AUTOSTART=1`，下次开机自动启动；当前节点不变 |
+| 关闭开机自启 | `sudo grinder-service disable` | 保存 `AUTOSTART=0`，下次开机不自动启动；当前节点不变 |
+| 立即启动节点 | `sudo grinder-service start` | 启动当前整套节点，不改变自启开关 |
+| 立即停止节点 | `sudo grinder-service stop` | 停止当前整套节点，不改变自启开关 |
+| 重启整套节点 | `sudo grinder-service restart` | 停止后重新启动当前整套节点，不重启板端 |
+| 重启板端 | `sudo reboot` | 重启 RK3588，节点是否自动启动取决于自启开关 |
+| 查看服务与自启状态 | `grinder-service status` | `enabled` / `disabled` 为自启状态，`active (running)` 为运行状态 |
+| 编辑启动配置 | `sudo nano /etc/grinder/startup.conf` | 可修改 `AUTOSTART`、`START_INDICATOR`、路径和 USB 身份 |
+| 应用手动修改的配置 | `sudo grinder-service apply` | 同步自启开关及服务定义，不重启当前节点 |
+
+也可直接在配置文件中将 `AUTOSTART` 改为 `1`（自启）或 `0`（不自启），保存后执行
+`sudo grinder-service apply`。修改灯带开关、路径或 USB 身份后，还需在任务停止后执行
+`sudo grinder-service restart`，使运行中的节点使用新配置。
+`START_INDICATOR=0` 只关闭灯带节点；`AUTOSTART=0` 关闭整套服务的开机自启。
+执行节点停止、节点重启或板端重启前，先通过现有任务接口停止任务。
+
+维护时先通过现有任务接口停止任务，再执行 `sudo grinder-service stop`。
+若下次开机也不希望启动，再执行 `sudo grinder-service disable`。
+更改运行用户、路径或 USB 身份后先 `apply`，再在任务停止后 `restart`。
+服务启动失败或受监督进程退出时清理整套子进程，默认不自动重启整套服务。
+板端已有启用的 `pm2-<运行用户>.service` 时，Grinder 排在它之后启动，复用它启动的 ROS master，
+避免两套开机流程同时启动 master；此排序不会启用或强制依赖 PM2。
+如果 PM2 在运行期间主动重启 master，ROS 链路仍可能中断，需要单独协调 PM2 的管理策略。
+LPA3588 已有 PM2 管理的 `roscore`、`rosbridge` 等进程，应保留其服务；安装后用
+`systemctl show grinder.service -p After` 确认包含 `pm2-neardi.service`。
+ROS/Catkin 环境加载期间临时关闭未定义变量检查，避免全新 systemd 环境报
+`ROS_DISTRO：未绑定的变量`；项目脚本自身仍保持严格检查。
+灯带 launch 保留自身 `respawn`；同一工作区的重复启动由启动脚本锁拒绝。
+服务启动成功只代表进程已启动，ROS 状态是否完整应查看灯带与 `/indicator/state`。
+
+管理日志见 journal；各节点详细日志位于 `$GRINDER_WS/logs/super_lio_base_*`。
+自启关闭且从未通信时，ESP32 通电显示启动黄灯；已经通信后停止节点且 USB 保持供电，
+固件通信超时显示红灯，急停提示仍优先。USB 断电则熄灭。
+板端验收包括开启／关闭后分别重启、完整状态变绿、USB 断连重连，以及停止后无残留节点。
+
+没有 ESP32 时，可先保持两个 USB 字段为空并设置 `START_INDICATOR=0`，在任务停止、
+旧的手动启动脚本退出后逐条执行：
+
+~~~bash
+sudo grinder-service apply
+sudo grinder-service start
+grinder-service status
+# 确认持续运行后开启自启；确认任务停止后再重启板端
+sudo grinder-service enable
+sudo reboot
+# 重新登录后等待约 20 秒，再检查
+grinder-service status
+~~~
+
+重启后应同时看到 `enabled` 和 `active (running)`。若显示 `failed`，先读取
+`sudo journalctl -u grinder.service -b -n 80 --no-pager`，并检查最新
+`logs/super_lio_base_*/*.log`，保留失败日志后再重试。
+本次板端日志仍有 MPP VP8 编码初始化失败；服务保持运行，但视频链路需另行验证。
+
+离线验证（Linux，不连接硬件）：
+
+~~~bash
+python3 catkin_ws/scripts/test_grinder_service.py -v
+~~~
+
+## 协议库生成
+
+当 `sl_link.proto` 变更后，需重新生成 SDK：
+
+```bash
+cd ~/work/Grinder
 bash third_party/sl_linka/scripts/generate_proto.sh all
 ```
 
-仅需部分目标时，将 `all` 替换为 `python` 或 `kotlin`。上位机工具入口为
-`third_party/sl_linka/sdk/python/tools/sl_linka_pyqt_debugger.py`，连接工控机 IP 和端口 `8002`。
-
-### 9.2 离线检查
-
-在仓库根目录执行，不连接硬件：
+若仅需 Python/Android：
 
 ```bash
-cd "$GRINDER_BASE_DIR"
-PYTHONPATH=catkin_ws/src/grinder_chassis_driver/src python3 -m unittest discover \
-  -s catkin_ws/src/grinder_chassis_driver/test -p 'test_*.py'
-PYTHONPATH=catkin_ws/src/grinder_scheduler/src python3 -m unittest discover \
-  -s catkin_ws/src/grinder_scheduler/test -p 'test_super_lio*.py'
-python3 catkin_ws/scripts/test_grinder_service.py -v
-python3 -m compileall -q catkin_ws/src/grinder_scheduler/src/grinder_scheduler \
-  catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver
+bash third_party/sl_linka/scripts/generate_proto.sh python
+bash third_party/sl_linka/scripts/generate_proto.sh kotlin
 ```
 
-LIO 位姿 / 速度 / 协方差数学回归、灯带协议互通、地图质量与仿真测试见对应专项文档。
-离线单测和构建不能替代录包回放及实机验收。
+## 常用联调命令
 
-## 10. 专项文档
+查看调度订阅发布：
 
-| 文档 | 内容 |
-| --- | --- |
-| [开发导航](AGENTS.md) | 按需求定位源码、修改边界与最小验证 |
-| [平台构建与启动](catkin_ws/PLATFORM_BUILD_RUN.md) | 架构、profile、启动脚本和平台参数 |
-| [Super-LIO 集成说明](catkin_ws/src/localization/Super-LIO/UPSTREAM.md) | 上游版本、外参换算、迭代诊断与数学回归 |
-| [二维建图](catkin_ws/src/mapping/cloud_to_occupancy_grid/README.md) | 栅格参数、保存与回环重投影 |
-| [回环后端](catkin_ws/src/localization/super_lio_loop/README.md) | 工业 / 轻量后端、依赖与参数 |
-| [状态灯固件与部署](firmware/status_strip/README.md) | 接线、烧录、USB 协议、灯效及验收 |
-| [SL-LinkA 协议](third_party/sl_linka/sl-link.md) | 地图、任务、重定位和设置接口 |
-| [Gazebo 仿真](catkin_ws/src/grinder_gazebo/README.md) | 仿真模型、APP 联调和运行方式 |
+```bash
+rosnode info /grinder_scheduler
+```
+
+查看导航目标发布：
+
+```bash
+rostopic echo /move_base_simple/goal
+```
+
+查看底盘任务使能：
+
+```bash
+rostopic echo /chassis/task_enable
+```
+
+查看底盘速度输入：
+
+```bash
+rostopic hz /cmd_vel
+```
+
+## 说明
+
+- `docs/` 为本地设计与归档资料目录，整体不纳入版本管理、不随仓库分发；运行与维护说明以根 README 和包内 README 为准。
+- `.planning/`、`artifacts/` 和根目录临时计划文件属于被 Git 忽略的本地工作记录，不参与板端部署。
+- 地图、任务、区域均建议基于 `map_id` 进行绑定与操作。
+- 清缓存指令 `0x051E` 为无参请求，具体清理范围由调度配置决定。
+- 本项目是在线联调工程，修改后请重启对应节点验证参数是否已生效。
