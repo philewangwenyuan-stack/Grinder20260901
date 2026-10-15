@@ -83,6 +83,7 @@ rg -n "参数名|话题名|消息名" catkin_ws/src/grinder_scheduler catkin_ws/
 - 项目集成代码：`third_party/path_planner/`、导航参数与启动文件；修改前确认任务确实涉及算法或导航配置。
 - 外部代码：`2-dnavigation-package` 的通用 ROS navigation 源码、`slamware_ros_sdk`、`rf2o_laser_odometry`、`third_party/sl_linka/sl_linka/nanopb`。优先通过项目配置或适配层解决问题。
 - 不要索引或手改生成/运行目录：`catkin_ws/build/`、`catkin_ws/devel/`、`catkin_ws/logs/`、各处 `build/`、`__pycache__/`、`*.pyc`、`temp/`。
+- `.planning/`、`artifacts/`、整个 `docs/` 均为被忽略的本地资料，不提交任务计划、归档文档、渲染产物或工具缓存。需随源码分发的说明维护在根 README 或包内 README；不要将本地历史报告当成当前代码事实。
 - `maps/raw/*.stcm`、`*.pgm`、预览图、路径 JSON、编译出的 `*.so` 都是数据或产物，除非任务明确要求，否则不要修改。
 - 协议 Python/Android/Embedded 生成代码位于 `third_party/sl_linka/sl_linka/sdk/`；应修改 `.proto` 后运行生成脚本，而非只改生成文件。
 

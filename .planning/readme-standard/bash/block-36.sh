@@ -1,1 +1,0 @@
-rostopic echo /super_lio/registration_diagnostics

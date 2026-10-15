@@ -60,4 +60,12 @@ __MACOSX/
 # Planner build caches and reproducible audit binaries
 third_party/path_planner/mst27/build-*/
 third_party/path_planner/mst27/build_wsl_*/
-artifacts/repository-app-audit-20261004/*.jar
+# Local agent plans, intermediate deliverables and diagnostic output
+/.planning/
+/artifacts/
+/findings.md
+/progress.md
+/task_plan.md
+
+# Local documents and archives are not distributed with the repository
+/docs/
