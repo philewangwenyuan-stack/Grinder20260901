@@ -20,7 +20,11 @@ class StatusIndicatorNode:
     def __init__(self):
         self._lock = threading.Lock()
         self._stop = threading.Event()
-        self.resolver = StateResolver(float(rospy.get_param("~state_timeout_sec", 3.0)))
+        self.resolver = StateResolver(
+            float(rospy.get_param("~state_timeout_sec", 3.0)),
+            ignore_chassis_status=rospy.get_param("~ignore_chassis_status", False))
+        if self.resolver.ignore_chassis_status:
+            rospy.logwarn("Indicator test mode: ignoring chassis status availability/connection")
         self.brightness = int(rospy.get_param("~brightness", 51))
         if not 1 <= self.brightness <= 51:
             raise ValueError("brightness must be 1..51 (20% maximum)")
@@ -136,6 +140,7 @@ class StatusIndicatorNode:
                 self._clear_pending = False
         self.status_pub.publish(String(data=json.dumps({
             "state": state.name, "backend": self.backend, "acknowledged": acknowledged,
+            "ignore_chassis_status": self.resolver.ignore_chassis_status,
             "clear_pending": self._clear_pending, "error": self.transport.last_error,
         })))
         diagnostic = DiagnosticStatus()

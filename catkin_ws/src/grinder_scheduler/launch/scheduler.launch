@@ -20,11 +20,13 @@
   <arg name="indicator_backend" default="mock" />
   <arg name="indicator_usb_serial_number" default="" />
   <arg name="indicator_device" default="" />
+  <arg name="indicator_ignore_chassis_status" default="" />
 
   <include if="$(arg enable_status_indicator)" file="$(find grinder_scheduler)/launch/status_indicator.launch">
     <arg name="backend" value="$(arg indicator_backend)" />
     <arg name="usb_serial_number" value="$(arg indicator_usb_serial_number)" />
     <arg name="device" value="$(arg indicator_device)" />
+    <arg name="ignore_chassis_status" value="$(arg indicator_ignore_chassis_status)" />
   </include>
 
   <!-- 可选系统采样节点：1 Hz 内存采样，后台每 10 秒写一次有界 JSON 快照。 -->

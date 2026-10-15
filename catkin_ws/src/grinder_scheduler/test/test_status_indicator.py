@@ -70,6 +70,20 @@ class StatePolicyTest(unittest.TestCase):
         resolver.update("chassis", {"connected": False}, 0)
         self.assertEqual(LightState.FAULT, resolver.resolve(0))
 
+    def test_bench_mode_skips_missing_stale_and_disconnected_chassis(self):
+        resolver = StateResolver(ignore_chassis_status=True)
+        for now in (10, 20):
+            resolver.update("scheduler", {"state": "IDLE"}, now)
+            resolver.update("activity", {"automatic_active": False, "manual_active": False}, now)
+            resolver.update("scheduler_emergency", False, now)
+            self.assertEqual(LightState.READY, resolver.resolve(now))
+            resolver.update("chassis", {"connected": False, "disc_enabled": True}, now)
+            self.assertEqual(LightState.READY, resolver.resolve(now))
+        # Other required sources still time out; received emergency still wins.
+        self.assertEqual(LightState.FAULT, resolver.resolve(24))
+        resolver.update("chassis_emergency", True, 1)
+        self.assertEqual(LightState.EMERGENCY, resolver.resolve(24))
+
     def test_collision_pause_is_distinct_and_emergency_fault_still_win(self):
         resolver = self.ready("PAUSED")
         resolver.update("activity", {"automatic_active": False, "manual_active": False,

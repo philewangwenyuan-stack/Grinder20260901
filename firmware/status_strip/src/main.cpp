@@ -6,7 +6,7 @@
 // No Wi-Fi/Bluetooth initialization. GPIO21 is the board's onboard LED;
 // GPIO4 exclusively drives the external strip via a 5V AHCT buffer.
 constexpr uint8_t PIXEL_PIN = 4;
-constexpr uint8_t PIXEL_COUNT = 3;
+constexpr uint8_t PIXEL_COUNT = 6;
 Adafruit_NeoPixel pixels(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 indicator::Receiver receiver;
 char line[128];

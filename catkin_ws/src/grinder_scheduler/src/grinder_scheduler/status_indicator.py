@@ -21,10 +21,11 @@ class LightState(IntEnum):
 class StateResolver:
     REQUIRED = ("scheduler", "chassis", "activity", "scheduler_emergency", "chassis_emergency")
 
-    def __init__(self, timeout=3.0):
+    def __init__(self, timeout=3.0, ignore_chassis_status=False):
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("state timeout must be positive")
         self.timeout = timeout
+        self.ignore_chassis_status = ignore_chassis_status
         self.samples = {}
         self.ever_ready = False
 
@@ -41,12 +42,14 @@ class StateResolver:
             if self.samples.get(name, (False, 0))[0]:
                 return LightState.EMERGENCY
         scheduler = self.samples.get("scheduler", ({}, 0))[0]
-        chassis = self.samples.get("chassis", ({}, 0))[0]
+        chassis = {} if self.ignore_chassis_status else self.samples.get("chassis", ({}, 0))[0]
         if (self.fresh("scheduler", now) and scheduler.get("state") == "ERROR") or (
-            self.fresh("chassis", now) and not chassis.get("connected", False)
+            not self.ignore_chassis_status and self.fresh("chassis", now) and not chassis.get("connected", False)
         ):
             return LightState.FAULT
-        if not all(self.fresh(name, now) for name in self.REQUIRED):
+        required = (name for name in self.REQUIRED
+                    if not self.ignore_chassis_status or name not in ("chassis", "chassis_emergency"))
+        if not all(self.fresh(name, now) for name in required):
             return LightState.FAULT if self.ever_ready else LightState.STARTUP
         activity = self.samples["activity"][0]
         state = scheduler.get("state")

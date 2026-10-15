@@ -1,7 +1,7 @@
 # RK3588 控制盒状态灯带
 
-硬件：微雪 ESP32-S3-Zero（FH4R2，4 MB Flash）、10 cm / 30 灯每米的
-5V WS2812B 灯带（3 颗灯）、74AHCT125、330Ω 电阻、乳白扩散罩。
+硬件：微雪 ESP32-S3-Zero（FH4R2，4 MB Flash）、10 cm / 60 灯每米的
+5V WS2812B 灯带（6 颗灯）、74AHCT125、330Ω 电阻、乳白扩散罩。
 本固件只驱动指示灯，不参与底盘控制或证明安全停车。
 
 ## 接线
@@ -36,7 +36,7 @@ pio run -t upload --upload-port /dev/ttyACM0
 ```
 
 首次烧录按住 BOOT，再连接 USB，必要时按 RESET 后释放 BOOT。
-Windows 烧录端口用实际 COM 号。烧录完成重启，3 颗灯应黄灯常亮。
+Windows 烧录端口用实际 COM 号。烧录完成重启，6 颗灯应黄灯常亮。
 固件不会等待 USB 打开；只有 USB 口开始供电后才能亮灯。
 Wi-Fi/Bluetooth 不初始化；看门狗超时 5 秒。调试日志不能混入 USB 协议。
 
@@ -54,7 +54,7 @@ Wi-Fi/Bluetooth 不初始化；看门狗超时 5 秒。调试日志不能混入 
 | 故障、底盘断连、就绪后状态过期 | 红色慢闪（1 Hz） |
 | 急停提示未清除 | 红色快闪（4 Hz） |
 
-固件最多输出 51/255（20%）亮度；3 颗灯整圈同步。
+固件最多输出 51/255（20%）亮度；6 颗灯整圈同步。
 调度器记录暂停原因；RPP 风险信号恢复为 FALSE 不会清除此原因，也不会自动续跑。
 黄色慢闪保持到任务成功恢复、新任务成功启动或明确停止；重复 PAUSE 不覆盖碰撞原因。
 恢复因障碍仍存在而失败时也继续黄色慢闪。该提示表示前方碰撞风险，不代表已经发生撞击。
@@ -84,6 +84,16 @@ rostopic echo /indicator/state
 底盘 `connected=false` 或调度 ERROR 即使尚未首次就绪也显示故障。
 不将 APP、视频、MQTT 在线作为绿色就绪条件；定位质量保持由调度现有状态反映。
 
+不接底盘的台架测试可设置 `ignore_chassis_status: true`，或独立 launch 时加
+`ignore_chassis_status:=true`（通过 scheduler.launch 启动则用
+`indicator_ignore_chassis_status:=true`）。修改 YAML 后重启灯带节点。
+该开关默认 false；开启后忽略底盘状态缺失、过期和 connected=false，
+不使用底盘磨盘反馈判定手动灯效；已收到的底盘急停 TRUE 仍优先显示。
+调度状态、活动状态和调度急停状态仍必须有效，ESP32 USB 超时仍报红。
+这只改变灯效，不改变任务或底盘安全控制；接回底盘时恢复 false。
+`/indicator/state` 会显示 `ignore_chassis_status`，便于核对测试开关。
+此开关在 ROS 灯带节点中，ESP32 插在 Windows 电脑上且未运行该节点时不会生效。
+
 接上控制器后查设备身份并确保运行用户有串口权限：
 
 ```bash
@@ -100,7 +110,7 @@ roslaunch grinder_scheduler status_indicator.launch backend:=serial device:=/dev
 默认不开启；单独 launch 默认 mock，不接硬件。
 MID-360 + Super-LIO 整套开机自启通过 `grinder.service` 统一管理；安装和配置步骤见
 [根 README](../../README.md#12-板端开机自启主系统与灯带统一开关)。服务已经启动灯带时，不要另开独立 launch。
-配置位于 `grinder_scheduler/config/status_indicator.yaml`，控制器数量固定 3，
+配置位于 `grinder_scheduler/config/status_indicator.yaml`，固件灯珠数量固定为 6，
 实际灯珠数量变更需修改固件并重新烧录。
 
 `/indicator/state` 返回状态名、后端、ACK、待清除标志和通信错误；

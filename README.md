@@ -765,7 +765,7 @@ rosnode list | grep -E 'super_lio_loop|super_lio_node|relocation_node|map_server
 
 ### 7.1 控制盒状态灯带：板端安装与启用（可选）
 
-硬件采用微雪 ESP32-S3-Zero + 10 cm、3 颗灯珠的 5V WS2812B 灯带，
+硬件采用微雪 ESP32-S3-Zero + 10 cm、6 颗灯珠的 5V WS2812B 灯带，
 通过 RK3588 的 USB 同时通信和供电。接线、ESP32 固件编译与烧录详见
 [状态灯带部署说明](firmware/status_strip/README.md)。ESP32 固件可在开发电脑上烧录，
 工控机只需要安装 ROS 节点依赖，不需要安装 PlatformIO。
@@ -817,7 +817,14 @@ roslaunch grinder_scheduler status_indicator.launch \
 MID-360 + Super-LIO 的整套开机启动使用下文统一服务；手动运行启动脚本默认不启动灯带，
 需要时设置 `START_INDICATOR=1` 并提供灯带 USB 身份。不要同时运行独立灯带 launch 和统一服务。
 
-状态指示灯对照表（3 颗灯珠同步显示，默认亮度 20%）：
+不接底盘测试灯效时，可在 `catkin_ws/src/grinder_scheduler/config/status_indicator.yaml`
+设置 `ignore_chassis_status: true` 并重启灯带节点（整套服务可用
+`sudo grinder-service restart`）。此时跳过底盘断连、状态缺失和过期判断，
+已收到的急停提示仍保留；调度状态和 USB 通信仍需正常。
+接回底盘后恢复 `false`。该配置由 ROS 灯带节点读取，无需重新烧录 ESP32；
+ESP32 仅插在 Windows 电脑上时，修改此配置不会直接改变灯效。
+
+状态指示灯对照表（6 颗灯珠同步显示，默认亮度 20%）：
 
 | 运行状态 | 灯带颜色与效果 | 含义 |
 | --- | --- | --- |

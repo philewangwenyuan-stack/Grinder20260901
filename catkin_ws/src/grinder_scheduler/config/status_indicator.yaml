@@ -1,5 +1,7 @@
 # Enable the launch explicitly. Mock never opens a physical USB device.
 backend: mock
+# Bench test only: skip chassis status/heartbeat requirements; retain received emergency alerts.
+ignore_chassis_status: true
 usb_serial_number: ""
 device: ""
 brightness: 51              # 0..255 scale, enforced maximum 51 (20%)
