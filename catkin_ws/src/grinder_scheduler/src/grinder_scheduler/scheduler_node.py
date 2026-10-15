@@ -249,6 +249,7 @@ class SchedulerNode:
             1.0, float(rospy.get_param("~path_corner_mid_turn_min_angle_deg", 45.0))
         )
         self.last_chassis_status = None
+        self._chassis_status_received_monotonic = None
         self.last_wheel_speed_state = None
         self._wheel_speed_state_lock = threading.Lock()
         self._wheel_odom_lock = threading.Lock()
@@ -3955,7 +3956,16 @@ class SchedulerNode:
         self.sl_link_server.stop()
 
     def _chassis_status_callback(self, msg):
+        self._chassis_status_received_monotonic = time.monotonic()
         self.last_chassis_status = msg
+
+    def _chassis_connection_for_report(self):
+        if self.last_chassis_status is None:
+            return None
+        received = getattr(self, "_chassis_status_received_monotonic", None)
+        # Diagnostics only: stale driver feedback must not remain 'connected' indefinitely.
+        fresh = received is not None and 0.0 <= time.monotonic() - received <= 3.0
+        return bool(self.last_chassis_status.connected) and fresh
 
     def _wheel_speed_state_callback(self, msg):
         with self._wheel_speed_state_lock:
@@ -7317,6 +7327,9 @@ class SchedulerNode:
         report.wifi_status = pb.WIFI_SUCCESS
         report.work_mode = pb.WORK_MODE_AUTO if self.state in (SchedulerState.RUNNING, SchedulerState.READY) else pb.WORK_MODE_MANUAL
         disc_speed_setting = max(0, int(self._configured_disc_speed_rpm()))
+        chassis_connected = self._chassis_connection_for_report()
+        if hasattr(report, "chassis_connected") and chassis_connected is not None:
+            report.chassis_connected = chassis_connected
         if self.last_chassis_status is not None:
             report.disc_speed_rpm = disc_speed_setting
             report.disc_enabled = self.last_chassis_status.disc_enabled

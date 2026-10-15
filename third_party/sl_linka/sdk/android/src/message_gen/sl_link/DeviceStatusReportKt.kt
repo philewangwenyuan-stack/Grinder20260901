@@ -432,6 +432,42 @@ public object DeviceStatusReportKt {
     public fun clearVehicleSpeed() {
       _builder.clearVehicleSpeed()
     }
+
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     */
+    public var chassisConnected: kotlin.Boolean
+      @JvmName("getChassisConnected")
+      get() = _builder.getChassisConnected()
+      @JvmName("setChassisConnected")
+      set(value) {
+        _builder.setChassisConnected(value)
+      }
+    /**
+     * ```
+     * Absent on older firmware or before the first chassis status sample.
+     * ```
+     *
+     * `optional bool chassis_connected = 21;`
+     */
+    public fun clearChassisConnected() {
+      _builder.clearChassisConnected()
+    }
+    /**
+     * ```
+     * Absent on older firmware or before the first chassis status sample.
+     * ```
+     *
+     * `optional bool chassis_connected = 21;`
+     * @return Whether the chassisConnected field is set.
+     */
+    public fun hasChassisConnected(): kotlin.Boolean {
+      return _builder.hasChassisConnected()
+    }
   }
 }
 public inline fun sl_link.SlLink.DeviceStatusReport.copy(block: `sl_link`.DeviceStatusReportKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.DeviceStatusReport =

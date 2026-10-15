@@ -426,6 +426,8 @@ typedef struct _sl_link_DeviceStatusReport {
     bool radar_system_status_available;
     pb_callback_t radar_system_status;
     float vehicle_speed;
+    bool has_chassis_connected;
+    bool chassis_connected;
 } sl_link_DeviceStatusReport;
 
 typedef struct _sl_link_CameraFrameRequest {
@@ -1459,7 +1461,7 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
 #define sl_link_Pose2D_init_default              {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_default {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0}
+#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0}
 #define sl_link_CameraFrameRequest_init_default  {0, 0}
 #define sl_link_CameraFrameChunk_init_default    {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}, 0}
@@ -1552,7 +1554,7 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
 #define sl_link_Pose2D_init_zero                 {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_zero {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0}
+#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0}
 #define sl_link_CameraFrameRequest_init_zero     {0, 0}
 #define sl_link_CameraFrameChunk_init_zero       {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}, 0}
@@ -1779,6 +1781,7 @@ extern "C" {
 #define sl_link_DeviceStatusReport_radar_system_status_available_tag 18
 #define sl_link_DeviceStatusReport_radar_system_status_tag 19
 #define sl_link_DeviceStatusReport_vehicle_speed_tag 20
+#define sl_link_DeviceStatusReport_chassis_connected_tag 21
 #define sl_link_CameraFrameRequest_snapshot_tag  1
 #define sl_link_CameraFrameRequest_max_chunk_size_tag 2
 #define sl_link_CameraFrameChunk_frame_id_tag    1
@@ -2498,7 +2501,8 @@ X(a, STATIC,   SINGULAR, UINT32,   localization_quality,  16) \
 X(a, STATIC,   SINGULAR, BOOL,     collision_imminent,  17) \
 X(a, STATIC,   SINGULAR, BOOL,     radar_system_status_available,  18) \
 X(a, CALLBACK, SINGULAR, STRING,   radar_system_status,  19) \
-X(a, STATIC,   SINGULAR, FLOAT,    vehicle_speed,    20)
+X(a, STATIC,   SINGULAR, FLOAT,    vehicle_speed,    20) \
+X(a, STATIC,   OPTIONAL, BOOL,     chassis_connected,  21)
 #define sl_link_DeviceStatusReport_CALLBACK pb_default_field_callback
 #define sl_link_DeviceStatusReport_DEFAULT NULL
 #define sl_link_DeviceStatusReport_position_MSGTYPE sl_link_Pose2D

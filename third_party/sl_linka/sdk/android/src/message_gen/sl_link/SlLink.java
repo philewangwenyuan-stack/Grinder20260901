@@ -15212,6 +15212,25 @@ public final class SlLink {
      * @return The vehicleSpeed.
      */
     float getVehicleSpeed();
+
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     * @return Whether the chassisConnected field is set.
+     */
+    boolean hasChassisConnected();
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     * @return The chassisConnected.
+     */
+    boolean getChassisConnected();
   }
   /**
    * Protobuf type {@code sl_link.DeviceStatusReport}
@@ -15904,6 +15923,56 @@ public final class SlLink {
     private void clearVehicleSpeed() {
 
       vehicleSpeed_ = 0F;
+    }
+
+    public static final int CHASSIS_CONNECTED_FIELD_NUMBER = 21;
+    private boolean chassisConnected_;
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     * @return Whether the chassisConnected field is set.
+     */
+    @java.lang.Override
+    public boolean hasChassisConnected() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     * @return The chassisConnected.
+     */
+    @java.lang.Override
+    public boolean getChassisConnected() {
+      return chassisConnected_;
+    }
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     * @param value The chassisConnected to set.
+     */
+    private void setChassisConnected(boolean value) {
+      bitField0_ |= 0x00000004;
+      chassisConnected_ = value;
+    }
+    /**
+     * <pre>
+     * Absent on older firmware or before the first chassis status sample.
+     * </pre>
+     *
+     * <code>optional bool chassis_connected = 21;</code>
+     */
+    private void clearChassisConnected() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      chassisConnected_ = false;
     }
 
     public static sl_link.SlLink.DeviceStatusReport parseFrom(
@@ -16730,6 +16799,58 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Absent on older firmware or before the first chassis status sample.
+       * </pre>
+       *
+       * <code>optional bool chassis_connected = 21;</code>
+       * @return Whether the chassisConnected field is set.
+       */
+      @java.lang.Override
+      public boolean hasChassisConnected() {
+        return instance.hasChassisConnected();
+      }
+      /**
+       * <pre>
+       * Absent on older firmware or before the first chassis status sample.
+       * </pre>
+       *
+       * <code>optional bool chassis_connected = 21;</code>
+       * @return The chassisConnected.
+       */
+      @java.lang.Override
+      public boolean getChassisConnected() {
+        return instance.getChassisConnected();
+      }
+      /**
+       * <pre>
+       * Absent on older firmware or before the first chassis status sample.
+       * </pre>
+       *
+       * <code>optional bool chassis_connected = 21;</code>
+       * @param value The chassisConnected to set.
+       * @return This builder for chaining.
+       */
+      public Builder setChassisConnected(boolean value) {
+        copyOnWrite();
+        instance.setChassisConnected(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Absent on older firmware or before the first chassis status sample.
+       * </pre>
+       *
+       * <code>optional bool chassis_connected = 21;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearChassisConnected() {
+        copyOnWrite();
+        instance.clearChassisConnected();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.DeviceStatusReport)
     }
     @java.lang.Override
@@ -16767,12 +16888,13 @@ public final class SlLink {
               "radarSystemStatusAvailable_",
               "radarSystemStatus_",
               "vehicleSpeed_",
+              "chassisConnected_",
             };
             java.lang.String info =
-                "\u0000\u0014\u0000\u0001\u0001\u0014\u0014\u0000\u0000\u0000\u0001\u000b\u0002\f" +
+                "\u0000\u0015\u0000\u0001\u0001\u0015\u0015\u0000\u0000\u0000\u0001\u000b\u0002\f" +
                 "\u0003\f\u0004\f\u0005\u0001\u0006\u0001\u0007\u000b\b\u0007\t\f\n\u0007\u000b\u1009" +
                 "\u0000\f\u0007\r\u0001\u000e\u1009\u0001\u000f\u0007\u0010\u000b\u0011\u0007\u0012" +
-                "\u0007\u0013\u0208\u0014\u0001";
+                "\u0007\u0013\u0208\u0014\u0001\u0015\u1007\u0002";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

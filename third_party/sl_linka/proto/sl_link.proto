@@ -427,6 +427,8 @@ message DeviceStatusReport {
   string radar_system_status = 19;
   // Vehicle linear speed computed from left/right wheel feedback, in m/s.
   float vehicle_speed = 20 [(unit) = "m/s", (scale) = 1];
+  // Absent on older firmware or before the first chassis status sample.
+  optional bool chassis_connected = 21;
 }
 
 message CameraFrameRequest {
