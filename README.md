@@ -765,7 +765,9 @@ rosnode list | grep -E 'super_lio_loop|super_lio_node|relocation_node|map_server
 
 ### 7.1 控制盒状态灯带：板端安装与启用（可选）
 
-硬件采用微雪 ESP32-S3-Zero + 10 cm、6 颗灯珠的 5V WS2812B 灯带，
+最低实现采用微雪 ESP32-C3-Zero + 10 cm、6 颗灯珠的 5V WS2812B 灯带，
+GPIO4 经 330Ω 直连 DIN（灯带需支持3.3V信号，优先选明确版本的 WS2812B-V6）。
+C3 160MHz、400KB SRAM、4MB Flash 满足本项目；原 S3 控制板仍支持，固件不可混烧。
 通过 RK3588 的 USB 同时通信和供电。接线、ESP32 固件编译与烧录详见
 [状态灯带部署说明](firmware/status_strip/README.md)。ESP32 固件可在开发电脑上烧录，
 工控机只需要安装 ROS 节点依赖，不需要安装 PlatformIO。

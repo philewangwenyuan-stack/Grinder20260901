@@ -3,8 +3,8 @@
 #include <esp_task_wdt.h>
 #include "indicator_protocol.h"
 
-// No Wi-Fi/Bluetooth initialization. GPIO21 is the board's onboard LED;
-// GPIO4 exclusively drives the external strip via a 5V AHCT buffer.
+// No Wi-Fi/Bluetooth initialization. Onboard RGB: S3 GPIO21, C3 GPIO10.
+// GPIO4 drives the external strip (direct 3.3V-compatible DIN or 5V buffer).
 constexpr uint8_t PIXEL_PIN = 4;
 constexpr uint8_t PIXEL_COUNT = 6;
 Adafruit_NeoPixel pixels(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);

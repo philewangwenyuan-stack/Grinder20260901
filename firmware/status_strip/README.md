@@ -1,41 +1,54 @@
 # RK3588 控制盒状态灯带
 
-硬件：微雪 ESP32-S3-Zero（FH4R2，4 MB Flash）、10 cm / 60 灯每米的
-5V WS2812B 灯带（6 颗灯）、74AHCT125、330Ω 电阻、乳白扩散罩。
+最低实现硬件：微雪 ESP32-C3-Zero（ESP32-C3FH4，4 MB Flash）、10 cm / 60 灯每米的
+5V WS2812B 灯带（6 颗灯）、330Ω 电阻、乳白扩散罩。原 ESP32-S3-Zero 仍支持。
+C3 为 160MHz 单核、400KB SRAM，无需 PSRAM；USB 使用原生 Serial/JTAG。
 本固件只驱动指示灯，不参与底盘控制或证明安全停车。
 
 ## 接线
 
 RK3588 USB 数据线接开发板 Type-C，同时供电和通信。开发板 5V 引脚
-接灯带 5V 和 AHCT125 VCC；所有 GND 共地。不再并接外部 5V，不用 3V3
+接灯带 5V；所有 GND 共地。不再并接外部 5V，不用 3V3
 给灯带供电。电源能力以实际 USB 口、线材及开发板验证结果为准。
 
-使用 SOIC-14 裸芯片时，74AHCT125：14 脚 VCC 接 5V，7 脚 GND 接地；
+简化接法：`GPIO4 → 330Ω → 第一颗灯 DIN`，电阻无正负极，靠近 DIN；
+`5V → 灯带 +5V`，`GND → 灯带 GND`。用户反馈现有灯带可直连工作；
+不能推广到所有 WS2812B 批次。新采购优先选明确支持 3.3V 输入的 WS2812B-V6：
+[Worldsemi 升级公告](https://www.world-semi.com/web/index.php?classid=22&id=587&lanstr=zh_cn&topclassid=19)。
+不加额外电容属于简化配置，并不代表 USB 可代替就近去耦；仍需实际布线下验收。
+若出现乱闪，可恢复 5V AHCT 电平转换并排查供电、共地和线长。
+
+可选的转换接法：使用 SOIC-14 裸芯片时，74AHCT125 的 14 脚 VCC 接 5V，7 脚 GND 接地；
 1 脚 /1OE 接地，2 脚 1A 接 GPIO4，3 脚 1Y 经 330Ω 接灯带 DIN。
 VCC/GND 间就近接 0.1µF 陶瓷电容；灯带入口接 100µF/10V 电解电容，注意极性。
 未使用的 /OE（4、10、13）接 5V，未使用 A（5、9、12）接地，未使用 Y 悬空。
 按芯片圆点/缺口确认 1 脚，不能按商品照片方向猜。若买模块，按模块引脚标签接。
-数据电阻放在第一颗灯 DIN 附近；GPIO21 是板载灯，本项目用 GPIO4。
+数据电阻放在第一颗灯 DIN 附近；C3 的 GPIO10、S3 的 GPIO21 是板载灯，本项目用 GPIO4。
+两种板的排针布局不同，以各自实物丝印 4 为准；C3 正面 USB 朝上时，GPIO4 是左侧第8个焊盘。
 
 官方资料：
+[C3 规格与引脚图](https://docs.waveshare.net/ESP32-C3-Zero/)、
 [开发板原理图](https://files.waveshare.com/wiki/ESP32-S3-Zero/ESP32-S3-Zero-Sch.pdf)、
 [AHCT125 数据手册](https://www.ti.com/lit/ds/symlink/sn74ahct125.pdf)。
 
 ## 编译与烧录
 
 使用 PlatformIO Core 6.1.18；项目固定 espressif32 6.9.0 / Arduino 2.0.17，
-Adafruit NeoPixel 1.12.3。使用 DevKitC-1 的编译定义但覆盖为 4 MB Flash；
+Adafruit NeoPixel 1.12.3。C3 环境使用 DevKitM-1 定义，S3 使用 DevKitC-1 定义并覆盖为 4 MB Flash；
 不使用 PSRAM，USB 使用芯片原生 CDC/JTAG。
 
 ```bash
 python3 -m pip install platformio==6.1.18
 cd firmware/status_strip
-pio run
+pio run -e esp32-c3-zero
 # 用户接好控制器后，手动执行；不要把底盘串口误当烧录端口。
-pio run -t upload --upload-port /dev/ttyACM0
+pio run -e esp32-c3-zero -t upload --upload-port /dev/ttyACM0
 ```
 
-首次烧录按住 BOOT，再连接 USB，必要时按 RESET 后释放 BOOT。
+C3 下载时按住 BOOT，再连接 USB，必要时按 RESET 后释放 BOOT。
+S3 构建／烧录使用 `-e esp32-s3-zero`；两种芯片固件不可混烧。
+C3 已编译通过：静态 RAM 14,180 字节（构建器可用 320KiB 的4.3%），
+程序255,952字节（默认1.25MiB应用分区的19.5%）；非运行时峰值，C3 实物待验收。
 Windows 烧录端口用实际 COM 号。烧录完成重启，6 颗灯应黄灯常亮。
 固件不会等待 USB 打开；只有 USB 口开始供电后才能亮灯。
 Wi-Fi/Bluetooth 不初始化；看门狗超时 5 秒。调试日志不能混入 USB 协议。
