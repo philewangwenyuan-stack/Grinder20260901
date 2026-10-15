@@ -3549,6 +3549,27 @@ class SchedulerNode:
         motor_rpm = wheel_rpm * self._manual_gear_ratio * self._manual_speed_scale
         return max(1, min(self._manual_max_abs_wheel_rpm, int(round(motor_rpm))))
 
+    def _execution_run_speed(self):
+        """Resolve the process speed to apply when starting a task."""
+        speed = float(self._chassis_settings.get("run_speed", 0.0))
+        limit = float(self._max_chassis_run_speed)
+        if self._navigation_speed_reconfigure_parameter == "desired_linear_vel":
+            settings = self._read_rpp_settings()
+            navigation_limit = float(settings["max_linear_vel"])
+            if not math.isfinite(navigation_limit):
+                raise ValueError("Navigation speed limit must be finite")
+            limit = min(limit, navigation_limit)
+        if not math.isfinite(speed) or not math.isfinite(limit) or speed <= 0.0 or limit <= 0.0:
+            raise ValueError("Task run speed and navigation limit must be positive and finite")
+        return min(speed, limit)
+
+    def _apply_execution_speed_limit(self):
+        try:
+            return self._update_navigation_speed_limit(self._execution_run_speed(), log=True)
+        except Exception as exc:
+            rospy.logwarn("Cannot apply task process speed: %s", exc)
+            return False
+
     def _update_navigation_speed_limit(self, run_speed, log=False):
         speed = max(0.0, min(self._max_chassis_run_speed, float(run_speed)))
         namespace = self._navigation_speed_reconfigure_namespace.rstrip("/")
@@ -6144,6 +6165,9 @@ class SchedulerNode:
         else:
             self._exec_region_index = -1
         mark("prepare_region_order")
+        if not self._apply_execution_speed_limit():
+            self._safe_stop_motion()
+            return False, "Cannot apply task process speed to navigation"
         self._set_chassis_enabled(True)
         self._manual_travel_disc_active = False
         self.work_mode_pub.publish(UInt16(data=2))

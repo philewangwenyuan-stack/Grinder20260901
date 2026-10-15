@@ -116,6 +116,7 @@ class SchedulerContinuationTest(unittest.TestCase):
         for name in ('work_mode_pub', 'disc_speed_pub', 'disc_enable_pub', 'light_pub'):
             setattr(n, name, types.SimpleNamespace(publish=mock.Mock()))
         n._configured_disc_speed_rpm = lambda: 1200
+        n._apply_execution_speed_limit = mock.Mock(return_value=True)
         n._exec_mode = 'path'
         n._active_segments = [dict(start_s=0., end_s=10.), dict(start_s=10., end_s=21.)]
         n._project_pose_to_path_progress = mock.Mock(return_value=dict(progress_s=11., index=2))

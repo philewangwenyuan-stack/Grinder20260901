@@ -120,6 +120,10 @@ message WifiStatusReport {
 `apply_rpp_temporarily=true` 通过 dynamic_reconfigure 立即应用，`save_rpp_default=true` 同步保存默认 YAML。
 两者可以同时设置。重点参数包括：
 
+任务启动时，调度器在底盘使能前将工艺参数 `ChassisSettings.run_speed` 下发到导航控制器，
+例如工艺速度为 `0.03 m/s`、RPP 原目标速度为 `0.05 m/s`，启动时将 RPP 目标速度设为 `0.03 m/s`。
+下发失败则保持底盘停止；底盘最大速度、RPP 最大速度、转弯减速及碰撞停车仍然生效。
+
 如果只修改部分字段，使用 `rpp_field_mask`（bit N 对应 `RppSettings` 的字段号 N+1）；
 传 `0` 表示发送完整参数快照。这样布尔值也能明确写入 `false`。
 
