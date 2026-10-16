@@ -32,7 +32,7 @@ RegulatedPurePursuitController:
   # 根据转弯曲率、障碍物代价和目标距离自动降低线速度
   use_regulated_linear_velocity_scaling: true  # 是否根据曲率降低线速度
   regulated_linear_scaling_min_radius: 1.2     # 转弯半径小于该值时开始减速，单位：m
-  regulated_linear_scaling_min_speed: 0.01      # 曲率减速后的最低线速度，单位：m/s
+  regulated_linear_scaling_min_speed: 0.016     # 曲率减速最低线速度，保持高于低速转向补偿门槛 0.015 m/s
   use_cost_regulated_linear_velocity_scaling: false  # 是否根据障碍物膨胀代价减速
   cost_scaling_dist: 0.5           # 估算障碍距离小于该值时开始减速，单位：m
   cost_scaling_gain: 1.0            # 障碍距离减速增益，越大减速越明显
