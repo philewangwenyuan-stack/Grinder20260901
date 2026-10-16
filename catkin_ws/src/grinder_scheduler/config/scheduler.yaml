@@ -4,6 +4,7 @@
 
 # Display-only emergency record; never resets or enables motion.
 indicator_emergency_file: "~/.ros/grinder_indicator/scheduler_emergency.json"
+motion_emergency_file: "~/.ros/grinder_safety/scheduler_emergency.json"
 
 # Aurora 雷达主机 IP 地址
 aurora_ip_address: 192.168.0.114

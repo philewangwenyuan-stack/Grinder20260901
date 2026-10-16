@@ -4,12 +4,16 @@ import os
 import threading
 import time
 import math
+import json
+from contextlib import contextmanager
 
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Bool, Float32, Int16, UInt16
+from std_msgs.msg import Bool, Float32, Int16, UInt16, String
+from std_srvs.srv import Trigger, TriggerResponse
+from grinder_chassis_driver.motion_safety import MotionInterlock, MotionCancelled, motion_action
 
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
 from grinder_chassis_driver.indicator_emergency import EmergencyIndicatorSource
@@ -52,12 +56,21 @@ from grinder_chassis_driver.register_map import (
     RegisterSnapshot,
     clamp,
     motor_rpm_to_base_twist,
+    to_int16,
 )
 
 
 class ChassisDriverNode:
     def __init__(self):
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
+        self._io_lock = threading.RLock()
+        self._motion = MotionInterlock(rospy.get_param(
+            "~motion_emergency_file", "~/.ros/grinder_safety/chassis_emergency.json"),
+            legacy_path=rospy.get_param("~indicator_emergency_file", "~/.ros/grinder_indicator/chassis_emergency.json"))
+        self._outputs_ready = False
+        self._safe_write_confirmed = False
+        self._reset_error = ""
+        self._reset_service_lock = threading.Lock()
         self.command = ChassisCommand()
         self.snapshot = RegisterSnapshot()
         self.actual_left_motor_speed = 0
@@ -198,6 +211,9 @@ class ChassisDriverNode:
         self._indicator_emergency = EmergencyIndicatorSource(
             "/chassis", "~/.ros/grinder_indicator/chassis_emergency.json"
         )
+        self.safety_pub = rospy.Publisher("/chassis/motion_safety", String, queue_size=1, latch=True)
+        if self._motion.latched:
+            self._indicator_emergency.observe()
 
         rospy.Subscriber("/chassis/wheel_speed_cmd", WheelSpeedCommand, self._handle_wheel_speed_cmd, queue_size=10)
         if self.cmd_vel_enabled:
@@ -213,9 +229,10 @@ class ChassisDriverNode:
 
         rospy.Service("/chassis/enable", EnableChassis, self._handle_enable_service)
         rospy.Service("/chassis/clear_fault", ClearFault, self._handle_clear_fault_service)
+        rospy.Service("/chassis/reset_emergency_stop", Trigger, self._reset_emergency_stop)
 
-        if self.startup_zero_output:
-            self._apply_startup_safe_state()
+        # Mandatory reconnect barrier, independent of the legacy startup flag.
+        self._apply_startup_safe_state()
 
         self.timer = rospy.Timer(rospy.Duration.from_sec(1.0 / max(self.poll_rate_hz, 1.0)), self._poll_once)
         rospy.on_shutdown(self._on_shutdown)
@@ -228,7 +245,7 @@ class ChassisDriverNode:
             self.command.disc_enable = DISC_ENABLE_OFF
             self.command.light = LIGHT_OFF
         try:
-            self._write_all_outputs()
+            self._issue_safe_stop()
         except ModbusTransportError as exc:
             rospy.logwarn("Failed to send startup safe state: %s", exc)
 
@@ -306,6 +323,7 @@ class ChassisDriverNode:
         limit = max(0, abs(int(self.manual_speed_limit_rpm)))
         return max(-limit, min(limit, int(value)))
 
+    @motion_action()
     def _handle_wheel_speed_cmd(self, msg):
         if self.cmd_vel_enabled:
             now_mono = time.monotonic()
@@ -327,7 +345,7 @@ class ChassisDriverNode:
         self._manual_last_left_input = int(req_left)
         self._manual_last_right_input = int(req_right)
         mapped_left, mapped_right = self._apply_drive_direction(req_left, req_right)
-        with self._lock:
+        with self._command_guard():
             self.command.left_wheel_speed = mapped_left
             self.command.right_wheel_speed = mapped_right
             self.last_command_time = rospy.Time.now()
@@ -421,6 +439,7 @@ class ChassisDriverNode:
 
     #=================================================================================================================
 
+    @motion_action()
     def _handle_cmd_vel(self, msg):
         # if not self.task_enable:
         #     return
@@ -474,31 +493,37 @@ class ChassisDriverNode:
         left_cmd = int(round(left_rpm))
         right_cmd = int(round(right_rpm))
         mapped_left, mapped_right = self._apply_drive_direction_cmd_vel(left_cmd, right_cmd)
-        with self._lock:
+        with self._command_guard():
             self.command.left_wheel_speed = mapped_left
             self.command.right_wheel_speed = mapped_right
             self.last_command_time = rospy.Time.now()
         if self.enabled:
             self._write_motion_registers()
 
+    @motion_action()
     def _handle_task_enable_cmd(self, msg):
-        was_enabled = bool(self.task_enable)
-        self.task_enable = bool(msg.data)
+        with self._command_guard():
+            was_enabled = bool(self.task_enable)
+            self.task_enable = bool(msg.data)
         if not self.task_enable:
             self._reset_cmd_vel_filter()
             self._last_cmd_vel_recv_monotonic = 0.0
-            with self._lock:
+            with self._command_guard():
                 already_stopped = self.command.left_wheel_speed == 0 and self.command.right_wheel_speed == 0
                 self.command.left_wheel_speed = 0
                 self.command.right_wheel_speed = 0
                 self.last_command_time = rospy.Time.now()
             if was_enabled and not already_stopped and self.enabled:
-                self._write_motion_registers()
+                try:
+                    self._write_all_outputs(force=True)
+                except ModbusTransportError as exc:
+                    self._handle_transport_error(exc)
         rospy.loginfo("chassis task_enable updated: %s", str(self.task_enable))
 
     def _handle_emergency_stop_cmd(self, msg):
         if not bool(msg.data):
             return
+        self._motion.invalidate(emergency=True)
         self._indicator_emergency.observe()
         rospy.logwarn("Chassis emergency stop command received. Issuing safe stop immediately.")
         with self._lock:
@@ -506,6 +531,7 @@ class ChassisDriverNode:
             self._last_cmd_vel_recv_monotonic = 0.0
         self._reset_cmd_vel_filter()
         self._issue_safe_stop()
+        self._motion.persist()
 
     def _apply_drive_direction(self, left_speed, right_speed):
         left = int(left_speed)
@@ -551,29 +577,33 @@ class ChassisDriverNode:
             clamp(right, self.right_speed_min, self.right_speed_max),
         )
 
+    @motion_action()
     def _handle_disc_speed_cmd(self, msg):
-        with self._lock:
+        with self._command_guard():
             self.command.disc_speed = clamp(msg.data, self.disc_speed_min, self.disc_speed_max)
         if self.enabled:
             self._write_single_output(REGISTER_DISC_SPEED, self.command.disc_speed, signed=True)
 
+    @motion_action()
     def _handle_disc_enable_cmd(self, msg):
-        with self._lock:
+        with self._command_guard():
             self.command.disc_enable = DISC_ENABLE_ON if msg.data else DISC_ENABLE_OFF
         if self.enabled:
             self._write_single_output(REGISTER_DISC_ENABLE, self.command.disc_enable, signed=False)
 
+    @motion_action()
     def _handle_work_mode_cmd(self, msg):
-        with self._lock:
+        with self._command_guard():
             self.command.work_mode = msg.data
         if self.enabled:
             self._write_single_output(REGISTER_WORK_MODE, self.command.work_mode, signed=False)
 
+    @motion_action()
     def _handle_disc_lift_cmd(self, msg):
         if not self.disc_lift_supported:
             rospy.logwarn_throttle(5.0, "Disc lift command ignored: this machine has no disc lift.")
             return
-        with self._lock:
+        with self._command_guard():
             self.command.disc_lift = msg.data
         if self.enabled:
             self._write_single_output(REGISTER_DISC_LIFT, self.command.disc_lift, signed=False)
@@ -585,17 +615,22 @@ class ChassisDriverNode:
             self._write_single_output(REGISTER_LIGHT, self.command.light, signed=False)
 
     def _handle_enable_service(self, request):
-        self.enabled = request.enable
-        if not self.enabled:
-            self._issue_safe_stop()
-            return EnableChassisResponse(success=True, message="Chassis output disabled and motion stopped.")
-        self.last_command_time = rospy.Time.now()
+        if not request.enable:
+            self.enabled = False
+            ok = self._issue_safe_stop()
+            return EnableChassisResponse(success=ok, message="disabled; safe write confirmed={}".format(ok))
+        return self._enable_outputs()
+
+    @motion_action(cancel_result=EnableChassisResponse(success=False, message="enable cancelled by emergency/stop"))
+    def _enable_outputs(self):
         try:
-            self._write_all_outputs()
-        except ModbusTransportError as exc:
-            self._handle_transport_error(exc)
-            return EnableChassisResponse(success=False, message="Failed to re-enable outputs: {}".format(exc))
-        return EnableChassisResponse(success=True, message="Chassis output enabled.")
+            with self._command_guard():
+                self.enabled = True
+                self.last_command_time = rospy.Time.now()
+            ok = self._write_all_outputs(force=True)
+            return EnableChassisResponse(success=ok, message="enabled with safe targets")
+        except (MotionCancelled, ModbusTransportError) as exc:
+            return EnableChassisResponse(success=False, message=str(exc))
 
     def _handle_clear_fault_service(self, _request):
         return ClearFaultResponse(
@@ -603,109 +638,180 @@ class ChassisDriverNode:
             message="Fault clear register is not defined yet. Provide the vendor register table to implement it.",
         )
 
-    def _write_motion_registers(self):
-        with self._lock:
-            desired_left = self.command.left_wheel_speed if self.enabled else 0
-            desired_right = self.command.right_wheel_speed if self.enabled else 0
-            left_speed = self._apply_ramp_limit(desired_left, self.last_sent_left_wheel_speed)
-            right_speed = self._apply_ramp_limit(desired_right, self.last_sent_right_wheel_speed)
-            if (
-                int(left_speed) == int(self.last_sent_left_wheel_speed)
-                and int(right_speed) == int(self.last_sent_right_wheel_speed)
-            ):
-                return
-        write_started = time.monotonic()
-        write_detail = "register=0x{:04X} left={} right={}".format(
-            REGISTER_LEFT_WHEEL_SPEED,
-            int(left_speed),
-            int(right_speed),
-        )
-        self.transport.log_event("MOTION_WRITE_START", write_detail)
-        try:
-            # Keep left/right wheel command atomic in one Modbus frame
-            # to avoid transient "single wheel moves first" behavior.
-            self.transport.write_register_block(
-                REGISTER_LEFT_WHEEL_SPEED,
-                [left_speed, right_speed],
-            )
+    @contextmanager
+    def _command_guard(self):
+        with self._motion.commit():
+            if not self._outputs_ready:
+                raise MotionCancelled("safe output synchronization pending")
             with self._lock:
-                self.last_sent_left_wheel_speed = left_speed
-                self.last_sent_right_wheel_speed = right_speed
-                self._last_written_registers[REGISTER_LEFT_WHEEL_SPEED] = int(left_speed)
-                self._last_written_registers[REGISTER_RIGHT_WHEEL_SPEED] = int(right_speed)
+                yield
+
+    def _invalidate_output_cache(self):
+        self._last_written_block = None
+        self._last_written_registers.clear()
+
+    def _submit_output(self, kind, address=None, value=None, signed=False, force=False, safe=False):
+        # This is the only output path. Re-check after acquiring the bus gate;
+        # a callback prepared before emergency/timeout cannot replay afterwards.
+        with self._io_lock:
+            with self._motion.lock:
+                if not safe:
+                    self._motion.check()
+                    if not self._outputs_ready:
+                        raise MotionCancelled("safe output synchronization pending")
+                generation = self._motion.generation
+                with self._lock:
+                    if kind == "motion":
+                        left = self.command.left_wheel_speed if self.enabled else 0
+                        right = self.command.right_wheel_speed if self.enabled else 0
+                        block = [self._apply_ramp_limit(left, self.last_sent_left_wheel_speed),
+                                 self._apply_ramp_limit(right, self.last_sent_right_wheel_speed)]
+                        address = REGISTER_LEFT_WHEEL_SPEED
+                        if not force and tuple(block) == (self.last_sent_left_wheel_speed, self.last_sent_right_wheel_speed):
+                            return True
+                    elif kind == "single":
+                        block = [int(value)]
+                        if not force and self._last_written_registers.get(address) == int(value):
+                            return True
+                    else:
+                        block = self.command.as_register_block()
+                        if safe or not self.enabled:
+                            block[:4] = [0, 0, 0, DISC_ENABLE_OFF]
+                        address = READ_BLOCK_START
+                        if not force and self._last_written_block == tuple(block):
+                            return True
+                    moving = (any(block[:4]) if kind == "all" else any(block) if kind == "motion"
+                              else address in (REGISTER_LEFT_WHEEL_SPEED, REGISTER_RIGHT_WHEEL_SPEED,
+                                               REGISTER_DISC_SPEED, REGISTER_DISC_ENABLE) and bool(block[0]))
+                    if safe or moving:
+                        self._safe_write_confirmed = False
+            # No state lock held during serial I/O. Emergency may latch now;
+            # its forced stop follows this transaction, never precedes it.
+            try:
+                if kind == "single":
+                    writer = self.transport.write_int16 if signed else self.transport.write_uint16
+                    writer(address, block[0])
+                elif kind == "all" and not self.disc_lift_supported:
+                    self.transport.write_register_block(address, block[:5])
+                    self.transport.write_uint16(REGISTER_LIGHT, block[6])
+                else:
+                    self.transport.write_register_block(address, block)
+            except ModbusTransportError:
+                with self._lock:
+                    self._invalidate_output_cache()
+                    self._safe_write_confirmed = False
+                raise
+            with self._motion.lock, self._lock:
+                if generation != self._motion.generation:
+                    self._invalidate_output_cache()
+                    return False
+                self._last_written_block = tuple(block) if kind == "all" else None
+                for index, item in enumerate(block):
+                    register = address + index
+                    if kind != "all" or self.disc_lift_supported or register != REGISTER_DISC_LIFT:
+                        self._last_written_registers[register] = to_int16(item) if register in (
+                            REGISTER_LEFT_WHEEL_SPEED, REGISTER_RIGHT_WHEEL_SPEED, REGISTER_DISC_SPEED) else int(item)
+                if kind in ("motion", "all"):
+                    self.last_sent_left_wheel_speed, self.last_sent_right_wheel_speed = map(to_int16, block[:2])
+                if safe:
+                    self._safe_write_confirmed = True
+                    self._outputs_ready = True
             self._mark_connected()
-            self.transport.log_event(
-                "MOTION_WRITE_OK",
-                "{} elapsed_ms={:.3f}".format(
-                    write_detail,
-                    (time.monotonic() - write_started) * 1000.0,
-                ),
-            )
+            return True
+
+    def _write_motion_registers(self):
+        try:
+            return self._submit_output("motion")
+        except MotionCancelled:
+            return False
         except ModbusTransportError as exc:
-            self.transport.log_event(
-                "MOTION_WRITE_ERROR",
-                "{} elapsed_ms={:.3f} error={}".format(
-                    write_detail,
-                    (time.monotonic() - write_started) * 1000.0,
-                    exc,
-                ),
-            )
             self._handle_transport_error(exc)
+            return False
 
     def _write_single_output(self, register_address, value, signed):
-        with self._lock:
-            if register_address in self._last_written_registers and int(self._last_written_registers[register_address]) == int(value):
-                return
         try:
-            if signed:
-                self.transport.write_int16(register_address, value)
-            else:
-                self.transport.write_uint16(register_address, value)
-            with self._lock:
-                self._last_written_registers[register_address] = int(value)
-            self._mark_connected()
+            return self._submit_output("single", register_address, value, signed)
+        except MotionCancelled:
+            return False
         except ModbusTransportError as exc:
             self._handle_transport_error(exc)
+            return False
 
     def _write_all_outputs(self, force=False):
-        with self._lock:
-            block = self.command.as_register_block()
-            if not self.enabled:
-                block[0] = 0
-                block[1] = 0
-                block[2] = 0
-                block[3] = DISC_ENABLE_OFF
-            block_tuple = tuple(int(x) for x in block)
-            if not force and self._last_written_block == block_tuple:
-                return
-        if self.disc_lift_supported:
-            self.transport.write_register_block(READ_BLOCK_START, block)
-        else:
-            # Do not touch the lift register on machines without lift hardware.
-            self.transport.write_register_block(READ_BLOCK_START, block[:5])
-            self.transport.write_uint16(REGISTER_LIGHT, block[6])
-        with self._lock:
-            self._last_written_block = block_tuple
-            self.last_sent_left_wheel_speed = int(block[0])
-            self.last_sent_right_wheel_speed = int(block[1])
-            for index, value in enumerate(block):
-                register = READ_BLOCK_START + index
-                if self.disc_lift_supported or register != REGISTER_DISC_LIFT:
-                    self._last_written_registers[register] = int(value)
-        self._mark_connected()
+        return self._submit_output("all", force=force)
 
     def _issue_safe_stop(self):
+        self._motion.invalidate()
         with self._lock:
+            self._safe_write_confirmed = False
             self.command.left_wheel_speed = 0
             self.command.right_wheel_speed = 0
             self.command.disc_speed = 0
             self.command.disc_enable = DISC_ENABLE_OFF
+            self.task_enable = False
+            self._last_cmd_vel_recv_monotonic = 0.0
+            self._manual_last_left_input = self._manual_last_right_input = 0
+        self._reset_cmd_vel_filter()
         try:
-            self._write_all_outputs()
+            return self._submit_output("all", force=True, safe=True)
         except ModbusTransportError as exc:
             self._handle_transport_error(exc)
+            return False
+
+    def _reset_emergency_stop(self, _request):
+        if not self._reset_service_lock.acquire(False):
+            return TriggerResponse(success=False, message="emergency reset already in progress")
+        try:
+            result = self._verify_emergency_reset()
+            self._reset_error = "" if result.success else result.message
+            return result
+        finally:
+            self._reset_service_lock.release()
+
+    def _verify_emergency_reset(self):
+        if not self._motion.latched:
+            self._motion.invalidate(emergency=True)
+            self._motion.persist()
+        generation = self._motion.generation + 1  # Safe stop invalidates once.
+        self._reset_error = ""
+        if not self.connected:
+            return TriggerResponse(success=False, message="chassis disconnected; emergency remains latched")
+        if not self._issue_safe_stop():
+            return TriggerResponse(success=False, message="safe output write not confirmed")
+        if generation != self._motion.generation:
+            return TriggerResponse(success=False, message="new emergency interrupted safe write")
+        started = time.monotonic()
+        last_sample, count = started, 0
+        while time.monotonic() - started < 3.0 and not rospy.is_shutdown():
+            with self._motion.lock, self._lock:
+                if generation != self._motion.generation:
+                    return TriggerResponse(success=False, message="new emergency or output failure interrupted reset")
+                sample = min(self._last_actual_read_monotonic, self._last_status_read_monotonic)
+                valid = (self.connected and self.actual_speed_valid and self._safe_write_confirmed
+                         and sample > last_sample and time.monotonic() - sample < 1.0)
+                if valid:
+                    stopped = (self.actual_left_motor_speed == 0 and self.actual_right_motor_speed == 0
+                               and self.snapshot.disc_speed == 0 and self.snapshot.disc_enable == DISC_ENABLE_OFF)
+                    count = count + 1 if stopped else 0
+                    last_sample = sample
+                if count >= 2:
+                    # No old targets are restored by reset.
+                    self.command.left_wheel_speed = self.command.right_wheel_speed = 0
+                    self.command.disc_speed = 0
+                    self.command.disc_enable = DISC_ENABLE_OFF
+                    self.task_enable = False
+                    self._reset_cmd_vel_filter()
+            if count >= 2:
+                if self._motion.reset(generation):
+                    return TriggerResponse(success=True, message="software emergency released; outputs remain stopped")
+                return TriggerResponse(success=False, message=self._motion.error or "reset superseded")
+            time.sleep(0.02)
+        self._reset_error = "two fresh stopped readbacks not confirmed within 3 seconds"
+        return TriggerResponse(success=False, message=self._reset_error)
 
     def _poll_once(self, _event):
+        if not self._outputs_ready:
+            self._issue_safe_stop()
         self._enforce_command_timeout()
         now_monotonic = time.monotonic()
         status_due = now_monotonic >= self._next_status_poll_monotonic
@@ -718,6 +824,7 @@ class ChassisDriverNode:
             self._next_diagnostics_monotonic = now_monotonic + diagnostics_interval
 
         status_fresh = False
+        read_started = time.monotonic()
         try:
             status_registers = None
             if status_due and self.status_combined_read:
@@ -754,12 +861,12 @@ class ChassisDriverNode:
             with self._lock:
                 if status_registers is not None:
                     self.snapshot = RegisterSnapshot.from_status_registers(status_registers)
-                    self._last_status_read_monotonic = time.monotonic()
+                    self._last_status_read_monotonic = read_started
                     status_fresh = True
                 self.actual_left_motor_speed = int(actual_speed_registers[0])
                 self.actual_right_motor_speed = int(actual_speed_registers[1])
                 self.actual_speed_valid = True
-                self._last_actual_read_monotonic = time.monotonic()
+                self._last_actual_read_monotonic = read_started
             self._mark_connected()
         except ModbusTransportError as exc:
             with self._lock:
@@ -783,9 +890,21 @@ class ChassisDriverNode:
             self.command.right_wheel_speed = 0
         if not already_stopped:
             rospy.logwarn_throttle(2.0, "Wheel speed command timeout reached. Stopping chassis motion.")
-            self._write_motion_registers()
+            self._motion.invalidate()
+            try:
+                self._submit_output("all", force=True, safe=False)
+            except (MotionCancelled, ModbusTransportError) as exc:
+                if isinstance(exc, ModbusTransportError):
+                    self._handle_transport_error(exc)
 
     def _publish_state(self, publish_status=True, status_fresh=True):
+        self.safety_pub.publish(String(data=json.dumps({
+            "emergency_latched": self._motion.latched,
+            "generation": self._motion.generation,
+            "safe_write_confirmed": self._safe_write_confirmed,
+            "outputs_ready": self._outputs_ready,
+            "reset_error": self._reset_error or self._motion.error,
+        })))
         now = rospy.Time.now()
         with self._lock:
             command = ChassisCommand(**self.command.__dict__)
@@ -885,6 +1004,10 @@ class ChassisDriverNode:
         diag.level = level
         diag.message = message
         diag.values = [
+            KeyValue(key="emergency_latched", value=str(self._motion.latched)),
+            KeyValue(key="safe_write_confirmed", value=str(self._safe_write_confirmed)),
+            KeyValue(key="outputs_ready", value=str(self._outputs_ready)),
+            KeyValue(key="reset_error", value=self._reset_error or self._motion.error),
             KeyValue(key="port", value=str(self.port)),
             KeyValue(key="baudrate", value=str(self.baudrate)),
             KeyValue(key="slave_id", value=str(self.slave_id)),
@@ -906,7 +1029,15 @@ class ChassisDriverNode:
             self.consecutive_failures = 0
 
     def _handle_transport_error(self, exc):
+        self._motion.invalidate()
         with self._lock:
+            self._outputs_ready = False
+            self._safe_write_confirmed = False
+            self._invalidate_output_cache()
+            self.command.left_wheel_speed = self.command.right_wheel_speed = 0
+            self.command.disc_speed = 0
+            self.command.disc_enable = DISC_ENABLE_OFF
+            self.task_enable = False
             self.connected = False
             self.last_error = str(exc)
             self.consecutive_failures += 1
@@ -917,19 +1048,13 @@ class ChassisDriverNode:
 
     def _issue_safe_stop_on_error(self):
         now = time.monotonic()
-        with self._lock:
-            if now - self._last_safe_stop_on_error_time < max(0.0, self.safe_stop_on_error_interval):
-                return
-            self._last_safe_stop_on_error_time = now
-        rospy.logwarn_throttle(1.0, "Safe-stop on communication error triggered.")
-        with self._lock:
-            self.command.left_wheel_speed = 0
-            self.command.right_wheel_speed = 0
-            self.command.disc_speed = 0
-            self.command.disc_enable = DISC_ENABLE_OFF
+        if now - self._last_safe_stop_on_error_time < max(0.0, self.safe_stop_on_error_interval):
+            return
+        self._last_safe_stop_on_error_time = now
         try:
-            self.transport.reconnect()
-            self._write_all_outputs(force=True)
+            with self._io_lock:
+                self.transport.reconnect()
+                self._submit_output("all", force=True, safe=True)
         except ModbusTransportError:
             pass
 

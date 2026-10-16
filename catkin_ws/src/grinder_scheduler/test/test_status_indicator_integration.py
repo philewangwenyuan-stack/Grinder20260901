@@ -10,10 +10,13 @@ import threading
 import time
 from types import SimpleNamespace, MethodType
 import unittest
+import tempfile
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / "catkin_ws/src/grinder_scheduler/src"))
+sys.path.insert(0, str(ROOT / "catkin_ws/src/grinder_chassis_driver/src"))
+from grinder_chassis_driver.motion_safety import MotionInterlock, motion_action
 from grinder_scheduler.models import SchedulerState
 
 
@@ -30,6 +33,7 @@ class Publisher:
 
 
 def production_method(path, name, namespace):
+    namespace.setdefault("motion_action", motion_action)
     parsed = ast.parse(path.read_text(encoding="utf-8"))
     function = next(node for node in ast.walk(parsed) if isinstance(node, ast.FunctionDef) and node.name == name)
     exec(compile(ast.Module(body=[function], type_ignores=[]), str(path), "exec"), namespace)
@@ -37,6 +41,10 @@ def production_method(path, name, namespace):
 
 
 class StopHookTest(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.gate = MotionInterlock(os.path.join(directory.name, "emergency.json"))
     def test_production_status_publishes_actual_activity_and_manual_expiry(self):
         namespace = {
             "time": time, "json": json, "math": math, "String": Message,
@@ -79,12 +87,14 @@ class StopHookTest(unittest.TestCase):
     def test_scheduler_emergency_records_event_and_keeps_stop_outputs(self):
         events = []
         namespace = {
-            "Bool": Message, "WheelSpeedCommand": Message, "SchedulerState": SchedulerState,
+            "Bool": Message, "WheelSpeedCommand": Message, "GoalID": Message, "SchedulerState": SchedulerState,
             "rospy": SimpleNamespace(logwarn=lambda *a: None, loginfo=lambda *a: None),
         }
         method = production_method(ROOT / "catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py",
                                    "_apply_emergency_stop", namespace)
         node = SimpleNamespace(
+            _motion=self.gate, move_base_cancel_pub=Publisher(),
+            _reset_emergency_stop=lambda _: Message(success=True, message="released"),
             _indicator_emergency=SimpleNamespace(observe=lambda: events.append("observe")),
             _set_cmd_vel_forward_runtime_active=lambda *a, **k: events.append("disable"),
             chassis_emergency_stop_pub=Publisher(), wheel_cmd_pub=Publisher(),
@@ -109,6 +119,7 @@ class StopHookTest(unittest.TestCase):
         method = production_method(ROOT / "catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py",
                                    "_handle_emergency_stop_cmd", namespace)
         node = SimpleNamespace(
+            _motion=self.gate,
             _lock=threading.Lock(), task_enable=True,
             _indicator_emergency=SimpleNamespace(observe=lambda: events.append("observe")),
             _reset_cmd_vel_filter=lambda: events.append("filter"),
@@ -194,6 +205,50 @@ class NodeIntegrationTest(unittest.TestCase):
         self.node._emergency("chassis_emergency", Message(data=True))
         self.assertFalse(self.node._clear_pending)
 
+    def test_bench_reset_without_chassis_source(self):
+        self.node.resolver.ignore_chassis_status = True
+        services = []
+        def wait(name, **kwargs):
+            if name.startswith('/chassis'):
+                raise RuntimeError('no chassis node')
+        self.rospy.wait_for_service = wait
+        def proxy(name, _type):
+            services.append(name)
+            def clear():
+                self.node._emergency('scheduler_emergency', Message(data=False))
+                return Message(success=True, message='cleared')
+            return clear
+        self.rospy.ServiceProxy = proxy
+        self.assertTrue(self.node._clear(None).success)
+        self.assertEqual(['/scheduler/clear_emergency_indicator'], services)
+
+    def test_new_emergency_cancels_display_reset(self):
+        self.publish_ready()
+        self.rospy.wait_for_service = lambda *a, **k: None
+        def proxy(name, _type):
+            def clear():
+                self.node._emergency('scheduler_emergency', Message(data=True))
+                return Message(success=True, message='raced')
+            return clear
+        self.rospy.ServiceProxy = proxy
+        self.assertFalse(self.node._clear(None).success)
+        self.assertFalse(self.node._clear_pending)
+
+    def test_bench_must_reset_existing_chassis_source(self):
+        self.publish_ready()
+        self.node.resolver.ignore_chassis_status = True
+        self.rospy.wait_for_service = lambda *a, **k: None
+        def proxy(name, _type):
+            if name.startswith('/chassis'):
+                return lambda: Message(success=False, message='cannot persist')
+            def clear():
+                self.node._emergency('scheduler_emergency', Message(data=False))
+                return Message(success=True, message='cleared')
+            return clear
+        self.rospy.ServiceProxy = proxy
+        self.assertFalse(self.node._clear(None).success)
+        self.assertFalse(self.node._clear_pending)
+
     def test_invalid_activity_does_not_refresh_freshness(self):
         self.node._activity(Message(data='{"automatic_active":"false","manual_active":false}'))
         self.assertNotIn("activity", self.node.resolver.samples)
@@ -211,12 +266,15 @@ class NodeIntegrationTest(unittest.TestCase):
 
 class CollisionPauseLifecycleTest(unittest.TestCase):
     def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
         namespace = {
             "Bool": Message, "Int16": Message, "time": time, "SchedulerState": SchedulerState,
             "rospy": SimpleNamespace(logwarn=lambda *a: None, logerr=lambda *a: None),
         }
         path = ROOT / "catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py"
         self.node = SimpleNamespace(
+            _motion=MotionInterlock(os.path.join(directory.name, "emergency.json")),
             state=SchedulerState.RUNNING, _exec_active=True, _indicator_pause_reason="",
             _collision_imminent_lock=threading.Lock(), _collision_imminent_active=False,
             _collision_pause_latched=False, _collision_imminent_topic="/rpp/collision_imminent",

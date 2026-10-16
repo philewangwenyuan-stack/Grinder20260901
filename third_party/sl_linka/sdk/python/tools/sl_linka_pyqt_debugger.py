@@ -619,6 +619,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_control_right = QtWidgets.QPushButton("遥感 右")
         self.btn_stop = QtWidgets.QPushButton("遥感 停止")
         self.btn_emergency_stop = QtWidgets.QPushButton("紧急停止")
+        self.btn_emergency_reset = QtWidgets.QPushButton("解除急停")
         self.btn_emergency_stop.setStyleSheet(
             "QPushButton { background: #c62828; color: white; font-weight: bold; }"
             "QPushButton:pressed { background: #8e0000; }"
@@ -846,6 +847,7 @@ class MainWindow(QtWidgets.QMainWindow):
         remote_layout.addWidget(self.remote_xy, 0, 4, 1, 2)
         # Manual direction buttons are removed from UI by requirement.
         remote_layout.addWidget(self.btn_emergency_stop, 4, 0, 1, 3)
+        remote_layout.addWidget(self.btn_emergency_reset, 5, 0, 1, 6)
         remote_layout.addWidget(self.remote_stick, 1, 3, 4, 3)
         camera_box = QtWidgets.QGroupBox("摄像头取流预览(RTSP)")
         camera_layout = QtWidgets.QGridLayout(camera_box)
@@ -1212,6 +1214,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_mode_local_off.clicked.connect(lambda: self._send_map_mode(pb.MAP_MODE_LOCALIZATION, False))
         # Manual direction buttons are removed from UI by requirement.
         self.btn_emergency_stop.clicked.connect(self._send_emergency_stop)
+        self.btn_emergency_reset.clicked.connect(self._send_emergency_reset)
         self.btn_chassis_enable.clicked.connect(lambda: self._send_chassis_power(True))
         self.btn_chassis_disable.clicked.connect(lambda: self._send_chassis_power(False))
         self.btn_light_on.clicked.connect(lambda: self._send_light(True))
@@ -2443,6 +2446,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self._remote_sent_nonzero = False
         self._send_remote(0.0, 0.0)
         self._send_chassis_power(False)
+
+    def _send_emergency_reset(self):
+        self._remote_x = self._remote_y = 0.0
+        self._remote_sent_nonzero = False
+        self.remote_xy.setText("x=+0.00  y=+0.00")
+        cmd = pb.ControlCommand()
+        cmd.emergency_stop.enabled = False
+        self._append_log("请求解除软件急停；等待响应，不自动恢复任务")
+        self._send(pb.MSG_ID_CONTROL_COMMAND, pb.COMP_CONTROL, cmd)
 
     def _on_joystick_value_changed(self, x: float, y: float):
         self._remote_x = float(x)

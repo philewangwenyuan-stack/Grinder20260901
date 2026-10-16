@@ -884,6 +884,14 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 
 ### 6.6 控制下发
 
+软件急停行为：`ControlCommand.emergency_stop.enabled=true` 锁存禁止运动并请求安全停车；
+`enabled=false` 显式请求解除（旧实现曾忽略false）。结构、消息ID和字段不变，无需重新生成SDK。
+正式解除必须经过底盘安全写入和两次新的停止读回确认，成功后保持STOPPED，不恢复原任务。
+`ControlCommandResponse.result` 成功只在正式解除完成时返回；失败原因放入message。
+若仅无底盘灯光测试清除，返回失败并说明仅清除测试提示、运动锁存仍保留。
+解除成功后自动申请清灯；通信故障等原因仍可红色慢闪，不能仅凭灯色判断停车。
+物理急停及厂商硬件故障不由此协议自动复位。
+
 1. APP 发送 `ControlCommand`
 2. LOWER 执行后返回 `ControlCommandResponse`
 

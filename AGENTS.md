@@ -49,6 +49,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 底盘 ROS 节点、`/cmd_vel`、任务使能 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py` | `config/chassis_driver.yaml`、`launch/chassis_driver.launch` |
 | RK3588 控制盒状态灯带、USB 协议与急停提示 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/status_indicator.py`、`status_indicator_node.py` | `launch/status_indicator.launch`、`config/status_indicator.yaml`；scheduler `_pause_execution(reason)` 区分人为/碰撞暂停；底盘 `indicator_emergency.py`；ESP32 固件、接线与烧录见 `firmware/status_strip/README.md` |
 | Modbus 帧、串口、CRC | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py` | `test/test_modbus_transport.py` |
+| 软件急停锁存、取消代号与显式解除 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/motion_safety.py` | 驱动统一输出提交／安全同步；scheduler `_reset_emergency_stop`；`/scheduler/reset_emergency_stop`、`/chassis/reset_emergency_stop`；回归 `test_motion_safety.py`、`test_emergency_stop_execution.py`；根 README 7.2 |
 | 寄存器地址、编解码、底盘命令模型 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py` | `test/test_register_map.py`、`doc/底盘485指令.png` |
 | ROS 消息/服务 | 两个自研包各自的 `msg/`、`srv/` | 对应 `CMakeLists.txt`、`package.xml` |
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |

@@ -7,11 +7,14 @@ import threading
 import time
 from types import SimpleNamespace
 import unittest
+import tempfile
 from unittest import mock
 
 SOURCE = Path(__file__).resolve().parents[1] / "src/grinder_scheduler/scheduler_node.py"
 sys.path.insert(0, str(SOURCE.parent.parent))
 from grinder_scheduler.models import SchedulerState, TaskConfigModel
+sys.path.insert(0, str(SOURCE.parents[3] / 'grinder_chassis_driver/src'))
+from grinder_chassis_driver.motion_safety import MotionInterlock, motion_action
 
 
 def production_scheduler(params, writes):
@@ -35,7 +38,7 @@ def production_scheduler(params, writes):
             return dict(values)
 
     namespace = dict(
-        math=math, time=time, SchedulerState=SchedulerState, DynamicReconfigureClient=Client,
+        math=math, time=time, SchedulerState=SchedulerState, DynamicReconfigureClient=Client, motion_action=motion_action,
         Bool=lambda **kw: SimpleNamespace(**kw), UInt16=lambda **kw: SimpleNamespace(**kw),
         Int16=lambda **kw: SimpleNamespace(**kw),
         rospy=SimpleNamespace(
@@ -52,6 +55,9 @@ class TaskStartSpeedTest(unittest.TestCase):
         self.params = {}
         self.writes = []
         n = self.node = production_scheduler(self.params, self.writes)()
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        n._motion = MotionInterlock(str(Path(directory.name) / 'motion.json'))
         n.state = SchedulerState.READY
         n.task_config = TaskConfigModel(task_id="task-a")
         n._chassis_settings = dict(run_speed=.03)

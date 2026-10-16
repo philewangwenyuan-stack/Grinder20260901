@@ -34,6 +34,7 @@ from nav_msgs.msg import OccupancyGrid, Odometry, Path
 from nav_msgs.srv import LoadMap
 from std_msgs.msg import Bool, Int16, UInt16, String
 from grinder_chassis_driver.indicator_emergency import EmergencyIndicatorSource
+from grinder_chassis_driver.motion_safety import MotionInterlock, MotionCancelled, GuardedPublisher, motion_action
 from std_srvs.srv import Empty, Trigger, TriggerResponse
 from grinder_scheduler.srv import (
     GetSuperLioStatus,
@@ -199,7 +200,14 @@ class SchedulerNode:
         return min(int(cap_edge), edge)
 
     def __init__(self):
-        self.state = SchedulerState.IDLE
+        self._motion = MotionInterlock(rospy.get_param(
+            "~motion_emergency_file", "~/.ros/grinder_safety/scheduler_emergency.json"),
+            legacy_path=rospy.get_param("~indicator_emergency_file", "~/.ros/grinder_indicator/scheduler_emergency.json"))
+        self._emergency_reset_lock = threading.Lock()
+        self._indicator_clear_generation = None
+        self._emergency_reset_message = ""
+        self._driver_emergency_latched = False
+        self.state = SchedulerState.STOPPED if self._motion.latched else SchedulerState.IDLE
         self._collision_imminent_topic = rospy.get_param(
             "~collision_imminent_topic", "/rpp/collision_imminent"
         )
@@ -847,6 +855,20 @@ class SchedulerNode:
             "/scheduler", "~/.ros/grinder_indicator/scheduler_emergency.json"
         )
 
+        if self._motion.latched:
+            self._indicator_emergency.observe()
+        safe_data = lambda msg: not bool(msg.data)
+        safe_wheels = lambda msg: msg.left_wheel_speed == 0 and msg.right_wheel_speed == 0
+        for name, safe in (("task_enable_pub", safe_data), ("disc_speed_pub", safe_data),
+                           ("disc_enable_pub", safe_data), ("wheel_cmd_pub", safe_wheels),
+                           ("work_mode_pub", lambda msg: False), ("disc_lift_pub", lambda msg: False),
+                           ("goal_pub", lambda msg: False), ("global_plan_pub", lambda msg: False),
+                           ("active_segment_plan_pub", lambda msg: False)):
+            setattr(self, name, GuardedPublisher(getattr(self, name), self._motion, safe))
+        self.motion_safety_pub = rospy.Publisher("/scheduler/motion_safety", String, queue_size=1, latch=True)
+        rospy.Service("/scheduler/reset_emergency_stop", Trigger, self._reset_emergency_stop)
+        rospy.Subscriber("/chassis/motion_safety", String, self._driver_motion_safety, queue_size=1)
+        self._emergency_status_timer = rospy.Timer(rospy.Duration(0.5), self._emergency_status_tick)
         rospy.Subscriber("/chassis/status", ChassisStatus, self._chassis_status_callback, queue_size=10)
         rospy.Subscriber("/chassis/wheel_speed_state", WheelSpeedState, self._wheel_speed_state_callback, queue_size=10)
         rospy.Subscriber(
@@ -964,16 +986,19 @@ class SchedulerNode:
 
     def _set_cmd_vel_forward_runtime_active(self, enabled, publish_zero=False, reason=""):
         # Compatibility wrapper: runtime task control now uses /chassis/task_enable.
-        enabled = bool(enabled)
-        changed = (self._task_enable_runtime_active != enabled)
-        if changed:
-            self._task_enable_runtime_active = enabled
-            self.task_enable_pub.publish(Bool(data=enabled))
-            rospy.loginfo(
-                "task_enable runtime %s%s",
-                "enabled" if enabled else "disabled",
-                (" reason={}".format(reason) if reason else ""),
-            )
+        with self._motion.lock:
+            if enabled:
+                self._motion.check()
+            enabled = bool(enabled)
+            changed = (self._task_enable_runtime_active != enabled)
+            if changed or not enabled:
+                self._task_enable_runtime_active = enabled
+                self.task_enable_pub.publish(Bool(data=enabled))
+                rospy.loginfo(
+                    "task_enable runtime %s%s",
+                    "enabled" if enabled else "disabled",
+                    (" reason={}".format(reason) if reason else ""),
+                )
 
     def _stream_tick(self, _event):
         left, right, left_stamp, right_stamp = self.aurora_bridge.get_latest_frames()
@@ -1016,6 +1041,7 @@ class SchedulerNode:
         except Exception as exc:
             rospy.logwarn_throttle(2.0, "Failed to publish path to navigation: %s", exc)
 
+    @motion_action(cancel_result=None, replace=False)
     def _publish_active_segment_tick(self, _event):
         if self.state != SchedulerState.RUNNING or not self._exec_active:
             return
@@ -1357,6 +1383,7 @@ class SchedulerNode:
         except Exception as exc:
             rospy.logwarn_throttle(2.0, "Failed to publish active segment plan: %s", exc)
 
+    @motion_action(cancel_result=False, replace=False)
     def _send_active_segment_goal(self, force=False, reason=""):
         if self.current_path is None or not self.current_path.points:
             return
@@ -1538,6 +1565,7 @@ class SchedulerNode:
         self._active_segment_last_progress_update_time = float(now)
         return True
 
+    @motion_action(cancel_result=None)
     def _finish_path_execution(self, stop_reason="completed"):
         self._continuation_checkpoint = None
         if self.current_path is None or not self.current_path.points:
@@ -1785,10 +1813,7 @@ class SchedulerNode:
             self._update_live_map_files(raw_map)
 
         if self.replan_requested and self.state == SchedulerState.RUNNING:
-            self._safe_stop_motion()
-            if self._plan_current_task():
-                self.replan_requested = False
-                self._resume_execution()
+            self._replan_execution()
 
         self._tick_path_execution()
         self._tick_disc_motion_guard()
@@ -4169,6 +4194,7 @@ class SchedulerNode:
         self._disc_stationary_since = 0.0
         self._disc_motion_guard_stopped = False
 
+    @motion_action(cancel_result=None, replace=False)
     def _tick_disc_motion_guard(self):
         if not bool(self._disc_motion_guard_enabled):
             return
@@ -4716,6 +4742,15 @@ class SchedulerNode:
             )
         return TriggerResponse(success=False, message=self.last_error or "planning_failed")
 
+    @motion_action(cancel_result=False)
+    def _replan_execution(self):
+        self._safe_stop_motion()
+        if self._plan_current_task():
+            self.replan_requested = False
+            return self._resume_execution()
+        return False
+
+    @motion_action(cancel_result=False)
     def _plan_current_task(self, force_use_all_regions=False, request_start_pose=None, request_end_pose=None, request_global_direction=None):
         t_plan_total = time.perf_counter()
         self._ensure_offline_map_service_for_current_map("plan_current_task_entry")
@@ -4832,7 +4867,8 @@ class SchedulerNode:
             map_info.get("height", 0),
             float(map_info.get("resolution", 0.0)),
         )
-        self.state = SchedulerState.PLANNING
+        with self._motion.commit():
+            self.state = SchedulerState.PLANNING
         try:
             current_pose = self.aurora_bridge.get_pose()
             t_plan_pose = time.perf_counter()
@@ -4915,7 +4951,8 @@ class SchedulerNode:
             )
             t_plan_algorithm = time.perf_counter()
             t_plan_path_transform = time.perf_counter()
-            self.current_path = planned_path
+            with self._motion.commit():
+                self.current_path = planned_path
             self._invalidate_path_preview_payload_cache()
             # Disable synthetic prepended start point:
             # if planner injected a first point marked as start_pose/current_pose,
@@ -4939,7 +4976,10 @@ class SchedulerNode:
                 rospy.logwarn("Failed to remove prepended start point safely: %s", _exc)
             self._current_plan_scope = "all" if len(selected_work_regions) > 1 else "single"
             t_plan_assign = time.perf_counter()
+        except MotionCancelled:
+            raise
         except Exception as exc:
+            self._motion.check()
             rospy.logerr("Planning failed with exception: %s", exc)
             self._set_error("Planning failed: {}".format(exc))
             return False
@@ -4988,7 +5028,8 @@ class SchedulerNode:
         else:
             rospy.loginfo("Skip scheduler state save on plan success; persistent task/map state is unchanged.")
         t_plan_state = time.perf_counter()
-        self.state = SchedulerState.READY
+        with self._motion.commit():
+            self.state = SchedulerState.READY
         rospy.loginfo(
             "Plan current task perf: total=%.1fms sync=%.1fms nav_refresh=%.1fms map_ready=%.1fms pose=%.1fms align=%.1fms algorithm=%.1fms path_transform=%.1fms assign=%.1fms prepend=%.1fms segments=%.1fms publish=%.1fms metadata=%.1fms preview_save=%.1fms debug=%.1fms state_save=%.1fms path_points=%d",
             (t_plan_state - t_plan_total) * 1000.0,
@@ -6095,6 +6136,7 @@ class SchedulerNode:
             self.current_path = None
             rospy.loginfo("Task continuation: map changed, replan remaining coverage")
 
+    @motion_action(cancel_result=(False, "Task start cancelled by stop/emergency"), replace=True)
     def _start_execution(self):
         runtime_parameters = getattr(self, "_task_runtime_parameters", None)
         if runtime_parameters is not None:
@@ -6115,6 +6157,7 @@ class SchedulerNode:
 
         def mark(step):
             nonlocal t_prev
+            self._motion.check()
             now = time.perf_counter()
             rospy.loginfo(
                 "TaskStart perf: step=%s step_ms=%.1f elapsed_ms=%.1f",
@@ -6173,13 +6216,15 @@ class SchedulerNode:
         self.work_mode_pub.publish(UInt16(data=2))
         self.disc_speed_pub.publish(Int16(data=self._configured_disc_speed_rpm()))
         self.disc_enable_pub.publish(Bool(data=True))
-        self._disc_auto_cover_desired = True
+        with self._motion.commit():
+            self._disc_auto_cover_desired = True
         self._reset_disc_motion_guard()
         self.light_pub.publish(Bool(data=True))
         mark("publish_chassis_disc_commands")
         self._init_segment_execution_cursor()
         mark("init_segment_cursor")
-        self._exec_active = True
+        with self._motion.commit():
+            self._exec_active = True
         self._exec_publish_start_pose_once = False
         checkpoint = getattr(self, "_continuation_checkpoint", None)
         self._exec_region_repeat_done = dict(checkpoint["repeat_done"]) if checkpoint else {}
@@ -6195,7 +6240,8 @@ class SchedulerNode:
         mark("publish_active_segment")
         self._send_active_segment_goal(force=True, reason="task_start")
         mark("send_active_goal")
-        self.state = SchedulerState.RUNNING
+        with self._motion.commit():
+            self.state = SchedulerState.RUNNING
         self._begin_task_execution_record()
         self._indicator_pause_reason = ""
         mark("set_running")
@@ -6275,6 +6321,7 @@ class SchedulerNode:
         return success
 
     def _pause_execution(self, reason="manual"):
+        self._motion.invalidate()
         # Keep the cause of a collision pause even after RPP reports clear or
         # the operator sends another PAUSE. Only a successful resume/new start
         # or stop ends this pause indication. This does not change stop logic.
@@ -6289,9 +6336,10 @@ class SchedulerNode:
         self._safe_stop_motion()
         self.disc_enable_pub.publish(Bool(data=False))
         self._indicator_pause_reason = "collision" if collision_pause else "manual"
-        self.state = SchedulerState.PAUSED
+        self.state = SchedulerState.STOPPED if self._motion.latched else SchedulerState.PAUSED
         return True, "Task paused"
 
+    @motion_action(cancel_result=(False, "Task resume cancelled by stop/emergency"), replace=True)
     def _resume_execution(self):
         if float(self._chassis_settings.get("run_speed", 0.0)) <= 0.0:
             self._safe_stop_motion()
@@ -6307,23 +6355,27 @@ class SchedulerNode:
         self._manual_travel_disc_active = False
         self.disc_speed_pub.publish(Int16(data=self._configured_disc_speed_rpm()))
         self.disc_enable_pub.publish(Bool(data=True))
-        self._disc_auto_cover_desired = True
+        with self._motion.commit():
+            self._disc_auto_cover_desired = True
         self._reset_disc_motion_guard()
         if not self._active_segments:
             self._rebuild_active_segments()
         self._init_segment_execution_cursor()
-        self._exec_active = True
+        with self._motion.commit():
+            self._exec_active = True
         self._exec_publish_start_pose_once = False
         self._set_cmd_vel_forward_runtime_active(True, publish_zero=False, reason="task_resume_nav_cmd_vel_forward")
         self._exec_goal_start_time = time.time()
         self._publish_path_to_navigation(publish_goal=False, reason="task_resume")
         self._publish_active_segment_plan(reason="task_resume")
         self._send_active_segment_goal(force=True, reason="task_resume")
-        self.state = SchedulerState.RUNNING
+        with self._motion.commit():
+            self.state = SchedulerState.RUNNING
         self._indicator_pause_reason = ""
         return True, "Task resumed"
 
     def _stop_execution(self):
+        self._motion.invalidate()
         was_active = self._exec_active or self.state == SchedulerState.PAUSED
         self._exec_active = False
         self._disc_auto_cover_desired = False
@@ -6684,6 +6736,7 @@ class SchedulerNode:
             target_goal_index = len(self._goal_points) - 1
         self._exec_goal_index = max(0, min(target_goal_index, len(self._goal_points) - 1))
 
+    @motion_action(cancel_result=False, replace=False)
     def _dispatch_current_goal(self, force=False):
         if not self._exec_active or self.current_path is None or not self.current_path.points:
             return
@@ -6750,6 +6803,7 @@ class SchedulerNode:
             quat = self._resolve_point_orientation(endpoint, path_index, cached_xy)
         self.goal_pub.publish(self._build_navigation_goal_msg(endpoint, path_index, quat))
 
+    @motion_action(cancel_result=None, replace=False)
     def _apply_disc_state_for_path_point(self, path_point):
         if not bool(self._disc_follow_path_type):
             return
@@ -6766,7 +6820,8 @@ class SchedulerNode:
             self._reset_disc_motion_guard()
             self._publish_disc_travel_state(True, reason="connection_path")
         else:
-            self._disc_auto_cover_desired = True
+            with self._motion.commit():
+                self._disc_auto_cover_desired = True
             self._reset_disc_motion_guard()
             self.disc_speed_pub.publish(Int16(data=self._configured_disc_speed_rpm()))
             if not self._disc_motion_guard_stopped:
@@ -6815,7 +6870,8 @@ class SchedulerNode:
             self._safe_stop_motion()
             self._exec_region_order = []
             self._exec_region_index = -1
-            self.state = SchedulerState.COMPLETED
+            with self._motion.commit():
+                self.state = SchedulerState.COMPLETED
             self._task_stop_reason = "completed"
             self._finalize_task_result(stop_reason="completed")
             rospy.loginfo("Path execution completed: task_id=%s path_version=%s", self.current_path.task_id, self.current_path.path_version)
@@ -6829,6 +6885,7 @@ class SchedulerNode:
         )
         self._dispatch_current_goal(force=True)
 
+    @motion_action(cancel_result=False)
     def _try_advance_to_next_region(self):
         if self._current_plan_scope == "all":
             return False
@@ -6871,20 +6928,24 @@ class SchedulerNode:
         self._set_chassis_enabled(True)
         self.disc_speed_pub.publish(Int16(data=self._configured_disc_speed_rpm()))
         self.disc_enable_pub.publish(Bool(data=True))
-        self._disc_auto_cover_desired = True
+        with self._motion.commit():
+            self._disc_auto_cover_desired = True
         self._reset_disc_motion_guard()
         self.light_pub.publish(Bool(data=True))
         self._exec_region_order = region_order
         self._exec_region_index = next_idx
         self._init_segment_execution_cursor()
-        self._exec_active = True
+        with self._motion.commit():
+            self._exec_active = True
         self._exec_last_send_time = 0.0
         self._exec_goal_start_time = time.time()
         self._publish_active_segment_plan(reason="next_region")
         self._send_active_segment_goal(force=True, reason="next_region")
-        self.state = SchedulerState.RUNNING
+        with self._motion.commit():
+            self.state = SchedulerState.RUNNING
         return True
 
+    @motion_action(cancel_result=None, replace=False)
     def _tick_path_execution(self):
         if self.state != SchedulerState.RUNNING:
             return
@@ -6982,6 +7043,7 @@ class SchedulerNode:
             min(32767, int(self._chassis_settings.get("disc_speed_rpm", 1200))),
         )
 
+    @motion_action(cancel_result=None, replace=False)
     def _publish_disc_travel_state(self, moving, reason=""):
         enabled = bool(moving) and bool(self._disc_travel_spin_enabled)
         if enabled:
@@ -6994,6 +7056,7 @@ class SchedulerNode:
             reason or "unspecified",
         )
 
+    @motion_action(cancel_result=None, replace=False)
     def _set_manual_travel_disc_active(self, active, reason=""):
         active = bool(active) and bool(self._disc_travel_spin_enabled)
         if active == self._manual_travel_disc_active:
@@ -7321,6 +7384,11 @@ class SchedulerNode:
             return ("", "", 0, 0)
 
     def _set_error(self, message):
+        self._motion.invalidate()
+        self._exec_active = False
+        self._disc_auto_cover_desired = False
+        self._safe_stop_motion()
+        self.disc_enable_pub.publish(Bool(data=False))
         self.last_error = message
         self._mark_current_region_repeat_done()
         self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="scheduler_error")
@@ -8352,6 +8420,19 @@ class SchedulerNode:
         if request is None:
             request = pb.ControlCommand()
             request.ParseFromString(payload)
+        if request.HasField("emergency_stop"):
+            handled, error_message = self._apply_emergency_stop(bool(request.emergency_stop.enabled))
+        else:
+            handled, error_message = self._apply_control_outputs(request)
+        response = pb.ControlCommandResponse()
+        response.result = pb.RESULT_SUCCESS if handled else pb.RESULT_FAILED
+        response.message = error_message or ("Control applied" if handled else "Control rejected")
+        response.applied_command.CopyFrom(request)
+        return response.SerializeToString(), pb.MSG_ID_CONTROL_COMMAND_RESPONSE, pb.COMP_CONTROL
+
+    @motion_action(cancel_result=(False, "Motion rejected: emergency latched or execution cancelled"))
+    def _apply_control_outputs(self, request):
+        pb = self.sl_link_server.pb
         control_fields = set(getattr(request, "DESCRIPTOR").fields_by_name.keys())
         has_disc_control = "disc_control" in control_fields
         has_emergency_stop = "emergency_stop" in control_fields
@@ -8379,7 +8460,7 @@ class SchedulerNode:
             self.light_pub.publish(Bool(data=request.lighting.enabled))
             handled = True
         elif request.HasField("manual_drive"):
-            self._handle_manual_drive(
+            applied = self._handle_manual_drive(
                 request.manual_drive.motion,
                 request.manual_drive.speed_ratio,
                 request.manual_drive.remote_x,
@@ -8387,25 +8468,122 @@ class SchedulerNode:
                 request.manual_drive.max_speed_mps,
                 request.manual_drive.max_turn_speed_ratio,
             )
-            handled = True
-        elif has_emergency_stop and request.HasField("emergency_stop"):
-            self._apply_emergency_stop(bool(request.emergency_stop.enabled))
-            handled = True
+            self._motion.check()
+            handled = applied is not False
         elif request.HasField("chassis_power"):
             self._set_chassis_enabled(request.chassis_power.enabled)
             handled = True
         else:
             error_message = "Unsupported or empty ControlCommand"
-        response = pb.ControlCommandResponse()
-        response.result = pb.RESULT_SUCCESS if handled else pb.RESULT_UNSUPPORTED
-        response.message = "Control applied" if handled else error_message
-        response.applied_command.CopyFrom(request)
-        return response.SerializeToString(), pb.MSG_ID_CONTROL_COMMAND_RESPONSE, pb.COMP_CONTROL
+        return handled, error_message
+
+    def _driver_motion_safety(self, msg):
+        try:
+            latched = bool(json.loads(msg.data)["emergency_latched"])
+        except (ValueError, KeyError, TypeError):
+            return
+        previous = self._driver_emergency_latched
+        self._driver_emergency_latched = latched
+        if latched and not previous and not self._motion.latched:
+            self._apply_emergency_stop(True)
+
+    def _request_indicator_clear(self, expected_generation=None):
+        with self._motion.lock:
+            if expected_generation is not None and expected_generation != self._motion.generation:
+                return False
+            self._indicator_clear_generation = self._motion.generation
+            return True
+
+    def _emergency_status_tick(self, _event):
+        self.motion_safety_pub.publish(String(data=json.dumps({
+            "emergency_latched": self._motion.latched,
+            "generation": self._motion.generation,
+            "reset_message": self._emergency_reset_message or self._motion.error,
+            "indicator_clear_pending": self._indicator_clear_generation is not None,
+        })))
+        generation = self._indicator_clear_generation
+        if generation is None or generation != self._motion.generation:
+            return
+        try:
+            rospy.wait_for_service("/indicator/clear_emergency", timeout=0.1)
+            result = rospy.ServiceProxy("/indicator/clear_emergency", Trigger)()
+            with self._motion.lock:
+                if generation != self._motion.generation and self._motion.latched:
+                    # The old RPC may already have cleared a source record.
+                    # Reassert the new event; never let its final indication be cleared.
+                    self._indicator_emergency.observe()
+                elif result.success:
+                    if generation == self._motion.generation:
+                        self._indicator_clear_generation = None
+        except (rospy.ROSException, rospy.ServiceException):
+            # A lost RPC response does not prove that its source clears failed.
+            with self._motion.lock:
+                if generation != self._motion.generation and self._motion.latched:
+                    self._indicator_emergency.observe()
+            # Retry when the optional indicator node becomes available.
+
+    def _reset_emergency_stop(self, _request):
+        if not self._emergency_reset_lock.acquire(False):
+            return TriggerResponse(success=False, message="emergency reset already in progress")
+        try:
+            # Keep the scheduler inhibited throughout all blocking verification.
+            if not self._motion.latched:
+                self._motion.invalidate(emergency=True)
+                self._motion.persist()
+            self._stop_execution()
+            generation = self._motion.generation
+            try:
+                rospy.wait_for_service("/chassis/reset_emergency_stop", timeout=0.5)
+            except rospy.ROSException:
+                bench = rospy.get_param("/grinder_status_indicator/ignore_chassis_status", False) is True
+                if bench:
+                    if not self._request_indicator_clear(generation):
+                        return TriggerResponse(success=False, message="new emergency interrupted reset")
+                    self._emergency_reset_message = "Only test indicator clear requested; chassis not confirmed; motion remains latched"
+                else:
+                    self._emergency_reset_message = "Chassis reset service unavailable; emergency remains latched"
+                return TriggerResponse(success=False, message=self._emergency_reset_message)
+            try:
+                result = rospy.ServiceProxy("/chassis/reset_emergency_stop", Trigger)()
+            except rospy.ServiceException as exc:
+                result = TriggerResponse(success=False, message=str(exc))
+            if not result.success:
+                bench = rospy.get_param("/grinder_status_indicator/ignore_chassis_status", False) is True
+                chassis = getattr(self, "last_chassis_status", None)
+                if bench and (chassis is None or not chassis.connected):
+                    if not self._request_indicator_clear(generation):
+                        return TriggerResponse(success=False, message="new emergency interrupted reset")
+                    self._emergency_reset_message = "Only test indicator clear requested; chassis not confirmed; motion remains latched: " + result.message
+                    return TriggerResponse(success=False, message=self._emergency_reset_message)
+                self._emergency_reset_message = result.message
+                return TriggerResponse(success=False, message=result.message)
+            if not self._motion.reset(generation):
+                self.chassis_emergency_stop_pub.publish(Bool(data=True))
+                self._emergency_reset_message = self._motion.error or "new emergency interrupted reset"
+                return TriggerResponse(success=False, message=self._emergency_reset_message)
+            with self._motion.lock:
+                if self._motion.latched:
+                    self._emergency_reset_message = "new emergency interrupted reset"
+                    return TriggerResponse(success=False, message=self._emergency_reset_message)
+                self._exec_active = False
+                self._disc_auto_cover_desired = False
+                self._manual_command_active = False
+                self._manual_last_left_cmd = self._manual_last_right_cmd = 0
+                self._manual_reverse_until = 0.0
+                self._manual_travel_disc_active = False
+                self.state = SchedulerState.STOPPED
+                self._request_indicator_clear()
+            self._emergency_reset_message = "Software emergency released; stopped; indicator clear queued; send a new start command to move"
+            return TriggerResponse(success=True, message=self._emergency_reset_message)
+        finally:
+            self._emergency_reset_lock.release()
 
     def _apply_emergency_stop(self, enabled):
         if not bool(enabled):
-            rospy.loginfo("EmergencyStopControl received with enabled=false, ignored.")
-            return
+            result = self._reset_emergency_stop(None)
+            return result.success, result.message
+        self._motion.invalidate(emergency=True)
+        self._indicator_clear_generation = None
         self._indicator_emergency.observe()
         # Emergency stop sequence:
         # 1) disable task cmd_vel forwarding before any zero-speed command
@@ -8419,14 +8597,21 @@ class SchedulerNode:
         wheel.left_wheel_speed = 0
         wheel.right_wheel_speed = 0
         self.wheel_cmd_pub.publish(wheel)
+        self.move_base_cancel_pub.publish(GoalID())
         self._reset_disc_motion_guard()
         self.disc_enable_pub.publish(Bool(data=False))
         self.light_pub.publish(Bool(data=False))
         self.state = SchedulerState.STOPPED
         self._indicator_pause_reason = ""
         self._task_stop_reason = "emergency_stop"
-        rospy.logwarn("Emergency stop applied: task_enable=false, chassis_safe_stop=true, wheels=0, disc=off.")
+        self._manual_command_active = False
+        self._manual_last_left_cmd = self._manual_last_right_cmd = 0
+        self._manual_travel_disc_active = False
+        persisted = self._motion.persist()
+        rospy.logwarn("Emergency stop latched; safety outputs requested, persistence=%s", persisted)
+        return persisted, "Emergency latched; safe stop requested" if persisted else self._motion.error
 
+    @motion_action(cancel_result=False, replace=False)
     def _handle_manual_drive(
         self,
         motion,
@@ -8569,10 +8754,11 @@ class SchedulerNode:
         self.wheel_cmd_pub.publish(wheel)
         if non_task_manual and not moving:
             self._set_manual_travel_disc_active(False, reason="manual_drive_stop")
-        self._manual_last_left_cmd = int(wheel.left_wheel_speed)
-        self._manual_last_right_cmd = int(wheel.right_wheel_speed)
-        self._manual_last_command_monotonic = time.monotonic()
-        self._manual_command_active = bool(moving)
+        with self._motion.commit():
+            self._manual_last_left_cmd = int(wheel.left_wheel_speed)
+            self._manual_last_right_cmd = int(wheel.right_wheel_speed)
+            self._manual_last_command_monotonic = time.monotonic()
+            self._manual_command_active = bool(moving)
 
     def _manual_drive_watchdog_tick(self, _event):
         with self._manual_drive_lock:
@@ -8734,6 +8920,7 @@ class SchedulerNode:
         response.task_id = self.task_config.task_id
         return response.SerializeToString(), pb.MSG_ID_TASK_CONFIG_RESPONSE, pb.COMP_SCHEDULER
 
+    @motion_action(cancel_result=None, replace=False)
     def _publish_task_runtime_disc_speed(self, rpm):
         self.disc_speed_pub.publish(Int16(data=int(rpm)))
 

@@ -1,6 +1,7 @@
 # 串口设备路径（底盘驱动与电机控制器通信口）
 # 仅保存急停灯光提示，不改变底盘急停/使能逻辑。
 indicator_emergency_file: "~/.ros/grinder_indicator/chassis_emergency.json"
+motion_emergency_file: "~/.ros/grinder_safety/chassis_emergency.json"
 port: /dev/ttyS0
 # 串口波特率
 baudrate: 19200

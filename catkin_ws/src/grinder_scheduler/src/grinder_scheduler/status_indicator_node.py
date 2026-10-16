@@ -92,7 +92,16 @@ class StatusIndicatorNode:
             return TriggerResponse(success=False, message="display reset already in progress")
         try:
             started = time.monotonic()
-            for source in ("/scheduler", "/chassis"):
+            with self._lock:
+                clear_generation = self._clear_generation
+                chassis_seen = "chassis_emergency" in self.resolver.samples or "chassis" in self.resolver.samples
+            sources = ["/scheduler", "/chassis"]
+            if self.resolver.ignore_chassis_status and not chassis_seen:
+                try:
+                    rospy.wait_for_service("/chassis/clear_emergency_indicator", timeout=0.1)
+                except rospy.ROSException:
+                    sources.remove("/chassis")
+            for source in sources:
                 service = source + "/clear_emergency_indicator"
                 rospy.wait_for_service(service, timeout=1.0)
                 result = rospy.ServiceProxy(service, Trigger)()
@@ -103,7 +112,9 @@ class StatusIndicatorNode:
             deadline = time.monotonic() + 2.0
             while time.monotonic() < deadline and not self._stop.is_set():
                 with self._lock:
-                    records = [self.resolver.samples.get(k) for k in ("scheduler_emergency", "chassis_emergency")]
+                    if clear_generation != self._clear_generation:
+                        return TriggerResponse(success=False, message="new emergency interrupted display reset")
+                    records = [self.resolver.samples.get(source[1:] + "_emergency") for source in sources]
                     if all(r is not None and not r[0] and r[1] >= started for r in records):
                         self._clear_generation += 1
                         self._clear_pending = True

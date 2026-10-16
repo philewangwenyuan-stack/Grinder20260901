@@ -49,8 +49,10 @@ class EmergencyRecord:
             os.replace(temporary, self.path)
             self.saved_revision = revision
 
-    def clear(self):
+    def clear(self, expected_revision=None):
         with self._lock:
+            if expected_revision is not None and self.revision != expected_revision:
+                return False
             self.value = False
             self.revision += 1
             revision = self.revision

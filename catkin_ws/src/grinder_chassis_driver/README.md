@@ -86,12 +86,24 @@
 核心运行逻辑：
 
 1. 节点启动后读取 ROS 参数并初始化串口
-2. 如果启用了 `startup_zero_output`，启动时先下发安全值
+2. 启动／通信恢复时强制下发安全值；`startup_zero_output` 保留兼容但不能关闭安全同步屏障
 3. 订阅 `/chassis/...` 控制话题，将命令写入对应寄存器
 4. 按 `poll_rate_hz` 读取 `0x4017 ~ 0x4018` 的有符号实际电机速度；按 `status_poll_rate_hz` 将 `0x4012 ~ 0x4016` 状态与当次轮速合并读取
 5. 轮速状态与 `/odom_wheel` 跟随轮速轮询发布，普通状态与诊断分别按配置频率发布
 6. 如果超过 `command_timeout` 未收到新的轮速命令，则自动停轮
 7. 如果通信连续失败，节点标记为掉线并尝试进入安全状态
+
+软件急停由 `/chassis/emergency_stop=true` 触发，运动锁存独立保存到
+`~/.ros/grinder_safety/chassis_emergency.json`（参数 `motion_emergency_file`），跨重启保留。
+急停、关闭输出和通信故障停车绕过缓存与斜坡；轮速命令超时直接停轮并保留原磨盘策略。
+单寄存器／轮速写入使整块缓存失效，通信异常或部分写失败清空全部缓存。
+所有输出共用串行提交入口，旧代号不能晚于安全帧提交运动；安全同步成功前不接受新运动。
+
+`/chassis/reset_emergency_stop`（std_srvs/Trigger）要求在线、安全写入确认和3秒内两次新的停止读数。
+成功仅解除软件锁存，目标仍清零、task_enable仍false。新急停可中断复位。
+用户应使用协调入口 `/scheduler/reset_emergency_stop`，以同时解除调度锁存并排队清灯。
+`/chassis/motion_safety`（JSON String）及诊断提供 emergency_latched、safe_write_confirmed、
+outputs_ready、reset_error；ACK及磨盘既有读回值不能证明实机机械停车。
 
 ## 5. 话题说明
 

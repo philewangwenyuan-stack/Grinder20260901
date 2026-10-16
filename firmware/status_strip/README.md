@@ -137,7 +137,21 @@ rosservice call /indicator/clear_emergency "{}"
 和 `acknowledged=true` 才能确认控制器已响应。通信恢复前持续重试最新清除请求。
 来源内部的 `/scheduler/clear_emergency_indicator`、`/chassis/clear_emergency_indicator`
 不应单独用于用户复位：它们不能单独清除控制器锁存。
-重新发生急停会取消尚未发送的显示复位。G01/G02 控制安全问题不在本模块中修复。
+重新发生急停会取消尚未发送的显示复位。显示记录不承担运动锁存职责。
+
+正式解除软件急停使用上位机 `emergency_stop.enabled=false` 或：
+
+```bash
+rosservice call /scheduler/reset_emergency_stop "{}"
+```
+
+驱动在3秒内验证安全输出确认及两次新的停止读数后解除，调度仍保持停止，
+随后自动调用灯光清除；不会自动恢复任务。运动锁存记录在 `~/.ros/grinder_safety/`，
+跨重启保留，与灯光提示文件独立；修改账户/HOME时需保持记录位置一致。
+`/scheduler/motion_safety` 和 `/chassis/motion_safety`（JSON String）报告锁存、复位和安全写入状态。
+无底盘且忽略底盘状态时，调度入口只排队清灯、保留运动锁存并返回失败说明。
+灯光清除在测试模式只可跳过从未出现且服务不存在的底盘来源；已有来源必须响应。
+清除后按实时状态重新选灯，其他故障可继续红色慢闪。物理急停须按设备流程另外解除。
 
 ## USB 协议 v1
 
