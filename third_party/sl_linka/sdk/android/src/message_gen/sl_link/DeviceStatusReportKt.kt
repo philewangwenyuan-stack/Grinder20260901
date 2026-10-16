@@ -468,6 +468,42 @@ public object DeviceStatusReportKt {
     public fun hasChassisConnected(): kotlin.Boolean {
       return _builder.hasChassisConnected()
     }
+
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     */
+    public var emergencyStopLatched: kotlin.Boolean
+      @JvmName("getEmergencyStopLatched")
+      get() = _builder.getEmergencyStopLatched()
+      @JvmName("setEmergencyStopLatched")
+      set(value) {
+        _builder.setEmergencyStopLatched(value)
+      }
+    /**
+     * ```
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * ```
+     *
+     * `optional bool emergency_stop_latched = 22;`
+     */
+    public fun clearEmergencyStopLatched() {
+      _builder.clearEmergencyStopLatched()
+    }
+    /**
+     * ```
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * ```
+     *
+     * `optional bool emergency_stop_latched = 22;`
+     * @return Whether the emergencyStopLatched field is set.
+     */
+    public fun hasEmergencyStopLatched(): kotlin.Boolean {
+      return _builder.hasEmergencyStopLatched()
+    }
   }
 }
 public inline fun sl_link.SlLink.DeviceStatusReport.copy(block: `sl_link`.DeviceStatusReportKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.DeviceStatusReport =

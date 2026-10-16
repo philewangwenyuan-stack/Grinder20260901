@@ -40,6 +40,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 当前任务临时直行速度与磨盘转速 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_runtime_parameters.py` | `scheduler_node.py` 中 `handle_task_runtime_settings`；协议 `0x0538/0x0539`；`test/test_task_runtime_parameters.py` |
 | 任务启动时下发工艺速度 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` 中 `_execution_run_speed`、`_start_execution` | `test/test_execution_settings.py`；底盘使能前将工艺速度下发到导航控制器 |
 | APP 消息中心的底盘断连上报 | `scheduler_node.py` 中 `_chassis_connection_for_report` / `build_device_status_report` | `DeviceStatusReport.chassis_connected` 可选字段；`test/test_chassis_connection_report.py`；3 秒无底盘状态视为断连，仅用于事件诊断 |
+| 平板单按钮急停/解除状态 | `scheduler_node.py` 中 `build_device_status_report` / `_reset_emergency_stop` | `DeviceStatusReport.emergency_stop_latched=22` 上报调度运动锁存；协议生成 Python/Android/nanopb SDK 同步 |
 | 板端日志采样与指标导出 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/metrics_registry.py` | `metrics_exporter.py`、`grinder_metrics_node.py`、`launch/scheduler.launch` |
 | 协议定义与说明、地图请求结果/快照分片 | `third_party/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl-link.md`、`third_party/sl_linka/scripts/generate_proto.sh` |
 | Aurora 地图、位姿和双目图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/aurora_bridge.py` | `catkin_ws/src/2-dnavigation-package/slamware_ros_sdk/` |

@@ -429,6 +429,8 @@ message DeviceStatusReport {
   float vehicle_speed = 20 [(unit) = "m/s", (scale) = 1];
   // Absent on older firmware or before the first chassis status sample.
   optional bool chassis_connected = 21;
+  // Scheduler emergency latch; absence means firmware does not report this state.
+  optional bool emergency_stop_latched = 22;
 }
 
 message CameraFrameRequest {

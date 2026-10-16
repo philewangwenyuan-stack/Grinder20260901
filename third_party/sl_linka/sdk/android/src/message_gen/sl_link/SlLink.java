@@ -15231,6 +15231,25 @@ public final class SlLink {
      * @return The chassisConnected.
      */
     boolean getChassisConnected();
+
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     * @return Whether the emergencyStopLatched field is set.
+     */
+    boolean hasEmergencyStopLatched();
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     * @return The emergencyStopLatched.
+     */
+    boolean getEmergencyStopLatched();
   }
   /**
    * Protobuf type {@code sl_link.DeviceStatusReport}
@@ -15973,6 +15992,56 @@ public final class SlLink {
     private void clearChassisConnected() {
       bitField0_ = (bitField0_ & ~0x00000004);
       chassisConnected_ = false;
+    }
+
+    public static final int EMERGENCY_STOP_LATCHED_FIELD_NUMBER = 22;
+    private boolean emergencyStopLatched_;
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     * @return Whether the emergencyStopLatched field is set.
+     */
+    @java.lang.Override
+    public boolean hasEmergencyStopLatched() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     * @return The emergencyStopLatched.
+     */
+    @java.lang.Override
+    public boolean getEmergencyStopLatched() {
+      return emergencyStopLatched_;
+    }
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     * @param value The emergencyStopLatched to set.
+     */
+    private void setEmergencyStopLatched(boolean value) {
+      bitField0_ |= 0x00000008;
+      emergencyStopLatched_ = value;
+    }
+    /**
+     * <pre>
+     * Scheduler emergency latch; absence means firmware does not report this state.
+     * </pre>
+     *
+     * <code>optional bool emergency_stop_latched = 22;</code>
+     */
+    private void clearEmergencyStopLatched() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      emergencyStopLatched_ = false;
     }
 
     public static sl_link.SlLink.DeviceStatusReport parseFrom(
@@ -16851,6 +16920,58 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Scheduler emergency latch; absence means firmware does not report this state.
+       * </pre>
+       *
+       * <code>optional bool emergency_stop_latched = 22;</code>
+       * @return Whether the emergencyStopLatched field is set.
+       */
+      @java.lang.Override
+      public boolean hasEmergencyStopLatched() {
+        return instance.hasEmergencyStopLatched();
+      }
+      /**
+       * <pre>
+       * Scheduler emergency latch; absence means firmware does not report this state.
+       * </pre>
+       *
+       * <code>optional bool emergency_stop_latched = 22;</code>
+       * @return The emergencyStopLatched.
+       */
+      @java.lang.Override
+      public boolean getEmergencyStopLatched() {
+        return instance.getEmergencyStopLatched();
+      }
+      /**
+       * <pre>
+       * Scheduler emergency latch; absence means firmware does not report this state.
+       * </pre>
+       *
+       * <code>optional bool emergency_stop_latched = 22;</code>
+       * @param value The emergencyStopLatched to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEmergencyStopLatched(boolean value) {
+        copyOnWrite();
+        instance.setEmergencyStopLatched(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Scheduler emergency latch; absence means firmware does not report this state.
+       * </pre>
+       *
+       * <code>optional bool emergency_stop_latched = 22;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEmergencyStopLatched() {
+        copyOnWrite();
+        instance.clearEmergencyStopLatched();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.DeviceStatusReport)
     }
     @java.lang.Override
@@ -16889,12 +17010,13 @@ public final class SlLink {
               "radarSystemStatus_",
               "vehicleSpeed_",
               "chassisConnected_",
+              "emergencyStopLatched_",
             };
             java.lang.String info =
-                "\u0000\u0015\u0000\u0001\u0001\u0015\u0015\u0000\u0000\u0000\u0001\u000b\u0002\f" +
+                "\u0000\u0016\u0000\u0001\u0001\u0016\u0016\u0000\u0000\u0000\u0001\u000b\u0002\f" +
                 "\u0003\f\u0004\f\u0005\u0001\u0006\u0001\u0007\u000b\b\u0007\t\f\n\u0007\u000b\u1009" +
                 "\u0000\f\u0007\r\u0001\u000e\u1009\u0001\u000f\u0007\u0010\u000b\u0011\u0007\u0012" +
-                "\u0007\u0013\u0208\u0014\u0001\u0015\u1007\u0002";
+                "\u0007\u0013\u0208\u0014\u0001\u0015\u1007\u0002\u0016\u1007\u0003";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

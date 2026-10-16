@@ -7414,6 +7414,8 @@ class SchedulerNode:
     def build_device_status_report(self):
         pb = self.sl_link_server.pb
         report = pb.DeviceStatusReport()
+        if hasattr(report, "emergency_stop_latched"):
+            report.emergency_stop_latched = bool(self._motion.latched)
         report.utc_time = int(time.time())
         report.system_status = pb.SYS_STATUS_ERROR if self.last_error else pb.SYS_STATUS_NORMAL
         report.wifi_status = pb.WIFI_SUCCESS
