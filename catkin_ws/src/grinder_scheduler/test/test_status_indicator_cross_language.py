@@ -30,7 +30,7 @@ class CrossLanguageTest(unittest.TestCase):
     def test_firmware_rejects_corruption_and_out_of_range_fields(self):
         session = "0123456789abcdef"
         frames = [
-            envelope("S1,{},1,1,52,0".format(session)),
+            envelope("S1,{},1,1,103,0".format(session)),
             envelope("S1,{},1,7,51,1".format(session)),
             envelope("S1,{},4294967296,1,51,0".format(session)),
             envelope("S1,{},0,1,51,0".format(session)),

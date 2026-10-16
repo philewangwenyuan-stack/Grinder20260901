@@ -6,7 +6,7 @@
 namespace indicator {
 enum State : uint8_t { STARTUP, READY, AUTOMATIC, MANUAL, PAUSED, COMPLETED, FAULT, EMERGENCY, COLLISION_PAUSED };
 constexpr uint32_t TIMEOUT_MS = 3000;
-constexpr uint8_t MAX_BRIGHTNESS = 51;
+constexpr uint8_t MAX_BRIGHTNESS = 102;  // 40% of 255.
 
 inline uint16_t crc16(const char* text, size_t count) {
     uint16_t crc = 0xffff;

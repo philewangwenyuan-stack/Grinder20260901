@@ -87,10 +87,10 @@ def unpack(frame):
     return payload.decode("ascii").split(",")
 
 
-def state_frame(session, sequence, state, brightness=51, clear=False):
+def state_frame(session, sequence, state, brightness=102, clear=False):
     if len(session) != 16 or any(c not in "0123456789abcdef" for c in session):
         raise ValueError("invalid session")
-    if not 1 <= sequence <= 0xFFFFFFFF or not 0 <= brightness <= 51:
+    if not 1 <= sequence <= 0xFFFFFFFF or not 0 <= brightness <= 102:
         raise ValueError("sequence/brightness out of range")
     state = LightState(state)
     if clear and state == LightState.EMERGENCY:
@@ -133,7 +133,7 @@ class IndicatorTransport:
         self.sequence = 0
         self.last_error = ""
 
-    def send(self, state, now, brightness=51, clear=False):
+    def send(self, state, now, brightness=102, clear=False):
         if self.port is None and now < self.retry_at:
             return False
         try:

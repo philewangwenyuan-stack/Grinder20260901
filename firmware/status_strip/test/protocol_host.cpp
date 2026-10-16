@@ -9,7 +9,7 @@ Frame makeFrame(const char* session, uint32_t sequence, State state, bool clear 
     strcpy(frame.session, session);
     frame.sequence = sequence;
     frame.state = state;
-    frame.brightness = 51;
+    frame.brightness = MAX_BRIGHTNESS;
     frame.clear = clear;
     return frame;
 }

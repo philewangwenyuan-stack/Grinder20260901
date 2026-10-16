@@ -4,6 +4,6 @@ backend: mock
 ignore_chassis_status: true
 usb_serial_number: ""
 device: ""
-brightness: 51              # 0..255 scale, enforced maximum 51 (20%)
+brightness: 102             # 0..255 scale, enforced maximum 102 (40%)
 state_timeout_sec: 3.0
 send_interval_sec: 0.5

@@ -107,7 +107,7 @@ class TransportTest(unittest.TestCase):
     def test_crc_known_vector_and_corruption(self):
         self.assertEqual(b"123456789*29B1\n", envelope("123456789"))
         frame = state_frame(self.SESSION, 1, LightState.AUTOMATIC)
-        self.assertEqual(["S1", self.SESSION, "1", "2", "51", "0"], unpack(frame))
+        self.assertEqual(["S1", self.SESSION, "1", "2", "102", "0"], unpack(frame))
         with self.assertRaises(ValueError):
             unpack(frame.replace(b",2,", b",3,"))
         self.assertTrue(valid_ack(envelope("A1,{},1".format(self.SESSION)), self.SESSION, 1))
@@ -115,7 +115,7 @@ class TransportTest(unittest.TestCase):
         self.assertFalse(valid_ack(b"noise\n", self.SESSION, 1))
 
     def test_bounds_and_explicit_clear(self):
-        for kwargs in ({"brightness": 52}, {"clear": True}):
+        for kwargs in ({"brightness": 103}, {"clear": True}):
             with self.assertRaises(ValueError):
                 state_frame(self.SESSION, 1, LightState.EMERGENCY, **kwargs)
         with self.assertRaises(ValueError):

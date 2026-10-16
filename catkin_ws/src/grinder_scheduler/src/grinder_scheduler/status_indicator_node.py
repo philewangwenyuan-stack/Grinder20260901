@@ -25,9 +25,9 @@ class StatusIndicatorNode:
             ignore_chassis_status=rospy.get_param("~ignore_chassis_status", False))
         if self.resolver.ignore_chassis_status:
             rospy.logwarn("Indicator test mode: ignoring chassis status availability/connection")
-        self.brightness = int(rospy.get_param("~brightness", 51))
-        if not 1 <= self.brightness <= 51:
-            raise ValueError("brightness must be 1..51 (20% maximum)")
+        self.brightness = int(rospy.get_param("~brightness", 102))
+        if not 1 <= self.brightness <= 102:
+            raise ValueError("brightness must be 1..102 (40% maximum)")
         self.interval = float(rospy.get_param("~send_interval_sec", 0.5))
         if not math.isfinite(self.interval) or not 0.1 <= self.interval <= 1.0:
             raise ValueError("send_interval_sec must be 0.1..1.0")
