@@ -18,7 +18,8 @@ exec(compile(ast.fix_missing_locations(ast.Module(body=methods, type_ignores=[])
 
 class ChassisConnectionReportTest(unittest.TestCase):
     def setUp(self):
-        self.node = SimpleNamespace(last_chassis_status=None, _chassis_status_received_monotonic=None)
+        self.node = SimpleNamespace(last_chassis_status=None, _chassis_status_received_monotonic=None,
+                                    _sync_deferred_driver_emergency=lambda: None)
 
     def snapshot(self):
         return namespace["_chassis_connection_for_report"](self.node)

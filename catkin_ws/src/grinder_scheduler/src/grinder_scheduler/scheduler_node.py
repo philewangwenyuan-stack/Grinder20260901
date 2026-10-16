@@ -207,6 +207,7 @@ class SchedulerNode:
         self._indicator_clear_generation = None
         self._emergency_reset_message = ""
         self._driver_emergency_latched = False
+        self._driver_emergency_deferred = False
         self.state = SchedulerState.STOPPED if self._motion.latched else SchedulerState.IDLE
         self._collision_imminent_topic = rospy.get_param(
             "~collision_imminent_topic", "/rpp/collision_imminent"
@@ -4004,6 +4005,7 @@ class SchedulerNode:
     def _chassis_status_callback(self, msg):
         self._chassis_status_received_monotonic = time.monotonic()
         self.last_chassis_status = msg
+        self._sync_deferred_driver_emergency()
 
     def _chassis_connection_for_report(self):
         if self.last_chassis_status is None:
@@ -8486,7 +8488,23 @@ class SchedulerNode:
             return
         previous = self._driver_emergency_latched
         self._driver_emergency_latched = latched
-        if latched and not previous and not self._motion.latched:
+        if not latched:
+            self._driver_emergency_deferred = False
+        elif not previous:
+            self._driver_emergency_deferred = True
+        self._sync_deferred_driver_emergency()
+
+    def _sync_deferred_driver_emergency(self):
+        if not getattr(self, "_driver_emergency_deferred", False):
+            return
+        bench = rospy.get_param("/grinder_status_indicator/ignore_chassis_status", False) is True
+        chassis = getattr(self, "last_chassis_status", None)
+        if bench and (chassis is None or not chassis.connected):
+            # Preserve a persisted scheduler test reset across restart, without
+            # clearing the driver's independent latch. Recheck on connection.
+            return
+        self._driver_emergency_deferred = False
+        if not self._motion.latched:
             self._apply_emergency_stop(True)
 
     def _request_indicator_clear(self, expected_generation=None):
@@ -8497,6 +8515,7 @@ class SchedulerNode:
             return True
 
     def _emergency_status_tick(self, _event):
+        self._sync_deferred_driver_emergency()
         self.motion_safety_pub.publish(String(data=json.dumps({
             "emergency_latched": self._motion.latched,
             "generation": self._motion.generation,
@@ -8534,31 +8553,32 @@ class SchedulerNode:
                 self._motion.persist()
             self._stop_execution()
             generation = self._motion.generation
+            bench_reset = False
             try:
                 rospy.wait_for_service("/chassis/reset_emergency_stop", timeout=0.5)
             except rospy.ROSException:
                 bench = rospy.get_param("/grinder_status_indicator/ignore_chassis_status", False) is True
-                if bench:
-                    if not self._request_indicator_clear(generation):
-                        return TriggerResponse(success=False, message="new emergency interrupted reset")
-                    self._emergency_reset_message = "Only test indicator clear requested; chassis not confirmed; motion remains latched"
+                chassis = getattr(self, "last_chassis_status", None)
+                if bench and (chassis is None or not chassis.connected):
+                    bench_reset = True
                 else:
                     self._emergency_reset_message = "Chassis reset service unavailable; emergency remains latched"
-                return TriggerResponse(success=False, message=self._emergency_reset_message)
-            try:
-                result = rospy.ServiceProxy("/chassis/reset_emergency_stop", Trigger)()
-            except rospy.ServiceException as exc:
-                result = TriggerResponse(success=False, message=str(exc))
+                    return TriggerResponse(success=False, message=self._emergency_reset_message)
+            if bench_reset:
+                result = TriggerResponse(success=True, message="no chassis service in bench mode")
+            else:
+                try:
+                    result = rospy.ServiceProxy("/chassis/reset_emergency_stop", Trigger)()
+                except rospy.ServiceException as exc:
+                    result = TriggerResponse(success=False, message=str(exc))
             if not result.success:
                 bench = rospy.get_param("/grinder_status_indicator/ignore_chassis_status", False) is True
                 chassis = getattr(self, "last_chassis_status", None)
                 if bench and (chassis is None or not chassis.connected):
-                    if not self._request_indicator_clear(generation):
-                        return TriggerResponse(success=False, message="new emergency interrupted reset")
-                    self._emergency_reset_message = "Only test indicator clear requested; chassis not confirmed; motion remains latched: " + result.message
-                    return TriggerResponse(success=False, message=self._emergency_reset_message)
-                self._emergency_reset_message = result.message
-                return TriggerResponse(success=False, message=result.message)
+                    bench_reset = True
+                else:
+                    self._emergency_reset_message = result.message
+                    return TriggerResponse(success=False, message=result.message)
             if not self._motion.reset(generation):
                 self.chassis_emergency_stop_pub.publish(Bool(data=True))
                 self._emergency_reset_message = self._motion.error or "new emergency interrupted reset"
@@ -8574,8 +8594,12 @@ class SchedulerNode:
                 self._manual_reverse_until = 0.0
                 self._manual_travel_disc_active = False
                 self.state = SchedulerState.STOPPED
+                if not bench_reset:
+                    self._driver_emergency_deferred = False
                 self._request_indicator_clear()
             self._emergency_reset_message = "Software emergency released; stopped; indicator clear queued; send a new start command to move"
+            if bench_reset:
+                self._emergency_reset_message = "Test mode: scheduler emergency released; stopped; indicator clear queued; chassis NOT confirmed; reconnect chassis and perform normal reset before hardware operation"
             return TriggerResponse(success=True, message=self._emergency_reset_message)
         finally:
             self._emergency_reset_lock.release()

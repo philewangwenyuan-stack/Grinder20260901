@@ -1,6 +1,7 @@
 # Enable the launch explicitly. Mock never opens a physical USB device.
 backend: mock
-# Bench test only: skip chassis status/heartbeat requirements; retain received emergency alerts.
+# Bench only: skip chassis heartbeat and allow explicit scheduler reset without chassis confirmation.
+# Driver motion latch remains protected; restore false before hardware operation.
 ignore_chassis_status: true
 usb_serial_number: ""
 device: ""

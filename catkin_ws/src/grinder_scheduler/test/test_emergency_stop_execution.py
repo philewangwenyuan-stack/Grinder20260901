@@ -25,7 +25,8 @@ class ExecutionTest(unittest.TestCase):
     def node(self):
         names = {'_start_execution', '_resume_execution', '_apply_emergency_stop', '_handle_manual_drive', '_handle_manual_drive_locked',
                  '_set_cmd_vel_forward_runtime_active', '_stop_execution', '_reset_emergency_stop',
-                 '_request_indicator_clear', '_emergency_status_tick', '_apply_control_outputs'}
+                 '_request_indicator_clear', '_emergency_status_tick', '_apply_control_outputs',
+                 '_driver_motion_safety', '_sync_deferred_driver_emergency', '_chassis_status_callback'}
         cls, namespace = harness.load_class(harness.SCHEDULER, names)
         class RosError(Exception):
             pass
@@ -39,6 +40,8 @@ class ExecutionTest(unittest.TestCase):
         node._emergency_reset_lock = threading.Lock()
         node._indicator_clear_generation = None
         node._emergency_reset_message = ''
+        node._driver_emergency_latched = False
+        node._driver_emergency_deferred = False
         node._task_enable_runtime_active = False
         node._chassis_settings = {'run_speed': 0.1}
         node._collision_imminent_lock = threading.Lock()
@@ -158,7 +161,7 @@ class ExecutionTest(unittest.TestCase):
         self.assertIsNotNone(node._indicator_clear_generation)
         self.assertFalse(MotionInterlock(str(self.directory / 'scheduler.json')).latched)
 
-    def test_missing_chassis_bench_clears_only_display(self):
+    def test_missing_chassis_bench_releases_scheduler_without_resuming(self):
         node, ros = self.node()
         node._apply_emergency_stop(True)
         def missing(*a, **k):
@@ -166,9 +169,13 @@ class ExecutionTest(unittest.TestCase):
         ros.wait_for_service = missing
         ros.get_param = lambda *a: True
         result = node._reset_emergency_stop(None)
-        self.assertFalse(result.success)
-        self.assertIn('Only test indicator', result.message)
-        self.assertTrue(node._motion.latched)
+        self.assertTrue(result.success)
+        self.assertIn('Test mode', result.message)
+        self.assertFalse(node._motion.latched)
+        self.assertFalse(MotionInterlock(str(self.directory / 'scheduler.json')).latched)
+        self.assertEqual(SchedulerState.STOPPED, node.state)
+        self.assertFalse(node._exec_active)
+        self.assertFalse(node._task_enable_runtime_active)
         self.assertIsNotNone(node._indicator_clear_generation)
 
     def test_driver_failure_keeps_latch_and_does_not_clear_lights(self):
@@ -213,10 +220,73 @@ class ExecutionTest(unittest.TestCase):
         ros.wait_for_service = lambda *a, **k: None
         ros.ServiceProxy = lambda *a: lambda: M(success=False, message='chassis disconnected')
         result = node._reset_emergency_stop(None)
-        self.assertFalse(result.success)
-        self.assertIn('Only test indicator', result.message)
-        self.assertTrue(node._motion.latched)
+        self.assertTrue(result.success)
+        self.assertIn('chassis NOT confirmed', result.message)
+        self.assertFalse(node._motion.latched)
+        self.assertEqual(SchedulerState.STOPPED, node.state)
         self.assertIsNotNone(node._indicator_clear_generation)
+
+    def test_missing_chassis_normal_mode_keeps_latch(self):
+        node, ros = self.node()
+        node._apply_emergency_stop(True)
+        def missing(*a, **k):
+            raise ros.ROSException('not present')
+        ros.wait_for_service = missing
+        result = node._reset_emergency_stop(None)
+        self.assertFalse(result.success)
+        self.assertTrue(node._motion.latched)
+        self.assertIsNone(node._indicator_clear_generation)
+
+    def test_persisted_bench_reset_survives_driver_replay_then_reconnect_latches(self):
+        node, ros = self.node()
+        node._apply_emergency_stop(True)
+        ros.get_param = lambda *a: True
+        def missing(*a, **k):
+            raise ros.ROSException('not present')
+        ros.wait_for_service = missing
+        self.assertTrue(node._reset_emergency_stop(None).success)
+        # Recreate scheduler from the persisted record, then replay the driver's
+        # latched topic before its first chassis status has arrived.
+        restarted, ros = self.node()
+        ros.get_param = lambda *a: True
+        self.assertFalse(restarted._motion.latched)
+        replay = M(data=json.dumps({'emergency_latched': True}))
+        restarted._driver_motion_safety(replay)
+        restarted._chassis_status_callback(M(connected=False))
+        restarted._driver_motion_safety(replay)
+        self.assertFalse(restarted._motion.latched)
+        restarted._chassis_status_callback(M(connected=True))
+        self.assertTrue(restarted._motion.latched)
+
+    def test_deferred_driver_lock_enforced_when_test_mode_disabled(self):
+        node, ros = self.node()
+        ros.get_param = lambda *a: True
+        node._driver_motion_safety(M(data=json.dumps({'emergency_latched': True})))
+        self.assertFalse(node._motion.latched)
+        ros.get_param = lambda key, default=None: default
+        node._sync_deferred_driver_emergency()
+        self.assertTrue(node._motion.latched)
+
+    def test_normal_mode_driver_replay_and_new_test_emergency_still_latch(self):
+        node, ros = self.node()
+        node._driver_motion_safety(M(data=json.dumps({'emergency_latched': True})))
+        self.assertTrue(node._motion.latched)
+        self.assertTrue(node._motion.reset(node._motion.generation))
+        ros.get_param = lambda *a: True
+        node._apply_emergency_stop(True)
+        self.assertTrue(node._motion.latched)
+
+    def test_connected_chassis_failure_not_bypassed_in_bench_mode(self):
+        node, ros = self.node()
+        node._apply_emergency_stop(True)
+        node.last_chassis_status = M(connected=True)
+        ros.get_param = lambda *a: True
+        ros.wait_for_service = lambda *a, **k: None
+        ros.ServiceProxy = lambda *a: lambda: M(success=False, message='not stopped')
+        result = node._reset_emergency_stop(None)
+        self.assertFalse(result.success)
+        self.assertTrue(node._motion.latched)
+        self.assertIsNone(node._indicator_clear_generation)
 
     def test_new_emergency_during_bench_reset_does_not_queue_clear(self):
         node, ros = self.node()

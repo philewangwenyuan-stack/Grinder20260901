@@ -887,8 +887,9 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 软件急停行为：`ControlCommand.emergency_stop.enabled=true` 锁存禁止运动并请求安全停车；
 `enabled=false` 显式请求解除（旧实现曾忽略false）。结构、消息ID和字段不变，无需重新生成SDK。
 正式解除必须经过底盘安全写入和两次新的停止读回确认，成功后保持STOPPED，不恢复原任务。
-`ControlCommandResponse.result` 成功只在正式解除完成时返回；失败原因放入message。
-若仅无底盘灯光测试清除，返回失败并说明仅清除测试提示、运动锁存仍保留。
+`ControlCommandResponse.result` 在正式解除或无底盘测试解除完成时返回成功；失败原因放入message。
+`ignore_chassis_status=true` 且底盘缺失／断连时允许解除调度锁存，message明确测试模式、底盘未确认；不解除驱动锁存。
+`false` 时必须通过底盘验证，已连接底盘验证失败也不能通过测试模式绕过。解除后仍保持停止。
 解除成功后自动申请清灯；通信故障等原因仍可红色慢闪，不能仅凭灯色判断停车。
 物理急停及厂商硬件故障不由此协议自动复位。
 
