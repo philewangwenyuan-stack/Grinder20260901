@@ -1603,8 +1603,14 @@ static py::list plan_core(
 
     const Grid grid = parse_grid(grid_array);
     const auto stages = parse_stages(stage_specs, grid);
-    const auto corner_path = plan_all_stages(grid, stages, spacing_pixels);
-    const auto path = densify_path(corner_path, output_spacing_pixels);
+    std::vector<PathItem> path;
+    {
+        // Inputs are now owned C++ data. Let ROS/control Python threads run
+        // during expensive planning; reacquire before constructing py::list.
+        py::gil_scoped_release release;
+        const auto corner_path = plan_all_stages(grid, stages, spacing_pixels);
+        path = densify_path(corner_path, output_spacing_pixels);
+    }
 
     py::list result;
     for (const auto& point : path) {

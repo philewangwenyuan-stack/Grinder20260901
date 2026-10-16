@@ -87,10 +87,20 @@ def unpack(frame):
     return payload.decode("ascii").split(",")
 
 
-def state_frame(session, sequence, state, brightness=102, clear=False):
+def brightness_from_percent(value):
+    """Keep indication visible; percentages configure the existing 8-bit field."""
+    if isinstance(value, bool):
+        raise ValueError("brightness_percent must be 1..100")
+    percent = float(value)
+    if not math.isfinite(percent) or not 1 <= percent <= 100:
+        raise ValueError("brightness_percent must be 1..100")
+    return int(percent * 255 / 100 + 0.5)
+
+
+def state_frame(session, sequence, state, brightness=166, clear=False):
     if len(session) != 16 or any(c not in "0123456789abcdef" for c in session):
         raise ValueError("invalid session")
-    if not 1 <= sequence <= 0xFFFFFFFF or not 0 <= brightness <= 102:
+    if not 1 <= sequence <= 0xFFFFFFFF or not 0 <= brightness <= 255:
         raise ValueError("sequence/brightness out of range")
     state = LightState(state)
     if clear and state == LightState.EMERGENCY:
@@ -133,7 +143,7 @@ class IndicatorTransport:
         self.sequence = 0
         self.last_error = ""
 
-    def send(self, state, now, brightness=102, clear=False):
+    def send(self, state, now, brightness=166, clear=False):
         if self.port is None and now < self.retry_at:
             return False
         try:

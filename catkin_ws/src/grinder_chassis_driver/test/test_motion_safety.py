@@ -162,6 +162,20 @@ class SafetyTest(unittest.TestCase):
             self.assertGreater(len(node._memory_serial.frames), count)
             self.assert_safe_frame(node._memory_serial.frames[-1])
 
+    def test_manual_zero_command_bypasses_ramp_and_writes_zero_immediately(self):
+        node = self.driver()
+        node.command.left_wheel_speed = node.command.right_wheel_speed = 100
+        node._write_motion_registers()
+        node.enable_cmd_ramp_limit = True
+        node.max_cmd_step_rpm = 20
+        before = len(node._memory_serial.frames)
+        node._handle_wheel_speed_cmd(Message(left_wheel_speed=0, right_wheel_speed=0))
+        self.assertGreater(len(node._memory_serial.frames), before)
+        frame = node._memory_serial.frames[-1]
+        self.assertEqual(b'\x00\x00\x00\x00', frame[7:11])
+        self.assertEqual(0, node.last_sent_left_wheel_speed)
+        self.assertEqual(0, node.last_sent_right_wheel_speed)
+
     def test_liftless_stop_does_not_write_lift_register(self):
         node = self.driver(False)
         self.assertEqual(5, int.from_bytes(node._memory_serial.frames[-2][4:6], 'big'))

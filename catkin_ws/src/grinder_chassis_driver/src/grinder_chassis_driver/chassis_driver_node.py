@@ -215,7 +215,7 @@ class ChassisDriverNode:
         if self._motion.latched:
             self._indicator_emergency.observe()
 
-        rospy.Subscriber("/chassis/wheel_speed_cmd", WheelSpeedCommand, self._handle_wheel_speed_cmd, queue_size=10)
+        rospy.Subscriber("/chassis/wheel_speed_cmd", WheelSpeedCommand, self._handle_wheel_speed_cmd, queue_size=1, tcp_nodelay=True)
         if self.cmd_vel_enabled:
             rospy.Subscriber(self.cmd_vel_topic, Twist, self._handle_cmd_vel, queue_size=10)
             rospy.Subscriber("/chassis/task_enable", Bool, self._handle_task_enable_cmd, queue_size=10)
@@ -664,8 +664,11 @@ class ChassisDriverNode:
                     if kind == "motion":
                         left = self.command.left_wheel_speed if self.enabled else 0
                         right = self.command.right_wheel_speed if self.enabled else 0
-                        block = [self._apply_ramp_limit(left, self.last_sent_left_wheel_speed),
-                                 self._apply_ramp_limit(right, self.last_sent_right_wheel_speed)]
+                        # A released joystick is a stop, even with ramp limiting
+                        # enabled. One zero command must not leave residual RPM.
+                        block = ([0, 0] if left == 0 and right == 0 else
+                                 [self._apply_ramp_limit(left, self.last_sent_left_wheel_speed),
+                                  self._apply_ramp_limit(right, self.last_sent_right_wheel_speed)])
                         address = REGISTER_LEFT_WHEEL_SPEED
                         if not force and tuple(block) == (self.last_sent_left_wheel_speed, self.last_sent_right_wheel_speed):
                             return True

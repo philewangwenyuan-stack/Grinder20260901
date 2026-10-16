@@ -844,7 +844,7 @@ class SchedulerNode:
         self.preview_meta_pub = rospy.Publisher("/scheduler/map_preview_metadata", MapPreviewMetadata, queue_size=10, latch=True)
         self.diagnostics_pub = rospy.Publisher("/diagnostics", DiagnosticArray, queue_size=10)
 
-        self.wheel_cmd_pub = rospy.Publisher("/chassis/wheel_speed_cmd", WheelSpeedCommand, queue_size=10)
+        self.wheel_cmd_pub = rospy.Publisher("/chassis/wheel_speed_cmd", WheelSpeedCommand, queue_size=1, tcp_nodelay=True)
         self.disc_speed_pub = rospy.Publisher("/chassis/disc_speed_cmd", Int16, queue_size=10)
         self.disc_enable_pub = rospy.Publisher("/chassis/disc_enable_cmd", Bool, queue_size=10)
         self.work_mode_pub = rospy.Publisher("/chassis/work_mode_cmd", UInt16, queue_size=10)
@@ -8419,7 +8419,11 @@ class SchedulerNode:
             rospy.logwarn("Settings write failed: %s", exc)
         return response.SerializeToString(), pb.MSG_ID_SETTINGS_WRITE_RESPONSE, pb.COMP_SETTINGS
 
-    def handle_control_command(self, payload, parsed_request=None):
+    def capture_control_generation(self):
+        with self._motion.lock:
+            return self._motion.generation
+
+    def handle_control_command(self, payload, parsed_request=None, control_generation=None):
         pb = self.sl_link_server.pb
         request = parsed_request
         if request is None:
@@ -8428,7 +8432,11 @@ class SchedulerNode:
         if request.HasField("emergency_stop"):
             handled, error_message = self._apply_emergency_stop(bool(request.emergency_stop.enabled))
         else:
-            handled, error_message = self._apply_control_outputs(request)
+            try:
+                with self._motion.action(generation=control_generation):
+                    handled, error_message = self._apply_control_outputs(request)
+            except MotionCancelled:
+                handled, error_message = False, "Control cancelled by stop/emergency or execution replacement"
         response = pb.ControlCommandResponse()
         response.result = pb.RESULT_SUCCESS if handled else pb.RESULT_FAILED
         response.message = error_message or ("Control applied" if handled else "Control rejected")

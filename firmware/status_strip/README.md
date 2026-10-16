@@ -54,9 +54,28 @@ Wi-Fi/Bluetooth 不初始化；看门狗超时 5 秒。调试日志不能混入 
 | 故障、底盘断连、就绪后状态过期 | 红色慢闪（1 Hz） |
 | 急停提示未清除 | 红色快闪（4 Hz） |
 
-固件默认及最多输出 102/255（40%）亮度；6 颗灯整圈同步。
-调整亮度上限需同时更新 ROS 节点、配置和 ESP32 固件并重新烧录；
-旧固件会拒绝超过原上限51的状态帧，板端旧配置51则仍以20%运行。
+默认亮度 65%（166/255）；6 颗灯整圈同步。ROS 将亮度放入每个 USB 状态帧，
+新固件支持完整 0..255 协议范围，不再锁定 40%。启动且尚未收到 USB 帧时使用固件默认 65%。
+
+### 自己修改亮度（以后无需反复烧录）
+
+板端编辑工作区 `catkin_ws/src/grinder_scheduler/config/status_indicator.yaml`：
+
+```yaml
+brightness_percent: 65      # 1..100，表示百分比；例如40就是40%
+```
+
+保存后执行 `sudo grinder-service restart`，或单独重启灯带 launch 以重新加载配置。
+独立启动也可传 `roslaunch grinder_scheduler status_indicator.launch brightness_percent:=65`。
+`rostopic echo -n 1 /indicator/state` 中的 `brightness` 为实际 0..255 数值，
+`brightness_percent` 为量化后的实际百分比（65%约为65.1%）。
+保留旧 `brightness: 102` 原始刻度配置兼容；同时存在时 `brightness_percent` 优先。
+
+**从旧40%上限固件升级，本次必须烧录一次新固件，并同步板端两个灯带 Python 模块、YAML及launch。**
+旧固件会拒收166这样的超上限帧，导致无ACK或超时红灯，不能仅修改YAML。
+升级后在1%～100%内调节，只改板端配置并重启节点；不需要重新编译或烧录ESP32。
+此配置在ROS通信有效时生效；修改独立上电黄灯亮度仍需改固件默认值。
+
 调度器记录暂停原因；RPP 风险信号恢复为 FALSE 不会清除此原因，也不会自动续跑。
 黄色慢闪保持到任务成功恢复、新任务成功启动或明确停止；重复 PAUSE 不覆盖碰撞原因。
 恢复因障碍仍存在而失败时也继续黄色慢闪。该提示表示前方碰撞风险，不代表已经发生撞击。
@@ -170,7 +189,7 @@ CRC-16/CCITT-FALSE：初值 FFFF、多项式 1021，对 `*` 前的 ASCII 内容�
 sequence 为 1..FFFFFFFF，递增；state 为 0..8，顺序与固件 State 枚举一致；
 新增 8 为 COLLISION_PAUSED，原有 0..7 编号不变；部署时同步更新调度代码与 ESP32 固件。
 旧固件会拒绝状态码 8 并进入通信超时红灯，不能显示黄色慢闪。
-brightness 为 0..102；clear 为 0/1，EMERGENCY 不允许 clear=1。
+brightness 为 0..255（ROS百分比配置限定1..100以保持提示可见）；clear 为 0/1，EMERGENCY 不允许 clear=1。
 每次仅一个未确认帧，ACK 超时 0.5 秒，失败后 2 秒重连，只发送最新状态。
 发送周期 0.5 秒；固件 3 秒没收到新有效帧切换故障。
 重复帧返回 ACK 但不延长心跳；旧序号及最近 4 个已退休连接会话被拒绝。

@@ -184,6 +184,21 @@ class NodeIntegrationTest(unittest.TestCase):
         self.assertEqual("PAUSED", self.latest()["state"])
         self.assertTrue(self.latest()["acknowledged"])
 
+    def test_percentage_config_reaches_usb_and_legacy_raw_config_still_works(self):
+        from grinder_scheduler.status_indicator import unpack
+        for params, expected in (({}, 166), ({'~brightness_percent': 65}, 166),
+                                 ({'~brightness_percent': 100}, 255),
+                                 ({'~brightness': 102}, 102),
+                                 ({'~brightness_percent': 40, '~brightness': 166}, 102)):
+            with self.subTest(params=params):
+                self.rospy.get_param = lambda key, default: params.get(key, default)
+                with patch('threading.Thread.start'):
+                    node = self.module.StatusIndicatorNode()
+                node._step()
+                self.assertEqual(expected, node.brightness)
+                self.assertEqual(str(expected), unpack(node.transport.port.frames[-1])[4])
+                self.assertEqual(expected, json.loads(node.status_pub.messages[-1].data)['brightness'])
+
     def test_reset_queues_explicit_controller_clear_without_motion_services(self):
         self.publish_ready()
         services = []

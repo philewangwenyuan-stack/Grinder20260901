@@ -5,7 +5,7 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 from grinder_scheduler.status_indicator import (
     IndicatorTransport, LightState, SimulatedPort, StateResolver,
-    envelope, state_frame, unpack, valid_ack,
+    brightness_from_percent, envelope, state_frame, unpack, valid_ack,
 )
 
 
@@ -107,7 +107,7 @@ class TransportTest(unittest.TestCase):
     def test_crc_known_vector_and_corruption(self):
         self.assertEqual(b"123456789*29B1\n", envelope("123456789"))
         frame = state_frame(self.SESSION, 1, LightState.AUTOMATIC)
-        self.assertEqual(["S1", self.SESSION, "1", "2", "102", "0"], unpack(frame))
+        self.assertEqual(["S1", self.SESSION, "1", "2", "166", "0"], unpack(frame))
         with self.assertRaises(ValueError):
             unpack(frame.replace(b",2,", b",3,"))
         self.assertTrue(valid_ack(envelope("A1,{},1".format(self.SESSION)), self.SESSION, 1))
@@ -115,12 +115,20 @@ class TransportTest(unittest.TestCase):
         self.assertFalse(valid_ack(b"noise\n", self.SESSION, 1))
 
     def test_bounds_and_explicit_clear(self):
-        for kwargs in ({"brightness": 103}, {"clear": True}):
+        for kwargs in ({"brightness": 256}, {"brightness": -1}, {"clear": True}):
             with self.assertRaises(ValueError):
                 state_frame(self.SESSION, 1, LightState.EMERGENCY, **kwargs)
         with self.assertRaises(ValueError):
             state_frame(self.SESSION, 0, LightState.READY)
         self.assertEqual("1", unpack(state_frame(self.SESSION, 1, LightState.READY, clear=True))[-1])
+
+    def test_configurable_percentage_brightness(self):
+        for percent, raw in ((1, 3), (40, 102), (65, 166), (100, 255)):
+            self.assertEqual(raw, brightness_from_percent(percent))
+            self.assertEqual(str(raw), unpack(state_frame(self.SESSION, 1, LightState.READY, raw))[4])
+        for value in (0, -1, 101, float('nan'), float('inf'), True):
+            with self.assertRaises(ValueError):
+                brightness_from_percent(value)
 
     def test_simulated_wire_path(self):
         port = SimulatedPort()

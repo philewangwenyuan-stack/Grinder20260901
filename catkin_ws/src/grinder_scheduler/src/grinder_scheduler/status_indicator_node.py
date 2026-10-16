@@ -12,7 +12,7 @@ from std_msgs.msg import Bool, String
 from std_srvs.srv import Trigger, TriggerResponse
 
 from grinder_scheduler.status_indicator import (
-    IndicatorTransport, LightState, SimulatedPort, StateResolver,
+    IndicatorTransport, LightState, SimulatedPort, StateResolver, brightness_from_percent,
 )
 
 
@@ -25,9 +25,12 @@ class StatusIndicatorNode:
             ignore_chassis_status=rospy.get_param("~ignore_chassis_status", False))
         if self.resolver.ignore_chassis_status:
             rospy.logwarn("Indicator test mode: ignoring chassis status availability/connection")
-        self.brightness = int(rospy.get_param("~brightness", 102))
-        if not 1 <= self.brightness <= 102:
-            raise ValueError("brightness must be 1..102 (40% maximum)")
+        percent = rospy.get_param("~brightness_percent", None)
+        # Preserve existing raw-scale configs when no percentage is supplied.
+        self.brightness = (brightness_from_percent(percent) if percent is not None
+                           else int(rospy.get_param("~brightness", 166)))
+        if not 1 <= self.brightness <= 255:
+            raise ValueError("brightness must be 1..255")
         self.interval = float(rospy.get_param("~send_interval_sec", 0.5))
         if not math.isfinite(self.interval) or not 0.1 <= self.interval <= 1.0:
             raise ValueError("send_interval_sec must be 0.1..1.0")
@@ -152,6 +155,8 @@ class StatusIndicatorNode:
         self.status_pub.publish(String(data=json.dumps({
             "state": state.name, "backend": self.backend, "acknowledged": acknowledged,
             "ignore_chassis_status": self.resolver.ignore_chassis_status,
+            "brightness": self.brightness,
+            "brightness_percent": round(self.brightness * 100.0 / 255, 1),
             "clear_pending": self._clear_pending, "error": self.transport.last_error,
         })))
         diagnostic = DiagnosticStatus()

@@ -354,7 +354,8 @@ class SlLinkAServer:
                     max_pending=4,
                     name="sl_linka_map",
                 )
-                self.manual_control_executor = _DropIfBusyWorker(
+                self.manual_control_executor = _BoundedLatestWorker(
+                    max_pending=1,
                     name="sl_linka_manual",
                 )
                 self.manual_response_executor = _DropIfBusyWorker(
@@ -410,20 +411,17 @@ class SlLinkAServer:
                                 if (
                                     control_request is not None
                                     and control_request.HasField("manual_drive")
+                                    and not control_request.HasField("emergency_stop")
                                 ):
-                                    accepted = self.manual_control_executor.submit(
+                                    dropped = self.manual_control_executor.submit(
                                         self._dispatch_control_immediately,
                                         frame,
                                         control_request,
                                         True,
                                         received_at,
+                                        outer._handler.capture_control_generation(),
                                     )
-                                    if not accepted and rospy is not None:
-                                        rospy.logwarn_throttle(
-                                            1.0,
-                                            "Drop incoming SL-LinkA manual control while previous command is running: seq=%d",
-                                            int(frame.seq),
-                                        )
+                                    self._log_dropped_job("manual control", dropped)
                                 else:
                                     self._dispatch_control_immediately(
                                         frame,
@@ -562,6 +560,7 @@ class SlLinkAServer:
                 control_request=None,
                 latest_response=False,
                 received_at=None,
+                control_generation=None,
             ):
                 started = time.monotonic()
                 if received_at is not None and outer._control_queue_wait is not None:
@@ -570,6 +569,7 @@ class SlLinkAServer:
                 payload, msg_id, comp_id = outer._handler.handle_control_command(
                     frame.payload,
                     parsed_request=control_request,
+                    control_generation=control_generation,
                 )
                 applied_ms = (time.monotonic() - started) * 1000.0
                 if rospy is not None:

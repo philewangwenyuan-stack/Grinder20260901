@@ -337,7 +337,7 @@ task_config_auto_plan_enabled: false
 # 手动控制换向保护时间（秒）：前进/后退/左右切换时先发 0 速，避免驱动瞬时反转报错
 manual_reverse_guard_sec: 1.0
 # 手动摇杆指令看门狗（秒）：超过该时间没有新指令，调度立即发布左右轮零速
-manual_command_timeout_sec: 2.0
+manual_command_timeout_sec: 0.5
 
 # 视频流推送循环频率（Hz）
 stream_push_hz: 20

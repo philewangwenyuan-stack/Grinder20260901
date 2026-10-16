@@ -30,7 +30,7 @@ class CrossLanguageTest(unittest.TestCase):
     def test_firmware_rejects_corruption_and_out_of_range_fields(self):
         session = "0123456789abcdef"
         frames = [
-            envelope("S1,{},1,1,103,0".format(session)),
+            envelope("S1,{},1,1,256,0".format(session)),
             envelope("S1,{},1,7,51,1".format(session)),
             envelope("S1,{},4294967296,1,51,0".format(session)),
             envelope("S1,{},0,1,51,0".format(session)),
@@ -39,6 +39,13 @@ class CrossLanguageTest(unittest.TestCase):
             envelope("S1,{},1,1,51,0".format(session)).replace(b",1,1,", b",1,2,"),
         ]
         self.assertEqual([b"REJECTED\n"] * len(frames), self.execute(frames))
+
+    def test_runtime_brightness_including_65_percent_and_full_scale(self):
+        session = '0123456789abcdef'
+        frames = [state_frame(session, seq, LightState.READY, brightness)
+                  for seq, brightness in enumerate((3, 51, 102, 166, 255), 1)]
+        for seq, reply in enumerate(self.execute(frames), 1):
+            self.assertTrue(valid_ack(reply, session, seq))
 
 
 if __name__ == "__main__":

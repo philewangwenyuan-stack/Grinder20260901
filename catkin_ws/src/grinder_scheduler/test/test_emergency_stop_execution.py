@@ -27,7 +27,7 @@ class ExecutionTest(unittest.TestCase):
                  '_set_cmd_vel_forward_runtime_active', '_stop_execution', '_reset_emergency_stop',
                  '_request_indicator_clear', '_emergency_status_tick', '_apply_control_outputs',
                  '_driver_motion_safety', '_sync_deferred_driver_emergency', '_chassis_status_callback',
-                 '_restore_indicator_reset'}
+                 '_restore_indicator_reset', 'capture_control_generation', 'handle_control_command'}
         cls, namespace = harness.load_class(harness.SCHEDULER, names)
         class RosError(Exception):
             pass

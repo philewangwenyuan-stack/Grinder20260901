@@ -6,7 +6,8 @@
 namespace indicator {
 enum State : uint8_t { STARTUP, READY, AUTOMATIC, MANUAL, PAUSED, COMPLETED, FAULT, EMERGENCY, COLLISION_PAUSED };
 constexpr uint32_t TIMEOUT_MS = 3000;
-constexpr uint8_t MAX_BRIGHTNESS = 102;  // 40% of 255.
+constexpr uint8_t MAX_BRIGHTNESS = 255;  // Runtime brightness comes from ROS.
+constexpr uint8_t DEFAULT_BRIGHTNESS = 166;  // 65% before the first USB frame.
 
 inline uint16_t crc16(const char* text, size_t count) {
     uint16_t crc = 0xffff;
@@ -121,7 +122,7 @@ private:
     uint8_t retired_index_ = 0;
     uint32_t sequence_ = 0;
     uint32_t last_received_ = 0;
-    uint8_t brightness_ = MAX_BRIGHTNESS;
+    uint8_t brightness_ = DEFAULT_BRIGHTNESS;
     State desired_ = STARTUP;
     bool received_ = false;
     bool emergency_ = false;

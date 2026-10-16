@@ -84,10 +84,12 @@ class MotionInterlock:
             yield
 
     @contextmanager
-    def action(self, replace=False):
+    def action(self, replace=False, generation=None):
         previous = getattr(self.local, "token", None)
         with self.lock:
             self.check()
+            if generation is not None and generation != self.generation:
+                raise MotionCancelled("queued command belongs to an old execution")
             if previous is None and replace:
                 self.generation += 1
             self.local.token = self.generation if previous is None else previous

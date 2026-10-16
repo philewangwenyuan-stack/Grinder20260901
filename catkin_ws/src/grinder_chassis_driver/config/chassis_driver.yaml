@@ -18,7 +18,7 @@ diagnostics_rate_hz: 1
 # 合并读取 0x4012~0x4018；控制器返回非法地址/数值时自动退回分段读取
 status_combined_read: true
 # 指令超时保护时间（秒），超过后底盘直接触发零速保护
-command_timeout: 5.0
+command_timeout: 0.5
 # 写入后是否进行回读校验
 write_verify: false
 # 通信失败最大重试次数

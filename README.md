@@ -824,7 +824,7 @@ MID-360 + Super-LIO 的整套开机启动使用下文统一服务；手动运行
 接回底盘后恢复 `false`。该配置由 ROS 灯带节点读取，无需重新烧录 ESP32；
 ESP32 仅插在 Windows 电脑上时，修改此配置不会直接改变灯效。
 
-状态指示灯对照表（6 颗灯珠同步显示，默认亮度 40%）：
+状态指示灯对照表（6 颗灯珠同步显示，默认亮度 65%）：
 
 | 运行状态 | 灯带颜色与效果 | 含义 |
 | --- | --- | --- |
@@ -886,7 +886,38 @@ rostopic echo /chassis/motion_safety
 `/indicator/clear_emergency` 始终只清灯，不解除运动锁存。
 `/chassis/reset_emergency_stop` 是协调流程使用的底盘验证服务，用户优先使用调度解除入口。
 部署需同步两个自研包的 Python 模块／YAML、灯带节点及调试上位机；板端停止任务和服务后更新，
-重新加载工作区环境并启动服务。ESP32仍为S3、6颗、40%，本次无需重烧。
+重新加载工作区环境并启动服务。急停逻辑本身无需重烧ESP32；亮度配置升级见下文。
+
+灯带亮度配置在 `catkin_ws/src/grinder_scheduler/config/status_indicator.yaml`：
+`brightness_percent: 65` 表示65%，范围1～100。修改后 `sudo grinder-service restart` 重新加载。
+从原40%上限固件升级时需烧录一次新版S3固件，并同步灯带节点／协议模块／YAML／launch；
+此后调整运行亮度无需重烧。独立上电、未通信前默认65%。完整步骤见 `firmware/status_strip/README.md`。
+
+### 7.3 遥控响应与松手停车
+
+平板摇杆持续指令周期为100ms；松手零速不等待任务停止回执，等待期间保存的移动目标同步作废。
+板端手动执行线程保留一个最新待处理指令，松手零速替换旧移动指令，不因线程忙直接丢弃。
+排队指令绑定接收时的执行代号，停止、暂停、急停或执行替换后不能恢复旧移动。
+轮速ROS发布／订阅队列均为1并开启TCP_NODELAY，避免慢串口前积压多个旧速度；
+双轮零速不经过轮速斜坡。调度 `manual_command_timeout_sec` 和底盘 `command_timeout` 默认均为0.5秒。
+正常松手走显式零速，超时只作失联兜底；实际停止时间还包含通信、串口事务和电机响应。
+`manual_reverse_guard_sec` 的换向停顿仍有效，本次保留现有1秒配置。
+
+MST27在完成Python输入解析后，仅对纯C++规划／加密阶段释放GIL，返回Python结果前重新取得锁，
+避免较长规划占用同进程的Python控制回调。
+
+部署需同步调度／底盘两个包的相关Python模块和YAML，并更新平板APK；本地覆盖配置也需核对两个超时参数。
+修改C++规划内核后，在板端停止服务、更新源码，再从仓库根目录编译：
+
+```bash
+cmake -S third_party/path_planner/mst27 -B /tmp/grinder-mst27-build \
+  -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=/usr/bin/python3
+cmake --build /tmp/grinder-mst27-build -j2
+sudo grinder-service restart
+```
+
+ESP32协议未变化，无需重烧。离线回归见 `test_manual_control_delivery.py`、`test_motion_safety.py`；
+实车验收需记录松手零速发出、板端接收／应用、485写帧及实际轮速归零，不能以灯效作为停车反馈。
 
 ### 8. 常见故障
 
