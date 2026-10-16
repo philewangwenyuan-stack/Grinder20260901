@@ -8,6 +8,7 @@ import time
 from types import SimpleNamespace
 import unittest
 import tempfile
+from functools import wraps
 from unittest import mock
 
 SOURCE = Path(__file__).resolve().parents[1] / "src/grinder_scheduler/scheduler_node.py"
@@ -46,7 +47,9 @@ def production_scheduler(params, writes):
             set_param=lambda name, value: params.__setitem__(name, value),
             logwarn=mock.Mock(), loginfo=mock.Mock(), logwarn_throttle=mock.Mock()),
     )
-    exec(compile(ast.Module(body=[defaults, cls], type_ignores=[]), str(SOURCE), "exec"), namespace)
+    decorator = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "localization_arming")
+    namespace["wraps"] = wraps
+    exec(compile(ast.Module(body=[defaults, decorator, cls], type_ignores=[]), str(SOURCE), "exec"), namespace)
     return namespace["SchedulerNode"]
 
 
@@ -58,6 +61,9 @@ class TaskStartSpeedTest(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         n._motion = MotionInterlock(str(Path(directory.name) / 'motion.json'))
+        n._localization_arm_lock = threading.Lock()
+        n._localization_arm_count = 0
+        n._localization_arming_cancelled = False
         n.state = SchedulerState.READY
         n.task_config = TaskConfigModel(task_id="task-a")
         n._chassis_settings = dict(run_speed=.03)
@@ -71,7 +77,11 @@ class TaskStartSpeedTest(unittest.TestCase):
         n.current_path = SimpleNamespace(points=[dict(x=0., y=0.)])
         n._collision_imminent_lock = threading.Lock()
         n._collision_imminent_active = False
-        n._super_lio_status_proxy = lambda: SimpleNamespace(state="READY", localization_ready=True)
+        n._super_lio_status_proxy = lambda: SimpleNamespace(
+            state="READY", localization_ready=True,
+            active_map_id="map-a", active_map_revision="revision-a")
+        n._localization_motion_status = lambda: (
+            True, "ready", {"map_id": "map-a", "map_revision": "revision-a"})
         n._tf_buffer = None
         n._continuation_checkpoint = None
         n._sorted_work_region_ids = lambda: []

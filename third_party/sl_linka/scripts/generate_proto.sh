@@ -90,6 +90,14 @@ generate_kotlin() {
             "$PROTO_FILE"
         echo "Generated: sdk/android/src/message_gen/sl_link/*.kt, *.java"
     fi
+    # Keep generated Java free of whitespace-only additions in source diffs.
+    python3 - "$KOTLIN_OUT/sl_link/SlLink.java" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+path.write_text("\n".join(line.rstrip() for line in path.read_text().splitlines()) + "\n")
+PY
 }
 
 # Parse arguments

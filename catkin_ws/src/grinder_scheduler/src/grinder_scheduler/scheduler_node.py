@@ -17,6 +17,7 @@ from datetime import datetime
 from collections import deque
 from copy import deepcopy
 from dataclasses import asdict
+from functools import wraps
 
 import cv2
 import numpy as np
@@ -76,6 +77,22 @@ from grinder_scheduler.metrics_exporter import MetricsExporter
 
 # 调度器与模式管理器是两个进程，各自保存本进程的计数和耗时分布。
 metrics = MetricsRegistry()
+
+
+def localization_arming(method):
+    """Keep startup/resume visible to the localization watchdog during waits."""
+    @wraps(method)
+    def run(self, *args, **kwargs):
+        with self._localization_arm_lock:
+            self._localization_arm_count += 1
+        try:
+            return method(self, *args, **kwargs)
+        finally:
+            with self._localization_arm_lock:
+                self._localization_arm_count -= 1
+                if self._localization_arm_count == 0:
+                    self._localization_arming_cancelled = False
+    return run
 
 try:
     from slamware_ros_sdk.msg import (
@@ -216,6 +233,13 @@ class SchedulerNode:
         self._collision_imminent_active = False
         self._collision_pause_latched = False
         self._indicator_pause_reason = ""
+        self._localization_status_lock = threading.Lock()
+        self._localization_status = None
+        self._localization_status_at = 0.0
+        self._localization_pause_reason = ""
+        self._localization_arm_lock = threading.Lock()
+        self._localization_arm_count = 0
+        self._localization_arming_cancelled = False
         self.task_config = TaskConfigModel()
         self._load_robot_config_from_params()
         self._robot_footprint = self._normalize_footprint(
@@ -725,6 +749,7 @@ class SchedulerNode:
         self._super_lio_start_localization_proxy = None
         self._super_lio_stop_proxy = None
         self._super_lio_status_proxy = None
+        self._localization_heartbeat_timeout_sec = 0.5
         self._super_lio_set_initial_pose_proxy = None
         self._initial_pose_position_variance = max(
             0.0, float(rospy.get_param("~initial_pose_position_variance", 0.25))
@@ -886,6 +911,13 @@ class SchedulerNode:
             Bool,
             self._collision_imminent_callback,
             queue_size=10,
+        )
+        rospy.Subscriber(
+            "/super_lio/localization_status", DiagnosticArray,
+            self._localization_status_callback, queue_size=1,
+        )
+        self._localization_watchdog_timer = rospy.Timer(
+            rospy.Duration(0.1), self._localization_watchdog_tick
         )
         if RadarSystemStatus is not None:
             rospy.Subscriber(
@@ -4108,6 +4140,64 @@ class SchedulerNode:
         with self._collision_imminent_lock:
             return bool(self._collision_imminent_active)
 
+    def _localization_status_callback(self, message):
+        for status in message.status:
+            if str(status.name).strip("/") != "super_lio_localization":
+                continue
+            values = {str(item.key): str(item.value) for item in status.values}
+            snapshot = {
+                "ready": values.get("ready") == "true" and int(status.level) == 0,
+                "state": values.get("state", ""),
+                "map_id": values.get("map_id", ""),
+                "map_revision": values.get("map_revision", ""),
+                "reason": values.get("reason", "localization_unavailable"),
+            }
+            with self._localization_status_lock:
+                self._localization_status = snapshot
+                self._localization_status_at = time.monotonic()
+            self._localization_watchdog_tick(None)
+            return
+
+    def _localization_motion_status(self):
+        with self._localization_status_lock:
+            status = dict(self._localization_status or {})
+            age = time.monotonic() - self._localization_status_at
+        if not status or age > self._localization_heartbeat_timeout_sec:
+            return False, "localization_heartbeat_timeout", status
+        if not status.get("ready") or status.get("state") != "READY":
+            return False, status.get("reason") or "localization_not_ready", status
+        expected_map = str(self.task_config.map_id or self._current_map_id()).strip()
+        if not expected_map or expected_map != status.get("map_id") or not status.get("map_revision"):
+            return False, "localization_map_identity_mismatch", status
+        record = self._find_recorded_map_by_id(expected_map)
+        recorded_revision = str((record or {}).get("map_revision", "") or "").strip()
+        if recorded_revision and recorded_revision != status["map_revision"]:
+            return False, "localization_map_identity_mismatch", status
+        return True, "ready", status
+
+    def _localization_watchdog_tick(self, _event):
+        with self._localization_arm_lock:
+            arming = self._localization_arm_count > 0
+        running = self.state == SchedulerState.RUNNING or self._exec_active
+        if not running and not arming:
+            return
+        ready, reason, _status = self._localization_motion_status()
+        if not ready:
+            if not running:
+                with self._localization_arm_lock:
+                    if self._localization_arm_count == 0 or self._localization_arming_cancelled:
+                        return
+                    self._localization_arming_cancelled = True
+                self._motion.invalidate()
+                self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="localization_start_cancel")
+                self._safe_stop_motion()
+                self.disc_enable_pub.publish(Bool(data=False))
+                rospy.logerr("Task startup cancelled by localization watchdog: %s", reason)
+                return
+            self._localization_pause_reason = reason
+            self._pause_execution(reason="localization")
+            rospy.logerr("Task paused by localization watchdog: %s", reason)
+
     def _radar_system_status_callback(self, msg):
         status = str(getattr(msg, "status", "") or "")
         timestamp_ns = int(getattr(msg, "timestamp_ns", 0) or 0)
@@ -6139,6 +6229,7 @@ class SchedulerNode:
             self.current_path = None
             rospy.loginfo("Task continuation: map changed, replan remaining coverage")
 
+    @localization_arming
     @motion_action(cancel_result=(False, "Task start cancelled by stop/emergency"), replace=True)
     def _start_execution(self):
         runtime_parameters = getattr(self, "_task_runtime_parameters", None)
@@ -6171,12 +6262,18 @@ class SchedulerNode:
             t_prev = now
 
         try:
+            heartbeat_ready, heartbeat_reason, heartbeat_status = self._localization_motion_status()
+            if not heartbeat_ready:
+                raise RuntimeError(heartbeat_reason)
             self._ensure_super_lio_proxies()
             mode_status = self._super_lio_status_proxy()
             if str(mode_status.state) not in ("LOCALIZING", "RELOCALIZING", "READY"):
                 raise RuntimeError("Super-LIO localization is not active")
             if not bool(mode_status.localization_ready):
                 raise RuntimeError("initial pose has not been received")
+            if (str(mode_status.active_map_id) != heartbeat_status["map_id"]
+                    or str(mode_status.active_map_revision) != heartbeat_status["map_revision"]):
+                raise RuntimeError("localization_map_identity_mismatch")
             if self._tf_buffer is not None:
                 self._tf_buffer.lookup_transform(
                     "map", "base_link", rospy.Time(0), rospy.Duration(1.0)
@@ -6214,6 +6311,9 @@ class SchedulerNode:
         if not self._apply_execution_speed_limit():
             self._safe_stop_motion()
             return False, "Cannot apply task process speed to navigation"
+        heartbeat_ready, heartbeat_reason, _ = self._localization_motion_status()
+        if not heartbeat_ready:
+            return False, "Super-LIO localization is not ready: {}".format(heartbeat_reason)
         self._set_chassis_enabled(True)
         self._manual_travel_disc_active = False
         self.work_mode_pub.publish(UInt16(data=2))
@@ -6247,6 +6347,7 @@ class SchedulerNode:
             self.state = SchedulerState.RUNNING
         self._begin_task_execution_record()
         self._indicator_pause_reason = ""
+        self._localization_pause_reason = ""
         mark("set_running")
         rospy.loginfo(
             "Task execution started: regions=%s active=%s mode=%s",
@@ -6328,22 +6429,25 @@ class SchedulerNode:
         # Keep the cause of a collision pause even after RPP reports clear or
         # the operator sends another PAUSE. Only a successful resume/new start
         # or stop ends this pause indication. This does not change stop logic.
-        collision_pause = reason == "collision" or (
-            self.state == SchedulerState.PAUSED
-            and getattr(self, "_indicator_pause_reason", "") == "collision"
-        )
+        old_reason = getattr(self, "_indicator_pause_reason", "") if self.state == SchedulerState.PAUSED else ""
+        pause_reason = ("localization" if "localization" in (reason, old_reason) else
+                        "collision" if "collision" in (reason, old_reason) else "manual")
         self._exec_active = False
         self._disc_auto_cover_desired = False
         self._reset_disc_motion_guard()
         self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="task_pause")
         self._safe_stop_motion()
         self.disc_enable_pub.publish(Bool(data=False))
-        self._indicator_pause_reason = "collision" if collision_pause else "manual"
+        self._indicator_pause_reason = pause_reason
         self.state = SchedulerState.STOPPED if self._motion.latched else SchedulerState.PAUSED
         return True, "Task paused"
 
+    @localization_arming
     @motion_action(cancel_result=(False, "Task resume cancelled by stop/emergency"), replace=True)
     def _resume_execution(self):
+        heartbeat_ready, heartbeat_reason, _ = self._localization_motion_status()
+        if not heartbeat_ready:
+            return False, "Super-LIO localization is not ready: {}".format(heartbeat_reason)
         if float(self._chassis_settings.get("run_speed", 0.0)) <= 0.0:
             self._safe_stop_motion()
             return False, "Cannot resume task while run_speed is zero"
@@ -6353,6 +6457,9 @@ class SchedulerNode:
             return False, "Cannot resume while navigation collision is imminent"
         if self.current_path is None or not self.current_path.points:
             return False, "No path to resume"
+        heartbeat_ready, heartbeat_reason, _ = self._localization_motion_status()
+        if not heartbeat_ready:
+            return False, "Super-LIO localization is not ready: {}".format(heartbeat_reason)
         self._set_chassis_enabled(True)
         self._disc_last_mode = ""
         self._manual_travel_disc_active = False
@@ -6375,6 +6482,7 @@ class SchedulerNode:
         with self._motion.commit():
             self.state = SchedulerState.RUNNING
         self._indicator_pause_reason = ""
+        self._localization_pause_reason = ""
         return True, "Task resumed"
 
     def _stop_execution(self):
@@ -6390,6 +6498,7 @@ class SchedulerNode:
         self._set_chassis_enabled(False)
         self.state = SchedulerState.STOPPED
         self._indicator_pause_reason = ""
+        self._localization_pause_reason = ""
         if was_active:
             try:
                 self._capture_task_continuation()
@@ -7419,6 +7528,15 @@ class SchedulerNode:
         report = pb.DeviceStatusReport()
         if hasattr(report, "emergency_stop_latched"):
             report.emergency_stop_latched = bool(self._motion.latched)
+        if hasattr(report, "localization_ready"):
+            ready, reason, _ = self._localization_motion_status()
+            report.localization_ready = ready
+            report.localization_pause_latched = (
+                self.state == SchedulerState.PAUSED and self._indicator_pause_reason == "localization"
+            )
+            report.localization_status_reason = (
+                self._localization_pause_reason if report.localization_pause_latched else reason
+            )
         report.utc_time = int(time.time())
         report.system_status = pb.SYS_STATUS_ERROR if self.last_error else pb.SYS_STATUS_NORMAL
         report.wifi_status = pb.WIFI_SUCCESS

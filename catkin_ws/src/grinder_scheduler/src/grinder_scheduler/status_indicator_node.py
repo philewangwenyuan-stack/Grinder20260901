@@ -76,7 +76,7 @@ class StatusIndicatorNode:
             value = json.loads(msg.data)
             if not isinstance(value, dict) or any(type(value.get(k)) is not bool for k in ("automatic_active", "manual_active")):
                 raise ValueError("missing boolean activity fields")
-            if value.get("pause_reason", "") not in ("", "manual", "collision"):
+            if value.get("pause_reason", "") not in ("", "manual", "collision", "localization"):
                 raise ValueError("invalid pause reason")
             self._update("activity", value)
         except (ValueError, TypeError):

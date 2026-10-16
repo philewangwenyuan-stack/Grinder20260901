@@ -29,6 +29,14 @@ class StatePolicyTest(unittest.TestCase):
         self.assertEqual(LightState.STARTUP, resolver.resolve(100))
         self.assertEqual(LightState.STARTUP, resolver.resolve(1000))
 
+    def test_localization_pause_keeps_fault_until_cleared_and_emergency_wins(self):
+        resolver = self.ready("PAUSED")
+        resolver.update("activity", {"automatic_active": False, "manual_active": False,
+                                     "pause_reason": "localization"}, 10)
+        self.assertEqual(LightState.FAULT, resolver.resolve(10))
+        resolver.update("scheduler_emergency", True, 10)
+        self.assertEqual(LightState.EMERGENCY, resolver.resolve(10))
+
     def test_all_states_and_auto_not_inferred_from_work_mode(self):
         cases = [
             ("IDLE", False, LightState.READY), ("READY", False, LightState.READY),

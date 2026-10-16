@@ -58,6 +58,8 @@ class StateResolver:
         self.ever_ready = True
         if state == "RUNNING" and activity.get("automatic_active"):
             return LightState.AUTOMATIC
+        if state == "PAUSED" and activity.get("pause_reason") == "localization":
+            return LightState.FAULT
         if state == "PAUSED" and activity.get("pause_reason") == "collision":
             return LightState.COLLISION_PAUSED
         if activity.get("manual_active"):

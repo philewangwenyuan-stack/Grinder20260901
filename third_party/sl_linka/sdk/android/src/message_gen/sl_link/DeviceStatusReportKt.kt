@@ -504,6 +504,103 @@ public object DeviceStatusReportKt {
     public fun hasEmergencyStopLatched(): kotlin.Boolean {
       return _builder.hasEmergencyStopLatched()
     }
+
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     */
+    public var localizationReady: kotlin.Boolean
+      @JvmName("getLocalizationReady")
+      get() = _builder.getLocalizationReady()
+      @JvmName("setLocalizationReady")
+      set(value) {
+        _builder.setLocalizationReady(value)
+      }
+    /**
+     * ```
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * ```
+     *
+     * `optional bool localization_ready = 23;`
+     */
+    public fun clearLocalizationReady() {
+      _builder.clearLocalizationReady()
+    }
+    /**
+     * ```
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * ```
+     *
+     * `optional bool localization_ready = 23;`
+     * @return Whether the localizationReady field is set.
+     */
+    public fun hasLocalizationReady(): kotlin.Boolean {
+      return _builder.hasLocalizationReady()
+    }
+
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     */
+    public var localizationPauseLatched: kotlin.Boolean
+      @JvmName("getLocalizationPauseLatched")
+      get() = _builder.getLocalizationPauseLatched()
+      @JvmName("setLocalizationPauseLatched")
+      set(value) {
+        _builder.setLocalizationPauseLatched(value)
+      }
+    /**
+     * ```
+     * True while a task remains paused due to confirmed localization failure.
+     * ```
+     *
+     * `optional bool localization_pause_latched = 24;`
+     */
+    public fun clearLocalizationPauseLatched() {
+      _builder.clearLocalizationPauseLatched()
+    }
+    /**
+     * ```
+     * True while a task remains paused due to confirmed localization failure.
+     * ```
+     *
+     * `optional bool localization_pause_latched = 24;`
+     * @return Whether the localizationPauseLatched field is set.
+     */
+    public fun hasLocalizationPauseLatched(): kotlin.Boolean {
+      return _builder.hasLocalizationPauseLatched()
+    }
+
+    /**
+     * ```
+     * Stable reason code; clients own presentation language.
+     * ```
+     *
+     * `string localization_status_reason = 25;`
+     */
+    public var localizationStatusReason: kotlin.String
+      @JvmName("getLocalizationStatusReason")
+      get() = _builder.getLocalizationStatusReason()
+      @JvmName("setLocalizationStatusReason")
+      set(value) {
+        _builder.setLocalizationStatusReason(value)
+      }
+    /**
+     * ```
+     * Stable reason code; clients own presentation language.
+     * ```
+     *
+     * `string localization_status_reason = 25;`
+     */
+    public fun clearLocalizationStatusReason() {
+      _builder.clearLocalizationStatusReason()
+    }
   }
 }
 public inline fun sl_link.SlLink.DeviceStatusReport.copy(block: `sl_link`.DeviceStatusReportKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.DeviceStatusReport =

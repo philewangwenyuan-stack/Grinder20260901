@@ -100,7 +100,8 @@ rostopic echo /indicator/state
 必需来源：`/scheduler/status`、`/chassis/status`、`/scheduler/control_activity`、
 `/scheduler/indicator_emergency`、`/chassis/indicator_emergency`。
 `control_activity` 的 JSON 含 `automatic_active`、`manual_active` 布尔值以及
-`pause_reason`（空字符串、`manual`、`collision`）；只有 PAUSED 才发布非空原因。
+`pause_reason`（空字符串、`manual`、`collision`、`localization`）；只有 PAUSED 才发布非空原因。
+定位异常暂停显示现有故障态红色慢闪，恢复后仍保持至成功继续、新任务成功启动或明确停止；急停提示优先。
 旧来源省略原因时按普通蓝色暂停处理，新版来源负责保留碰撞暂停原因。
 底盘 `connected=false` 或调度 ERROR 即使尚未首次就绪也显示故障。
 不将 APP、视频、MQTT 在线作为绿色就绪条件；定位质量保持由调度现有状态反映。

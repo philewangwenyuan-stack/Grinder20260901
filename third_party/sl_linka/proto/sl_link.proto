@@ -431,6 +431,12 @@ message DeviceStatusReport {
   optional bool chassis_connected = 21;
   // Scheduler emergency latch; absence means firmware does not report this state.
   optional bool emergency_stop_latched = 22;
+  // Composite Super-LIO readiness. Absence means unknown/older board.
+  optional bool localization_ready = 23;
+  // True while a task remains paused due to confirmed localization failure.
+  optional bool localization_pause_latched = 24;
+  // Stable reason code; clients own presentation language.
+  string localization_status_reason = 25;
 }
 
 message CameraFrameRequest {

@@ -23,7 +23,8 @@ class ExecutionTest(unittest.TestCase):
         self.directory = Path(temp.name)
 
     def node(self):
-        names = {'_start_execution', '_resume_execution', '_apply_emergency_stop', '_handle_manual_drive', '_handle_manual_drive_locked',
+        names = {'_start_execution', '_resume_execution', '_localization_watchdog_tick', '_pause_execution',
+                 '_apply_emergency_stop', '_handle_manual_drive', '_handle_manual_drive_locked',
                  '_set_cmd_vel_forward_runtime_active', '_stop_execution', '_reset_emergency_stop',
                  '_request_indicator_clear', '_emergency_status_tick', '_apply_control_outputs',
                  '_driver_motion_safety', '_sync_deferred_driver_emergency', '_chassis_status_callback',
@@ -38,6 +39,9 @@ class ExecutionTest(unittest.TestCase):
         namespace['rospy'] = ros
         node = cls()
         node._motion = MotionInterlock(str(self.directory / 'scheduler.json'))
+        node._localization_arm_lock = threading.Lock()
+        node._localization_arm_count = 0
+        node._localization_arming_cancelled = False
         node._emergency_reset_lock = threading.Lock()
         node._indicator_clear_generation = None
         node._emergency_reset_message = ''
@@ -55,7 +59,11 @@ class ExecutionTest(unittest.TestCase):
         node._exec_active = False
         node._manual_drive_lock = threading.Lock()
         node._indicator_emergency = SimpleNamespace(observe=lambda: None)
-        node._super_lio_status_proxy = lambda: M(state='READY', localization_ready=True)
+        node._super_lio_status_proxy = lambda: M(
+            state='READY', localization_ready=True,
+            active_map_id='map-a', active_map_revision='revision-a')
+        node._localization_motion_status = lambda: (
+            True, 'ready', {'map_id': 'map-a', 'map_revision': 'revision-a'})
         for name in ('_ensure_super_lio_proxies', '_sync_task_regions_from_overlay', '_prepare_task_continuation_start',
                      '_set_chassis_enabled', '_reset_disc_motion_guard', '_init_segment_execution_cursor',
                      '_publish_path_to_navigation', '_publish_active_segment_plan', '_begin_task_execution_record',
@@ -84,7 +92,9 @@ class ExecutionTest(unittest.TestCase):
                     self.assertTrue(release.wait(2))
                     return value
                 if stage == 'localization':
-                    node._super_lio_status_proxy = lambda: barrier(M(state='READY', localization_ready=True))
+                    node._super_lio_status_proxy = lambda: barrier(M(
+                        state='READY', localization_ready=True,
+                        active_map_id='map-a', active_map_revision='revision-a'))
                 elif stage == 'planning':
                     node.current_path = None
                     def plan():
@@ -108,6 +118,31 @@ class ExecutionTest(unittest.TestCase):
                 self.assertFalse(node._exec_active)
                 self.assertFalse(any(m.data for m in node.task_enable_pub.messages))
                 self.assertFalse(any(m.data for m in node.disc_enable_pub.messages))
+
+    def test_localization_loss_during_planning_cancels_start_before_motion(self):
+        node, _ = self.node()
+        entered, release = threading.Event(), threading.Event()
+        node.current_path = None
+
+        def plan():
+            entered.set()
+            release.wait(2)
+            node.current_path = M(points=[{}])
+            return True
+
+        node._plan_current_task = plan
+        result = []
+        thread = threading.Thread(target=lambda: result.append(node._start_execution()))
+        thread.start()
+        self.assertTrue(entered.wait(1))
+        node._localization_motion_status = lambda: (False, 'localization_heartbeat_timeout', {})
+        node._localization_watchdog_tick(None)
+        release.set()
+        thread.join(2)
+        self.assertFalse(thread.is_alive())
+        self.assertFalse(result[0][0])
+        self.assertFalse(any(message.data for message in node.task_enable_pub.messages))
+        self.assertFalse(any(message.data for message in node.disc_enable_pub.messages))
 
     def test_old_manual_scope_cannot_publish_after_release(self):
         node, _ = self.node()

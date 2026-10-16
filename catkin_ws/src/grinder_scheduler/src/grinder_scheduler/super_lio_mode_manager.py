@@ -17,7 +17,7 @@ from xmlrpc.client import ServerProxy
 import roslaunch
 import rosnode
 import rospy
-from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
 from sensor_msgs.msg import Imu
@@ -93,6 +93,8 @@ class SuperLioModeManager:
         self._localization_ready = False
         self._initial_pose_received = False
         self._localization_good_frames = 0
+        self._localization_bad_frames = 0
+        self._localization_reason = "initial_pose_required"
         self._registration_quality_valid = False
         self._registration_fitness = 0.0
         self._registration_inlier_ratio = 0.0
@@ -145,7 +147,10 @@ class SuperLioModeManager:
         self._min_imu_hz = max(0.1, float(rospy.get_param("~super_lio_min_imu_hz", 20.0)))
         self._min_odom_hz = max(0.1, float(rospy.get_param("~super_lio_min_odom_hz", 5.0)))
         self._required_good_frames = max(
-            1, int(rospy.get_param("~super_lio_localization_stable_frames", 8))
+            1, int(rospy.get_param("~super_lio_localization_stable_frames", 5))
+        )
+        self._required_bad_frames = max(
+            1, int(rospy.get_param("~super_lio_localization_bad_frames", 5))
         )
         self._fitness_max = max(0.0, float(rospy.get_param("~super_lio_fitness_max_m2", 0.3)))
         self._inlier_ratio_min = min(
@@ -183,6 +188,9 @@ class SuperLioModeManager:
         )
         self._initial_pose_pub = rospy.Publisher(
             "/initialpose", PoseWithCovarianceStamped, queue_size=1
+        )
+        self._localization_status_pub = rospy.Publisher(
+            "/super_lio/localization_status", DiagnosticArray, queue_size=1
         )
         # Only the header timestamp is needed here. Decoding every Livox point
         # in Python can consume a core while roslaunch runs on the main thread.
@@ -230,6 +238,9 @@ class SuperLioModeManager:
             self._handle_set_initial_pose,
         )
         rospy.on_shutdown(self.shutdown)
+        self._localization_status_timer = rospy.Timer(
+            rospy.Duration(0.1), self._localization_status_tick
+        )
         self._publish_safe()
         rospy.loginfo(
             "Super-LIO mode manager ready: state=%s map_root=%s", self._state, self._map_root
@@ -291,6 +302,58 @@ class SuperLioModeManager:
     def spin(self):
         while not rospy.is_shutdown():
             self._process_next_operation()
+
+    def _invalidate_localization(self, reason, bad_frames=0):
+        self._localization_ready = False
+        self._localization_good_frames = 0
+        self._localization_bad_frames = bad_frames
+        self._registration_quality_valid = False
+        self._localization_reason = reason
+        self._state = self.RELOCALIZING
+        self._message = reason
+
+    def _refresh_localization_health_locked(self):
+        if self._owned_mode != "localization" or not self._initial_pose_received or self._state not in (self.RELOCALIZING, self.READY):
+            return
+        reason = ""
+        for topic, rate, code in (
+            ("/livox/lidar", self._min_lidar_hz, "livox_lidar_unhealthy"),
+            ("/livox/imu", self._min_imu_hz, "livox_imu_unhealthy"),
+            ("/lio/odom", self._min_odom_hz, "lio_odom_unhealthy"),
+        ):
+            if not self._stream_is_healthy(topic, rate):
+                reason = code
+                break
+        if not reason and time.monotonic() - getattr(self, "_last_quality_arrival", 0.0) > self._message_max_age_sec:
+            reason = "registration_diagnostics_stale"
+        if not reason and not self._tf_is_valid(timeout_sec=0.0):
+            reason = "map_to_base_tf_invalid"
+        if reason and (self._localization_ready or self._localization_reason != reason):
+            self._invalidate_localization(reason)
+
+    def _localization_status_tick(self, _event):
+        # This timer also revokes a previously ready state when all data stops.
+        with self._lock:
+            self._refresh_localization_health_locked()
+            status = DiagnosticStatus()
+            status.name = "super_lio_localization"
+            status.level = DiagnosticStatus.OK if self._localization_ready else DiagnosticStatus.WARN
+            status.message = self._localization_reason
+            values = {
+                "ready": str(bool(self._localization_ready)).lower(),
+                "state": self._state,
+                "map_id": self._active_map_id,
+                "map_revision": self._active_map_revision,
+                "reason": self._localization_reason,
+                "good_frames": str(self._localization_good_frames),
+                "bad_frames": str(self._localization_bad_frames),
+                "quality_valid": str(bool(self._registration_quality_valid)).lower(),
+            }
+            status.values = [KeyValue(key=key, value=value) for key, value in values.items()]
+            report = DiagnosticArray()
+            report.header.stamp = rospy.Time.now()
+            report.status = [status]
+        self._localization_status_pub.publish(report)
 
     def _staging_dir(self):
         return os.path.join(self._map_root, ".staging", "current")
@@ -461,12 +524,12 @@ class SuperLioModeManager:
             and self._stamp_is_fresh(metadata.get("stamp", 0.0), self._map_max_age_sec)
         )
 
-    def _tf_is_valid(self):
+    def _tf_is_valid(self, timeout_sec=0.25):
         if self._tf_buffer is None:
             return False
         try:
             transform = self._tf_buffer.lookup_transform(
-                "map", self._tf_base_frame, rospy.Time(0), rospy.Duration(0.25)
+                "map", self._tf_base_frame, rospy.Time(0), rospy.Duration(timeout_sec)
             )
             if not self._stamp_is_fresh(self._stamp_sec(transform)):
                 return False
@@ -489,13 +552,22 @@ class SuperLioModeManager:
         pose = odom.pose.pose
         covariance = odom.pose.covariance
         position = pose.position
-        valid = (
+        data_valid = (
             self._stamp_is_fresh(stamp)
             and str(odom.header.frame_id) == self._localization_world_frame
             and all(math.isfinite(float(value)) for value in (position.x, position.y, position.z))
             and self._quaternion_is_valid(pose.orientation)
             and len(covariance) >= 36
             and all(math.isfinite(float(covariance[index])) for index in (0, 7, 35))
+            and abs(float(quality.get("stamp", 0.0)) - stamp) <= 0.025
+            and time.monotonic() - float(quality.get("arrival", 0.0)) <= self._message_max_age_sec
+            and self._stream_is_healthy("/livox/lidar", self._min_lidar_hz)
+            and self._stream_is_healthy("/livox/imu", self._min_imu_hz)
+            and self._stream_is_healthy("/lio/odom", self._min_odom_hz)
+            and self._tf_is_valid()
+        )
+        quality_valid = (
+            data_valid
             and 0.0 <= float(covariance[0]) <= self._max_xy_variance
             and 0.0 <= float(covariance[7]) <= self._max_xy_variance
             and 0.0 <= float(covariance[35]) <= self._max_yaw_variance
@@ -506,10 +578,6 @@ class SuperLioModeManager:
             and math.isfinite(float(quality.get("inlier_ratio", float("nan"))))
             and float(quality.get("inlier_ratio", 0.0)) >= self._inlier_ratio_min
             and int(quality.get("correspondences", 0)) >= self._min_correspondences
-            and abs(float(quality.get("stamp", 0.0)) - stamp) <= 0.025
-            and time.monotonic() - float(quality.get("arrival", 0.0)) <= self._message_max_age_sec
-            and self._stream_is_healthy("/lio/odom", self._min_odom_hz)
-            and self._tf_is_valid()
         )
         x = float(position.x)
         y = float(position.y)
@@ -521,16 +589,23 @@ class SuperLioModeManager:
                 or self._state not in (self.RELOCALIZING, self.READY)
             ):
                 return
-            self._registration_quality_valid = bool(valid)
+            self._last_quality_arrival = time.monotonic()
+            self._registration_quality_valid = bool(quality_valid)
             self._registration_fitness = float(quality.get("fitness", 0.0) or 0.0)
             self._registration_inlier_ratio = float(quality.get("inlier_ratio", 0.0) or 0.0)
-            if not valid:
-                self._localization_good_frames = 0
-                self._localization_ready = False
-                self._state = self.RELOCALIZING
-                self._message = "registration quality below readiness thresholds"
-                self._last_good_pose = None
-                self._last_good_pose_stamp = 0.0
+            if not data_valid:
+                reason = "localization_data_invalid"
+                for topic, rate, code in (
+                    ("/livox/lidar", self._min_lidar_hz, "livox_lidar_unhealthy"),
+                    ("/livox/imu", self._min_imu_hz, "livox_imu_unhealthy"),
+                    ("/lio/odom", self._min_odom_hz, "lio_odom_unhealthy"),
+                ):
+                    if not self._stream_is_healthy(topic, rate):
+                        reason = code
+                        break
+                if reason == "localization_data_invalid" and not self._tf_is_valid(timeout_sec=0.0):
+                    reason = "map_to_base_tf_invalid"
+                self._invalidate_localization(reason)
                 return
             if self._last_good_pose is not None:
                 dt = stamp - self._last_good_pose_stamp
@@ -540,16 +615,32 @@ class SuperLioModeManager:
                     math.cos(yaw - self._last_good_pose[2]),
                 ))
                 if dt <= 0.0 or distance > self._max_pose_jump_m or yaw_delta > self._max_yaw_jump_rad:
-                    self._localization_good_frames = 0
-                    self._localization_ready = False
-                    self._state = self.RELOCALIZING
-                    self._message = "pose jump exceeded readiness thresholds"
+                    self._invalidate_localization("pose_jump_exceeded")
                     self._last_good_pose = (x, y, yaw)
                     self._last_good_pose_stamp = stamp
                     return
+            if not quality_valid:
+                self._localization_good_frames = 0
+                self._localization_bad_frames += 1
+                if self._localization_ready and self._localization_bad_frames >= self._required_bad_frames:
+                    self._invalidate_localization("registration_quality_failed", self._localization_bad_frames)
+                elif self._localization_ready:
+                    self._localization_reason = "registration_quality_degraded"
+                    self._message = self._localization_reason
+                elif not self._localization_ready:
+                    self._localization_reason = "registration_quality_failed"
+                    self._message = "registration quality below readiness thresholds"
+                return
+            self._localization_bad_frames = 0
             self._last_good_pose = (x, y, yaw)
             self._last_good_pose_stamp = stamp
             self._localization_good_frames += 1
+            if not self._localization_ready:
+                self._localization_reason = "stable_frames_pending"
+                self._message = self._localization_reason
+            else:
+                self._localization_reason = "ready"
+                self._message = "localization ready"
             if self._localization_good_frames >= self._required_good_frames:
                 if not self._localization_ready:
                     metrics.counter("super_lio_localization_ready").inc()
@@ -557,6 +648,7 @@ class SuperLioModeManager:
                 self._state = self.READY
                 self._localization_ready = True
                 self._message = "localization ready"
+                self._localization_reason = "ready"
 
     def _handle_set_initial_pose(self, request):
         response = SetSuperLioInitialPoseResponse()
@@ -606,6 +698,8 @@ class SuperLioModeManager:
                 self._initial_pose_received = True
                 self._localization_ready = False
                 self._localization_good_frames = 0
+                self._localization_bad_frames = 0
+                self._localization_reason = "stable_frames_pending"
                 self._registration_quality_valid = False
                 self._last_good_pose = None
                 self._last_good_pose_stamp = 0.0
@@ -912,6 +1006,9 @@ class SuperLioModeManager:
         self._initial_pose_received = False
         self._localization_ready = False
         self._localization_good_frames = 0
+        self._localization_bad_frames = 0
+        self._localization_reason = "initial_pose_required"
+        self._last_quality_arrival = 0.0
         self._registration_quality_valid = False
         self._registration_fitness = 0.0
         self._registration_inlier_ratio = 0.0
@@ -1324,6 +1421,7 @@ class SuperLioModeManager:
 
     def _handle_status(self, _request):
         with self._lock:
+            self._refresh_localization_health_locked()
             return GetSuperLioStatusResponse(
                 success=self._state not in (self.ERROR, self.TIMEOUT),
                 message=self._message,

@@ -184,6 +184,10 @@ message PolygonRegion {
 |--------|------|------|------|
 | `0x0301` | `DeviceStatusReport` | `LOWER -> APP` | 自动 `1Hz` 上报运行状态 |
 
+`DeviceStatusReport` 新增 `optional localization_ready=23`、`optional localization_pause_latched=24` 与
+`localization_status_reason=25`。可选字段缺省表示旧板端未知状态；APP 仅在定位暂停锁存时报警，
+恢复连续合格后仍保留暂停并提示手动继续。原因码由 APP 映射为本地文案。
+
 字段包括：
 - 左轮速度 `left_wheel_speed`
 - 右轮速度 `right_wheel_speed`

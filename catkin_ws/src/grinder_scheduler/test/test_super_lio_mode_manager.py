@@ -6,9 +6,11 @@ import struct
 import sys
 import tempfile
 import threading
+import time
 import types
 import unittest
 from collections import deque
+from unittest.mock import patch
 
 
 def _stub_module(name, **attributes):
@@ -49,7 +51,7 @@ _stub_module("sensor_msgs.msg", Imu=_Dummy)
 _stub_module("geometry_msgs")
 _stub_module("geometry_msgs.msg", PoseWithCovarianceStamped=_Dummy)
 _stub_module("diagnostic_msgs")
-_stub_module("diagnostic_msgs.msg", DiagnosticArray=_Dummy)
+_stub_module("diagnostic_msgs.msg", DiagnosticArray=_Dummy, DiagnosticStatus=_Dummy, KeyValue=_Dummy)
 _stub_module("std_msgs")
 _stub_module("std_msgs.msg", Bool=_Dummy)
 _stub_module("std_srvs")
@@ -72,6 +74,122 @@ from grinder_scheduler.super_lio_mode_manager import (  # noqa: E402
     SuperLioModeManager,
     SuperLioShutdownTimeout,
 )
+
+
+class SuperLioRunningQualityTest(unittest.TestCase):
+    @staticmethod
+    def _manager():
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._lock = threading.RLock()
+        manager._owned_mode = "localization"
+        manager._initial_pose_received = True
+        manager._state = manager.READY
+        manager._localization_ready = True
+        manager._localization_good_frames = 5
+        manager._localization_bad_frames = 0
+        manager._localization_reason = "ready"
+        manager._required_good_frames = 5
+        manager._required_bad_frames = 5
+        manager._registration_quality_valid = True
+        manager._last_good_pose = (0.0, 0.0, 0.0)
+        manager._last_good_pose_stamp = 1.0
+        manager._localization_world_frame = "map"
+        manager._max_xy_variance = 0.25
+        manager._max_yaw_variance = 0.07
+        manager._fitness_max = 0.3
+        manager._inlier_ratio_min = 0.2
+        manager._min_correspondences = 100
+        manager._min_odom_hz = 5.0
+        manager._min_lidar_hz = 5.0
+        manager._min_imu_hz = 20.0
+        manager._message_max_age_sec = 0.5
+        manager._max_pose_jump_m = 0.75
+        manager._max_yaw_jump_rad = 0.52359878
+        manager._stamp_is_fresh = lambda *_args: True
+        manager._stream_is_healthy = lambda *_args: True
+        manager._tf_is_valid = lambda *_args, **_kwargs: True
+        return manager
+
+    @staticmethod
+    def _sample(stamp, x=0.0, fitness=0.1):
+        pose = types.SimpleNamespace(
+            position=types.SimpleNamespace(x=x, y=0.0, z=0.0),
+            orientation=types.SimpleNamespace(x=0.0, y=0.0, z=0.0, w=1.0),
+        )
+        odom = types.SimpleNamespace(
+            header=types.SimpleNamespace(frame_id="map", stamp=types.SimpleNamespace(to_sec=lambda: stamp)),
+            pose=types.SimpleNamespace(pose=pose, covariance=[0.01] * 36),
+        )
+        quality = {"stamp": stamp, "arrival": time.monotonic(), "ok": True,
+                   "converged": True, "fitness": fitness, "inlier_ratio": 0.8,
+                   "correspondences": 200}
+        return odom, quality
+
+    def test_fifth_bad_frame_pauses_and_five_good_frames_restore(self):
+        manager = self._manager()
+        for stamp in range(2, 6):
+            manager._evaluate_localization_sample(*self._sample(float(stamp), fitness=0.9))
+            self.assertTrue(manager._localization_ready)
+        manager._evaluate_localization_sample(*self._sample(6.0))
+        self.assertEqual(manager._localization_bad_frames, 0)
+        manager._evaluate_localization_sample(*self._sample(7.0, fitness=0.9))
+        self.assertEqual(manager._localization_bad_frames, 1)
+        for stamp in range(8, 12):
+            manager._evaluate_localization_sample(*self._sample(float(stamp), fitness=0.9))
+        self.assertFalse(manager._localization_ready)
+        for stamp in range(12, 16):
+            manager._evaluate_localization_sample(*self._sample(float(stamp)))
+            self.assertFalse(manager._localization_ready)
+        manager._evaluate_localization_sample(*self._sample(16.0))
+        self.assertTrue(manager._localization_ready)
+
+    def test_pose_jump_is_immediate(self):
+        manager = self._manager()
+        manager._evaluate_localization_sample(*self._sample(2.0, x=0.8, fitness=0.9))
+        self.assertFalse(manager._localization_ready)
+        self.assertEqual(manager._localization_reason, "pose_jump_exceeded")
+
+    def test_missing_matched_diagnostics_revokes_ready_without_new_frame(self):
+        import grinder_scheduler.super_lio_mode_manager as module
+        manager = self._manager()
+        manager._last_quality_arrival = time.monotonic() - 1.0
+        manager._active_map_id = "map-a"
+        manager._active_map_revision = "revision-a"
+        sent = []
+        manager._localization_status_pub = types.SimpleNamespace(publish=sent.append)
+
+        class Status:
+            OK = 0
+            WARN = 1
+
+        class Array:
+            def __init__(self):
+                self.header = types.SimpleNamespace()
+
+        with patch.object(module, "DiagnosticStatus", Status), \
+                patch.object(module, "DiagnosticArray", Array), \
+                patch.object(module, "KeyValue", lambda **kw: types.SimpleNamespace(**kw)), \
+                patch.object(module.rospy, "Time", types.SimpleNamespace(
+                    now=lambda: types.SimpleNamespace(to_sec=lambda: 2.0)), create=True):
+            manager._localization_status_tick(None)
+            manager._localization_status_tick(None)
+        self.assertFalse(manager._localization_ready)
+        self.assertEqual("registration_diagnostics_stale", manager._localization_reason)
+        self.assertEqual(0, manager._localization_good_frames)
+        self.assertEqual(2, len(sent))
+
+    def test_repeated_same_frame_is_not_counted_twice(self):
+        manager = self._manager()
+        manager._pending_odom = deque(maxlen=32)
+        manager._quality_samples = deque(maxlen=32)
+        manager._last_quality_stamp = 0.0
+        odom, quality = self._sample(2.0)
+        for _ in range(2):
+            manager._pending_odom.append((2.0, time.monotonic(), odom))
+            manager._quality_samples.append(dict(quality))
+        matched = manager._take_quality_pairs_locked()
+        self.assertEqual(1, len(matched))
+        self.assertEqual(2.0, manager._last_quality_stamp)
 
 
 class SuperLioRawLidarStampTest(unittest.TestCase):

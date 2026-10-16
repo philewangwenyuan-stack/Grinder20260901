@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 import threading
 import time
+from functools import wraps
 from types import SimpleNamespace, MethodType
 import unittest
 import tempfile
@@ -34,6 +35,7 @@ class Publisher:
 
 def production_method(path, name, namespace):
     namespace.setdefault("motion_action", motion_action)
+    namespace.setdefault("localization_arming", lambda method: method)
     parsed = ast.parse(path.read_text(encoding="utf-8"))
     function = next(node for node in ast.walk(parsed) if isinstance(node, ast.FunctionDef) and node.name == name)
     exec(compile(ast.Module(body=[function], type_ignores=[]), str(path), "exec"), namespace)
@@ -278,6 +280,14 @@ class NodeIntegrationTest(unittest.TestCase):
         self.node._activity(Message(data='{"automatic_active":false,"manual_active":false,"pause_reason":"manual"}'))
         self.assertEqual("PAUSED", self.latest()["state"])
 
+    def test_localization_pause_uses_existing_fault_wire_state(self):
+        self.publish_ready()
+        self.node._scheduler(Message(state="PAUSED"))
+        self.node._activity(Message(data='{"automatic_active":false,"manual_active":false,"pause_reason":"localization"}'))
+        self.assertEqual("FAULT", self.latest()["state"])
+        from grinder_scheduler.status_indicator import unpack
+        self.assertEqual("6", unpack(self.node.transport.port.frames[-1])[3])
+
 
 class CollisionPauseLifecycleTest(unittest.TestCase):
     def setUp(self):
@@ -290,9 +300,12 @@ class CollisionPauseLifecycleTest(unittest.TestCase):
         path = ROOT / "catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py"
         self.node = SimpleNamespace(
             _motion=MotionInterlock(os.path.join(directory.name, "emergency.json")),
+            _localization_arm_lock=threading.Lock(), _localization_arm_count=0,
+            _localization_arming_cancelled=False,
             state=SchedulerState.RUNNING, _exec_active=True, _indicator_pause_reason="",
             _collision_imminent_lock=threading.Lock(), _collision_imminent_active=False,
             _collision_pause_latched=False, _collision_imminent_topic="/rpp/collision_imminent",
+            _localization_motion_status=lambda: (True, "ready", {}),
             task_config=Message(task_id="task"), _chassis_settings={"run_speed": 0.1},
             current_path=Message(points=[{}]), _active_segments=[{}],
             disc_enable_pub=Publisher(), disc_speed_pub=Publisher(), light_pub=Publisher(),
@@ -306,8 +319,27 @@ class CollisionPauseLifecycleTest(unittest.TestCase):
             _capture_task_continuation=lambda: None,
             _finalize_task_result=lambda **k: None,
         )
-        for name in ("_collision_imminent_callback", "_pause_execution", "_resume_execution", "_stop_execution"):
+        for name in ("_collision_imminent_callback", "_localization_watchdog_tick",
+                     "_pause_execution", "_resume_execution", "_stop_execution"):
             setattr(self.node, name, MethodType(production_method(path, name, namespace), self.node))
+
+    def test_localization_watchdog_pauses_and_requires_manual_resume(self):
+        self.node._localization_motion_status = lambda: (False, "localization_heartbeat_timeout", {})
+        self.node._localization_watchdog_tick(None)
+        self.assertEqual(SchedulerState.PAUSED, self.node.state)
+        self.assertEqual("localization", self.node._indicator_pause_reason)
+        self.assertFalse(self.node.disc_enable_pub.messages[-1].data)
+        self.assertFalse(self.node._resume_execution()[0])
+        self.node._localization_motion_status = lambda: (True, "ready", {})
+        self.assertEqual(SchedulerState.PAUSED, self.node.state)
+        self.assertTrue(self.node._resume_execution()[0])
+        self.assertEqual("", self.node._indicator_pause_reason)
+
+    def test_localization_pause_has_priority_over_collision_and_manual(self):
+        self.node._pause_execution(reason="collision")
+        self.node._pause_execution(reason="localization")
+        self.node._pause_execution(reason="manual")
+        self.assertEqual("localization", self.node._indicator_pause_reason)
 
     def test_collision_clear_and_repeated_pause_do_not_erase_cause(self):
         self.node._collision_imminent_callback(Message(data=True))

@@ -40,7 +40,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | 遥控指令跟手、忙时松手停车 | `sl_linka_adapter.py` 中手动最新指令队列、scheduler `capture_control_generation` | 排队绑定执行代号；底盘零速绕过斜坡；`test_manual_control_delivery.py`、`test_motion_safety.py`；部署与超时见根 README 7.3 |
 | 当前任务临时直行速度与磨盘转速 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_runtime_parameters.py` | `scheduler_node.py` 中 `handle_task_runtime_settings`；协议 `0x0538/0x0539`；`test/test_task_runtime_parameters.py` |
 | 任务启动时下发工艺速度 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` 中 `_execution_run_speed`、`_start_execution` | `test/test_execution_settings.py`；底盘使能前将工艺速度下发到导航控制器 |
-| APP 消息中心的底盘断连上报 | `scheduler_node.py` 中 `_chassis_connection_for_report` / `build_device_status_report` | `DeviceStatusReport.chassis_connected` 可选字段；`test/test_chassis_connection_report.py`；3 秒无底盘状态视为断连，仅用于事件诊断 |
+| APP 消息中心的设备/定位告警 | `scheduler_node.py` 中 `build_device_status_report` | `DeviceStatusReport` 可选状态字段；Android `core/tcp/DeviceEventTracker.kt`；定位暂停/恢复仅按边沿记录 |
 | 平板单按钮急停/解除状态 | `scheduler_node.py` 中 `build_device_status_report` / `_reset_emergency_stop` | `DeviceStatusReport.emergency_stop_latched=22` 上报调度运动锁存；协议生成 Python/Android/nanopb SDK 同步 |
 | 板端日志采样与指标导出 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/metrics_registry.py` | `metrics_exporter.py`、`grinder_metrics_node.py`、`launch/scheduler.launch` |
 | 协议定义与说明、地图请求结果/快照分片 | `third_party/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl-link.md`、`third_party/sl_linka/scripts/generate_proto.sh` |
@@ -57,7 +57,7 @@ Aurora/slamware -> /map、/odom、图像、雷达状态 -> scheduler/navigation
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |
 | 激光里程计与 EKF | `catkin_ws/src/rf2o_laser_odometry/` | `launch/`、`config/ekf.yaml` |
 | MID-360S + Super-LIO 实时二维栅格建图 | `catkin_ws/src/cloud_to_occupancy_grid/` | `config/mid360.yaml`、`launch/mid360_mapping.launch` |
-| Super-LIO 生命周期/定位质量/地图版本 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/super_lio_mode_manager.py`、`map_asset_revision.py` | `launch/super_lio_*_managed.launch`、`srv/*SuperLio*.srv`、`config/super_lio.yaml` |
+| Super-LIO 生命周期/定位质量/地图版本 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/super_lio_mode_manager.py`、`map_asset_revision.py` | `/super_lio/localization_status` 10 Hz 心跳；调度 `_localization_watchdog_tick`；`config/super_lio.yaml`、`srv/*SuperLio*.srv` |
 | Super-LIO 回环检测、位姿图和协方差 | `catkin_ws/src/super_lio_loop/` | `config/mid360_loop.yaml`、`launch/loop_closure.launch` |
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh`、`catkin_ws/start_grinder_super_lio_base.sh` | Livox UDP 端口预检：`catkin_ws/scripts/check_livox_udp_ports.py`；`catkin_ws/PLATFORM_BUILD_RUN.md` |
 | 板端整套开机自启、配置与 systemd 管理 | `catkin_ws/scripts/grinder-service`、`catkin_ws/install_grinder_service.sh` | 板端 `/etc/grinder/startup.conf`；`start_grinder_super_lio_base.sh` 先启动灯带并监督子进程；离线验证 `scripts/test_grinder_service.py`；根 README 第 12 节 |

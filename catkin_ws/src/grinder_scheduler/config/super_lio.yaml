@@ -13,6 +13,7 @@ super_lio_min_lidar_hz: 5.0
 super_lio_min_imu_hz: 20.0
 super_lio_min_odom_hz: 5.0
 super_lio_localization_stable_frames: 5
+super_lio_localization_bad_frames: 5
 super_lio_fitness_max_m2: 0.3
 super_lio_inlier_ratio_min: 0.2
 super_lio_min_correspondences: 100

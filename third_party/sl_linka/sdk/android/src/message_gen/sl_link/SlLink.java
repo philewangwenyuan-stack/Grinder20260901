@@ -716,13 +716,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return MessageIdVerifier.INSTANCE;
     }
 
-    private static final class MessageIdVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class MessageIdVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MessageIdVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -823,13 +823,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return DeviceIdVerifier.INSTANCE;
     }
 
-    private static final class DeviceIdVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class DeviceIdVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new DeviceIdVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -948,13 +948,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return ComponentIdVerifier.INSTANCE;
     }
 
-    private static final class ComponentIdVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class ComponentIdVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new ComponentIdVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1064,13 +1064,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return ResultCodeVerifier.INSTANCE;
     }
 
-    private static final class ResultCodeVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class ResultCodeVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new ResultCodeVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1153,13 +1153,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return SystemStatusVerifier.INSTANCE;
     }
 
-    private static final class SystemStatusVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class SystemStatusVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new SystemStatusVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1260,13 +1260,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return WifiResultVerifier.INSTANCE;
     }
 
-    private static final class WifiResultVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class WifiResultVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new WifiResultVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1376,13 +1376,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return WorkModeVerifier.INSTANCE;
     }
 
-    private static final class WorkModeVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class WorkModeVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new WorkModeVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1483,13 +1483,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return DiscLiftStateVerifier.INSTANCE;
     }
 
-    private static final class DiscLiftStateVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class DiscLiftStateVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new DiscLiftStateVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1581,13 +1581,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return DiscLiftCommandVerifier.INSTANCE;
     }
 
-    private static final class DiscLiftCommandVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class DiscLiftCommandVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new DiscLiftCommandVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1715,13 +1715,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return ManualMotionCommandVerifier.INSTANCE;
     }
 
-    private static final class ManualMotionCommandVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class ManualMotionCommandVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new ManualMotionCommandVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1804,13 +1804,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return CameraCodecVerifier.INSTANCE;
     }
 
-    private static final class CameraCodecVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class CameraCodecVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new CameraCodecVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -1902,13 +1902,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return MapEncodingVerifier.INSTANCE;
     }
 
-    private static final class MapEncodingVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class MapEncodingVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MapEncodingVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2018,13 +2018,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return RegionTypeVerifier.INSTANCE;
     }
 
-    private static final class RegionTypeVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class RegionTypeVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new RegionTypeVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2161,13 +2161,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return TaskStateVerifier.INSTANCE;
     }
 
-    private static final class TaskStateVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class TaskStateVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new TaskStateVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2268,13 +2268,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return TaskCommandTypeVerifier.INSTANCE;
     }
 
-    private static final class TaskCommandTypeVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class TaskCommandTypeVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new TaskCommandTypeVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2445,13 +2445,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return MapEditOperationVerifier.INSTANCE;
     }
 
-    private static final class MapEditOperationVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class MapEditOperationVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MapEditOperationVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2543,13 +2543,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return MapSyncOperationVerifier.INSTANCE;
     }
 
-    private static final class MapSyncOperationVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class MapSyncOperationVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MapSyncOperationVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2641,13 +2641,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return MapModeTypeVerifier.INSTANCE;
     }
 
-    private static final class MapModeTypeVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class MapModeTypeVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MapModeTypeVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2757,13 +2757,13 @@ public final class SlLink {
             }
           };
 
-    public static com.google.protobuf.Internal.EnumVerifier 
+    public static com.google.protobuf.Internal.EnumVerifier
         internalGetVerifier() {
       return MapRequestStatusVerifier.INSTANCE;
     }
 
-    private static final class MapRequestStatusVerifier implements 
-         com.google.protobuf.Internal.EnumVerifier { 
+    private static final class MapRequestStatusVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
             static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MapRequestStatusVerifier();
             @java.lang.Override
             public boolean isInRange(int number) {
@@ -2846,7 +2846,7 @@ public final class SlLink {
     private void setSsid(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       ssid_ = value;
     }
     /**
@@ -2893,7 +2893,7 @@ public final class SlLink {
     private void setPassword(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       password_ = value;
     }
     /**
@@ -3291,7 +3291,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -3621,7 +3621,7 @@ public final class SlLink {
      * @param value The x to set.
      */
     private void setX(float value) {
-      
+
       x_ = value;
     }
     /**
@@ -3647,7 +3647,7 @@ public final class SlLink {
      * @param value The y to set.
      */
     private void setY(float value) {
-      
+
       y_ = value;
     }
     /**
@@ -3906,7 +3906,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonPoint points = 2;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonPoint> 
+    java.util.List<sl_link.SlLink.PolygonPoint>
         getPointsList();
     /**
      * <code>repeated .sl_link.PolygonPoint points = 2;</code>
@@ -4026,7 +4026,7 @@ public final class SlLink {
     private void setName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       name_ = value;
     }
     /**
@@ -4059,7 +4059,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonPoint points = 2;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonPointOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonPointOrBuilder>
         getPointsOrBuilderList() {
       return points_;
     }
@@ -4167,7 +4167,7 @@ public final class SlLink {
     private void setRegionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionId_ = value;
     }
     /**
@@ -4203,7 +4203,7 @@ public final class SlLink {
      * @param value The priority to set.
      */
     private void setPriority(int value) {
-      
+
       priority_ = value;
     }
     /**
@@ -4229,7 +4229,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -4255,7 +4255,7 @@ public final class SlLink {
      * @param value The colorArgb to set.
      */
     private void setColorArgb(int value) {
-      
+
       colorArgb_ = value;
     }
     /**
@@ -4281,7 +4281,7 @@ public final class SlLink {
      * @param value The closed to set.
      */
     private void setClosed(boolean value) {
-      
+
       closed_ = value;
     }
     /**
@@ -4375,7 +4375,7 @@ public final class SlLink {
     private void setGlobalDirection(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       globalDirection_ = value;
     }
     /**
@@ -5103,7 +5103,7 @@ public final class SlLink {
      * @param value The runSpeed to set.
      */
     private void setRunSpeed(float value) {
-      
+
       runSpeed_ = value;
     }
     /**
@@ -5134,7 +5134,7 @@ public final class SlLink {
      * @param value The discSpeedRpm to set.
      */
     private void setDiscSpeedRpm(int value) {
-      
+
       discSpeedRpm_ = value;
     }
     /**
@@ -5160,7 +5160,7 @@ public final class SlLink {
      * @param value The discEnabled to set.
      */
     private void setDiscEnabled(boolean value) {
-      
+
       discEnabled_ = value;
     }
     /**
@@ -5238,7 +5238,7 @@ public final class SlLink {
      * @param value The maxTurnSpeedRatio to set.
      */
     private void setMaxTurnSpeedRatio(float value) {
-      
+
       maxTurnSpeedRatio_ = value;
     }
     /**
@@ -5661,7 +5661,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 7;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonRegion> 
+    java.util.List<sl_link.SlLink.PolygonRegion>
         getObstacleRegionsList();
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 7;</code>
@@ -5675,7 +5675,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion work_regions = 8;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonRegion> 
+    java.util.List<sl_link.SlLink.PolygonRegion>
         getWorkRegionsList();
     /**
      * <code>repeated .sl_link.PolygonRegion work_regions = 8;</code>
@@ -5694,7 +5694,7 @@ public final class SlLink {
      *
      * <code>repeated .sl_link.PolygonPoint footprint = 9;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonPoint> 
+    java.util.List<sl_link.SlLink.PolygonPoint>
         getFootprintList();
     /**
      * <pre>
@@ -5861,7 +5861,7 @@ public final class SlLink {
      * @param value The vehicleWidth to set.
      */
     private void setVehicleWidth(float value) {
-      
+
       vehicleWidth_ = value;
     }
     /**
@@ -5887,7 +5887,7 @@ public final class SlLink {
      * @param value The vehicleLength to set.
      */
     private void setVehicleLength(float value) {
-      
+
       vehicleLength_ = value;
     }
     /**
@@ -5913,7 +5913,7 @@ public final class SlLink {
      * @param value The defaultPathSpacing to set.
      */
     private void setDefaultPathSpacing(float value) {
-      
+
       defaultPathSpacing_ = value;
     }
     /**
@@ -5939,7 +5939,7 @@ public final class SlLink {
      * @param value The turnRadius to set.
      */
     private void setTurnRadius(float value) {
-      
+
       turnRadius_ = value;
     }
     /**
@@ -5965,7 +5965,7 @@ public final class SlLink {
      * @param value The overlapRatio to set.
      */
     private void setOverlapRatio(float value) {
-      
+
       overlapRatio_ = value;
     }
     /**
@@ -5991,7 +5991,7 @@ public final class SlLink {
      * @param value The inflationRadius to set.
      */
     private void setInflationRadius(float value) {
-      
+
       inflationRadius_ = value;
     }
     /**
@@ -6014,7 +6014,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 7;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
         getObstacleRegionsOrBuilderList() {
       return obstacleRegions_;
     }
@@ -6108,7 +6108,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion work_regions = 8;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
         getWorkRegionsOrBuilderList() {
       return workRegions_;
     }
@@ -6212,7 +6212,7 @@ public final class SlLink {
      *
      * <code>repeated .sl_link.PolygonPoint footprint = 9;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonPointOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonPointOrBuilder>
         getFootprintOrBuilderList() {
       return footprint_;
     }
@@ -6364,7 +6364,7 @@ public final class SlLink {
      * @param value The baseLaserX to set.
      */
     private void setBaseLaserX(float value) {
-      
+
       baseLaserX_ = value;
     }
     /**
@@ -6395,7 +6395,7 @@ public final class SlLink {
      * @param value The baseLaserY to set.
      */
     private void setBaseLaserY(float value) {
-      
+
       baseLaserY_ = value;
     }
     /**
@@ -6421,7 +6421,7 @@ public final class SlLink {
      * @param value The baseLaserZ to set.
      */
     private void setBaseLaserZ(float value) {
-      
+
       baseLaserZ_ = value;
     }
     /**
@@ -6447,7 +6447,7 @@ public final class SlLink {
      * @param value The baseLaserRollDeg to set.
      */
     private void setBaseLaserRollDeg(float value) {
-      
+
       baseLaserRollDeg_ = value;
     }
     /**
@@ -6473,7 +6473,7 @@ public final class SlLink {
      * @param value The baseLaserPitchDeg to set.
      */
     private void setBaseLaserPitchDeg(float value) {
-      
+
       baseLaserPitchDeg_ = value;
     }
     /**
@@ -6499,7 +6499,7 @@ public final class SlLink {
      * @param value The baseLaserYawDeg to set.
      */
     private void setBaseLaserYawDeg(float value) {
-      
+
       baseLaserYawDeg_ = value;
     }
     /**
@@ -8230,7 +8230,7 @@ public final class SlLink {
      * @param value The desiredLinearVel to set.
      */
     private void setDesiredLinearVel(float value) {
-      
+
       desiredLinearVel_ = value;
     }
     /**
@@ -8256,7 +8256,7 @@ public final class SlLink {
      * @param value The maxLinearVel to set.
      */
     private void setMaxLinearVel(float value) {
-      
+
       maxLinearVel_ = value;
     }
     /**
@@ -8282,7 +8282,7 @@ public final class SlLink {
      * @param value The maxAngularVel to set.
      */
     private void setMaxAngularVel(float value) {
-      
+
       maxAngularVel_ = value;
     }
     /**
@@ -8308,7 +8308,7 @@ public final class SlLink {
      * @param value The maxLinearAccel to set.
      */
     private void setMaxLinearAccel(float value) {
-      
+
       maxLinearAccel_ = value;
     }
     /**
@@ -8334,7 +8334,7 @@ public final class SlLink {
      * @param value The maxAngularAccel to set.
      */
     private void setMaxAngularAccel(float value) {
-      
+
       maxAngularAccel_ = value;
     }
     /**
@@ -8360,7 +8360,7 @@ public final class SlLink {
      * @param value The lookaheadDist to set.
      */
     private void setLookaheadDist(float value) {
-      
+
       lookaheadDist_ = value;
     }
     /**
@@ -8386,7 +8386,7 @@ public final class SlLink {
      * @param value The minLookaheadDist to set.
      */
     private void setMinLookaheadDist(float value) {
-      
+
       minLookaheadDist_ = value;
     }
     /**
@@ -8412,7 +8412,7 @@ public final class SlLink {
      * @param value The maxLookaheadDist to set.
      */
     private void setMaxLookaheadDist(float value) {
-      
+
       maxLookaheadDist_ = value;
     }
     /**
@@ -8438,7 +8438,7 @@ public final class SlLink {
      * @param value The curvatureLookaheadDist to set.
      */
     private void setCurvatureLookaheadDist(float value) {
-      
+
       curvatureLookaheadDist_ = value;
     }
     /**
@@ -8464,7 +8464,7 @@ public final class SlLink {
      * @param value The regulatedLinearScalingMinRadius to set.
      */
     private void setRegulatedLinearScalingMinRadius(float value) {
-      
+
       regulatedLinearScalingMinRadius_ = value;
     }
     /**
@@ -8490,7 +8490,7 @@ public final class SlLink {
      * @param value The regulatedLinearScalingMinSpeed to set.
      */
     private void setRegulatedLinearScalingMinSpeed(float value) {
-      
+
       regulatedLinearScalingMinSpeed_ = value;
     }
     /**
@@ -8516,7 +8516,7 @@ public final class SlLink {
      * @param value The useCollisionDetection to set.
      */
     private void setUseCollisionDetection(boolean value) {
-      
+
       useCollisionDetection_ = value;
     }
     /**
@@ -8542,7 +8542,7 @@ public final class SlLink {
      * @param value The useFootprintExpansionCollisionDetection to set.
      */
     private void setUseFootprintExpansionCollisionDetection(boolean value) {
-      
+
       useFootprintExpansionCollisionDetection_ = value;
     }
     /**
@@ -8568,7 +8568,7 @@ public final class SlLink {
      * @param value The collisionFrontClearanceM to set.
      */
     private void setCollisionFrontClearanceM(float value) {
-      
+
       collisionFrontClearanceM_ = value;
     }
     /**
@@ -8594,7 +8594,7 @@ public final class SlLink {
      * @param value The collisionSideClearanceM to set.
      */
     private void setCollisionSideClearanceM(float value) {
-      
+
       collisionSideClearanceM_ = value;
     }
     /**
@@ -8620,7 +8620,7 @@ public final class SlLink {
      * @param value The maxAllowedTimeToCollisionUpToCarrot to set.
      */
     private void setMaxAllowedTimeToCollisionUpToCarrot(float value) {
-      
+
       maxAllowedTimeToCollisionUpToCarrot_ = value;
     }
     /**
@@ -8646,7 +8646,7 @@ public final class SlLink {
      * @param value The collisionConfirmScans to set.
      */
     private void setCollisionConfirmScans(int value) {
-      
+
       collisionConfirmScans_ = value;
     }
     /**
@@ -8672,7 +8672,7 @@ public final class SlLink {
      * @param value The collisionClearConfirmScans to set.
      */
     private void setCollisionClearConfirmScans(int value) {
-      
+
       collisionClearConfirmScans_ = value;
     }
     /**
@@ -8698,7 +8698,7 @@ public final class SlLink {
      * @param value The useRotateToHeading to set.
      */
     private void setUseRotateToHeading(boolean value) {
-      
+
       useRotateToHeading_ = value;
     }
     /**
@@ -8724,7 +8724,7 @@ public final class SlLink {
      * @param value The rotateToHeadingAngularVel to set.
      */
     private void setRotateToHeadingAngularVel(float value) {
-      
+
       rotateToHeadingAngularVel_ = value;
     }
     /**
@@ -8750,7 +8750,7 @@ public final class SlLink {
      * @param value The rotateToHeadingMinAngle to set.
      */
     private void setRotateToHeadingMinAngle(float value) {
-      
+
       rotateToHeadingMinAngle_ = value;
     }
     /**
@@ -8776,7 +8776,7 @@ public final class SlLink {
      * @param value The goalDistTol to set.
      */
     private void setGoalDistTol(float value) {
-      
+
       goalDistTol_ = value;
     }
     /**
@@ -8802,7 +8802,7 @@ public final class SlLink {
      * @param value The angleTol to set.
      */
     private void setAngleTol(float value) {
-      
+
       angleTol_ = value;
     }
     /**
@@ -8828,7 +8828,7 @@ public final class SlLink {
      * @param value The allowReversing to set.
      */
     private void setAllowReversing(boolean value) {
-      
+
       allowReversing_ = value;
     }
     /**
@@ -8854,7 +8854,7 @@ public final class SlLink {
      * @param value The useFixedCurvatureLookahead to set.
      */
     private void setUseFixedCurvatureLookahead(boolean value) {
-      
+
       useFixedCurvatureLookahead_ = value;
     }
     /**
@@ -8880,7 +8880,7 @@ public final class SlLink {
      * @param value The useRegulatedLinearVelocityScaling to set.
      */
     private void setUseRegulatedLinearVelocityScaling(boolean value) {
-      
+
       useRegulatedLinearVelocityScaling_ = value;
     }
     /**
@@ -8914,7 +8914,7 @@ public final class SlLink {
      * @param value The useFixedDistanceCollisionDetection to set.
      */
     private void setUseFixedDistanceCollisionDetection(boolean value) {
-      
+
       useFixedDistanceCollisionDetection_ = value;
     }
     /**
@@ -8944,7 +8944,7 @@ public final class SlLink {
      * @param value The collisionStopDistanceM to set.
      */
     private void setCollisionStopDistanceM(float value) {
-      
+
       collisionStopDistanceM_ = value;
     }
     /**
@@ -8970,7 +8970,7 @@ public final class SlLink {
      * @param value The collisionScanHalfAngleRad to set.
      */
     private void setCollisionScanHalfAngleRad(float value) {
-      
+
       collisionScanHalfAngleRad_ = value;
     }
     /**
@@ -8996,7 +8996,7 @@ public final class SlLink {
      * @param value The collisionScanTimeoutS to set.
      */
     private void setCollisionScanTimeoutS(float value) {
-      
+
       collisionScanTimeoutS_ = value;
     }
     /**
@@ -9022,7 +9022,7 @@ public final class SlLink {
      * @param value The predictionCollisionConfirmCycles to set.
      */
     private void setPredictionCollisionConfirmCycles(int value) {
-      
+
       predictionCollisionConfirmCycles_ = value;
     }
     /**
@@ -9048,7 +9048,7 @@ public final class SlLink {
      * @param value The useCostRegulatedLinearVelocityScaling to set.
      */
     private void setUseCostRegulatedLinearVelocityScaling(boolean value) {
-      
+
       useCostRegulatedLinearVelocityScaling_ = value;
     }
     /**
@@ -9074,7 +9074,7 @@ public final class SlLink {
      * @param value The costScalingDist to set.
      */
     private void setCostScalingDist(float value) {
-      
+
       costScalingDist_ = value;
     }
     /**
@@ -9100,7 +9100,7 @@ public final class SlLink {
      * @param value The costScalingGain to set.
      */
     private void setCostScalingGain(float value) {
-      
+
       costScalingGain_ = value;
     }
     /**
@@ -9126,7 +9126,7 @@ public final class SlLink {
      * @param value The lookaheadTime to set.
      */
     private void setLookaheadTime(float value) {
-      
+
       lookaheadTime_ = value;
     }
     /**
@@ -9152,7 +9152,7 @@ public final class SlLink {
      * @param value The useVelocityScaledLookaheadDist to set.
      */
     private void setUseVelocityScaledLookaheadDist(boolean value) {
-      
+
       useVelocityScaledLookaheadDist_ = value;
     }
     /**
@@ -9178,7 +9178,7 @@ public final class SlLink {
      * @param value The useApproachVelocityScaling to set.
      */
     private void setUseApproachVelocityScaling(boolean value) {
-      
+
       useApproachVelocityScaling_ = value;
     }
     /**
@@ -9204,7 +9204,7 @@ public final class SlLink {
      * @param value The approachVelocityScalingDist to set.
      */
     private void setApproachVelocityScalingDist(float value) {
-      
+
       approachVelocityScalingDist_ = value;
     }
     /**
@@ -9230,7 +9230,7 @@ public final class SlLink {
      * @param value The minApproachLinearVelocity to set.
      */
     private void setMinApproachLinearVelocity(float value) {
-      
+
       minApproachLinearVelocity_ = value;
     }
     /**
@@ -9256,7 +9256,7 @@ public final class SlLink {
      * @param value The collisionMinValidPoints to set.
      */
     private void setCollisionMinValidPoints(int value) {
-      
+
       collisionMinValidPoints_ = value;
     }
     /**
@@ -9282,7 +9282,7 @@ public final class SlLink {
      * @param value The useCommandVelocityForAccelLimit to set.
      */
     private void setUseCommandVelocityForAccelLimit(boolean value) {
-      
+
       useCommandVelocityForAccelLimit_ = value;
     }
     /**
@@ -9308,7 +9308,7 @@ public final class SlLink {
      * @param value The useCommandAngularVelocityForAccelLimit to set.
      */
     private void setUseCommandAngularVelocityForAccelLimit(boolean value) {
-      
+
       useCommandAngularVelocityForAccelLimit_ = value;
     }
     /**
@@ -9334,7 +9334,7 @@ public final class SlLink {
      * @param value The commandVelocityMemoryTimeout to set.
      */
     private void setCommandVelocityMemoryTimeout(float value) {
-      
+
       commandVelocityMemoryTimeout_ = value;
     }
     /**
@@ -9360,7 +9360,7 @@ public final class SlLink {
      * @param value The maxRobotPoseSearchDist to set.
      */
     private void setMaxRobotPoseSearchDist(float value) {
-      
+
       maxRobotPoseSearchDist_ = value;
     }
     /**
@@ -9386,7 +9386,7 @@ public final class SlLink {
      * @param value The transStoppedVel to set.
      */
     private void setTransStoppedVel(float value) {
-      
+
       transStoppedVel_ = value;
     }
     /**
@@ -9412,7 +9412,7 @@ public final class SlLink {
      * @param value The thetaStoppedVel to set.
      */
     private void setThetaStoppedVel(float value) {
-      
+
       thetaStoppedVel_ = value;
     }
     /**
@@ -9438,7 +9438,7 @@ public final class SlLink {
      * @param value The collisionSideOnlyWhenTurning to set.
      */
     private void setCollisionSideOnlyWhenTurning(boolean value) {
-      
+
       collisionSideOnlyWhenTurning_ = value;
     }
     /**
@@ -9464,7 +9464,7 @@ public final class SlLink {
      * @param value The collisionSideTurningMinAngularVel to set.
      */
     private void setCollisionSideTurningMinAngularVel(float value) {
-      
+
       collisionSideTurningMinAngularVel_ = value;
     }
     /**
@@ -9490,7 +9490,7 @@ public final class SlLink {
      * @param value The useCornerAwareRotateToHeading to set.
      */
     private void setUseCornerAwareRotateToHeading(boolean value) {
-      
+
       useCornerAwareRotateToHeading_ = value;
     }
     /**
@@ -9516,7 +9516,7 @@ public final class SlLink {
      * @param value The rotateToHeadingExitAngle to set.
      */
     private void setRotateToHeadingExitAngle(float value) {
-      
+
       rotateToHeadingExitAngle_ = value;
     }
     /**
@@ -9542,7 +9542,7 @@ public final class SlLink {
      * @param value The rotateToHeadingStableCycles to set.
      */
     private void setRotateToHeadingStableCycles(int value) {
-      
+
       rotateToHeadingStableCycles_ = value;
     }
     /**
@@ -9568,7 +9568,7 @@ public final class SlLink {
      * @param value The rotateToHeadingCornerDistance to set.
      */
     private void setRotateToHeadingCornerDistance(float value) {
-      
+
       rotateToHeadingCornerDistance_ = value;
     }
     /**
@@ -11322,7 +11322,7 @@ public final class SlLink {
      * @param value The readChassis to set.
      */
     private void setReadChassis(boolean value) {
-      
+
       readChassis_ = value;
     }
     /**
@@ -11348,7 +11348,7 @@ public final class SlLink {
      * @param value The readMap to set.
      */
     private void setReadMap(boolean value) {
-      
+
       readMap_ = value;
     }
     /**
@@ -11374,7 +11374,7 @@ public final class SlLink {
      * @param value The readRpp to set.
      */
     private void setReadRpp(boolean value) {
-      
+
       readRpp_ = value;
     }
     /**
@@ -11875,7 +11875,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -12594,7 +12594,7 @@ public final class SlLink {
      * @param value The applyRppTemporarily to set.
      */
     private void setApplyRppTemporarily(boolean value) {
-      
+
       applyRppTemporarily_ = value;
     }
     /**
@@ -12625,7 +12625,7 @@ public final class SlLink {
      * @param value The saveRppDefault to set.
      */
     private void setSaveRppDefault(boolean value) {
-      
+
       saveRppDefault_ = value;
     }
     /**
@@ -12661,7 +12661,7 @@ public final class SlLink {
      * @param value The rppFieldMask to set.
      */
     private void setRppFieldMask(long value) {
-      
+
       rppFieldMask_ = value;
     }
     /**
@@ -13268,7 +13268,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -13442,7 +13442,7 @@ public final class SlLink {
      * @param value The rppApplied to set.
      */
     private void setRppApplied(boolean value) {
-      
+
       rppApplied_ = value;
     }
     /**
@@ -13468,7 +13468,7 @@ public final class SlLink {
      * @param value The rppSaved to set.
      */
     private void setRppSaved(boolean value) {
-      
+
       rppSaved_ = value;
     }
     /**
@@ -13494,7 +13494,7 @@ public final class SlLink {
      * @param value The geometryRequiresRestart to set.
      */
     private void setGeometryRequiresRestart(boolean value) {
-      
+
       geometryRequiresRestart_ = value;
     }
     /**
@@ -14052,7 +14052,7 @@ public final class SlLink {
      * @param value The x to set.
      */
     private void setX(float value) {
-      
+
       x_ = value;
     }
     /**
@@ -14078,7 +14078,7 @@ public final class SlLink {
      * @param value The y to set.
      */
     private void setY(float value) {
-      
+
       y_ = value;
     }
     /**
@@ -14104,7 +14104,7 @@ public final class SlLink {
      * @param value The headingDeg to set.
      */
     private void setHeadingDeg(float value) {
-      
+
       headingDeg_ = value;
     }
     /**
@@ -14460,7 +14460,7 @@ public final class SlLink {
      * @param value The valid to set.
      */
     private void setValid(boolean value) {
-      
+
       valid_ = value;
     }
     /**
@@ -14498,7 +14498,7 @@ public final class SlLink {
      * @param value The xVariance to set.
      */
     private void setXVariance(float value) {
-      
+
       xVariance_ = value;
     }
     /**
@@ -14528,7 +14528,7 @@ public final class SlLink {
      * @param value The yVariance to set.
      */
     private void setYVariance(float value) {
-      
+
       yVariance_ = value;
     }
     /**
@@ -14554,7 +14554,7 @@ public final class SlLink {
      * @param value The yawVariance to set.
      */
     private void setYawVariance(float value) {
-      
+
       yawVariance_ = value;
     }
     /**
@@ -14580,7 +14580,7 @@ public final class SlLink {
      * @param value The xyCovariance to set.
      */
     private void setXyCovariance(float value) {
-      
+
       xyCovariance_ = value;
     }
     /**
@@ -14606,7 +14606,7 @@ public final class SlLink {
      * @param value The xYawCovariance to set.
      */
     private void setXYawCovariance(float value) {
-      
+
       xYawCovariance_ = value;
     }
     /**
@@ -14632,7 +14632,7 @@ public final class SlLink {
      * @param value The yYawCovariance to set.
      */
     private void setYYawCovariance(float value) {
-      
+
       yYawCovariance_ = value;
     }
     /**
@@ -15250,6 +15250,64 @@ public final class SlLink {
      * @return The emergencyStopLatched.
      */
     boolean getEmergencyStopLatched();
+
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     * @return Whether the localizationReady field is set.
+     */
+    boolean hasLocalizationReady();
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     * @return The localizationReady.
+     */
+    boolean getLocalizationReady();
+
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     * @return Whether the localizationPauseLatched field is set.
+     */
+    boolean hasLocalizationPauseLatched();
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     * @return The localizationPauseLatched.
+     */
+    boolean getLocalizationPauseLatched();
+
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     * @return The localizationStatusReason.
+     */
+    java.lang.String getLocalizationStatusReason();
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     * @return The bytes for localizationStatusReason.
+     */
+    com.google.protobuf.ByteString
+        getLocalizationStatusReasonBytes();
   }
   /**
    * Protobuf type {@code sl_link.DeviceStatusReport}
@@ -15261,6 +15319,7 @@ public final class SlLink {
       DeviceStatusReportOrBuilder {
     private DeviceStatusReport() {
       radarSystemStatus_ = "";
+      localizationStatusReason_ = "";
     }
     private int bitField0_;
     public static final int UTC_TIME_FIELD_NUMBER = 1;
@@ -15278,7 +15337,7 @@ public final class SlLink {
      * @param value The utcTime to set.
      */
     private void setUtcTime(int value) {
-      
+
       utcTime_ = value;
     }
     /**
@@ -15430,7 +15489,7 @@ public final class SlLink {
      * @param value The leftWheelSpeed to set.
      */
     private void setLeftWheelSpeed(float value) {
-      
+
       leftWheelSpeed_ = value;
     }
     /**
@@ -15456,7 +15515,7 @@ public final class SlLink {
      * @param value The rightWheelSpeed to set.
      */
     private void setRightWheelSpeed(float value) {
-      
+
       rightWheelSpeed_ = value;
     }
     /**
@@ -15482,7 +15541,7 @@ public final class SlLink {
      * @param value The discSpeedRpm to set.
      */
     private void setDiscSpeedRpm(int value) {
-      
+
       discSpeedRpm_ = value;
     }
     /**
@@ -15508,7 +15567,7 @@ public final class SlLink {
      * @param value The discEnabled to set.
      */
     private void setDiscEnabled(boolean value) {
-      
+
       discEnabled_ = value;
     }
     /**
@@ -15576,7 +15635,7 @@ public final class SlLink {
      * @param value The lightEnabled to set.
      */
     private void setLightEnabled(boolean value) {
-      
+
       lightEnabled_ = value;
     }
     /**
@@ -15648,7 +15707,7 @@ public final class SlLink {
      * @param value The chassisEnabled to set.
      */
     private void setChassisEnabled(boolean value) {
-      
+
       chassisEnabled_ = value;
     }
     /**
@@ -15674,7 +15733,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -15746,7 +15805,7 @@ public final class SlLink {
      * @param value The localizationQualityAvailable to set.
      */
     private void setLocalizationQualityAvailable(boolean value) {
-      
+
       localizationQualityAvailable_ = value;
     }
     /**
@@ -15772,7 +15831,7 @@ public final class SlLink {
      * @param value The localizationQuality to set.
      */
     private void setLocalizationQuality(int value) {
-      
+
       localizationQuality_ = value;
     }
     /**
@@ -15806,7 +15865,7 @@ public final class SlLink {
      * @param value The collisionImminent to set.
      */
     private void setCollisionImminent(boolean value) {
-      
+
       collisionImminent_ = value;
     }
     /**
@@ -15844,7 +15903,7 @@ public final class SlLink {
      * @param value The radarSystemStatusAvailable to set.
      */
     private void setRadarSystemStatusAvailable(boolean value) {
-      
+
       radarSystemStatusAvailable_ = value;
     }
     /**
@@ -15885,7 +15944,7 @@ public final class SlLink {
     private void setRadarSystemStatus(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       radarSystemStatus_ = value;
     }
     /**
@@ -15929,7 +15988,7 @@ public final class SlLink {
      * @param value The vehicleSpeed to set.
      */
     private void setVehicleSpeed(float value) {
-      
+
       vehicleSpeed_ = value;
     }
     /**
@@ -16042,6 +16101,173 @@ public final class SlLink {
     private void clearEmergencyStopLatched() {
       bitField0_ = (bitField0_ & ~0x00000008);
       emergencyStopLatched_ = false;
+    }
+
+    public static final int LOCALIZATION_READY_FIELD_NUMBER = 23;
+    private boolean localizationReady_;
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     * @return Whether the localizationReady field is set.
+     */
+    @java.lang.Override
+    public boolean hasLocalizationReady() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     * @return The localizationReady.
+     */
+    @java.lang.Override
+    public boolean getLocalizationReady() {
+      return localizationReady_;
+    }
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     * @param value The localizationReady to set.
+     */
+    private void setLocalizationReady(boolean value) {
+      bitField0_ |= 0x00000010;
+      localizationReady_ = value;
+    }
+    /**
+     * <pre>
+     * Composite Super-LIO readiness. Absence means unknown/older board.
+     * </pre>
+     *
+     * <code>optional bool localization_ready = 23;</code>
+     */
+    private void clearLocalizationReady() {
+      bitField0_ = (bitField0_ & ~0x00000010);
+      localizationReady_ = false;
+    }
+
+    public static final int LOCALIZATION_PAUSE_LATCHED_FIELD_NUMBER = 24;
+    private boolean localizationPauseLatched_;
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     * @return Whether the localizationPauseLatched field is set.
+     */
+    @java.lang.Override
+    public boolean hasLocalizationPauseLatched() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     * @return The localizationPauseLatched.
+     */
+    @java.lang.Override
+    public boolean getLocalizationPauseLatched() {
+      return localizationPauseLatched_;
+    }
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     * @param value The localizationPauseLatched to set.
+     */
+    private void setLocalizationPauseLatched(boolean value) {
+      bitField0_ |= 0x00000020;
+      localizationPauseLatched_ = value;
+    }
+    /**
+     * <pre>
+     * True while a task remains paused due to confirmed localization failure.
+     * </pre>
+     *
+     * <code>optional bool localization_pause_latched = 24;</code>
+     */
+    private void clearLocalizationPauseLatched() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      localizationPauseLatched_ = false;
+    }
+
+    public static final int LOCALIZATION_STATUS_REASON_FIELD_NUMBER = 25;
+    private java.lang.String localizationStatusReason_;
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     * @return The localizationStatusReason.
+     */
+    @java.lang.Override
+    public java.lang.String getLocalizationStatusReason() {
+      return localizationStatusReason_;
+    }
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     * @return The bytes for localizationStatusReason.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getLocalizationStatusReasonBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(localizationStatusReason_);
+    }
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     * @param value The localizationStatusReason to set.
+     */
+    private void setLocalizationStatusReason(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      localizationStatusReason_ = value;
+    }
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     */
+    private void clearLocalizationStatusReason() {
+
+      localizationStatusReason_ = getDefaultInstance().getLocalizationStatusReason();
+    }
+    /**
+     * <pre>
+     * Stable reason code; clients own presentation language.
+     * </pre>
+     *
+     * <code>string localization_status_reason = 25;</code>
+     * @param value The bytes for localizationStatusReason to set.
+     */
+    private void setLocalizationStatusReasonBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      localizationStatusReason_ = value.toStringUtf8();
+
     }
 
     public static sl_link.SlLink.DeviceStatusReport parseFrom(
@@ -16972,6 +17198,179 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Composite Super-LIO readiness. Absence means unknown/older board.
+       * </pre>
+       *
+       * <code>optional bool localization_ready = 23;</code>
+       * @return Whether the localizationReady field is set.
+       */
+      @java.lang.Override
+      public boolean hasLocalizationReady() {
+        return instance.hasLocalizationReady();
+      }
+      /**
+       * <pre>
+       * Composite Super-LIO readiness. Absence means unknown/older board.
+       * </pre>
+       *
+       * <code>optional bool localization_ready = 23;</code>
+       * @return The localizationReady.
+       */
+      @java.lang.Override
+      public boolean getLocalizationReady() {
+        return instance.getLocalizationReady();
+      }
+      /**
+       * <pre>
+       * Composite Super-LIO readiness. Absence means unknown/older board.
+       * </pre>
+       *
+       * <code>optional bool localization_ready = 23;</code>
+       * @param value The localizationReady to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLocalizationReady(boolean value) {
+        copyOnWrite();
+        instance.setLocalizationReady(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Composite Super-LIO readiness. Absence means unknown/older board.
+       * </pre>
+       *
+       * <code>optional bool localization_ready = 23;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLocalizationReady() {
+        copyOnWrite();
+        instance.clearLocalizationReady();
+        return this;
+      }
+
+      /**
+       * <pre>
+       * True while a task remains paused due to confirmed localization failure.
+       * </pre>
+       *
+       * <code>optional bool localization_pause_latched = 24;</code>
+       * @return Whether the localizationPauseLatched field is set.
+       */
+      @java.lang.Override
+      public boolean hasLocalizationPauseLatched() {
+        return instance.hasLocalizationPauseLatched();
+      }
+      /**
+       * <pre>
+       * True while a task remains paused due to confirmed localization failure.
+       * </pre>
+       *
+       * <code>optional bool localization_pause_latched = 24;</code>
+       * @return The localizationPauseLatched.
+       */
+      @java.lang.Override
+      public boolean getLocalizationPauseLatched() {
+        return instance.getLocalizationPauseLatched();
+      }
+      /**
+       * <pre>
+       * True while a task remains paused due to confirmed localization failure.
+       * </pre>
+       *
+       * <code>optional bool localization_pause_latched = 24;</code>
+       * @param value The localizationPauseLatched to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLocalizationPauseLatched(boolean value) {
+        copyOnWrite();
+        instance.setLocalizationPauseLatched(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * True while a task remains paused due to confirmed localization failure.
+       * </pre>
+       *
+       * <code>optional bool localization_pause_latched = 24;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLocalizationPauseLatched() {
+        copyOnWrite();
+        instance.clearLocalizationPauseLatched();
+        return this;
+      }
+
+      /**
+       * <pre>
+       * Stable reason code; clients own presentation language.
+       * </pre>
+       *
+       * <code>string localization_status_reason = 25;</code>
+       * @return The localizationStatusReason.
+       */
+      @java.lang.Override
+      public java.lang.String getLocalizationStatusReason() {
+        return instance.getLocalizationStatusReason();
+      }
+      /**
+       * <pre>
+       * Stable reason code; clients own presentation language.
+       * </pre>
+       *
+       * <code>string localization_status_reason = 25;</code>
+       * @return The bytes for localizationStatusReason.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getLocalizationStatusReasonBytes() {
+        return instance.getLocalizationStatusReasonBytes();
+      }
+      /**
+       * <pre>
+       * Stable reason code; clients own presentation language.
+       * </pre>
+       *
+       * <code>string localization_status_reason = 25;</code>
+       * @param value The localizationStatusReason to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLocalizationStatusReason(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setLocalizationStatusReason(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Stable reason code; clients own presentation language.
+       * </pre>
+       *
+       * <code>string localization_status_reason = 25;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLocalizationStatusReason() {
+        copyOnWrite();
+        instance.clearLocalizationStatusReason();
+        return this;
+      }
+      /**
+       * <pre>
+       * Stable reason code; clients own presentation language.
+       * </pre>
+       *
+       * <code>string localization_status_reason = 25;</code>
+       * @param value The bytes for localizationStatusReason to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLocalizationStatusReasonBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setLocalizationStatusReasonBytes(value);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.DeviceStatusReport)
     }
     @java.lang.Override
@@ -17011,12 +17410,16 @@ public final class SlLink {
               "vehicleSpeed_",
               "chassisConnected_",
               "emergencyStopLatched_",
+              "localizationReady_",
+              "localizationPauseLatched_",
+              "localizationStatusReason_",
             };
             java.lang.String info =
-                "\u0000\u0016\u0000\u0001\u0001\u0016\u0016\u0000\u0000\u0000\u0001\u000b\u0002\f" +
+                "\u0000\u0019\u0000\u0001\u0001\u0019\u0019\u0000\u0000\u0000\u0001\u000b\u0002\f" +
                 "\u0003\f\u0004\f\u0005\u0001\u0006\u0001\u0007\u000b\b\u0007\t\f\n\u0007\u000b\u1009" +
                 "\u0000\f\u0007\r\u0001\u000e\u1009\u0001\u000f\u0007\u0010\u000b\u0011\u0007\u0012" +
-                "\u0007\u0013\u0208\u0014\u0001\u0015\u1007\u0002\u0016\u1007\u0003";
+                "\u0007\u0013\u0208\u0014\u0001\u0015\u1007\u0002\u0016\u1007\u0003\u0017\u1007\u0004" +
+                "\u0018\u1007\u0005\u0019\u0208";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -17112,7 +17515,7 @@ public final class SlLink {
      * @param value The snapshot to set.
      */
     private void setSnapshot(boolean value) {
-      
+
       snapshot_ = value;
     }
     /**
@@ -17138,7 +17541,7 @@ public final class SlLink {
      * @param value The maxChunkSize to set.
      */
     private void setMaxChunkSize(int value) {
-      
+
       maxChunkSize_ = value;
     }
     /**
@@ -17461,7 +17864,7 @@ public final class SlLink {
      * @param value The frameId to set.
      */
     private void setFrameId(int value) {
-      
+
       frameId_ = value;
     }
     /**
@@ -17487,7 +17890,7 @@ public final class SlLink {
      * @param value The utcTime to set.
      */
     private void setUtcTime(int value) {
-      
+
       utcTime_ = value;
     }
     /**
@@ -17513,7 +17916,7 @@ public final class SlLink {
      * @param value The width to set.
      */
     private void setWidth(int value) {
-      
+
       width_ = value;
     }
     /**
@@ -17539,7 +17942,7 @@ public final class SlLink {
      * @param value The height to set.
      */
     private void setHeight(int value) {
-      
+
       height_ = value;
     }
     /**
@@ -17607,7 +18010,7 @@ public final class SlLink {
      * @param value The chunkIndex to set.
      */
     private void setChunkIndex(int value) {
-      
+
       chunkIndex_ = value;
     }
     /**
@@ -17633,7 +18036,7 @@ public final class SlLink {
      * @param value The totalChunks to set.
      */
     private void setTotalChunks(int value) {
-      
+
       totalChunks_ = value;
     }
     /**
@@ -17660,7 +18063,7 @@ public final class SlLink {
      */
     private void setData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       data_ = value;
     }
     /**
@@ -18166,7 +18569,7 @@ public final class SlLink {
      * @param value The snapshot to set.
      */
     private void setSnapshot(boolean value) {
-      
+
       snapshot_ = value;
     }
     /**
@@ -18192,7 +18595,7 @@ public final class SlLink {
      * @param value The maxChunkSize to set.
      */
     private void setMaxChunkSize(int value) {
-      
+
       maxChunkSize_ = value;
     }
     /**
@@ -18244,7 +18647,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -18298,7 +18701,7 @@ public final class SlLink {
      * @param value The requestId to set.
      */
     private void setRequestId(long value) {
-      
+
       requestId_ = value;
     }
     /**
@@ -18760,7 +19163,7 @@ public final class SlLink {
      * @param value The requestId to set.
      */
     private void setRequestId(long value) {
-      
+
       requestId_ = value;
     }
     /**
@@ -18839,7 +19242,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -18875,7 +19278,7 @@ public final class SlLink {
      * @param value The snapshotId to set.
      */
     private void setSnapshotId(long value) {
-      
+
       snapshotId_ = value;
     }
     /**
@@ -18901,7 +19304,7 @@ public final class SlLink {
      * @param value The totalChunks to set.
      */
     private void setTotalChunks(int value) {
-      
+
       totalChunks_ = value;
     }
     /**
@@ -18927,7 +19330,7 @@ public final class SlLink {
      * @param value The payloadSize to set.
      */
     private void setPayloadSize(int value) {
-      
+
       payloadSize_ = value;
     }
     /**
@@ -18953,7 +19356,7 @@ public final class SlLink {
      * @param value The payloadCrc32 to set.
      */
     private void setPayloadCrc32(int value) {
-      
+
       payloadCrc32_ = value;
     }
     /**
@@ -18979,7 +19382,7 @@ public final class SlLink {
      * @param value The retryAfterMs to set.
      */
     private void setRetryAfterMs(int value) {
-      
+
       retryAfterMs_ = value;
     }
     /**
@@ -19016,7 +19419,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -19710,7 +20113,7 @@ public final class SlLink {
      * @param value The mapId to set.
      */
     private void setMapId(int value) {
-      
+
       mapId_ = value;
     }
     /**
@@ -19736,7 +20139,7 @@ public final class SlLink {
      * @param value The utcTime to set.
      */
     private void setUtcTime(int value) {
-      
+
       utcTime_ = value;
     }
     /**
@@ -19804,7 +20207,7 @@ public final class SlLink {
      * @param value The width to set.
      */
     private void setWidth(int value) {
-      
+
       width_ = value;
     }
     /**
@@ -19830,7 +20233,7 @@ public final class SlLink {
      * @param value The height to set.
      */
     private void setHeight(int value) {
-      
+
       height_ = value;
     }
     /**
@@ -19856,7 +20259,7 @@ public final class SlLink {
      * @param value The resolution to set.
      */
     private void setResolution(float value) {
-      
+
       resolution_ = value;
     }
     /**
@@ -19882,7 +20285,7 @@ public final class SlLink {
      * @param value The chunkIndex to set.
      */
     private void setChunkIndex(int value) {
-      
+
       chunkIndex_ = value;
     }
     /**
@@ -19908,7 +20311,7 @@ public final class SlLink {
      * @param value The totalChunks to set.
      */
     private void setTotalChunks(int value) {
-      
+
       totalChunks_ = value;
     }
     /**
@@ -19935,7 +20338,7 @@ public final class SlLink {
      */
     private void setData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       data_ = value;
     }
     /**
@@ -20018,7 +20421,7 @@ public final class SlLink {
     private void setFrameId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       frameId_ = value;
     }
     /**
@@ -20054,7 +20457,7 @@ public final class SlLink {
      * @param value The previewScaleX to set.
      */
     private void setPreviewScaleX(float value) {
-      
+
       previewScaleX_ = value;
     }
     /**
@@ -20080,7 +20483,7 @@ public final class SlLink {
      * @param value The previewScaleY to set.
      */
     private void setPreviewScaleY(float value) {
-      
+
       previewScaleY_ = value;
     }
     /**
@@ -20160,7 +20563,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -20190,7 +20593,7 @@ public final class SlLink {
      * @param value The appRotationDeg to set.
      */
     private void setAppRotationDeg(float value) {
-      
+
       appRotationDeg_ = value;
     }
     /**
@@ -20216,7 +20619,7 @@ public final class SlLink {
      * @param value The rotationAlignmentDeltaDeg to set.
      */
     private void setRotationAlignmentDeltaDeg(float value) {
-      
+
       rotationAlignmentDeltaDeg_ = value;
     }
     /**
@@ -20250,7 +20653,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -20280,7 +20683,7 @@ public final class SlLink {
      * @param value The requestId to set.
      */
     private void setRequestId(long value) {
-      
+
       requestId_ = value;
     }
     /**
@@ -20306,7 +20709,7 @@ public final class SlLink {
      * @param value The snapshotId to set.
      */
     private void setSnapshotId(long value) {
-      
+
       snapshotId_ = value;
     }
     /**
@@ -21226,7 +21629,7 @@ public final class SlLink {
      * @param value The x to set.
      */
     private void setX(float value) {
-      
+
       x_ = value;
     }
     /**
@@ -21252,7 +21655,7 @@ public final class SlLink {
      * @param value The y to set.
      */
     private void setY(float value) {
-      
+
       y_ = value;
     }
     /**
@@ -21289,7 +21692,7 @@ public final class SlLink {
     private void setPathType(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       pathType_ = value;
     }
     /**
@@ -21648,7 +22051,7 @@ public final class SlLink {
     private void setRegionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionId_ = value;
     }
     /**
@@ -21684,7 +22087,7 @@ public final class SlLink {
      * @param value The repeat to set.
      */
     private void setRepeat(int value) {
-      
+
       repeat_ = value;
     }
     /**
@@ -21964,7 +22367,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion work_regions = 2;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonRegion> 
+    java.util.List<sl_link.SlLink.PolygonRegion>
         getWorkRegionsList();
     /**
      * <code>repeated .sl_link.PolygonRegion work_regions = 2;</code>
@@ -21978,7 +22381,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 3;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonRegion> 
+    java.util.List<sl_link.SlLink.PolygonRegion>
         getObstacleRegionsList();
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 3;</code>
@@ -22053,7 +22456,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.RegionRepeatItem region_repeats = 10;</code>
      */
-    java.util.List<sl_link.SlLink.RegionRepeatItem> 
+    java.util.List<sl_link.SlLink.RegionRepeatItem>
         getRegionRepeatsList();
     /**
      * <code>repeated .sl_link.RegionRepeatItem region_repeats = 10;</code>
@@ -22106,7 +22509,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -22139,7 +22542,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion work_regions = 2;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
         getWorkRegionsOrBuilderList() {
       return workRegions_;
     }
@@ -22233,7 +22636,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 3;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
         getObstacleRegionsOrBuilderList() {
       return obstacleRegions_;
     }
@@ -22330,7 +22733,7 @@ public final class SlLink {
      * @param value The defaultPathSpacing to set.
      */
     private void setDefaultPathSpacing(float value) {
-      
+
       defaultPathSpacing_ = value;
     }
     /**
@@ -22356,7 +22759,7 @@ public final class SlLink {
      * @param value The turnRadius to set.
      */
     private void setTurnRadius(float value) {
-      
+
       turnRadius_ = value;
     }
     /**
@@ -22382,7 +22785,7 @@ public final class SlLink {
      * @param value The overlapRatio to set.
      */
     private void setOverlapRatio(float value) {
-      
+
       overlapRatio_ = value;
     }
     /**
@@ -22408,7 +22811,7 @@ public final class SlLink {
      * @param value The inflationRadius to set.
      */
     private void setInflationRadius(float value) {
-      
+
       inflationRadius_ = value;
     }
     /**
@@ -22445,7 +22848,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -22571,7 +22974,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.RegionRepeatItem region_repeats = 10;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.RegionRepeatItemOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.RegionRepeatItemOrBuilder>
         getRegionRepeatsOrBuilderList() {
       return regionRepeats_;
     }
@@ -23564,7 +23967,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -23611,7 +24014,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -24014,7 +24417,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -24464,7 +24867,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -24511,7 +24914,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -24931,7 +25334,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -25481,7 +25884,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -25528,7 +25931,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -25632,7 +26035,7 @@ public final class SlLink {
      * @param value The maxRunSpeed to set.
      */
     private void setMaxRunSpeed(float value) {
-      
+
       maxRunSpeed_ = value;
     }
     /**
@@ -25658,7 +26061,7 @@ public final class SlLink {
      * @param value The maxDiscSpeedRpm to set.
      */
     private void setMaxDiscSpeedRpm(int value) {
-      
+
       maxDiscSpeedRpm_ = value;
     }
     /**
@@ -25684,7 +26087,7 @@ public final class SlLink {
      * @param value The temporary to set.
      */
     private void setTemporary(boolean value) {
-      
+
       temporary_ = value;
     }
     /**
@@ -26354,7 +26757,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -26432,7 +26835,7 @@ public final class SlLink {
      * @param value The progress to set.
      */
     private void setProgress(float value) {
-      
+
       progress_ = value;
     }
     /**
@@ -26458,7 +26861,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -26495,7 +26898,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -26577,7 +26980,7 @@ public final class SlLink {
      * @param value The replanRequested to set.
      */
     private void setReplanRequested(boolean value) {
-      
+
       replanRequested_ = value;
     }
     /**
@@ -26603,7 +27006,7 @@ public final class SlLink {
      * @param value The pathPointCount to set.
      */
     private void setPathPointCount(int value) {
-      
+
       pathPointCount_ = value;
     }
     /**
@@ -26629,7 +27032,7 @@ public final class SlLink {
      * @param value The pathVersion to set.
      */
     private void setPathVersion(int value) {
-      
+
       pathVersion_ = value;
     }
     /**
@@ -26655,7 +27058,7 @@ public final class SlLink {
      * @param value The totalWorkAreaM2 to set.
      */
     private void setTotalWorkAreaM2(float value) {
-      
+
       totalWorkAreaM2_ = value;
     }
     /**
@@ -26681,7 +27084,7 @@ public final class SlLink {
      * @param value The remainingWorkAreaM2 to set.
      */
     private void setRemainingWorkAreaM2(float value) {
-      
+
       remainingWorkAreaM2_ = value;
     }
     /**
@@ -26707,7 +27110,7 @@ public final class SlLink {
      * @param value The remainingTimeS to set.
      */
     private void setRemainingTimeS(float value) {
-      
+
       remainingTimeS_ = value;
     }
     /**
@@ -26744,7 +27147,7 @@ public final class SlLink {
     private void setCurrentRegionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       currentRegionId_ = value;
     }
     /**
@@ -26780,7 +27183,7 @@ public final class SlLink {
      * @param value The currentRegionRepeatIndex to set.
      */
     private void setCurrentRegionRepeatIndex(int value) {
-      
+
       currentRegionRepeatIndex_ = value;
     }
     /**
@@ -26806,7 +27209,7 @@ public final class SlLink {
      * @param value The currentRegionRepeatTotal to set.
      */
     private void setCurrentRegionRepeatTotal(int value) {
-      
+
       currentRegionRepeatTotal_ = value;
     }
     /**
@@ -26832,7 +27235,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -27851,7 +28254,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -27897,7 +28300,7 @@ public final class SlLink {
      * @param value The maxChunkSize to set.
      */
     private void setMaxChunkSize(int value) {
-      
+
       maxChunkSize_ = value;
     }
     /**
@@ -27934,7 +28337,7 @@ public final class SlLink {
     private void setRequestId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       requestId_ = value;
     }
     /**
@@ -27970,7 +28373,7 @@ public final class SlLink {
      * @param value The forceReplan to set.
      */
     private void setForceReplan(boolean value) {
-      
+
       forceReplan_ = value;
     }
     /**
@@ -28131,7 +28534,7 @@ public final class SlLink {
     private void setGlobalDirection(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       globalDirection_ = value;
     }
     /**
@@ -28198,7 +28601,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -29019,7 +29422,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -29055,7 +29458,7 @@ public final class SlLink {
      * @param value The chunkIndex to set.
      */
     private void setChunkIndex(int value) {
-      
+
       chunkIndex_ = value;
     }
     /**
@@ -29081,7 +29484,7 @@ public final class SlLink {
      * @param value The totalChunks to set.
      */
     private void setTotalChunks(int value) {
-      
+
       totalChunks_ = value;
     }
     /**
@@ -29107,7 +29510,7 @@ public final class SlLink {
      * @param value The pathVersion to set.
      */
     private void setPathVersion(int value) {
-      
+
       pathVersion_ = value;
     }
     /**
@@ -29134,7 +29537,7 @@ public final class SlLink {
      */
     private void setData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       data_ = value;
     }
     /**
@@ -29171,7 +29574,7 @@ public final class SlLink {
     private void setRequestId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       requestId_ = value;
     }
     /**
@@ -29218,7 +29621,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -29307,7 +29710,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -29343,7 +29746,7 @@ public final class SlLink {
      * @param value The planned to set.
      */
     private void setPlanned(boolean value) {
-      
+
       planned_ = value;
     }
     /**
@@ -29369,7 +29772,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -29395,7 +29798,7 @@ public final class SlLink {
      * @param value The pathPointCount to set.
      */
     private void setPathPointCount(int value) {
-      
+
       pathPointCount_ = value;
     }
     /**
@@ -29421,7 +29824,7 @@ public final class SlLink {
      * @param value The pathLengthM to set.
      */
     private void setPathLengthM(float value) {
-      
+
       pathLengthM_ = value;
     }
     /**
@@ -29447,7 +29850,7 @@ public final class SlLink {
      * @param value The totalWorkAreaM2 to set.
      */
     private void setTotalWorkAreaM2(float value) {
-      
+
       totalWorkAreaM2_ = value;
     }
     /**
@@ -29473,7 +29876,7 @@ public final class SlLink {
      * @param value The estimatedTimeS to set.
      */
     private void setEstimatedTimeS(float value) {
-      
+
       estimatedTimeS_ = value;
     }
     /**
@@ -29510,7 +29913,7 @@ public final class SlLink {
     private void setFrameId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       frameId_ = value;
     }
     /**
@@ -30357,7 +30760,7 @@ public final class SlLink {
      * @param value The maxEdge to set.
      */
     private void setMaxEdge(int value) {
-      
+
       maxEdge_ = value;
     }
     /**
@@ -30394,7 +30797,7 @@ public final class SlLink {
     private void setImageFormat(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       imageFormat_ = value;
     }
     /**
@@ -30430,7 +30833,7 @@ public final class SlLink {
      * @param value The includeOverlay to set.
      */
     private void setIncludeOverlay(boolean value) {
-      
+
       includeOverlay_ = value;
     }
     /**
@@ -30467,7 +30870,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -31071,7 +31474,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -31107,7 +31510,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -31133,7 +31536,7 @@ public final class SlLink {
      * @param value The width to set.
      */
     private void setWidth(int value) {
-      
+
       width_ = value;
     }
     /**
@@ -31159,7 +31562,7 @@ public final class SlLink {
      * @param value The height to set.
      */
     private void setHeight(int value) {
-      
+
       height_ = value;
     }
     /**
@@ -31185,7 +31588,7 @@ public final class SlLink {
      * @param value The resolution to set.
      */
     private void setResolution(float value) {
-      
+
       resolution_ = value;
     }
     /**
@@ -31268,7 +31671,7 @@ public final class SlLink {
     private void setFrameId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       frameId_ = value;
     }
     /**
@@ -31305,7 +31708,7 @@ public final class SlLink {
      */
     private void setImageData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       imageData_ = value;
     }
     /**
@@ -31342,7 +31745,7 @@ public final class SlLink {
     private void setOverlayJson(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       overlayJson_ = value;
     }
     /**
@@ -31378,7 +31781,7 @@ public final class SlLink {
      * @param value The previewScaleX to set.
      */
     private void setPreviewScaleX(float value) {
-      
+
       previewScaleX_ = value;
     }
     /**
@@ -31404,7 +31807,7 @@ public final class SlLink {
      * @param value The previewScaleY to set.
      */
     private void setPreviewScaleY(float value) {
-      
+
       previewScaleY_ = value;
     }
     /**
@@ -31484,7 +31887,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -31514,7 +31917,7 @@ public final class SlLink {
      * @param value The appRotationDeg to set.
      */
     private void setAppRotationDeg(float value) {
-      
+
       appRotationDeg_ = value;
     }
     /**
@@ -31540,7 +31943,7 @@ public final class SlLink {
      * @param value The rotationAlignmentDeltaDeg to set.
      */
     private void setRotationAlignmentDeltaDeg(float value) {
-      
+
       rotationAlignmentDeltaDeg_ = value;
     }
     /**
@@ -31577,7 +31980,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -31636,7 +32039,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -32631,7 +33034,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -33025,7 +33428,7 @@ public final class SlLink {
      * @param value The startPoseAvailable to set.
      */
     private void setStartPoseAvailable(boolean value) {
-      
+
       startPoseAvailable_ = value;
     }
     /**
@@ -33097,7 +33500,7 @@ public final class SlLink {
      * @param value The endPoseAvailable to set.
      */
     private void setEndPoseAvailable(boolean value) {
-      
+
       endPoseAvailable_ = value;
     }
     /**
@@ -33576,7 +33979,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
      */
-    java.util.List<sl_link.SlLink.WorkRegionPointInfo> 
+    java.util.List<sl_link.SlLink.WorkRegionPointInfo>
         getWorkRegionsList();
     /**
      * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
@@ -33590,7 +33993,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonRegion> 
+    java.util.List<sl_link.SlLink.PolygonRegion>
         getObstacleRegionsList();
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
@@ -33604,7 +34007,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonRegion> 
+    java.util.List<sl_link.SlLink.PolygonRegion>
         getEraseRegionsList();
     /**
      * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
@@ -33716,7 +34119,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -33763,7 +34166,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -33799,7 +34202,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -33822,7 +34225,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.WorkRegionPointInfo work_regions = 5;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.WorkRegionPointInfoOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.WorkRegionPointInfoOrBuilder>
         getWorkRegionsOrBuilderList() {
       return workRegions_;
     }
@@ -33916,7 +34319,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion obstacle_regions = 6;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
         getObstacleRegionsOrBuilderList() {
       return obstacleRegions_;
     }
@@ -34010,7 +34413,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonRegion erase_regions = 7;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
         getEraseRegionsOrBuilderList() {
       return eraseRegions_;
     }
@@ -34107,7 +34510,7 @@ public final class SlLink {
      * @param value The cropRegionAvailable to set.
      */
     private void setCropRegionAvailable(boolean value) {
-      
+
       cropRegionAvailable_ = value;
     }
     /**
@@ -34954,7 +35357,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonPoint polygon = 5;</code>
      */
-    java.util.List<sl_link.SlLink.PolygonPoint> 
+    java.util.List<sl_link.SlLink.PolygonPoint>
         getPolygonList();
     /**
      * <code>repeated .sl_link.PolygonPoint polygon = 5;</code>
@@ -35088,7 +35491,7 @@ public final class SlLink {
     private void setEditId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       editId_ = value;
     }
     /**
@@ -35177,7 +35580,7 @@ public final class SlLink {
     private void setRegionName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionName_ = value;
     }
     /**
@@ -35256,7 +35659,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.PolygonPoint polygon = 5;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.PolygonPointOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.PolygonPointOrBuilder>
         getPolygonOrBuilderList() {
       return polygon_;
     }
@@ -35353,7 +35756,7 @@ public final class SlLink {
      * @param value The brushRadius to set.
      */
     private void setBrushRadius(float value) {
-      
+
       brushRadius_ = value;
     }
     /**
@@ -35379,7 +35782,7 @@ public final class SlLink {
      * @param value The paintValue to set.
      */
     private void setPaintValue(int value) {
-      
+
       paintValue_ = value;
     }
     /**
@@ -35416,7 +35819,7 @@ public final class SlLink {
     private void setTargetRegionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       targetRegionId_ = value;
     }
     /**
@@ -35494,7 +35897,7 @@ public final class SlLink {
      * @param value The expectedMapVersion to set.
      */
     private void setExpectedMapVersion(int value) {
-      
+
       expectedMapVersion_ = value;
     }
     /**
@@ -35520,7 +35923,7 @@ public final class SlLink {
      * @param value The dryRun to set.
      */
     private void setDryRun(boolean value) {
-      
+
       dryRun_ = value;
     }
     /**
@@ -35649,7 +36052,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -36613,7 +37016,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -36649,7 +37052,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -37011,7 +37414,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -37037,7 +37440,7 @@ public final class SlLink {
      * @param value The appliedToPlanner to set.
      */
     private void setAppliedToPlanner(boolean value) {
-      
+
       appliedToPlanner_ = value;
     }
     /**
@@ -37074,7 +37477,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -37409,7 +37812,7 @@ public final class SlLink {
      * @param value The includeDebug to set.
      */
     private void setIncludeDebug(boolean value) {
-      
+
       includeDebug_ = value;
     }
     /**
@@ -37775,7 +38178,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -37822,7 +38225,7 @@ public final class SlLink {
     private void setStreamUrl(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       streamUrl_ = value;
     }
     /**
@@ -37869,7 +38272,7 @@ public final class SlLink {
     private void setCodec(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       codec_ = value;
     }
     /**
@@ -37905,7 +38308,7 @@ public final class SlLink {
      * @param value The width to set.
      */
     private void setWidth(int value) {
-      
+
       width_ = value;
     }
     /**
@@ -37931,7 +38334,7 @@ public final class SlLink {
      * @param value The height to set.
      */
     private void setHeight(int value) {
-      
+
       height_ = value;
     }
     /**
@@ -37957,7 +38360,7 @@ public final class SlLink {
      * @param value The online to set.
      */
     private void setOnline(boolean value) {
-      
+
       online_ = value;
     }
     /**
@@ -37983,7 +38386,7 @@ public final class SlLink {
      * @param value The utcTime to set.
      */
     private void setUtcTime(int value) {
-      
+
       utcTime_ = value;
     }
     /**
@@ -38627,7 +39030,7 @@ public final class SlLink {
     private void setRequestId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       requestId_ = value;
     }
     /**
@@ -38674,7 +39077,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -38710,7 +39113,7 @@ public final class SlLink {
      * @param value The forceReplan to set.
      */
     private void setForceReplan(boolean value) {
-      
+
       forceReplan_ = value;
     }
     /**
@@ -38736,7 +39139,7 @@ public final class SlLink {
      * @param value The returnPathChunks to set.
      */
     private void setReturnPathChunks(boolean value) {
-      
+
       returnPathChunks_ = value;
     }
     /**
@@ -38762,7 +39165,7 @@ public final class SlLink {
      * @param value The maxChunkSize to set.
      */
     private void setMaxChunkSize(int value) {
-      
+
       maxChunkSize_ = value;
     }
     /**
@@ -38903,7 +39306,7 @@ public final class SlLink {
     private void setGlobalDirection(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       globalDirection_ = value;
     }
     /**
@@ -38970,7 +39373,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -39882,7 +40285,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -39929,7 +40332,7 @@ public final class SlLink {
     private void setRequestId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       requestId_ = value;
     }
     /**
@@ -39976,7 +40379,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -40012,7 +40415,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -40038,7 +40441,7 @@ public final class SlLink {
      * @param value The pathVersion to set.
      */
     private void setPathVersion(int value) {
-      
+
       pathVersion_ = value;
     }
     /**
@@ -40064,7 +40467,7 @@ public final class SlLink {
      * @param value The pathPointCount to set.
      */
     private void setPathPointCount(int value) {
-      
+
       pathPointCount_ = value;
     }
     /**
@@ -40090,7 +40493,7 @@ public final class SlLink {
      * @param value The pathLengthM to set.
      */
     private void setPathLengthM(float value) {
-      
+
       pathLengthM_ = value;
     }
     /**
@@ -40116,7 +40519,7 @@ public final class SlLink {
      * @param value The planned to set.
      */
     private void setPlanned(boolean value) {
-      
+
       planned_ = value;
     }
     /**
@@ -40142,7 +40545,7 @@ public final class SlLink {
      * @param value The pathChunked to set.
      */
     private void setPathChunked(boolean value) {
-      
+
       pathChunked_ = value;
     }
     /**
@@ -40169,7 +40572,7 @@ public final class SlLink {
      */
     private void setPreviewImage(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       previewImage_ = value;
     }
     /**
@@ -40206,7 +40609,7 @@ public final class SlLink {
     private void setPreviewFormat(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       previewFormat_ = value;
     }
     /**
@@ -40242,7 +40645,7 @@ public final class SlLink {
      * @param value The width to set.
      */
     private void setWidth(int value) {
-      
+
       width_ = value;
     }
     /**
@@ -40268,7 +40671,7 @@ public final class SlLink {
      * @param value The height to set.
      */
     private void setHeight(int value) {
-      
+
       height_ = value;
     }
     /**
@@ -40294,7 +40697,7 @@ public final class SlLink {
      * @param value The resolution to set.
      */
     private void setResolution(float value) {
-      
+
       resolution_ = value;
     }
     /**
@@ -40377,7 +40780,7 @@ public final class SlLink {
     private void setFrameId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       frameId_ = value;
     }
     /**
@@ -40413,7 +40816,7 @@ public final class SlLink {
      * @param value The previewScaleX to set.
      */
     private void setPreviewScaleX(float value) {
-      
+
       previewScaleX_ = value;
     }
     /**
@@ -40439,7 +40842,7 @@ public final class SlLink {
      * @param value The previewScaleY to set.
      */
     private void setPreviewScaleY(float value) {
-      
+
       previewScaleY_ = value;
     }
     /**
@@ -40465,7 +40868,7 @@ public final class SlLink {
      * @param value The totalWorkAreaM2 to set.
      */
     private void setTotalWorkAreaM2(float value) {
-      
+
       totalWorkAreaM2_ = value;
     }
     /**
@@ -40491,7 +40894,7 @@ public final class SlLink {
      * @param value The estimatedTimeS to set.
      */
     private void setEstimatedTimeS(float value) {
-      
+
       estimatedTimeS_ = value;
     }
     /**
@@ -40571,7 +40974,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -40601,7 +41004,7 @@ public final class SlLink {
      * @param value The appRotationDeg to set.
      */
     private void setAppRotationDeg(float value) {
-      
+
       appRotationDeg_ = value;
     }
     /**
@@ -40627,7 +41030,7 @@ public final class SlLink {
      * @param value The rotationAlignmentDeltaDeg to set.
      */
     private void setRotationAlignmentDeltaDeg(float value) {
-      
+
       rotationAlignmentDeltaDeg_ = value;
     }
     /**
@@ -41853,7 +42256,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -41901,7 +42304,7 @@ public final class SlLink {
      * @param value The updateNavigationMap to set.
      */
     private void setUpdateNavigationMap(boolean value) {
-      
+
       updateNavigationMap_ = value;
     }
     /**
@@ -42440,7 +42843,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -42529,7 +42932,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -42576,7 +42979,7 @@ public final class SlLink {
     private void setMapName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapName_ = value;
     }
     /**
@@ -42623,7 +43026,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -42670,7 +43073,7 @@ public final class SlLink {
     private void setMapYamlPath(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapYamlPath_ = value;
     }
     /**
@@ -42717,7 +43120,7 @@ public final class SlLink {
     private void setMapImagePath(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapImagePath_ = value;
     }
     /**
@@ -42753,7 +43156,7 @@ public final class SlLink {
      * @param value The navigationMapReloaded to set.
      */
     private void setNavigationMapReloaded(boolean value) {
-      
+
       navigationMapReloaded_ = value;
     }
     /**
@@ -42790,7 +43193,7 @@ public final class SlLink {
     private void setLifecycleState(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       lifecycleState_ = value;
     }
     /**
@@ -43508,7 +43911,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -43913,7 +44316,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -43960,7 +44363,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -44007,7 +44410,7 @@ public final class SlLink {
     private void setMapName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapName_ = value;
     }
     /**
@@ -44043,7 +44446,7 @@ public final class SlLink {
      * @param value The imported to set.
      */
     private void setImported(boolean value) {
-      
+
       imported_ = value;
     }
     /**
@@ -44080,7 +44483,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -44127,7 +44530,7 @@ public final class SlLink {
     private void setLifecycleState(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       lifecycleState_ = value;
     }
     /**
@@ -44739,7 +45142,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -44765,7 +45168,7 @@ public final class SlLink {
      * @param value The mapKind to set.
      */
     private void setMapKind(int value) {
-      
+
       mapKind_ = value;
     }
     /**
@@ -45246,7 +45649,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -45324,7 +45727,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -45350,7 +45753,7 @@ public final class SlLink {
      * @param value The mapKind to set.
      */
     private void setMapKind(int value) {
-      
+
       mapKind_ = value;
     }
     /**
@@ -45387,7 +45790,7 @@ public final class SlLink {
     private void setLifecycleState(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       lifecycleState_ = value;
     }
     /**
@@ -45434,7 +45837,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -45481,7 +45884,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -46276,7 +46679,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -46324,7 +46727,7 @@ public final class SlLink {
      * @param value The rotationDeg to set.
      */
     private void setRotationDeg(float value) {
-      
+
       rotationDeg_ = value;
     }
     /**
@@ -46752,7 +47155,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -46799,7 +47202,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -46835,7 +47238,7 @@ public final class SlLink {
      * @param value The rotationDeg to set.
      */
     private void setRotationDeg(float value) {
-      
+
       rotationDeg_ = value;
     }
     /**
@@ -46861,7 +47264,7 @@ public final class SlLink {
      * @param value The rotationRad to set.
      */
     private void setRotationRad(float value) {
-      
+
       rotationRad_ = value;
     }
     /**
@@ -46887,7 +47290,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -46913,7 +47316,7 @@ public final class SlLink {
      * @param value The rotationAlignmentDeltaDeg to set.
      */
     private void setRotationAlignmentDeltaDeg(float value) {
-      
+
       rotationAlignmentDeltaDeg_ = value;
     }
     /**
@@ -47694,7 +48097,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -47741,7 +48144,7 @@ public final class SlLink {
     private void setName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       name_ = value;
     }
     /**
@@ -47777,7 +48180,7 @@ public final class SlLink {
      * @param value The sizeBytes to set.
      */
     private void setSizeBytes(long value) {
-      
+
       sizeBytes_ = value;
     }
     /**
@@ -47803,7 +48206,7 @@ public final class SlLink {
      * @param value The savedAt to set.
      */
     private void setSavedAt(long value) {
-      
+
       savedAt_ = value;
     }
     /**
@@ -47829,7 +48232,7 @@ public final class SlLink {
      * @param value The totalWorkAreaM2 to set.
      */
     private void setTotalWorkAreaM2(float value) {
-      
+
       totalWorkAreaM2_ = value;
     }
     /**
@@ -47855,7 +48258,7 @@ public final class SlLink {
      * @param value The estimatedTimeS to set.
      */
     private void setEstimatedTimeS(float value) {
-      
+
       estimatedTimeS_ = value;
     }
     /**
@@ -47892,7 +48295,7 @@ public final class SlLink {
     private void setThumbnailFormat(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       thumbnailFormat_ = value;
     }
     /**
@@ -47928,7 +48331,7 @@ public final class SlLink {
      * @param value The thumbnailWidth to set.
      */
     private void setThumbnailWidth(int value) {
-      
+
       thumbnailWidth_ = value;
     }
     /**
@@ -47954,7 +48357,7 @@ public final class SlLink {
      * @param value The thumbnailHeight to set.
      */
     private void setThumbnailHeight(int value) {
-      
+
       thumbnailHeight_ = value;
     }
     /**
@@ -47991,7 +48394,7 @@ public final class SlLink {
     private void setThumbnailImageB64(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       thumbnailImageB64_ = value;
     }
     /**
@@ -48038,7 +48441,7 @@ public final class SlLink {
     private void setCreatedAt(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       createdAt_ = value;
     }
     /**
@@ -48085,7 +48488,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -48788,7 +49191,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.MapCatalogItem items = 4;</code>
      */
-    java.util.List<sl_link.SlLink.MapCatalogItem> 
+    java.util.List<sl_link.SlLink.MapCatalogItem>
         getItemsList();
     /**
      * <code>repeated .sl_link.MapCatalogItem items = 4;</code>
@@ -48879,7 +49282,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -48915,7 +49318,7 @@ public final class SlLink {
      * @param value The totalCount to set.
      */
     private void setTotalCount(int value) {
-      
+
       totalCount_ = value;
     }
     /**
@@ -48938,7 +49341,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.MapCatalogItem items = 4;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.MapCatalogItemOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.MapCatalogItemOrBuilder>
         getItemsOrBuilderList() {
       return items_;
     }
@@ -49474,7 +49877,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -49871,7 +50274,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -49918,7 +50321,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -49965,7 +50368,7 @@ public final class SlLink {
     private void setMapName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapName_ = value;
     }
     /**
@@ -50001,7 +50404,7 @@ public final class SlLink {
      * @param value The deleted to set.
      */
     private void setDeleted(boolean value) {
-      
+
       deleted_ = value;
     }
     /**
@@ -50027,7 +50430,7 @@ public final class SlLink {
      * @param value The localDeleted to set.
      */
     private void setLocalDeleted(boolean value) {
-      
+
       localDeleted_ = value;
     }
     /**
@@ -50053,7 +50456,7 @@ public final class SlLink {
      * @param value The remoteDeleted to set.
      */
     private void setRemoteDeleted(boolean value) {
-      
+
       remoteDeleted_ = value;
     }
     /**
@@ -50079,7 +50482,7 @@ public final class SlLink {
      * @param value The remoteDeletePending to set.
      */
     private void setRemoteDeletePending(boolean value) {
-      
+
       remoteDeletePending_ = value;
     }
     /**
@@ -50658,7 +51061,7 @@ public final class SlLink {
     private void setMapName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapName_ = value;
     }
     /**
@@ -50705,7 +51108,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -50753,7 +51156,7 @@ public final class SlLink {
      * @param value The hasRotationDeg to set.
      */
     private void setHasRotationDeg(boolean value) {
-      
+
       hasRotationDeg_ = value;
     }
     /**
@@ -50785,7 +51188,7 @@ public final class SlLink {
      * @param value The rotationDeg to set.
      */
     private void setRotationDeg(float value) {
-      
+
       rotationDeg_ = value;
     }
     /**
@@ -51396,7 +51799,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -51443,7 +51846,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -51490,7 +51893,7 @@ public final class SlLink {
     private void setMapName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapName_ = value;
     }
     /**
@@ -51537,7 +51940,7 @@ public final class SlLink {
     private void setMapYamlPath(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapYamlPath_ = value;
     }
     /**
@@ -51584,7 +51987,7 @@ public final class SlLink {
     private void setMapImagePath(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapImagePath_ = value;
     }
     /**
@@ -51620,7 +52023,7 @@ public final class SlLink {
      * @param value The navigationMapReloaded to set.
      */
     private void setNavigationMapReloaded(boolean value) {
-      
+
       navigationMapReloaded_ = value;
     }
     /**
@@ -51646,7 +52049,7 @@ public final class SlLink {
      * @param value The totalWorkAreaM2 to set.
      */
     private void setTotalWorkAreaM2(float value) {
-      
+
       totalWorkAreaM2_ = value;
     }
     /**
@@ -51672,7 +52075,7 @@ public final class SlLink {
      * @param value The estimatedTimeS to set.
      */
     private void setEstimatedTimeS(float value) {
-      
+
       estimatedTimeS_ = value;
     }
     /**
@@ -51709,7 +52112,7 @@ public final class SlLink {
     private void setCreatedAt(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       createdAt_ = value;
     }
     /**
@@ -51756,7 +52159,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -51803,7 +52206,7 @@ public final class SlLink {
     private void setLifecycleState(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       lifecycleState_ = value;
     }
     /**
@@ -51839,7 +52242,7 @@ public final class SlLink {
      * @param value The mappingStopped to set.
      */
     private void setMappingStopped(boolean value) {
-      
+
       mappingStopped_ = value;
     }
     /**
@@ -51865,7 +52268,7 @@ public final class SlLink {
      * @param value The localizationStarted to set.
      */
     private void setLocalizationStarted(boolean value) {
-      
+
       localizationStarted_ = value;
     }
     /**
@@ -52879,7 +53282,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -53204,7 +53607,7 @@ public final class SlLink {
     private void setRegionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionId_ = value;
     }
     /**
@@ -53251,7 +53654,7 @@ public final class SlLink {
     private void setRegionName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionName_ = value;
     }
     /**
@@ -53287,7 +53690,7 @@ public final class SlLink {
      * @param value The repeat to set.
      */
     private void setRepeat(int value) {
-      
+
       repeat_ = value;
     }
     /**
@@ -53313,7 +53716,7 @@ public final class SlLink {
      * @param value The areaM2 to set.
      */
     private void setAreaM2(float value) {
-      
+
       areaM2_ = value;
     }
     /**
@@ -53339,7 +53742,7 @@ public final class SlLink {
      * @param value The estimatedTimeH to set.
      */
     private void setEstimatedTimeH(float value) {
-      
+
       estimatedTimeH_ = value;
     }
     /**
@@ -53762,7 +54165,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.RegionMetricsItem region_metrics = 5;</code>
      */
-    java.util.List<sl_link.SlLink.RegionMetricsItem> 
+    java.util.List<sl_link.SlLink.RegionMetricsItem>
         getRegionMetricsList();
     /**
      * <code>repeated .sl_link.RegionMetricsItem region_metrics = 5;</code>
@@ -53855,7 +54258,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -53902,7 +54305,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -53949,7 +54352,7 @@ public final class SlLink {
     private void setMapName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapName_ = value;
     }
     /**
@@ -53982,7 +54385,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.RegionMetricsItem region_metrics = 5;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.RegionMetricsItemOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.RegionMetricsItemOrBuilder>
         getRegionMetricsOrBuilderList() {
       return regionMetrics_;
     }
@@ -54608,7 +55011,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -54655,7 +55058,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -54691,7 +55094,7 @@ public final class SlLink {
      * @param value The maxExecutionRecords to set.
      */
     private void setMaxExecutionRecords(int value) {
-      
+
       maxExecutionRecords_ = value;
     }
     /**
@@ -55099,7 +55502,7 @@ public final class SlLink {
     private void setRegionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionId_ = value;
     }
     /**
@@ -55146,7 +55549,7 @@ public final class SlLink {
     private void setRegionName(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       regionName_ = value;
     }
     /**
@@ -55182,7 +55585,7 @@ public final class SlLink {
      * @param value The targetRepeat to set.
      */
     private void setTargetRepeat(int value) {
-      
+
       targetRepeat_ = value;
     }
     /**
@@ -55208,7 +55611,7 @@ public final class SlLink {
      * @param value The executedRepeat to set.
      */
     private void setExecutedRepeat(int value) {
-      
+
       executedRepeat_ = value;
     }
     /**
@@ -55234,7 +55637,7 @@ public final class SlLink {
      * @param value The completed to set.
      */
     private void setCompleted(boolean value) {
-      
+
       completed_ = value;
     }
     /**
@@ -55271,7 +55674,7 @@ public final class SlLink {
     private void setUnfinishedReason(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       unfinishedReason_ = value;
     }
     /**
@@ -55845,7 +56248,7 @@ public final class SlLink {
     private void setExecutionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       executionId_ = value;
     }
     /**
@@ -55892,7 +56295,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -55939,7 +56342,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -56028,7 +56431,7 @@ public final class SlLink {
     private void setStopReason(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       stopReason_ = value;
     }
     /**
@@ -56064,7 +56467,7 @@ public final class SlLink {
      * @param value The startedAt to set.
      */
     private void setStartedAt(long value) {
-      
+
       startedAt_ = value;
     }
     /**
@@ -56090,7 +56493,7 @@ public final class SlLink {
      * @param value The finishedAt to set.
      */
     private void setFinishedAt(long value) {
-      
+
       finishedAt_ = value;
     }
     /**
@@ -56116,7 +56519,7 @@ public final class SlLink {
      * @param value The plannedAreaM2 to set.
      */
     private void setPlannedAreaM2(float value) {
-      
+
       plannedAreaM2_ = value;
     }
     /**
@@ -56142,7 +56545,7 @@ public final class SlLink {
      * @param value The executedAreaM2 to set.
      */
     private void setExecutedAreaM2(float value) {
-      
+
       executedAreaM2_ = value;
     }
     /**
@@ -56168,7 +56571,7 @@ public final class SlLink {
      * @param value The progress to set.
      */
     private void setProgress(float value) {
-      
+
       progress_ = value;
     }
     /**
@@ -56194,7 +56597,7 @@ public final class SlLink {
      * @param value The pathVersion to set.
      */
     private void setPathVersion(int value) {
-      
+
       pathVersion_ = value;
     }
     /**
@@ -56220,7 +56623,7 @@ public final class SlLink {
      * @param value The allCompleted to set.
      */
     private void setAllCompleted(boolean value) {
-      
+
       allCompleted_ = value;
     }
     /**
@@ -57003,7 +57406,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.TaskResultRegionItem region_results = 15;</code>
      */
-    java.util.List<sl_link.SlLink.TaskResultRegionItem> 
+    java.util.List<sl_link.SlLink.TaskResultRegionItem>
         getRegionResultsList();
     /**
      * <code>repeated .sl_link.TaskResultRegionItem region_results = 15;</code>
@@ -57086,7 +57489,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
      */
-    java.util.List<sl_link.SlLink.TaskExecutionRecord> 
+    java.util.List<sl_link.SlLink.TaskExecutionRecord>
         getExecutionRecordsList();
     /**
      * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
@@ -57186,7 +57589,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -57233,7 +57636,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -57280,7 +57683,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -57358,7 +57761,7 @@ public final class SlLink {
      * @param value The allCompleted to set.
      */
     private void setAllCompleted(boolean value) {
-      
+
       allCompleted_ = value;
     }
     /**
@@ -57395,7 +57798,7 @@ public final class SlLink {
     private void setStopReason(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       stopReason_ = value;
     }
     /**
@@ -57431,7 +57834,7 @@ public final class SlLink {
      * @param value The pathVersion to set.
      */
     private void setPathVersion(int value) {
-      
+
       pathVersion_ = value;
     }
     /**
@@ -57468,7 +57871,7 @@ public final class SlLink {
     private void setImageFormat(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       imageFormat_ = value;
     }
     /**
@@ -57505,7 +57908,7 @@ public final class SlLink {
      */
     private void setImageData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       imageData_ = value;
     }
     /**
@@ -57531,7 +57934,7 @@ public final class SlLink {
      * @param value The imageWidth to set.
      */
     private void setImageWidth(int value) {
-      
+
       imageWidth_ = value;
     }
     /**
@@ -57557,7 +57960,7 @@ public final class SlLink {
      * @param value The imageHeight to set.
      */
     private void setImageHeight(int value) {
-      
+
       imageHeight_ = value;
     }
     /**
@@ -57583,7 +57986,7 @@ public final class SlLink {
      * @param value The finishedAt to set.
      */
     private void setFinishedAt(long value) {
-      
+
       finishedAt_ = value;
     }
     /**
@@ -57699,7 +58102,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.TaskResultRegionItem region_results = 15;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.TaskResultRegionItemOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.TaskResultRegionItemOrBuilder>
         getRegionResultsOrBuilderList() {
       return regionResults_;
     }
@@ -57850,7 +58253,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -57880,7 +58283,7 @@ public final class SlLink {
      * @param value The appRotationDeg to set.
      */
     private void setAppRotationDeg(float value) {
-      
+
       appRotationDeg_ = value;
     }
     /**
@@ -57906,7 +58309,7 @@ public final class SlLink {
      * @param value The rotationAlignmentDeltaDeg to set.
      */
     private void setRotationAlignmentDeltaDeg(float value) {
-      
+
       rotationAlignmentDeltaDeg_ = value;
     }
     /**
@@ -57943,7 +58346,7 @@ public final class SlLink {
     private void setExecutionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       executionId_ = value;
     }
     /**
@@ -57979,7 +58382,7 @@ public final class SlLink {
      * @param value The startedAt to set.
      */
     private void setStartedAt(long value) {
-      
+
       startedAt_ = value;
     }
     /**
@@ -58005,7 +58408,7 @@ public final class SlLink {
      * @param value The plannedAreaM2 to set.
      */
     private void setPlannedAreaM2(float value) {
-      
+
       plannedAreaM2_ = value;
     }
     /**
@@ -58031,7 +58434,7 @@ public final class SlLink {
      * @param value The executedAreaM2 to set.
      */
     private void setExecutedAreaM2(float value) {
-      
+
       executedAreaM2_ = value;
     }
     /**
@@ -58057,7 +58460,7 @@ public final class SlLink {
      * @param value The executionProgress to set.
      */
     private void setExecutionProgress(float value) {
-      
+
       executionProgress_ = value;
     }
     /**
@@ -58080,7 +58483,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.TaskExecutionRecord execution_records = 25;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.TaskExecutionRecordOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.TaskExecutionRecordOrBuilder>
         getExecutionRecordsOrBuilderList() {
       return executionRecords_;
     }
@@ -59557,7 +59960,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -59604,7 +60007,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -59648,7 +60051,7 @@ public final class SlLink {
      * @param value The startTime to set.
      */
     private void setStartTime(long value) {
-      
+
       startTime_ = value;
     }
     /**
@@ -59678,7 +60081,7 @@ public final class SlLink {
      * @param value The endTime to set.
      */
     private void setEndTime(long value) {
-      
+
       endTime_ = value;
     }
     /**
@@ -59704,7 +60107,7 @@ public final class SlLink {
      * @param value The maxChunkSize to set.
      */
     private void setMaxChunkSize(int value) {
-      
+
       maxChunkSize_ = value;
     }
     /**
@@ -60228,7 +60631,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -60264,7 +60667,7 @@ public final class SlLink {
      * @param value The chunkIndex to set.
      */
     private void setChunkIndex(int value) {
-      
+
       chunkIndex_ = value;
     }
     /**
@@ -60290,7 +60693,7 @@ public final class SlLink {
      * @param value The totalChunks to set.
      */
     private void setTotalChunks(int value) {
-      
+
       totalChunks_ = value;
     }
     /**
@@ -60316,7 +60719,7 @@ public final class SlLink {
      * @param value The totalRecordCount to set.
      */
     private void setTotalRecordCount(int value) {
-      
+
       totalRecordCount_ = value;
     }
     /**
@@ -60343,7 +60746,7 @@ public final class SlLink {
      */
     private void setData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       data_ = value;
     }
     /**
@@ -60369,7 +60772,7 @@ public final class SlLink {
      * @param value The startTime to set.
      */
     private void setStartTime(long value) {
-      
+
       startTime_ = value;
     }
     /**
@@ -60395,7 +60798,7 @@ public final class SlLink {
      * @param value The endTime to set.
      */
     private void setEndTime(long value) {
-      
+
       endTime_ = value;
     }
     /**
@@ -60921,7 +61324,7 @@ public final class SlLink {
     private void setExecutionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       executionId_ = value;
     }
     /**
@@ -61347,7 +61750,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -61394,7 +61797,7 @@ public final class SlLink {
     private void setExecutionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       executionId_ = value;
     }
     /**
@@ -61441,7 +61844,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -61488,7 +61891,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -61524,7 +61927,7 @@ public final class SlLink {
      * @param value The deleted to set.
      */
     private void setDeleted(boolean value) {
-      
+
       deleted_ = value;
     }
     /**
@@ -61550,7 +61953,7 @@ public final class SlLink {
      * @param value The executionFilesDeleted to set.
      */
     private void setExecutionFilesDeleted(boolean value) {
-      
+
       executionFilesDeleted_ = value;
     }
     /**
@@ -62163,7 +62566,7 @@ public final class SlLink {
     private void setExecutionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       executionId_ = value;
     }
     /**
@@ -62218,7 +62621,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -62262,7 +62665,7 @@ public final class SlLink {
      * @param value The startTime to set.
      */
     private void setStartTime(long value) {
-      
+
       startTime_ = value;
     }
     /**
@@ -62292,7 +62695,7 @@ public final class SlLink {
      * @param value The endTime to set.
      */
     private void setEndTime(long value) {
-      
+
       endTime_ = value;
     }
     /**
@@ -62318,7 +62721,7 @@ public final class SlLink {
      * @param value The startIndex to set.
      */
     private void setStartIndex(int value) {
-      
+
       startIndex_ = value;
     }
     /**
@@ -62344,7 +62747,7 @@ public final class SlLink {
      * @param value The maxPoints to set.
      */
     private void setMaxPoints(int value) {
-      
+
       maxPoints_ = value;
     }
     /**
@@ -62370,7 +62773,7 @@ public final class SlLink {
      * @param value The sampleStep to set.
      */
     private void setSampleStep(int value) {
-      
+
       sampleStep_ = value;
     }
     /**
@@ -62396,7 +62799,7 @@ public final class SlLink {
      * @param value The maxChunkSize to set.
      */
     private void setMaxChunkSize(int value) {
-      
+
       maxChunkSize_ = value;
     }
     /**
@@ -62988,7 +63391,7 @@ public final class SlLink {
      * @param value The index to set.
      */
     private void setIndex(int value) {
-      
+
       index_ = value;
     }
     /**
@@ -63022,7 +63425,7 @@ public final class SlLink {
      * @param value The offsetMs to set.
      */
     private void setOffsetMs(int value) {
-      
+
       offsetMs_ = value;
     }
     /**
@@ -63052,7 +63455,7 @@ public final class SlLink {
      * @param value The xMm to set.
      */
     private void setXMm(int value) {
-      
+
       xMm_ = value;
     }
     /**
@@ -63078,7 +63481,7 @@ public final class SlLink {
      * @param value The yMm to set.
      */
     private void setYMm(int value) {
-      
+
       yMm_ = value;
     }
     /**
@@ -63104,7 +63507,7 @@ public final class SlLink {
      * @param value The headingMdeg to set.
      */
     private void setHeadingMdeg(int value) {
-      
+
       headingMdeg_ = value;
     }
     /**
@@ -63130,7 +63533,7 @@ public final class SlLink {
      * @param value The linearSpeedMmps to set.
      */
     private void setLinearSpeedMmps(int value) {
-      
+
       linearSpeedMmps_ = value;
     }
     /**
@@ -63156,7 +63559,7 @@ public final class SlLink {
      * @param value The angularSpeedMradps to set.
      */
     private void setAngularSpeedMradps(int value) {
-      
+
       angularSpeedMradps_ = value;
     }
     /**
@@ -63182,7 +63585,7 @@ public final class SlLink {
      * @param value The discSpeedRpm to set.
      */
     private void setDiscSpeedRpm(int value) {
-      
+
       discSpeedRpm_ = value;
     }
     /**
@@ -63208,7 +63611,7 @@ public final class SlLink {
      * @param value The speedAvailable to set.
      */
     private void setSpeedAvailable(boolean value) {
-      
+
       speedAvailable_ = value;
     }
     /**
@@ -63234,7 +63637,7 @@ public final class SlLink {
      * @param value The discEnabled to set.
      */
     private void setDiscEnabled(boolean value) {
-      
+
       discEnabled_ = value;
     }
     /**
@@ -63898,7 +64301,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
      */
-    java.util.List<sl_link.SlLink.TaskTrajectoryPoint> 
+    java.util.List<sl_link.SlLink.TaskTrajectoryPoint>
         getPointsList();
     /**
      * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
@@ -64184,7 +64587,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -64231,7 +64634,7 @@ public final class SlLink {
     private void setExecutionId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       executionId_ = value;
     }
     /**
@@ -64267,7 +64670,7 @@ public final class SlLink {
      * @param value The chunkIndex to set.
      */
     private void setChunkIndex(int value) {
-      
+
       chunkIndex_ = value;
     }
     /**
@@ -64293,7 +64696,7 @@ public final class SlLink {
      * @param value The totalChunks to set.
      */
     private void setTotalChunks(int value) {
-      
+
       totalChunks_ = value;
     }
     /**
@@ -64319,7 +64722,7 @@ public final class SlLink {
      * @param value The totalPointCount to set.
      */
     private void setTotalPointCount(int value) {
-      
+
       totalPointCount_ = value;
     }
     /**
@@ -64345,7 +64748,7 @@ public final class SlLink {
      * @param value The returnedPointCount to set.
      */
     private void setReturnedPointCount(int value) {
-      
+
       returnedPointCount_ = value;
     }
     /**
@@ -64371,7 +64774,7 @@ public final class SlLink {
      * @param value The startIndex to set.
      */
     private void setStartIndex(int value) {
-      
+
       startIndex_ = value;
     }
     /**
@@ -64397,7 +64800,7 @@ public final class SlLink {
      * @param value The nextIndex to set.
      */
     private void setNextIndex(int value) {
-      
+
       nextIndex_ = value;
     }
     /**
@@ -64423,7 +64826,7 @@ public final class SlLink {
      * @param value The hasMore to set.
      */
     private void setHasMore(boolean value) {
-      
+
       hasMore_ = value;
     }
     /**
@@ -64449,7 +64852,7 @@ public final class SlLink {
      * @param value The startedAtMs to set.
      */
     private void setStartedAtMs(long value) {
-      
+
       startedAtMs_ = value;
     }
     /**
@@ -64472,7 +64875,7 @@ public final class SlLink {
     /**
      * <code>repeated .sl_link.TaskTrajectoryPoint points = 12;</code>
      */
-    public java.util.List<? extends sl_link.SlLink.TaskTrajectoryPointOrBuilder> 
+    public java.util.List<? extends sl_link.SlLink.TaskTrajectoryPointOrBuilder>
         getPointsOrBuilderList() {
       return points_;
     }
@@ -64580,7 +64983,7 @@ public final class SlLink {
     private void setTaskId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       taskId_ = value;
     }
     /**
@@ -64627,7 +65030,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -64663,7 +65066,7 @@ public final class SlLink {
      * @param value The startTime to set.
      */
     private void setStartTime(long value) {
-      
+
       startTime_ = value;
     }
     /**
@@ -64689,7 +65092,7 @@ public final class SlLink {
      * @param value The endTime to set.
      */
     private void setEndTime(long value) {
-      
+
       endTime_ = value;
     }
     /**
@@ -64715,7 +65118,7 @@ public final class SlLink {
      * @param value The sampleStep to set.
      */
     private void setSampleStep(int value) {
-      
+
       sampleStep_ = value;
     }
     /**
@@ -64741,7 +65144,7 @@ public final class SlLink {
      * @param value The mapAvailable to set.
      */
     private void setMapAvailable(boolean value) {
-      
+
       mapAvailable_ = value;
     }
     /**
@@ -64778,7 +65181,7 @@ public final class SlLink {
     private void setMapMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapMessage_ = value;
     }
     /**
@@ -64814,7 +65217,7 @@ public final class SlLink {
      * @param value The mapVersion to set.
      */
     private void setMapVersion(int value) {
-      
+
       mapVersion_ = value;
     }
     /**
@@ -64848,7 +65251,7 @@ public final class SlLink {
      * @param value The mapSourceWidth to set.
      */
     private void setMapSourceWidth(int value) {
-      
+
       mapSourceWidth_ = value;
     }
     /**
@@ -64878,7 +65281,7 @@ public final class SlLink {
      * @param value The mapSourceHeight to set.
      */
     private void setMapSourceHeight(int value) {
-      
+
       mapSourceHeight_ = value;
     }
     /**
@@ -64904,7 +65307,7 @@ public final class SlLink {
      * @param value The mapResolution to set.
      */
     private void setMapResolution(float value) {
-      
+
       mapResolution_ = value;
     }
     /**
@@ -64987,7 +65390,7 @@ public final class SlLink {
     private void setMapFrameId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapFrameId_ = value;
     }
     /**
@@ -65034,7 +65437,7 @@ public final class SlLink {
     private void setMapImageFormat(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapImageFormat_ = value;
     }
     /**
@@ -65070,7 +65473,7 @@ public final class SlLink {
      * @param value The mapImageWidth to set.
      */
     private void setMapImageWidth(int value) {
-      
+
       mapImageWidth_ = value;
     }
     /**
@@ -65096,7 +65499,7 @@ public final class SlLink {
      * @param value The mapImageHeight to set.
      */
     private void setMapImageHeight(int value) {
-      
+
       mapImageHeight_ = value;
     }
     /**
@@ -65122,7 +65525,7 @@ public final class SlLink {
      * @param value The mapPreviewScaleX to set.
      */
     private void setMapPreviewScaleX(float value) {
-      
+
       mapPreviewScaleX_ = value;
     }
     /**
@@ -65148,7 +65551,7 @@ public final class SlLink {
      * @param value The mapPreviewScaleY to set.
      */
     private void setMapPreviewScaleY(float value) {
-      
+
       mapPreviewScaleY_ = value;
     }
     /**
@@ -65183,7 +65586,7 @@ public final class SlLink {
      */
     private void setMapImageData(com.google.protobuf.ByteString value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapImageData_ = value;
     }
     /**
@@ -65213,7 +65616,7 @@ public final class SlLink {
      * @param value The mapImageChunkIndex to set.
      */
     private void setMapImageChunkIndex(int value) {
-      
+
       mapImageChunkIndex_ = value;
     }
     /**
@@ -65239,7 +65642,7 @@ public final class SlLink {
      * @param value The mapImageTotalChunks to set.
      */
     private void setMapImageTotalChunks(int value) {
-      
+
       mapImageTotalChunks_ = value;
     }
     /**
@@ -65265,7 +65668,7 @@ public final class SlLink {
      * @param value The alignmentYawDeg to set.
      */
     private void setAlignmentYawDeg(float value) {
-      
+
       alignmentYawDeg_ = value;
     }
     /**
@@ -65291,7 +65694,7 @@ public final class SlLink {
      * @param value The appRotationDeg to set.
      */
     private void setAppRotationDeg(float value) {
-      
+
       appRotationDeg_ = value;
     }
     /**
@@ -65317,7 +65720,7 @@ public final class SlLink {
      * @param value The rotationAlignmentDeltaDeg to set.
      */
     private void setRotationAlignmentDeltaDeg(float value) {
-      
+
       rotationAlignmentDeltaDeg_ = value;
     }
     /**
@@ -67119,7 +67522,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -67459,7 +67862,7 @@ public final class SlLink {
      * @param value The clearMemoryCache to set.
      */
     private void setClearMemoryCache(boolean value) {
-      
+
       clearMemoryCache_ = value;
     }
     /**
@@ -67485,7 +67888,7 @@ public final class SlLink {
      * @param value The clearTemporaryFiles to set.
      */
     private void setClearTemporaryFiles(boolean value) {
-      
+
       clearTemporaryFiles_ = value;
     }
     /**
@@ -67519,7 +67922,7 @@ public final class SlLink {
      * @param value The clearLogs to set.
      */
     private void setClearLogs(boolean value) {
-      
+
       clearLogs_ = value;
     }
     /**
@@ -67946,7 +68349,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -67982,7 +68385,7 @@ public final class SlLink {
      * @param value The memoryCacheCleared to set.
      */
     private void setMemoryCacheCleared(boolean value) {
-      
+
       memoryCacheCleared_ = value;
     }
     /**
@@ -68008,7 +68411,7 @@ public final class SlLink {
      * @param value The temporaryFilesCleared to set.
      */
     private void setTemporaryFilesCleared(int value) {
-      
+
       temporaryFilesCleared_ = value;
     }
     /**
@@ -68034,7 +68437,7 @@ public final class SlLink {
      * @param value The temporaryBytesReleased to set.
      */
     private void setTemporaryBytesReleased(long value) {
-      
+
       temporaryBytesReleased_ = value;
     }
     /**
@@ -68060,7 +68463,7 @@ public final class SlLink {
      * @param value The logFilesCleared to set.
      */
     private void setLogFilesCleared(int value) {
-      
+
       logFilesCleared_ = value;
     }
     /**
@@ -68086,7 +68489,7 @@ public final class SlLink {
      * @param value The logBytesReleased to set.
      */
     private void setLogBytesReleased(long value) {
-      
+
       logBytesReleased_ = value;
     }
     /**
@@ -68112,7 +68515,7 @@ public final class SlLink {
      * @param value The failedItems to set.
      */
     private void setFailedItems(int value) {
-      
+
       failedItems_ = value;
     }
     /**
@@ -68853,7 +69256,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -69455,7 +69858,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -69491,7 +69894,7 @@ public final class SlLink {
      * @param value The available to set.
      */
     private void setAvailable(boolean value) {
-      
+
       available_ = value;
     }
     /**
@@ -69528,7 +69931,7 @@ public final class SlLink {
     private void setStatus(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       status_ = value;
     }
     /**
@@ -69564,7 +69967,7 @@ public final class SlLink {
      * @param value The timestampNs to set.
      */
     private void setTimestampNs(long value) {
-      
+
       timestampNs_ = value;
     }
     /**
@@ -70245,7 +70648,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -70281,7 +70684,7 @@ public final class SlLink {
      * @param value The sent to set.
      */
     private void setSent(boolean value) {
-      
+
       sent_ = value;
     }
     /**
@@ -70706,7 +71109,7 @@ public final class SlLink {
      * @param value The initialPoseAvailable to set.
      */
     private void setInitialPoseAvailable(boolean value) {
-      
+
       initialPoseAvailable_ = value;
     }
     /**
@@ -70877,7 +71280,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -70932,7 +71335,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -71583,7 +71986,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**
@@ -71627,7 +72030,7 @@ public final class SlLink {
      * @param value The accepted to set.
      */
     private void setAccepted(boolean value) {
-      
+
       accepted_ = value;
     }
     /**
@@ -71668,7 +72071,7 @@ public final class SlLink {
     private void setStatus(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       status_ = value;
     }
     /**
@@ -71715,7 +72118,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -71762,7 +72165,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -71809,7 +72212,7 @@ public final class SlLink {
     private void setLifecycleState(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       lifecycleState_ = value;
     }
     /**
@@ -72688,7 +73091,7 @@ public final class SlLink {
     private void setRawStatus(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       rawStatus_ = value;
     }
     /**
@@ -72724,7 +73127,7 @@ public final class SlLink {
      * @param value The timestampNs to set.
      */
     private void setTimestampNs(long value) {
-      
+
       timestampNs_ = value;
     }
     /**
@@ -72761,7 +73164,7 @@ public final class SlLink {
     private void setLifecycleState(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       lifecycleState_ = value;
     }
     /**
@@ -72808,7 +73211,7 @@ public final class SlLink {
     private void setDetail(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       detail_ = value;
     }
     /**
@@ -72855,7 +73258,7 @@ public final class SlLink {
     private void setMapId(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapId_ = value;
     }
     /**
@@ -72902,7 +73305,7 @@ public final class SlLink {
     private void setMapRevision(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       mapRevision_ = value;
     }
     /**
@@ -72938,7 +73341,7 @@ public final class SlLink {
      * @param value The goodFrames to set.
      */
     private void setGoodFrames(int value) {
-      
+
       goodFrames_ = value;
     }
     /**
@@ -72964,7 +73367,7 @@ public final class SlLink {
      * @param value The requiredFrames to set.
      */
     private void setRequiredFrames(int value) {
-      
+
       requiredFrames_ = value;
     }
     /**
@@ -72990,7 +73393,7 @@ public final class SlLink {
      * @param value The registrationQualityValid to set.
      */
     private void setRegistrationQualityValid(boolean value) {
-      
+
       registrationQualityValid_ = value;
     }
     /**
@@ -73016,7 +73419,7 @@ public final class SlLink {
      * @param value The registrationFitness to set.
      */
     private void setRegistrationFitness(float value) {
-      
+
       registrationFitness_ = value;
     }
     /**
@@ -73042,7 +73445,7 @@ public final class SlLink {
      * @param value The registrationInlierRatio to set.
      */
     private void setRegistrationInlierRatio(float value) {
-      
+
       registrationInlierRatio_ = value;
     }
     /**
@@ -74154,7 +74557,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -74399,7 +74802,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -74650,7 +75053,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -74676,7 +75079,7 @@ public final class SlLink {
      * @param value The speedRpm to set.
      */
     private void setSpeedRpm(int value) {
-      
+
       speedRpm_ = value;
     }
     /**
@@ -74951,7 +75354,7 @@ public final class SlLink {
      * @param value The enabled to set.
      */
     private void setEnabled(boolean value) {
-      
+
       enabled_ = value;
     }
     /**
@@ -75281,7 +75684,7 @@ public final class SlLink {
      * @param value The speedRatio to set.
      */
     private void setSpeedRatio(float value) {
-      
+
       speedRatio_ = value;
     }
     /**
@@ -75307,7 +75710,7 @@ public final class SlLink {
      * @param value The remoteX to set.
      */
     private void setRemoteX(float value) {
-      
+
       remoteX_ = value;
     }
     /**
@@ -75333,7 +75736,7 @@ public final class SlLink {
      * @param value The remoteY to set.
      */
     private void setRemoteY(float value) {
-      
+
       remoteY_ = value;
     }
     /**
@@ -75367,7 +75770,7 @@ public final class SlLink {
      * @param value The maxSpeedMps to set.
      */
     private void setMaxSpeedMps(float value) {
-      
+
       maxSpeedMps_ = value;
     }
     /**
@@ -75405,7 +75808,7 @@ public final class SlLink {
      * @param value The maxTurnSpeedRatio to set.
      */
     private void setMaxTurnSpeedRatio(float value) {
-      
+
       maxTurnSpeedRatio_ = value;
     }
     /**
@@ -76837,7 +77240,7 @@ public final class SlLink {
     private void setMessage(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+
       message_ = value;
     }
     /**

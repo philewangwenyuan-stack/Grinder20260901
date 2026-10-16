@@ -93,6 +93,11 @@ def load_class(relative, names=None):
         'ChassisStatus', 'WheelSpeedCommand', 'WheelSpeedState', 'EnableChassis', 'EnableChassisResponse',
         'ClearFault', 'ClearFaultResponse', 'Trigger', 'TriggerResponse', 'DiagnosticStatus', 'DiagnosticArray',
         'KeyValue', 'GoalID')})
+    if relative == SCHEDULER:
+        from functools import wraps
+        namespace['wraps'] = wraps
+        decorator = next(n for n in parsed.body if isinstance(n, ast.FunctionDef) and n.name == 'localization_arming')
+        exec(compile(ast.Module(body=[decorator], type_ignores=[]), str(path), 'exec'), namespace)
     exec(compile(ast.Module(body=[cls], type_ignores=[]), str(path), 'exec'), namespace)
     return namespace[cls.name], namespace
 

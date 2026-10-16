@@ -193,12 +193,14 @@ typedef enum _sl_link_TaskCommandType {
 typedef enum _sl_link_MapEditOperation {
     sl_link_MapEditOperation_MAP_EDIT_OP_UNKNOWN = 0,
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_WORK_REGION = 1,
+    /* Keep legacy obstacle upsert for backward compatibility. */
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_OBSTACLE_REGION = 2,
     sl_link_MapEditOperation_MAP_EDIT_OP_DELETE_REGION = 3,
     sl_link_MapEditOperation_MAP_EDIT_OP_PAINT_FREE = 4,
     sl_link_MapEditOperation_MAP_EDIT_OP_PAINT_OCCUPIED = 5,
     sl_link_MapEditOperation_MAP_EDIT_OP_PAINT_UNKNOWN = 6,
     sl_link_MapEditOperation_MAP_EDIT_OP_CLEAR_OVERLAY_PATCH = 7,
+    /* New explicit operations to avoid overloading UPSERT_OBSTACLE_REGION. */
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_ERASE_REGION = 8,
     sl_link_MapEditOperation_MAP_EDIT_OP_UPSERT_CROP_REGION = 9
 } sl_link_MapEditOperation;
@@ -248,14 +250,20 @@ typedef struct _sl_link_PolygonRegion {
     uint32_t color_argb;
     bool closed;
     sl_link_RegionType region_type;
+    /* Region-specific planning direction: "x", "-x", "y", or "-y".
+ Empty means LOWER-side default policy. */
     pb_callback_t global_direction;
 } sl_link_PolygonRegion;
 
 typedef struct _sl_link_ChassisSettings {
+    /* Requested speed in m/s for task/navigation and manual command generation.
+ Manual output is additionally capped by the chassis manual speed limit. */
     float run_speed;
     uint32_t disc_speed_rpm;
     bool disc_enabled;
     sl_link_WorkMode work_mode;
+    /* Default steering/differential speed ratio for manual drive, in (0, 1].
+ Zero means keep the current LOWER-side default. */
     float max_turn_speed_ratio;
 } sl_link_ChassisSettings;
 
@@ -268,25 +276,43 @@ typedef struct _sl_link_MapSettings {
     float inflation_radius;
     pb_callback_t obstacle_regions;
     pb_callback_t work_regions;
+    /* Robot footprint vertices expressed in the base_link frame, ordered around
+ the polygon. Empty keeps the currently configured footprint. */
     pb_callback_t footprint;
+    /* base_link -> base_laser_link extrinsic. Geometry is persisted by the
+ scheduler; static TF consumers apply it after their next restart/mode load. */
     float base_laser_x;
     float base_laser_y;
     float base_laser_z;
     float base_laser_roll_deg;
     float base_laser_pitch_deg;
     float base_laser_yaw_deg;
-    bool has_endpoint_margin;
-    float endpoint_margin;
-    bool has_output_point_spacing;
-    float output_point_spacing;
-    bool has_aligned_obstacle_inflation;
-    float aligned_obstacle_inflation;
-    bool has_aligned_obstacle_max_extent;
-    float aligned_obstacle_max_extent;
-    bool has_obstacle_corner_angle_deg;
-    float obstacle_corner_angle_deg;
-    bool has_obstacle_avoidance_distance;
-    float obstacle_avoidance_distance;
+    pb_size_t which__endpoint_margin;
+    union _sl_link_MapSettings__endpoint_margin {
+        /* Global path-planner parameters used by the MST27 planner. Optional keeps
+     older geometry-only writes from overwriting values they do not edit. */
+        float endpoint_margin;
+    } _endpoint_margin;
+    pb_size_t which__output_point_spacing;
+    union _sl_link_MapSettings__output_point_spacing {
+        float output_point_spacing;
+    } _output_point_spacing;
+    pb_size_t which__aligned_obstacle_inflation;
+    union _sl_link_MapSettings__aligned_obstacle_inflation {
+        float aligned_obstacle_inflation;
+    } _aligned_obstacle_inflation;
+    pb_size_t which__aligned_obstacle_max_extent;
+    union _sl_link_MapSettings__aligned_obstacle_max_extent {
+        float aligned_obstacle_max_extent;
+    } _aligned_obstacle_max_extent;
+    pb_size_t which__obstacle_corner_angle_deg;
+    union _sl_link_MapSettings__obstacle_corner_angle_deg {
+        float obstacle_corner_angle_deg;
+    } _obstacle_corner_angle_deg;
+    pb_size_t which__obstacle_avoidance_distance;
+    union _sl_link_MapSettings__obstacle_avoidance_distance {
+        float obstacle_avoidance_distance;
+    } _obstacle_avoidance_distance;
 } sl_link_MapSettings;
 
 typedef struct _sl_link_RppSettings {
@@ -316,6 +342,7 @@ typedef struct _sl_link_RppSettings {
     bool allow_reversing;
     bool use_fixed_curvature_lookahead;
     bool use_regulated_linear_velocity_scaling;
+    /* Additional high-impact tracking/collision controls exposed by the board. */
     bool use_fixed_distance_collision_detection;
     float collision_stop_distance_m;
     float collision_scan_half_angle_rad;
@@ -368,8 +395,12 @@ typedef struct _sl_link_SettingsWriteRequest {
     sl_link_MapSettings map;
     bool has_rpp;
     sl_link_RppSettings rpp;
+    /* Apply RPP through dynamic_reconfigure immediately; it is not persistent
+ unless save_rpp_default is also true. */
     bool apply_rpp_temporarily;
     bool save_rpp_default;
+    /* Optional partial-update mask for RppSettings. Bit N selects the field
+ number N+1; zero means the message is a complete settings snapshot. */
     uint64_t rpp_field_mask;
 } sl_link_SettingsWriteRequest;
 
@@ -394,7 +425,9 @@ typedef struct _sl_link_Pose2D {
 } sl_link_Pose2D;
 
 typedef struct _sl_link_LocalizationCovariance {
+    /* True when covariance values come from the latest odometry pose covariance. */
     bool valid;
+    /* 2D pose covariance components in the same coordinate frame as the reported pose/map. */
     float x_variance;
     float y_variance;
     float yaw_variance;
@@ -422,14 +455,35 @@ typedef struct _sl_link_DeviceStatusReport {
     sl_link_LocalizationCovariance localization_covariance;
     bool localization_quality_available;
     uint32_t localization_quality;
+    /* True when navigation reports imminent collision on /rpp/collision_imminent. */
     bool collision_imminent;
+    /* Latest laser/radar system status from /slamware_ros_sdk_server_node/system_status. */
     bool radar_system_status_available;
     pb_callback_t radar_system_status;
+    /* Vehicle linear speed computed from left/right wheel feedback, in m/s. */
     float vehicle_speed;
-    bool has_chassis_connected;
-    bool chassis_connected;
-    bool has_emergency_stop_latched;
-    bool emergency_stop_latched;
+    pb_size_t which__chassis_connected;
+    union _sl_link_DeviceStatusReport__chassis_connected {
+        /* Absent on older firmware or before the first chassis status sample. */
+        bool chassis_connected;
+    } _chassis_connected;
+    pb_size_t which__emergency_stop_latched;
+    union _sl_link_DeviceStatusReport__emergency_stop_latched {
+        /* Scheduler emergency latch; absence means firmware does not report this state. */
+        bool emergency_stop_latched;
+    } _emergency_stop_latched;
+    pb_size_t which__localization_ready;
+    union _sl_link_DeviceStatusReport__localization_ready {
+        /* Composite Super-LIO readiness. Absence means unknown/older board. */
+        bool localization_ready;
+    } _localization_ready;
+    pb_size_t which__localization_pause_latched;
+    union _sl_link_DeviceStatusReport__localization_pause_latched {
+        /* True while a task remains paused due to confirmed localization failure. */
+        bool localization_pause_latched;
+    } _localization_pause_latched;
+    /* Stable reason code; clients own presentation language. */
+    pb_callback_t localization_status_reason;
 } sl_link_DeviceStatusReport;
 
 typedef struct _sl_link_CameraFrameRequest {
@@ -451,7 +505,10 @@ typedef struct _sl_link_CameraFrameChunk {
 typedef struct _sl_link_MapRequest {
     bool snapshot;
     uint32_t max_chunk_size;
+    /* Empty or LIVE_MAP selects the live radar map; otherwise load the saved
+ offline raw grid associated with this map ID. */
     pb_callback_t map_id;
+    /* Unique within the APP session; echoed by the result and every chunk. */
     uint64_t request_id;
 } sl_link_MapRequest;
 
@@ -484,9 +541,11 @@ typedef struct _sl_link_MapChunk {
     float preview_scale_y;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
+    /* Rotation from source map frame to the returned map image frame, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
+    /* Same region/edit version semantics as MapPreviewResponse.map_version. */
     uint32_t map_version;
     uint64_t request_id;
     uint64_t snapshot_id;
@@ -533,22 +592,32 @@ typedef struct _sl_link_TaskCommandResponse {
     pb_callback_t task_id;
 } sl_link_TaskCommandResponse;
 
+/* Empty optional fields query the current task's effective setpoints and limits.
+ Updates apply only to this task; no persistent configuration or enable state changes. */
 typedef struct _sl_link_TaskRuntimeSettingsRequest {
     pb_callback_t task_id;
-    bool has_run_speed;
-    float run_speed;
-    bool has_disc_speed_rpm;
-    uint32_t disc_speed_rpm;
+    pb_size_t which__run_speed;
+    union _sl_link_TaskRuntimeSettingsRequest__run_speed {
+        float run_speed;
+    } _run_speed;
+    pb_size_t which__disc_speed_rpm;
+    union _sl_link_TaskRuntimeSettingsRequest__disc_speed_rpm {
+        uint32_t disc_speed_rpm;
+    } _disc_speed_rpm;
 } sl_link_TaskRuntimeSettingsRequest;
 
 typedef struct _sl_link_TaskRuntimeSettingsResponse {
     sl_link_ResultCode result;
     pb_callback_t message;
     pb_callback_t task_id;
-    bool has_run_speed;
-    float run_speed;
-    bool has_disc_speed_rpm;
-    uint32_t disc_speed_rpm;
+    pb_size_t which__run_speed;
+    union _sl_link_TaskRuntimeSettingsResponse__run_speed {
+        float run_speed;
+    } _run_speed;
+    pb_size_t which__disc_speed_rpm;
+    union _sl_link_TaskRuntimeSettingsResponse__disc_speed_rpm {
+        uint32_t disc_speed_rpm;
+    } _disc_speed_rpm;
     float max_run_speed;
     uint32_t max_disc_speed_rpm;
     bool temporary;
@@ -577,15 +646,20 @@ typedef struct _sl_link_TaskStatusReport {
 } sl_link_TaskStatusReport;
 
 typedef struct _sl_link_PathPointPlanRequest {
+    /* Non-empty: plan with the matching task configuration and its temporary
+ obstacles. Empty: plan only with current-map work/public obstacle regions. */
     pb_callback_t task_id;
     uint32_t max_chunk_size;
     pb_callback_t request_id;
     bool force_replan;
+    /* Optional planning endpoints. Omitted endpoints use planner defaults. */
     bool has_start_pose;
     sl_link_Pose2D start_pose;
     bool has_end_pose;
     sl_link_Pose2D end_pose;
+    /* Optional planning direction: x, -x, y, or -y. */
     pb_callback_t global_direction;
+    /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
 } sl_link_PathPointPlanRequest;
 
@@ -631,14 +705,18 @@ typedef struct _sl_link_MapPreviewResponse {
     float preview_scale_y;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
+    /* Saved rotation angle for this map, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
     pb_callback_t map_id;
+    /* SHA-256 revision of immutable saved assets; distinct from map_version (region edits). */
     pb_callback_t map_revision;
 } sl_link_MapPreviewResponse;
 
+/* Lightweight map annotation query. It does not render or return an image. */
 typedef struct _sl_link_MapRegionPointRequest {
+    /* Empty means the currently active map; LIVE_MAP means the realtime map. */
     pb_callback_t map_id;
 } sl_link_MapRegionPointRequest;
 
@@ -723,7 +801,9 @@ typedef struct _sl_link_PathPlanRequest {
     sl_link_Pose2D start_pose;
     bool has_end_pose;
     sl_link_Pose2D end_pose;
+    /* Optional planning direction: x, -x, y, or -y. */
     pb_callback_t global_direction;
+    /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
 } sl_link_PathPlanRequest;
 
@@ -752,6 +832,7 @@ typedef struct _sl_link_PathPlanResponse {
     float estimated_time_s;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
+    /* Saved rotation angle used by the returned path preview, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
@@ -759,6 +840,9 @@ typedef struct _sl_link_PathPlanResponse {
 
 typedef struct _sl_link_MapSyncRequest {
     sl_link_MapSyncOperation operation;
+    /* Map-id-only mode:
+ - DOWNLOAD_FROM_AURORA: map_id 可为空（自动生成新地图ID）
+ - UPLOAD_TO_AURORA: map_id 必填（从本地已记录地图中查找并上传） */
     pb_callback_t map_id;
     bool update_navigation_map;
 } sl_link_MapSyncRequest;
@@ -811,6 +895,9 @@ typedef struct _sl_link_MapModeResponse {
 
 typedef struct _sl_link_MapAlignmentRequest {
     pb_callback_t map_id;
+    /* APP planning/display rotation relative to the map X axis, in degrees.
+ It is stored independently; planning uses alignment_yaw plus the saved
+ rotation difference, but alignment_yaw itself is never overwritten. */
     float rotation_deg;
 } sl_link_MapAlignmentRequest;
 
@@ -868,6 +955,9 @@ typedef struct _sl_link_MapDeleteResponse {
 typedef struct _sl_link_MapSaveRequest {
     pb_callback_t map_name;
     pb_callback_t map_id;
+    /* Optional map rotation angle relative to the positive X axis, in degrees;
+ positive values rotate clockwise in APP image coordinates.
+ Set has_rotation_deg=true when rotation_deg should override the saved value. */
     bool has_rotation_deg;
     float rotation_deg;
 } sl_link_MapSaveRequest;
@@ -959,6 +1049,7 @@ typedef struct _sl_link_TaskResultResponse {
     pb_callback_t region_results;
     bool has_localization_covariance;
     sl_link_LocalizationCovariance localization_covariance;
+    /* Saved rotation angle used by the returned result image, in degrees. */
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
@@ -973,6 +1064,7 @@ typedef struct _sl_link_TaskResultResponse {
 typedef struct _sl_link_TaskExecutionHistoryRequest {
     pb_callback_t map_id;
     pb_callback_t task_id;
+    /* Inclusive execution start-time range, epoch seconds. Zero means unbounded. */
     uint64_t start_time;
     uint64_t end_time;
     uint32_t max_chunk_size;
@@ -990,6 +1082,7 @@ typedef struct _sl_link_TaskExecutionHistoryChunk {
 } sl_link_TaskExecutionHistoryChunk;
 
 typedef struct _sl_link_TaskExecutionDeleteRequest {
+    /* Unique ID returned by TaskExecutionHistoryChunk records[].execution_id. */
     pb_callback_t execution_id;
 } sl_link_TaskExecutionDeleteRequest;
 
@@ -1004,8 +1097,10 @@ typedef struct _sl_link_TaskExecutionDeleteResponse {
 } sl_link_TaskExecutionDeleteResponse;
 
 typedef struct _sl_link_TaskTrajectoryRequest {
+    /* Prefer execution_id. If empty, task_id selects its latest execution. */
     pb_callback_t execution_id;
     pb_callback_t task_id;
+    /* Inclusive point timestamp range, epoch seconds. Zero means unbounded. */
     uint64_t start_time;
     uint64_t end_time;
     uint32_t start_index;
@@ -1016,6 +1111,7 @@ typedef struct _sl_link_TaskTrajectoryRequest {
 
 typedef struct _sl_link_TaskTrajectoryPoint {
     uint32_t index;
+    /* Milliseconds relative to TaskTrajectoryChunk.started_at_ms. */
     uint32_t offset_ms;
     int32_t x_mm;
     int32_t y_mm;
@@ -1049,6 +1145,7 @@ typedef struct _sl_link_TaskTrajectoryChunk {
     bool map_available;
     pb_callback_t map_message;
     uint32_t map_version;
+    /* Source occupancy-grid dimensions before preview scaling. */
     uint32_t map_source_width;
     uint32_t map_source_height;
     float map_resolution;
@@ -1060,6 +1157,7 @@ typedef struct _sl_link_TaskTrajectoryChunk {
     uint32_t map_image_height;
     float map_preview_scale_x;
     float map_preview_scale_y;
+    /* Raw map preview without region/point/path overlays. */
     pb_callback_t map_image_data;
     uint32_t map_image_chunk_index;
     uint32_t map_image_total_chunks;
@@ -1080,6 +1178,7 @@ typedef struct _sl_link_LiveMapCacheClearResponse {
 typedef struct _sl_link_SystemCacheClearRequest {
     bool clear_memory_cache;
     bool clear_temporary_files;
+    /* Includes catkin_ws/logs and ~/.ros/log. */
     bool clear_logs;
 } sl_link_SystemCacheClearRequest;
 
@@ -1126,11 +1225,16 @@ typedef struct _sl_link_RadarMapSyncResponse {
 } sl_link_RadarMapSyncResponse;
 
 typedef struct _sl_link_RadarRelocalizationRequest {
+    /* Required for Super-LIO. The pose is expressed in the ROS map frame.
+ x/y use metres and heading_deg uses degrees counter-clockwise from map X. */
     bool initial_pose_available;
     bool has_initial_pose;
     sl_link_Pose2D initial_pose;
+    /* Optional uncertainty for the initial guess. When valid=false, LOWER uses
+ its configured defaults. */
     bool has_initial_pose_covariance;
     sl_link_LocalizationCovariance initial_pose_covariance;
+    /* Must match the currently active immutable saved map. */
     pb_callback_t map_id;
     pb_callback_t map_revision;
 } sl_link_RadarRelocalizationRequest;
@@ -1138,6 +1242,7 @@ typedef struct _sl_link_RadarRelocalizationRequest {
 typedef struct _sl_link_RadarRelocalizationResponse {
     sl_link_ResultCode result;
     pb_callback_t message;
+    /* True means the radar accepted the asynchronous relocalization request. */
     bool accepted;
     pb_callback_t status;
     pb_callback_t map_id;
@@ -1191,7 +1296,9 @@ typedef struct _sl_link_ManualDriveControl {
     float speed_ratio;
     float remote_x;
     float remote_y;
+    /* Optional maximum straight-line speed for this command, in m/s. */
     float max_speed_mps;
+    /* Optional steering/differential speed ratio in (0, 1]. Zero keeps legacy behavior. */
     float max_turn_speed_ratio;
 } sl_link_ManualDriveControl;
 
@@ -1455,7 +1562,7 @@ extern "C" {
 #define sl_link_PolygonPoint_init_default        {0, 0}
 #define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
 #define sl_link_ChassisSettings_init_default     {0, 0, 0, _sl_link_WorkMode_MIN, 0}
-#define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}}
 #define sl_link_RppSettings_init_default         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define sl_link_SettingsReadRequest_init_default {0, 0, 0}
 #define sl_link_SettingsReadResponse_init_default {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, {{NULL}, NULL}, false, sl_link_RppSettings_init_default}
@@ -1463,7 +1570,7 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
 #define sl_link_Pose2D_init_default              {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_default {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0}
+#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, {{NULL}, NULL}}
 #define sl_link_CameraFrameRequest_init_default  {0, 0}
 #define sl_link_CameraFrameChunk_init_default    {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}, 0}
@@ -1475,8 +1582,8 @@ extern "C" {
 #define sl_link_TaskConfigResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_default         {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, false, 0, false, 0}
-#define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
+#define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, 0, {0}, 0, {0}}
+#define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {0}, 0, {0}, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_default    {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default}
 #define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
@@ -1548,7 +1655,7 @@ extern "C" {
 #define sl_link_PolygonPoint_init_zero           {0, 0}
 #define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
 #define sl_link_ChassisSettings_init_zero        {0, 0, 0, _sl_link_WorkMode_MIN, 0}
-#define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}}
 #define sl_link_RppSettings_init_zero            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define sl_link_SettingsReadRequest_init_zero    {0, 0, 0}
 #define sl_link_SettingsReadResponse_init_zero   {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, {{NULL}, NULL}, false, sl_link_RppSettings_init_zero}
@@ -1556,7 +1663,7 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
 #define sl_link_Pose2D_init_zero                 {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_zero {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0}
+#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, {{NULL}, NULL}}
 #define sl_link_CameraFrameRequest_init_zero     {0, 0}
 #define sl_link_CameraFrameChunk_init_zero       {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}, 0}
@@ -1568,8 +1675,8 @@ extern "C" {
 #define sl_link_TaskConfigResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_zero            {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, false, 0, false, 0}
-#define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
+#define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, 0, {0}, 0, {0}}
+#define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {0}, 0, {0}, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_zero       {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero}
 #define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
@@ -1785,6 +1892,9 @@ extern "C" {
 #define sl_link_DeviceStatusReport_vehicle_speed_tag 20
 #define sl_link_DeviceStatusReport_chassis_connected_tag 21
 #define sl_link_DeviceStatusReport_emergency_stop_latched_tag 22
+#define sl_link_DeviceStatusReport_localization_ready_tag 23
+#define sl_link_DeviceStatusReport_localization_pause_latched_tag 24
+#define sl_link_DeviceStatusReport_localization_status_reason_tag 25
 #define sl_link_CameraFrameRequest_snapshot_tag  1
 #define sl_link_CameraFrameRequest_max_chunk_size_tag 2
 #define sl_link_CameraFrameChunk_frame_id_tag    1
@@ -2351,12 +2461,12 @@ X(a, STATIC,   SINGULAR, FLOAT,    base_laser_z,     12) \
 X(a, STATIC,   SINGULAR, FLOAT,    base_laser_roll_deg,  13) \
 X(a, STATIC,   SINGULAR, FLOAT,    base_laser_pitch_deg,  14) \
 X(a, STATIC,   SINGULAR, FLOAT,    base_laser_yaw_deg,  15) \
-X(a, STATIC,   OPTIONAL, FLOAT,    endpoint_margin,  16) \
-X(a, STATIC,   OPTIONAL, FLOAT,    output_point_spacing,  17) \
-X(a, STATIC,   OPTIONAL, FLOAT,    aligned_obstacle_inflation,  18) \
-X(a, STATIC,   OPTIONAL, FLOAT,    aligned_obstacle_max_extent,  19) \
-X(a, STATIC,   OPTIONAL, FLOAT,    obstacle_corner_angle_deg,  20) \
-X(a, STATIC,   OPTIONAL, FLOAT,    obstacle_avoidance_distance,  21)
+X(a, STATIC,   ONEOF,    FLOAT,    (_endpoint_margin,endpoint_margin,_endpoint_margin.endpoint_margin),  16) \
+X(a, STATIC,   ONEOF,    FLOAT,    (_output_point_spacing,output_point_spacing,_output_point_spacing.output_point_spacing),  17) \
+X(a, STATIC,   ONEOF,    FLOAT,    (_aligned_obstacle_inflation,aligned_obstacle_inflation,_aligned_obstacle_inflation.aligned_obstacle_inflation),  18) \
+X(a, STATIC,   ONEOF,    FLOAT,    (_aligned_obstacle_max_extent,aligned_obstacle_max_extent,_aligned_obstacle_max_extent.aligned_obstacle_max_extent),  19) \
+X(a, STATIC,   ONEOF,    FLOAT,    (_obstacle_corner_angle_deg,obstacle_corner_angle_deg,_obstacle_corner_angle_deg.obstacle_corner_angle_deg),  20) \
+X(a, STATIC,   ONEOF,    FLOAT,    (_obstacle_avoidance_distance,obstacle_avoidance_distance,_obstacle_avoidance_distance.obstacle_avoidance_distance),  21)
 #define sl_link_MapSettings_CALLBACK pb_default_field_callback
 #define sl_link_MapSettings_DEFAULT NULL
 #define sl_link_MapSettings_obstacle_regions_MSGTYPE sl_link_PolygonRegion
@@ -2505,8 +2615,11 @@ X(a, STATIC,   SINGULAR, BOOL,     collision_imminent,  17) \
 X(a, STATIC,   SINGULAR, BOOL,     radar_system_status_available,  18) \
 X(a, CALLBACK, SINGULAR, STRING,   radar_system_status,  19) \
 X(a, STATIC,   SINGULAR, FLOAT,    vehicle_speed,    20) \
-X(a, STATIC,   OPTIONAL, BOOL,     chassis_connected,  21) \
-X(a, STATIC,   OPTIONAL, BOOL,     emergency_stop_latched,  22)
+X(a, STATIC,   ONEOF,    BOOL,     (_chassis_connected,chassis_connected,_chassis_connected.chassis_connected),  21) \
+X(a, STATIC,   ONEOF,    BOOL,     (_emergency_stop_latched,emergency_stop_latched,_emergency_stop_latched.emergency_stop_latched),  22) \
+X(a, STATIC,   ONEOF,    BOOL,     (_localization_ready,localization_ready,_localization_ready.localization_ready),  23) \
+X(a, STATIC,   ONEOF,    BOOL,     (_localization_pause_latched,localization_pause_latched,_localization_pause_latched.localization_pause_latched),  24) \
+X(a, CALLBACK, SINGULAR, STRING,   localization_status_reason,  25)
 #define sl_link_DeviceStatusReport_CALLBACK pb_default_field_callback
 #define sl_link_DeviceStatusReport_DEFAULT NULL
 #define sl_link_DeviceStatusReport_position_MSGTYPE sl_link_Pose2D
@@ -2629,8 +2742,8 @@ X(a, CALLBACK, SINGULAR, STRING,   task_id,           3)
 
 #define sl_link_TaskRuntimeSettingsRequest_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           1) \
-X(a, STATIC,   OPTIONAL, FLOAT,    run_speed,         2) \
-X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    3)
+X(a, STATIC,   ONEOF,    FLOAT,    (_run_speed,run_speed,_run_speed.run_speed),   2) \
+X(a, STATIC,   ONEOF,    UINT32,   (_disc_speed_rpm,disc_speed_rpm,_disc_speed_rpm.disc_speed_rpm),   3)
 #define sl_link_TaskRuntimeSettingsRequest_CALLBACK pb_default_field_callback
 #define sl_link_TaskRuntimeSettingsRequest_DEFAULT NULL
 
@@ -2638,8 +2751,8 @@ X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    3)
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           3) \
-X(a, STATIC,   OPTIONAL, FLOAT,    run_speed,         4) \
-X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    5) \
+X(a, STATIC,   ONEOF,    FLOAT,    (_run_speed,run_speed,_run_speed.run_speed),   4) \
+X(a, STATIC,   ONEOF,    UINT32,   (_disc_speed_rpm,disc_speed_rpm,_disc_speed_rpm.disc_speed_rpm),   5) \
 X(a, STATIC,   SINGULAR, FLOAT,    max_run_speed,     6) \
 X(a, STATIC,   SINGULAR, UINT32,   max_disc_speed_rpm,   7) \
 X(a, STATIC,   SINGULAR, BOOL,     temporary,         8)
