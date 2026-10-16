@@ -26,7 +26,8 @@ class ExecutionTest(unittest.TestCase):
         names = {'_start_execution', '_resume_execution', '_apply_emergency_stop', '_handle_manual_drive', '_handle_manual_drive_locked',
                  '_set_cmd_vel_forward_runtime_active', '_stop_execution', '_reset_emergency_stop',
                  '_request_indicator_clear', '_emergency_status_tick', '_apply_control_outputs',
-                 '_driver_motion_safety', '_sync_deferred_driver_emergency', '_chassis_status_callback'}
+                 '_driver_motion_safety', '_sync_deferred_driver_emergency', '_chassis_status_callback',
+                 '_restore_indicator_reset'}
         cls, namespace = harness.load_class(harness.SCHEDULER, names)
         class RosError(Exception):
             pass
@@ -250,6 +251,8 @@ class ExecutionTest(unittest.TestCase):
         restarted, ros = self.node()
         ros.get_param = lambda *a: True
         self.assertFalse(restarted._motion.latched)
+        restarted._restore_indicator_reset()
+        self.assertEqual(restarted._motion.generation, restarted._indicator_clear_generation)
         replay = M(data=json.dumps({'emergency_latched': True}))
         restarted._driver_motion_safety(replay)
         restarted._chassis_status_callback(M(connected=False))
@@ -257,6 +260,71 @@ class ExecutionTest(unittest.TestCase):
         self.assertFalse(restarted._motion.latched)
         restarted._chassis_status_callback(M(connected=True))
         self.assertTrue(restarted._motion.latched)
+
+    def test_startup_reset_replay_requires_explicit_durable_reset(self):
+        node, _ = self.node()
+        node._restore_indicator_reset()
+        self.assertIsNone(node._indicator_clear_generation)
+        node._apply_emergency_stop(True)
+        node._restore_indicator_reset()
+        self.assertIsNone(node._indicator_clear_generation)
+        self.assertTrue(node._motion.reset(node._motion.generation))
+        node._restore_indicator_reset()
+        self.assertIsNotNone(node._indicator_clear_generation)
+        node._apply_emergency_stop(True)
+        self.assertIsNone(node._indicator_clear_generation)
+        node._restore_indicator_reset()
+        self.assertIsNone(node._indicator_clear_generation)
+
+    def test_restored_clear_retries_services_and_clears_both_records(self):
+        node, ros = self.node()
+        node._apply_emergency_stop(True)
+        self.assertTrue(node._motion.reset(node._motion.generation))
+        restarted, ros = self.node()
+        ros.get_param = lambda *a: True
+        restarted._restore_indicator_reset()
+        def missing(*a, **k):
+            raise ros.ROSException('indicator not ready')
+        ros.wait_for_service = missing
+        restarted._emergency_status_tick(None)
+        self.assertIsNotNone(restarted._indicator_clear_generation)
+        # Exercise the real indicator clear RPC: both sources start red again,
+        # as a disconnected but motion-latched driver does after restarting.
+        from test_status_indicator_integration import NodeIntegrationTest, Message
+        fixture = NodeIntegrationTest()
+        fixture.setUp()
+        indicator = fixture.node
+        indicator.resolver.ignore_chassis_status = True
+        indicator._emergency('scheduler_emergency', Message(data=False))
+        indicator._emergency('chassis_emergency', Message(data=True))
+        cleared = []
+        fixture.rospy.wait_for_service = lambda *a, **k: None
+        def source_proxy(name, _type):
+            def clear():
+                cleared.append(name)
+                source = 'scheduler_emergency' if name.startswith('/scheduler') else 'chassis_emergency'
+                indicator._emergency(source, Message(data=False))
+                return Message(success=True, message='cleared')
+            return clear
+        fixture.rospy.ServiceProxy = source_proxy
+        ros.wait_for_service = lambda *a, **k: None
+        ros.ServiceProxy = lambda *a: lambda: indicator._clear(None)
+        restarted._emergency_status_tick(None)
+        self.assertEqual(['/scheduler/clear_emergency_indicator', '/chassis/clear_emergency_indicator'], cleared)
+        self.assertIsNone(restarted._indicator_clear_generation)
+        self.assertTrue(indicator._clear_pending)
+        factory = indicator.transport.factory
+        def unplugged():
+            raise IOError('USB absent during boot')
+        indicator.transport.factory = unplugged
+        indicator.transport.retry_seconds = 0
+        indicator._step()
+        self.assertTrue(indicator._clear_pending)
+        indicator.transport.factory = factory
+        indicator._step()
+        from grinder_scheduler.status_indicator import unpack
+        self.assertEqual('1', unpack(indicator.transport.port.frames[-1])[-1])
+        self.assertFalse(indicator._clear_pending)
 
     def test_deferred_driver_lock_enforced_when_test_mode_disabled(self):
         node, ros = self.node()

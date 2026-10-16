@@ -867,6 +867,7 @@ class SchedulerNode:
                            ("active_segment_plan_pub", lambda msg: False)):
             setattr(self, name, GuardedPublisher(getattr(self, name), self._motion, safe))
         self.motion_safety_pub = rospy.Publisher("/scheduler/motion_safety", String, queue_size=1, latch=True)
+        self._restore_indicator_reset()
         rospy.Service("/scheduler/reset_emergency_stop", Trigger, self._reset_emergency_stop)
         rospy.Subscriber("/chassis/motion_safety", String, self._driver_motion_safety, queue_size=1)
         self._emergency_status_timer = rospy.Timer(rospy.Duration(0.5), self._emergency_status_tick)
@@ -8506,6 +8507,15 @@ class SchedulerNode:
         self._driver_emergency_deferred = False
         if not self._motion.latched:
             self._apply_emergency_stop(True)
+
+    def _restore_indicator_reset(self):
+        # A durable FALSE motion record proves a prior explicit reset. Replay
+        # its display reset after restart: a still-latched disconnected driver
+        # reasserts its display record on boot, and USB power may retain the
+        # controller's emergency latch. A missing record grants no clear.
+        with self._motion.lock:
+            if not self._motion.latched and os.path.isfile(self._motion.record.path):
+                self._request_indicator_clear(self._motion.generation)
 
     def _request_indicator_clear(self, expected_generation=None):
         with self._motion.lock:
