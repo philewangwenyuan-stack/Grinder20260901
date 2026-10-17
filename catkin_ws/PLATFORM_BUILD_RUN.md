@@ -50,6 +50,15 @@ PROFILE=sim       ./build_grinder_platform.sh   # Gazebo + 调度 + RPP/move_bas
 PROFILE=mapping   ./build_grinder_platform.sh   # Super-LIO + 固定内存二维栅格建图
 ```
 
+内部轮速融合新增 C++ 代码及底盘消息依赖后，目标 Linux 需构建 `PROFILE=mapping`
+和 `PROFILE=runtime`。两种模式融合默认关闭；受控验证后在调度包
+`config/super_lio.yaml` 分别开启 `super_lio_wheel_fusion_mapping_enabled` 或
+`super_lio_wheel_fusion_localization_enabled`，重启对应模式生效。
+线速度和角速度另有独立开关（默认 true/false）；观测源为 `/chassis/wheel_twis`。
+直接 roslaunch 可传 `wheel_fusion_enabled:=true wheel_fuse_angular_velocity:=true`；
+这只应在完成时间与噪声标定后使用。检查 `/super_lio/wheel_fusion_diagnostics`，
+不通过降低定位质量门槛掩盖轮速打滑或雷达退化。
+
 `mapping` profile 默认要求工业回环后端。首次在 Ubuntu 20.04 / RK3588 上构建时先安装固定版本依赖：
 
 ```bash

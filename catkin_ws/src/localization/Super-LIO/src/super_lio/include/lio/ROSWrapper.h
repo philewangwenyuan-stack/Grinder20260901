@@ -26,6 +26,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -59,7 +61,7 @@ void livox2pcl(const livox_ros_driver2::CustomMsg::ConstPtr& msg, BASIC::CloudPt
 class ROSWrapper{
 public:
   ROSWrapper();
-  ~ROSWrapper(){};
+  ~ROSWrapper();
   using Ptr = std::unique_ptr<ROSWrapper>;
   bool sync_measure(MeasureGroup&);
   void spinOnce(){
@@ -68,6 +70,7 @@ public:
 
   void setESKF(ESKF::Ptr& eskf) {
     eskf_ = eskf;
+    eskf_->EnableWheelFusion(wheel_enabled_);
   }
 
   void setMap(OctVoxMap<BASIC::V3, BASIC::scalar>::Ptr& ivox) {
@@ -75,6 +78,7 @@ public:
   }
 
   void clear(){
+    resetWheelFusion();
     lidar_buffer_.clear();
     imu_buffer_.clear();
     lidar_pushed_ = false;
@@ -83,6 +87,12 @@ public:
   }
 
   void pub_odom(const NavState& state, bool re_path);
+  bool propagateWheel(MeasureGroup& meas, std::vector<DynamicState>& states);
+  void resetWheelFusion();
+  void setWheelInitialized(bool initialized) {
+    if (eskf_) eskf_->SetWheelInitialized(initialized);
+    resetWheelFusion();
+  }
   // void pub_cloud_body(const BASIC::CloudPtr& pc, double time);
   void pub_cloud_world(const BASIC::CloudPtr& pc, double time);
   void pub_cloud2planner(const BASIC::CloudPtr& pc, double time);
@@ -104,6 +114,22 @@ public:
   void get3DCloud(BASIC::CloudPtr& pc);
  
 private:
+  void setupWheelFusion();
+  void wheelHandler(const geometry_msgs::TwistWithCovarianceStamped::ConstPtr& msg);
+  void wheelDiagnostics(const ros::TimerEvent&);
+  bool wheel_enabled_ = false, wheel_linear_ = true, wheel_angular_ = false;
+  std::string wheel_mode_;
+  double wheel_max_age_ = 0.25, wheel_single_gate_ = 9.0, wheel_joint_gate_ = 11.83;
+  double wheel_last_clock_ = -1.0;
+  bool wheel_have_left_ = false;
+  IMUData wheel_left_;
+  wheel_fusion::Buffer wheel_buffer_;
+  wheel_fusion::Result wheel_result_;
+  unsigned long wheel_rejected_ = 0;
+  double wheel_last_time_ = -1.0;
+  ros::Subscriber wheel_sub_;
+  ros::Publisher wheel_diagnostics_pub_, wheel_system_diagnostics_pub_;
+  ros::Timer wheel_diagnostics_timer_;
   void imuHandler(const sensor_msgs::Imu::ConstPtr&);
   void livoxHandler(const livox_ros_driver2::CustomMsg::ConstPtr&);
   void stdMsgHandler(const sensor_msgs::PointCloud2::ConstPtr&);

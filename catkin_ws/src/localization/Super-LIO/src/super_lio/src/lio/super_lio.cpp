@@ -129,6 +129,7 @@ void SuperLIO::init(){
     }
     if(map_init()){
       kf_->init_ = true;
+      data_wrapper_->setWheelInitialized(true);
       break;
     }
     loop.sleep();
@@ -185,6 +186,7 @@ bool SuperLIO::kf_init(){
   state.p = g_odom_robo.t_;        // By default, the robot frame is used as the reference origin.
   state.timestamp = measures_.imu.back().secs;
   kf_->SetX(state);
+  data_wrapper_->resetWheelFusion();
   sys_init_pose_ = kf_->GetSE3();
   return true;
 }
@@ -552,12 +554,14 @@ void SuperLIO::process(){
 
 
 void SuperLIO::Propagation_Undistort(){
-  propagate_states_.clear();
-  propagate_states_.emplace_back(kf_->GetDynamicState());
-  kf_->SetObsTime(measures_.lidar.end_time);
-  for (auto &imu : measures_.imu) {
-    kf_->Predict(imu);
+  if (!data_wrapper_->propagateWheel(measures_, propagate_states_)) {
+    propagate_states_.clear();
     propagate_states_.emplace_back(kf_->GetDynamicState());
+    kf_->SetObsTime(measures_.lidar.end_time);
+    for (auto &imu : measures_.imu) {
+      kf_->Predict(imu);
+      propagate_states_.emplace_back(kf_->GetDynamicState());
+    }
   }
 
   static const M3 TLI_R = g_lidar_imu.R_;
@@ -580,7 +584,7 @@ void SuperLIO::Propagation_Undistort(){
       const auto& pt = raw_pc->points[idx];
       pt_full.intensity = pt.intensity;
       double query_time = start_time + pt.offset_time;
-      if (query_time > propagate_states_.back().time) {
+      if (propagate_states_.size()<2 || query_time > propagate_states_.back().time) {
         V3 raw(pt.x, pt.y, pt.z);
         V3 eigen_point = TLI_R * raw + TLI_t;
         pt_full.x = eigen_point[0];
@@ -589,7 +593,7 @@ void SuperLIO::Propagation_Undistort(){
         continue;
       }
       auto match_iter = propagate_states_.begin();
-      for (auto iter = propagate_states_.begin(); iter != propagate_states_.end(); ++iter) {
+      for (auto iter = propagate_states_.begin(); std::next(iter) != propagate_states_.end(); ++iter) {
         auto next_iter = std::next(iter);
         if (iter->time < query_time && next_iter->time >= query_time) {
           match_iter = iter;

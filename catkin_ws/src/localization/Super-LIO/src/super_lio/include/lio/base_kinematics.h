@@ -12,6 +12,7 @@ using Transform = Eigen::Isometry3d;
 using Covariance = Eigen::Matrix<double, 18, 18>;
 using Jacobian = Eigen::Matrix<double, 6, 18>;
 using Covariance6 = Eigen::Matrix<double, 6, 6>;
+using StateGyroCross = Eigen::Matrix<double, 18, 3>;
 
 inline Eigen::Matrix3d hat(const Eigen::Vector3d& v) {
   Eigen::Matrix3d result;
@@ -44,7 +45,8 @@ inline Output convert(const Transform& world_imu, const Transform& imu_base,
                       const Eigen::Vector3d& world_velocity,
                       const Eigen::Vector3d& imu_omega,
                       const Covariance& covariance,
-                      const Eigen::Matrix3d& gyro_covariance) {
+                      const Eigen::Matrix3d& gyro_covariance,
+                      const StateGyroCross& state_gyro_cross = StateGyroCross::Zero()) {
   Output result;
   result.pose = imuToBase(world_imu, imu_base);
   const Eigen::Matrix3d R = world_imu.linear();
@@ -71,7 +73,9 @@ inline Output convert(const Transform& world_imu, const Transform& imu_base,
   G.topRows<3>() = -A * hat(r);
   G.bottomRows<3>() = A;
   result.twist_covariance = J_twist * covariance * J_twist.transpose() +
-                            G * gyro_covariance * G.transpose();
+                            G * gyro_covariance * G.transpose() -
+                            J_twist * state_gyro_cross * G.transpose() -
+                            G * state_gyro_cross.transpose() * J_twist.transpose();
   return result;
 }
 

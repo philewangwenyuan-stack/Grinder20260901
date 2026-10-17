@@ -49,6 +49,7 @@ void ESKF::SetInitialConditions(Options options, const V3& init_bg,
                                 const V3& init_ba, const float imu_scale,
                                 const V3& gravity) 
 {
+  wheel_initialized_ = false;
   BuildNoise(options);
   options_ = options;
   bg_ = init_bg;
@@ -64,6 +65,7 @@ void ESKF::SetInitialConditions(Options options, const V3& init_bg,
 
 
 void ESKF::SetX(const SysState& x) {
+  wheel_gyro_.clear();
   last_imu_time_ = x.timestamp;      // TODO: The timestamp update is not strictly consistent.
   current_time_ = last_imu_time_;
   R_ = x.R;
@@ -242,6 +244,10 @@ bool ESKF::Predict(const IMUData& imu) {
 const int STATE_DIM = 18;
 bool ESKF::UpdateObserve(ESKF::ObsFunc obs) {
   SO3 R_0 = R_;
+  const auto wheel_prior = wheel_gyro_;
+  const auto state_prior = GetSysState();
+  const auto covariance_prior = P_;
+  const V3 gravity_prior = g_;
 
   M6 HTVH;     // H^T * V^(-1) * H
   V6 HTVr;     // H^T * V^(-1) * residuals
@@ -340,7 +346,7 @@ bool ESKF::UpdateObserve(ESKF::ObsFunc obs) {
   // update P
   M18 temp_cov = M18::Identity();
   temp_cov.block<6,6>(0,0) = HTVH;
-  P_ = (M18::Identity() - Qk * temp_cov) * Pk;
+  P_ = wheel_enabled_ ? Qk.eval() : ((M18::Identity() - Qk * temp_cov) * Pk).eval();
 
   Pk = P_;
 
@@ -355,6 +361,37 @@ bool ESKF::UpdateObserve(ESKF::ObsFunc obs) {
   }
 
   P_ = Pk;
+
+  if (wheel_enabled_) {
+    // Condition retained gyro samples on the same LiDAR update. Their noise is
+    // correlated with the propagated state and must survive into the next interval.
+    const wheel_fusion::M18 prior = covariance_prior.cast<double>();
+    const auto solver = prior.ldlt();
+    if (solver.info() == Eigen::Success && solver.isPositive()) {
+      wheel_fusion::V18 delta;
+      delta.segment<3>(0) = (state_prior.R.inverse()*R_).log_vee().cast<double>();
+      delta.segment<3>(3) = (p_-state_prior.p).cast<double>();
+      delta.segment<3>(6) = (v_-state_prior.v).cast<double>();
+      delta.segment<3>(9) = (bg_-state_prior.bg).cast<double>();
+      delta.segment<3>(12) = (ba_-state_prior.ba).cast<double>();
+      // Gravity is normalized by Update(); recover its actual accumulated change.
+      delta.segment<3>(15) = (g_-gravity_prior).cast<double>();
+      const wheel_fusion::M18x6 regression = solver.solve(wheel_prior.cross);
+      wheel_fusion::M18 reset = wheel_fusion::M18::Identity();
+      reset.topLeftCorner<3,3>() -= 0.5*base_kinematics::hat(delta.head<3>());
+      const wheel_fusion::M18 posterior = P_.cast<double>();
+      // Express the posterior in the prior tangent before conditioning nuisance noise.
+      const wheel_fusion::M18 inverse_reset = reset.inverse();
+      const wheel_fusion::M18 old_tangent = inverse_reset*posterior*inverse_reset.transpose();
+      wheel_gyro_.mean = wheel_prior.mean + regression.transpose()*delta;
+      wheel_gyro_.covariance = wheel_prior.covariance +
+          regression.transpose()*(old_tangent-prior)*regression;
+      wheel_gyro_.covariance = (wheel_gyro_.covariance+wheel_gyro_.covariance.transpose()).eval()*0.5;
+      wheel_gyro_.cross = posterior*inverse_reset.transpose()*regression;
+      raw_body_omega_ = wheel_raw_gyro_ - (wheel_gyro_weights_*wheel_gyro_.mean).cast<scalar>();
+      body_omega_ = raw_body_omega_ - bg_;
+    }
+  }
 
   dx_.setZero();
   

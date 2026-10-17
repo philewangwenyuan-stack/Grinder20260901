@@ -199,7 +199,14 @@ class ModbusTransport:
             self.close()
             raise ModbusTransportError(str(exc))
 
-    def read_register_block(self, start_address, count, signed_indices=None):
+    def read_register_block(self, start_address, count, signed_indices=None, timing=None):
+        """Read registers; optionally return monotonic TX/RX bounds in ``timing``.
+
+        Bounds are recorded inside the serial lock, excluding time waiting for
+        unrelated writes. The caller owns the output list, avoiding shared metadata.
+        """
+        if timing is not None:
+            timing[:] = []
         self.connect()
         signed_indices = set(signed_indices or [])
         try:
@@ -211,6 +218,7 @@ class ModbusTransport:
                         + count.to_bytes(2, byteorder="big", signed=False)
                     ),
                 )
+                read_tx_time = time.monotonic()
                 self._serial_port.write(frame)
                 self._log_raw_frame("TX", frame)
                 header = self._serial_port.read_exactly(3)
@@ -227,6 +235,9 @@ class ModbusTransport:
                 response = header + body
                 self._log_raw_frame("RX", response)
                 self._validate_response(response, expected_function=3)
+                read_rx_time = time.monotonic()
+                if timing is not None:
+                    timing[:] = [read_tx_time, read_rx_time]
                 values = []
                 for index in range(0, byte_count, 2):
                     values.append(int.from_bytes(response[3 + index : 5 + index], byteorder="big", signed=False))

@@ -9,6 +9,7 @@
 #include "basic/Manifold.h"
 #include "common/ds.h"
 #include "params.h"
+#include "lio/wheel_fusion.h"
 
 
 namespace LI2Sup{
@@ -73,6 +74,12 @@ public:
                             const BASIC::V3& gravity = BASIC::V3(0, 0, -9.8));
 
   bool Predict(const IMUData& imu);
+  void EnableWheelFusion(bool enabled) { wheel_enabled_ = enabled; wheel_gyro_.clear(); }
+  void SetWheelInitialized(bool initialized) { wheel_initialized_ = initialized; wheel_gyro_.clear(); }
+  bool IsWheelInitialized() const { return wheel_initialized_; }
+  bool PredictWheelInterval(const IMUData& left, const IMUData& right, double target);
+  wheel_fusion::Result UpdateWheel(const wheel_fusion::Sample& sample,
+      bool linear, bool angular, double single_gate, double joint_gate);
 
   using ObsFunc = std::function<void(const KFState& kf_state, BASIC::M6& HT_Vinv_H, BASIC::V6& HT_Vinv_r)>;
   bool UpdateObserve(ObsFunc obs);
@@ -94,6 +101,14 @@ public:
   COV GetCov() const { return P_; }
   // Prediction-interval gyro average, debiased with the latest posterior bias.
   BASIC::V3 GetBodyAngularVelocity() const { return raw_body_omega_ - bg_; }
+  Eigen::Matrix3d GetGyroNoiseCovariance() const {
+    if (!wheel_enabled_ || wheel_gyro_.times[0]<0.0)
+      return options_.gyro_var_*Eigen::Matrix3d::Identity();
+    return wheel_gyro_weights_*wheel_gyro_.covariance*wheel_gyro_weights_.transpose();
+  }
+  base_kinematics::StateGyroCross GetStateGyroCross() const {
+    return wheel_gyro_.cross*wheel_gyro_weights_.transpose();
+  }
 
   BASIC::SE3 GetSE3() const { return BASIC::SE3(R_, p_); }
 
@@ -110,6 +125,11 @@ public:
   bool Predict(const IMUData& imu, nav_msgs::Odometry& odom, nav_msgs::Odometry& odom1);
 
 private:
+  bool wheel_enabled_ = false;
+  bool wheel_initialized_ = false;
+  wheel_fusion::GyroContext wheel_gyro_;
+  Eigen::Matrix<double,3,6> wheel_gyro_weights_ = Eigen::Matrix<double,3,6>::Zero();
+  BASIC::V3 wheel_raw_gyro_ = BASIC::V3::Zero();
   void BuildNoise(const Options& options);
   void Update();
   

@@ -20,15 +20,34 @@
 - 基础状态发布
 - `/diagnostics` 诊断信息发布
 - 读取 `0x4017/0x4018` 电机实际转速并发布轮式 `nav_msgs/Odometry`
+- `/cmd_vel` 到轮速的转换，以及仅有效反馈的 `/chassis/wheel_twis` 融合观测
 
 当前版本暂未实现：
 
-- `/cmd_vel` 到轮速的转换
-- 轮式里程计 TF 发布（轮式 Odometry 不广播 TF，Aurora 继续提供 TF）
+- 轮式里程计 TF 发布（轮式反馈不广播 TF，由定位系统统一发布）
 - 故障清除寄存器的真实写入
 - 更完整的底盘状态寄存器解析
 
 ## 2. 工程结构
+
+### Super-LIO 轮速观测
+
+同一次 Modbus 实际转速读取同时供给 `/odom_wheel`（RPP 原接口）和
+`/chassis/wheel_twis`（`geometry_msgs/TwistWithCovarianceStamped`）。后者只在
+反馈有效且换算成功时发布；有效静止仍发布零速，读取失败则不发布假零速。
+前向速度保持正负号以支持倒车，角速度沿用左转为正、右转为负，frame 为
+`base_link`，不提供位置、不广播 TF、不增加串口轮询。
+
+`config/chassis_driver.yaml` 可配置 `wheel_twist_topic`、
+`wheel_feedback_delay_sec`（默认 0 秒）、`wheel_twist_linear_variance` 和
+`wheel_twist_angular_variance`（分别默认 0.04，单位 `(m/s)^2`、`(rad/s)^2`）
+以及 `wheel_twist_cross_covariance`（默认 0）。方差须为正、联合矩阵须正定；
+索引 0/35 为方差，5/30 为交叉项，其他未测速度的对角线标为 1e6。
+
+融合观测时间为成功的实际转速读取事务中点减去估计反馈延迟；总控缓存年龄未知，
+它不是伺服硬件采样时刻。请用正常定位区域的前进、倒车、转弯及磨盘开关工况
+标定延迟和噪声，避免直接减小方差来“强行相信”轮速。Super-LIO 两模式默认不融合，
+开启步骤和诊断见 [Super-LIO 说明](../localization/Super-LIO/UPSTREAM.md#optional-internal-wheel-fusion)。
 
 主要文件如下：
 

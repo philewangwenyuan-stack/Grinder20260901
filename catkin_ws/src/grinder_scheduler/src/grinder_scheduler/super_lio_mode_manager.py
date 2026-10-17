@@ -1022,6 +1022,23 @@ class SuperLioModeManager:
                 for key in ("base_to_laser_x", "base_to_laser_y", "base_to_laser_z",
                             "base_to_laser_roll", "base_to_laser_pitch", "base_to_laser_yaw")]
 
+    @staticmethod
+    def _wheel_fusion_launch_args(mode):
+        enabled = rospy.get_param("~super_lio_wheel_fusion_{}_enabled".format(mode), False)
+        values = {
+            "wheel_fusion_enabled": enabled,
+            "wheel_fuse_linear_velocity": rospy.get_param("~super_lio_wheel_fuse_linear_velocity", True),
+            "wheel_fuse_angular_velocity": rospy.get_param("~super_lio_wheel_fuse_angular_velocity", False),
+            "wheel_twist_topic": rospy.get_param("~super_lio_wheel_twist_topic", "/chassis/wheel_twis"),
+            "wheel_max_age_sec": rospy.get_param("~super_lio_wheel_max_age_sec", 0.25),
+            "wheel_single_nis_gate": rospy.get_param("~super_lio_wheel_single_nis_gate", 9.0),
+            "wheel_joint_nis_gate": rospy.get_param("~super_lio_wheel_joint_nis_gate", 11.83),
+        }
+        if enabled and not (values["wheel_fuse_linear_velocity"] or values["wheel_fuse_angular_velocity"]):
+            raise ValueError("Wheel fusion requires at least one enabled velocity observation")
+        return ["{}:={}".format(key, str(value).lower() if isinstance(value, bool) else value)
+                for key, value in values.items()]
+
     def _start_mapping_locked(self):
         self._publish_safe()
         if self._state == self.MAPPING and self._owned_mode == "mapping":
@@ -1045,6 +1062,7 @@ class SuperLioModeManager:
             "autosave:={}".format(str(self._autosave).lower()),
         ]
         args.extend(self._base_laser_launch_args())
+        args.extend(self._wheel_fusion_launch_args("mapping"))
         try:
             rospy.loginfo("Starting managed Super-LIO mapping launch")
             launch_started = time.monotonic()
@@ -1169,6 +1187,7 @@ class SuperLioModeManager:
         self._clear_health_samples()
         args = ["bundle_dir:={}".format(bundle)]
         args.extend(self._base_laser_launch_args())
+        args.extend(self._wheel_fusion_launch_args("localization"))
         try:
             launch_started = time.monotonic()
             self._start_launch(self._localization_launch, args, "localization")

@@ -91,6 +91,13 @@ APP / 上位机 -> SL-LinkA -> grinder_scheduler
 不能再给 `/lio/odom` 额外减一次雷达偏移。历史调试话题 `/lio/robo/odom`
 仍是单独的 IMU 频率接口，正式导航使用 `/lio/odom`。
 
+可选内部轮速融合在建图、定位模式下均默认关闭。底盘从同一次实际转速读取
+额外发布有效观测 `/chassis/wheel_twis`，RPP 的 `/odom_wheel` 保持原用途。
+`grinder_scheduler/config/super_lio.yaml` 分别配置两模式总开关及线速度、角速度
+观测开关；支持倒车，缺少轮速时继续纯 LIO，不改变定位异常暂停条件或 TF 发布权。
+现场标定前不要开启；参数、回放和诊断说明见
+[`Super-LIO/UPSTREAM.md`](catkin_ws/src/localization/Super-LIO/UPSTREAM.md#optional-internal-wheel-fusion)。
+
 ### 5. 建图、保存和定位的两条分支
 
 **建图分支**由 `super_lio_mode_manager` 启动 `super_lio_node` 和

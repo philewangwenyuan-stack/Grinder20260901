@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(grinder_chassis_driver)
 
 find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
   diagnostic_msgs
   message_generation
   nav_msgs
@@ -31,7 +32,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS diagnostic_msgs message_runtime nav_msgs rospy std_msgs std_srvs
+  CATKIN_DEPENDS diagnostic_msgs geometry_msgs message_runtime nav_msgs rospy std_msgs std_srvs
 )
 
 catkin_install_python(PROGRAMS

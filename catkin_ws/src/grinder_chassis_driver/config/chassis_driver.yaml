@@ -79,6 +79,12 @@ cmd_vel_wheel_radius_m: 0.1475
 cmd_vel_gear_ratio: 60.0
 # 真实电机转速反馈发布的 Odometry 话题
 wheel_odom_topic: /odom_wheel
+# Dedicated valid-only observations for Super-LIO (RPP keeps /odom_wheel).
+wheel_twist_topic: /chassis/wheel_twis
+wheel_feedback_delay_sec: 0.0
+wheel_twist_linear_variance: 0.04      # (m/s)^2, calibrate before enabling fusion
+wheel_twist_angular_variance: 0.04     # (rad/s)^2
+wheel_twist_cross_covariance: 0.0
  
 # 0x4017/0x4018 的实际电机转速缩放系数，默认按 rpm 原值读取
 actual_motor_speed_scale: 1.0

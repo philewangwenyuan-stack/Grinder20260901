@@ -19,6 +19,89 @@ future changes and compare upstream updates against the checkout above.
 The former nested Git history remains in an ignored `.git.nested-backup-*`
 directory on the migration workstation; it is not required to build a fresh clone.
 
+## Optional internal wheel fusion
+
+The Grinder extension consumes valid-only `geometry_msgs/TwistWithCovarianceStamped`
+on `/chassis/wheel_twis` (the spelling is intentional). Existing `/odom_wheel`
+remains RPP's velocity feedback; its unavailable pose is never fused. There is
+no additional TF broadcaster or external EKF. Mapping and localization share
+the same chronological IMU/wheel propagation implementation.
+
+Managed parameters in `grinder_scheduler/config/super_lio.yaml`:
+
+```yaml
+super_lio_wheel_fusion_mapping_enabled: false
+super_lio_wheel_fusion_localization_enabled: false
+super_lio_wheel_fuse_linear_velocity: true
+super_lio_wheel_fuse_angular_velocity: false
+super_lio_wheel_twist_topic: /chassis/wheel_twis
+super_lio_wheel_max_age_sec: 0.25
+super_lio_wheel_single_nis_gate: 9.0
+super_lio_wheel_joint_nis_gate: 11.83
+```
+
+Both mode switches default off. Enable a mode only after calibration and replay;
+parameter changes take effect on the next managed mode restart. Direct launch
+arguments are `wheel_fusion_enabled`, `wheel_fuse_linear_velocity`,
+`wheel_fuse_angular_velocity`, `wheel_twist_topic`, `wheel_max_age_sec`,
+`wheel_single_nis_gate` and `wheel_joint_nis_gate`, with matching defaults.
+They are supported by `Livox_mid360.launch`, `relocation.launch` and
+`mid360_mapping.launch`. Standard `legacy_tf: false` is required. Selecting no
+observation while enabling a mode is a configuration error.
+Fusion readiness is explicit in both applications and independent of the legacy
+IMU-rate debug initialization flag. Reinitialization clears this readiness until
+the mapping/localization initialization sequence has completed.
+
+Signed base-frame forward speed supports reverse motion; yaw rate is positive
+for left rotation and is not inverted while reversing. The model includes the
+existing measured IMU/base rotation and lever arm. No lateral-zero or height
+constraint is added. A separate wheel update acts on the 18D ESKF state. Original
+gyro samples bracketing the current time are retained as nuisance noise variables
+with their conditional means, covariance and state cross-covariance. Consequently,
+IMU interval splitting and wheel yaw/lever-arm observations do not treat shared
+gyro noise as independent evidence. LiDAR updates also condition this retained
+noise. In the enabled path, the LiDAR covariance uses its existing inverse-
+information posterior `Qk` for all 18 state dimensions before the attitude reset;
+this preserves a consistent joint state/noise covariance. The disabled path
+retains its historical covariance calculation. Innovation gating rejects scalar outliers (default NIS 9) and inconsistent
+joint updates (default NIS 11.83). An invalid channel does not disable a valid
+selected channel. Wheel observations are never re-used by LiDAR iterations.
+
+The first subsequent IMU sample provides interpolation at scan/wheel boundaries;
+there is no waiting for wheel data and no state-history rollback. Wheel samples
+older than the state, duplicated, stale (>0.25 s), non-finite, in the wrong frame
+or with invalid covariance are rejected. Future observations can arrive out of
+order and are consumed chronologically. The buffer is limited to
+2 s/200 samples and is cleared on initialization/relocalization, state reset,
+and time rollback. Missing/rejected wheel data leaves IMU/LiDAR processing active;
+it does not relax registration/readiness checks or override task safety.
+
+The chassis publisher uses the midpoint of the successful wheel-read transaction
+minus `wheel_feedback_delay_sec`, initially zero. This is an estimated host time,
+not a servo sampling timestamp: successful reads may still return an old controller
+cache. Default v/yaw variances are each 0.04, with zero cross covariance; calibrate
+them and the delay using textured-area runs, including reverse, turns and disc-on
+operation. Read/conversion failures do not publish a fusion message; real stopped
+feedback does. Source timestamps/sequence counters remain a future firmware improvement.
+
+Inspect `/super_lio/wheel_fusion_diagnostics` (also on `/diagnostics`) for mode,
+channel switches, last applied observation age, accepted/rejected/late/expired
+counts, residuals, variances and NIS. The angular residual is also available with
+yaw fusion disabled, for time alignment/slip investigation. Disable the relevant
+mode switch and restart that mode to return to the original propagation path.
+
+Tests `super_lio_wheel_fusion` and `super_lio_wheel_eskf` cover model Jacobians,
+signed motion, correlated gyro noise, covariance PSD, channel selection, time
+ordering and a synthetic biased-IMU trajectory. Synthetic error reduction is not
+a field accuracy claim. With a local test master, run the additional ROS interface
+regression using `rosrun super_lio test_wheel_ros`; it exercises message rejection,
+reverse motion, single consumption, future buffering and reset without hardware.
+Record `/livox/lidar /livox/imu /chassis/wheel_twis
+/lio/odom /super_lio/registration_diagnostics /super_lio/wheel_fusion_diagnostics
+/tf /tf_static` and compare the same bag with fusion off, linear only and both
+channels; use bag clock and measured reference poses for accuracy assessment.
+Without a field bag/reference trajectory the feature stays disabled by default.
+
 ## Per-frame localization iteration diagnostics
 
 See also the [base pose and mounting calibration](#base-pose-and-mounting-calibration)

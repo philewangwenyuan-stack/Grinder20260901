@@ -1,4 +1,11 @@
 <launch>
+  <arg name="wheel_fusion_enabled" default="false" />
+  <arg name="wheel_fuse_linear_velocity" default="true" />
+  <arg name="wheel_fuse_angular_velocity" default="false" />
+  <arg name="wheel_twist_topic" default="/chassis/wheel_twis" />
+  <arg name="wheel_max_age_sec" default="0.25" />
+  <arg name="wheel_single_nis_gate" default="9.0" />
+  <arg name="wheel_joint_nis_gate" default="11.83" />
   <arg name="staging_dir" />
   <arg name="base_to_laser_x" default="0.0" />
   <arg name="base_to_laser_y" default="0.0" />
@@ -10,6 +17,13 @@
   <arg name="autosave" default="false" />
 
   <include file="$(find cloud_to_occupancy_grid)/launch/mid360_mapping.launch">
+    <arg name="wheel_fusion_enabled" value="$(arg wheel_fusion_enabled)" />
+    <arg name="wheel_fuse_linear_velocity" value="$(arg wheel_fuse_linear_velocity)" />
+    <arg name="wheel_fuse_angular_velocity" value="$(arg wheel_fuse_angular_velocity)" />
+    <arg name="wheel_twist_topic" value="$(arg wheel_twist_topic)" />
+    <arg name="wheel_max_age_sec" value="$(arg wheel_max_age_sec)" />
+    <arg name="wheel_single_nis_gate" value="$(arg wheel_single_nis_gate)" />
+    <arg name="wheel_joint_nis_gate" value="$(arg wheel_joint_nis_gate)" />
     <arg name="rviz" value="false" />
     <arg name="base_to_laser_x" value="$(arg base_to_laser_x)" />
     <arg name="base_to_laser_y" value="$(arg base_to_laser_y)" />

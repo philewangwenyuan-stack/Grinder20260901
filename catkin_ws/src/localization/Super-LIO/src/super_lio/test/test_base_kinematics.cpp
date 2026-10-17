@@ -107,6 +107,12 @@ void checkCovarianceFiniteDifferences() {
           "pose covariance matches numerical SE3 Jacobian including cross terms");
   require(nominal.twist_covariance.isApprox(twist_jacobian * covariance * twist_jacobian.transpose() +
               noise_jacobian * gyro * noise_jacobian.transpose(), 1e-6), "twist covariance matches numerical Jacobian");
+  const StateGyroCross cross=covariance.leftCols<3>()*0.001;
+  const auto correlated=convert(imu,imu_base,velocity,omega,covariance,gyro,cross);
+  require(correlated.twist_covariance.isApprox(
+      twist_jacobian*covariance*twist_jacobian.transpose()+noise_jacobian*gyro*noise_jacobian.transpose()-
+      twist_jacobian*cross*noise_jacobian.transpose()-noise_jacobian*cross.transpose()*twist_jacobian.transpose(),1e-6),
+      "shared gyro covariance uses the correct cross-term signs");
   require(nominal.pose_covariance.isApprox(nominal.pose_covariance.transpose(), 1e-12), "pose covariance symmetry");
   require(Eigen::SelfAdjointEigenSolver<Covariance6>(nominal.twist_covariance).eigenvalues().minCoeff() > -1e-12,
           "twist covariance positive semidefinite");

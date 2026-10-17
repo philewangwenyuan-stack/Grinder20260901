@@ -253,6 +253,7 @@ ROSWrapper::ROSWrapper(){
   LOG(INFO) << GREEN << " ---> Using Lidar type: " << lidarTypeToString(g_lidar_type) << RESET;
 
   nh_.setCallbackQueue(&self_queue_);
+  setupWheelFusion();
 
   subLidar_ = nh_.subscribe(ops);
   subIMU_   = nh_.subscribe<sensor_msgs::Imu>(g_imu_topic, 10000,    // 100Hz x 10s
@@ -451,6 +452,7 @@ void ROSWrapper::imuHandler(const sensor_msgs::Imu::ConstPtr& msg){
   if (data.secs < last_timestamp_imu_) {
     LOG(WARNING) << "imu loop back, clear buffer";
     imu_buffer_.clear();
+    resetWheelFusion();
   }
   last_timestamp_imu_ = data.secs;
 
@@ -570,6 +572,7 @@ bool ROSWrapper::SetInitStateCallback(super_lio::SetInitState::Request& req,
     state.p = final_pose.t();
     state.R = final_pose.so3();
     eskf_->SetX(state);
+    resetWheelFusion();
 
     res.success = true;
     LOG(INFO) << GREEN << "SetInitState: Map reset successfully." << RESET;
@@ -612,6 +615,9 @@ bool ROSWrapper::sync_measure(MeasureGroup& meas){
   last_timestamp_lidar_ = meas.lidar.end_time;
   lidar_buffer_.pop_front();
   lidar_pushed_ = false;
+  // Keep the first IMU sample after the scan as an interpolation bracket;
+  // leave it queued for the next scan as well. Disabled path is unchanged.
+  if (wheel_enabled_ && !imu_buffer_.empty()) meas.imu.push_back(imu_buffer_.front());
   return true;
 }
 
@@ -644,13 +650,19 @@ void ROSWrapper::pub_odom(const NavState& state, bool re_path){
     imu_base.translation() = g_imu_base.t_.cast<double>();
     base_kinematics::Covariance covariance = base_kinematics::Covariance::Zero();
     Eigen::Vector3d omega = Eigen::Vector3d::Zero();
+    Eigen::Matrix3d gyro_covariance = Eigen::Matrix3d::Identity()*g_imu_ng;
+    base_kinematics::StateGyroCross state_gyro_cross = base_kinematics::StateGyroCross::Zero();
     if (eskf_) {
       covariance = eskf_->GetCov().cast<double>();
       omega = eskf_->GetBodyAngularVelocity().cast<double>();
+      if (wheel_enabled_) {
+        gyro_covariance = eskf_->GetGyroNoiseCovariance();
+        state_gyro_cross = eskf_->GetStateGyroCross();
+      }
     }
     const auto output = base_kinematics::convert(world_imu, imu_base,
         state.v.cast<double>(), omega, covariance,
-        Eigen::Matrix3d::Identity() * g_imu_ng);
+        gyro_covariance, state_gyro_cross);
     odom.pose.pose.position.x = output.pose.translation().x();
     odom.pose.pose.position.y = output.pose.translation().y();
     odom.pose.pose.position.z = output.pose.translation().z();

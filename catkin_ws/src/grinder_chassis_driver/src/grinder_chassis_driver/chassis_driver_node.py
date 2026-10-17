@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TwistWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, Float32, Int16, UInt16, String
 from std_srvs.srv import Trigger, TriggerResponse
@@ -135,6 +135,18 @@ class ChassisDriverNode:
         self.wheel_odom_topic = rospy.get_param("~wheel_odom_topic", "/odom_wheel")
         self.wheel_odom_frame_id = rospy.get_param("~wheel_odom_frame_id", "odom")
         self.wheel_odom_child_frame_id = rospy.get_param("~wheel_odom_child_frame_id", "base_link")
+        self.wheel_twist_topic = rospy.get_param("~wheel_twist_topic", "/chassis/wheel_twis")
+        self.wheel_feedback_delay_sec = float(rospy.get_param("~wheel_feedback_delay_sec", 0.0))
+        self.wheel_twist_linear_variance = float(rospy.get_param("~wheel_twist_linear_variance", 0.04))
+        self.wheel_twist_angular_variance = float(rospy.get_param("~wheel_twist_angular_variance", 0.04))
+        self.wheel_twist_cross_covariance = float(rospy.get_param("~wheel_twist_cross_covariance", 0.0))
+        variances = (self.wheel_twist_linear_variance, self.wheel_twist_angular_variance)
+        if (not all(math.isfinite(value) and value > 0.0 for value in variances)
+                or not math.isfinite(self.wheel_twist_cross_covariance)
+                or self.wheel_twist_cross_covariance ** 2 >= variances[0] * variances[1]
+                or not math.isfinite(self.wheel_feedback_delay_sec) or self.wheel_feedback_delay_sec < 0.0):
+            raise ValueError("Invalid wheel fusion covariance or feedback delay")
+        self._actual_feedback_stamp = None
         self.actual_motor_speed_scale = float(rospy.get_param("~actual_motor_speed_scale", 1.0))
         self.actual_speed_left_sign = -1 if int(rospy.get_param("~actual_speed_left_sign", 1)) < 0 else 1
         self.actual_speed_right_sign = -1 if int(rospy.get_param("~actual_speed_right_sign", 1)) < 0 else 1
@@ -206,6 +218,7 @@ class ChassisDriverNode:
 
         self.wheel_speed_pub = rospy.Publisher("/chassis/wheel_speed_state", WheelSpeedState, queue_size=10)
         self.wheel_odom_pub = rospy.Publisher(self.wheel_odom_topic, Odometry, queue_size=10)
+        self.wheel_twist_pub = rospy.Publisher(self.wheel_twist_topic, TwistWithCovarianceStamped, queue_size=10)
         self.status_pub = rospy.Publisher("/chassis/status", ChassisStatus, queue_size=10)
         self.diagnostics_pub = rospy.Publisher("/diagnostics", DiagnosticArray, queue_size=10)
         self._indicator_emergency = EmergencyIndicatorSource(
@@ -832,10 +845,13 @@ class ChassisDriverNode:
             status_registers = None
             if status_due and self.status_combined_read:
                 try:
+                    actual_read_start = time.monotonic()
+                    actual_read_timing = []
                     combined_registers = self.transport.read_register_block(
                         STATUS_READ_START,
                         STATUS_AND_ACTUAL_READ_COUNT,
                         signed_indices=(0, 5, 6),
+                        timing=actual_read_timing,
                     )
                 except ModbusExceptionResponse as exc:
                     if exc.exception_code not in (0x02, 0x03):
@@ -846,6 +862,8 @@ class ChassisDriverNode:
                         exc,
                     )
                 else:
+                    actual_read_end = time.monotonic()
+                    actual_read_end_ros = rospy.Time.now()
                     status_registers = combined_registers[:STATUS_READ_COUNT]
                     actual_speed_registers = combined_registers[STATUS_READ_COUNT:]
 
@@ -856,11 +874,16 @@ class ChassisDriverNode:
                     signed_indices=(0,),
                 )
             if not status_due or not self.status_combined_read:
+                actual_read_start = time.monotonic()
+                actual_read_timing = []
                 actual_speed_registers = self.transport.read_register_block(
                     REGISTER_LEFT_MOTOR_ACTUAL_SPEED,
                     ACTUAL_SPEED_READ_COUNT,
                     signed_indices=(0, 1),
+                    timing=actual_read_timing,
                 )
+                actual_read_end = time.monotonic()
+                actual_read_end_ros = rospy.Time.now()
             with self._lock:
                 if status_registers is not None:
                     self.snapshot = RegisterSnapshot.from_status_registers(status_registers)
@@ -869,6 +892,12 @@ class ChassisDriverNode:
                 self.actual_left_motor_speed = int(actual_speed_registers[0])
                 self.actual_right_motor_speed = int(actual_speed_registers[1])
                 self.actual_speed_valid = True
+                # Transaction midpoint is only a software estimate: upstream
+                # servo/controller cache age is unknown without source timestamps.
+                self._actual_feedback_stamp = actual_read_end_ros - rospy.Duration.from_sec(
+                    actual_read_end - (sum(actual_read_timing) * 0.5 if actual_read_timing else
+                                       (actual_read_start + actual_read_end) * 0.5)
+                    + self.wheel_feedback_delay_sec)
                 self._last_actual_read_monotonic = read_started
             self._mark_connected()
         except ModbusTransportError as exc:
@@ -916,6 +945,7 @@ class ChassisDriverNode:
             actual_left_motor_speed = self.actual_left_motor_speed
             actual_right_motor_speed = self.actual_right_motor_speed
             actual_speed_valid = self.actual_speed_valid
+            feedback_stamp = self._actual_feedback_stamp
             enabled = self.enabled
             last_error = self.last_error
             consecutive_failures = self.consecutive_failures
@@ -935,6 +965,8 @@ class ChassisDriverNode:
             actual_right_motor_speed,
             connected and actual_speed_valid,
         )
+        if connected and actual_speed_valid and feedback_stamp is not None:
+            self._publish_wheel_twist(feedback_stamp, actual_left_motor_speed, actual_right_motor_speed)
 
         if publish_status:
             status_msg = ChassisStatus()
@@ -989,6 +1021,29 @@ class ChassisDriverNode:
         odom_msg.twist.covariance[0] = 0.04
         odom_msg.twist.covariance[35] = 0.04
         self.wheel_odom_pub.publish(odom_msg)
+
+    def _publish_wheel_twist(self, stamp, left_motor_rpm, right_motor_rpm):
+        try:
+            linear, angular = motor_rpm_to_base_twist(
+                left_motor_rpm, right_motor_rpm, self.cmd_vel_wheel_radius_m,
+                self.cmd_vel_wheel_track_m, self.cmd_vel_gear_ratio,
+                left_sign=self.actual_speed_left_sign, right_sign=self.actual_speed_right_sign,
+                swap_lr=self.actual_speed_swap_lr, motor_speed_scale=self.actual_motor_speed_scale)
+            if not all(math.isfinite(value) for value in (linear, angular)) or stamp.to_sec() <= 0.0:
+                return
+        except (ValueError, OverflowError):
+            return
+        msg = TwistWithCovarianceStamped()
+        msg.header.stamp = stamp
+        msg.header.frame_id = "base_link"
+        msg.twist.twist.linear.x = linear
+        msg.twist.twist.angular.z = angular
+        for index in (7, 14, 21, 28):
+            msg.twist.covariance[index] = 1e6  # Unmeasured, never a zero-motion constraint.
+        msg.twist.covariance[0] = self.wheel_twist_linear_variance
+        msg.twist.covariance[35] = self.wheel_twist_angular_variance
+        msg.twist.covariance[5] = msg.twist.covariance[30] = self.wheel_twist_cross_covariance
+        self.wheel_twist_pub.publish(msg)
 
     def _publish_diagnostics(self):
         now = rospy.Time.now()

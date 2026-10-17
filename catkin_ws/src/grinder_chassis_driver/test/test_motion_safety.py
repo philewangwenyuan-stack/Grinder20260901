@@ -89,7 +89,7 @@ def load_class(relative, names=None):
         cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in names]
     namespace = dict(vars(registers))
     namespace.update(globals())
-    namespace.update({name: Message for name in ('Bool', 'Int16', 'UInt16', 'Float32', 'String', 'Twist', 'Odometry',
+    namespace.update({name: Message for name in ('Bool', 'Int16', 'UInt16', 'Float32', 'String', 'Twist', 'TwistWithCovarianceStamped', 'Odometry',
         'ChassisStatus', 'WheelSpeedCommand', 'WheelSpeedState', 'EnableChassis', 'EnableChassisResponse',
         'ClearFault', 'ClearFaultResponse', 'Trigger', 'TriggerResponse', 'DiagnosticStatus', 'DiagnosticArray',
         'KeyValue', 'GoalID')})

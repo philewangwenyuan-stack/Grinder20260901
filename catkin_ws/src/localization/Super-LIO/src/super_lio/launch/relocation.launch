@@ -1,4 +1,11 @@
 <launch>
+  <arg name="wheel_fusion_enabled" default="false" />
+  <arg name="wheel_fuse_linear_velocity" default="true" />
+  <arg name="wheel_fuse_angular_velocity" default="false" />
+  <arg name="wheel_twist_topic" default="/chassis/wheel_twis" />
+  <arg name="wheel_max_age_sec" default="0.25" />
+  <arg name="wheel_single_nis_gate" default="9.0" />
+  <arg name="wheel_joint_nis_gate" default="11.83" />
 
   <arg name="rviz" default="true" />
   <arg name="map_dir" default="$(find super_lio)/map" />
@@ -21,6 +28,15 @@
   <param name="/lio/map/save_map" value="false" />
   <param name="/lio/map/save_map_dir" value="$(arg map_dir)" />
   <param name="/lio/map/map_name" value="$(arg map_name)" />
+
+  <param name="/lio/wheel/enabled" value="$(arg wheel_fusion_enabled)" />
+  <param name="/lio/wheel/mode" value="localization" />
+  <param name="/lio/wheel/fuse_linear_velocity" value="$(arg wheel_fuse_linear_velocity)" />
+  <param name="/lio/wheel/fuse_angular_velocity" value="$(arg wheel_fuse_angular_velocity)" />
+  <param name="/lio/wheel/twist_topic" value="$(arg wheel_twist_topic)" />
+  <param name="/lio/wheel/max_age_sec" value="$(arg wheel_max_age_sec)" />
+  <param name="/lio/wheel/single_nis_gate" value="$(arg wheel_single_nis_gate)" />
+  <param name="/lio/wheel/joint_nis_gate" value="$(arg wheel_joint_nis_gate)" />
 
   <!-- Launch Nodes -->
   <node pkg="super_lio" type="relocation_node" name="relocation_node" output="screen"/>

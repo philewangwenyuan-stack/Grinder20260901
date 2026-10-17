@@ -76,6 +76,7 @@ inline bool compute_error(
 
 
 void SuperLIOReLoc::initialpose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg){
+  if (data_wrapper_) data_wrapper_->setWheelInitialized(false);
   flg_init_get_guess_ = true;
 
   V3 init_translation(0, 0, 0);
@@ -144,6 +145,7 @@ void SuperLIOReLoc::init(){
 
 
 bool SuperLIOReLoc::reloc_initialization(){
+  data_wrapper_->setWheelInitialized(false);
   ros::Rate loop(100);
   auto start_time = std::chrono::high_resolution_clock::now();
   int __count = -1;
@@ -207,6 +209,7 @@ bool SuperLIOReLoc::reloc_initialization(){
       continue;
     }
     kf_->SetLastObsTime(measures_.lidar.end_time);
+    data_wrapper_->setWheelInitialized(true);
     break;
   }
 
@@ -343,6 +346,7 @@ bool SuperLIOReLoc::kf_init(){
   state.p = init_guess_T.block<3, 1>(0, 3);
   state.timestamp = -1.0;
   kf_->SetX(state);
+  data_wrapper_->resetWheelFusion();
   sys_init_pose_ = kf_->GetSE3();
   return true;
 }
@@ -589,12 +593,14 @@ void SuperLIOReLoc::process(){
 
 
 void SuperLIOReLoc::Propagation_Undistort(){
-  propagate_states_.clear();
-  propagate_states_.emplace_back(kf_->GetDynamicState());
-  kf_->SetObsTime(measures_.lidar.end_time);
-  for (auto &imu : measures_.imu) {
-    kf_->Predict(imu);
+  if (!data_wrapper_->propagateWheel(measures_, propagate_states_)) {
+    propagate_states_.clear();
     propagate_states_.emplace_back(kf_->GetDynamicState());
+    kf_->SetObsTime(measures_.lidar.end_time);
+    for (auto &imu : measures_.imu) {
+      kf_->Predict(imu);
+      propagate_states_.emplace_back(kf_->GetDynamicState());
+    }
   }
 
   static const M3 TLI_R = g_lidar_imu.R_;
@@ -617,7 +623,7 @@ void SuperLIOReLoc::Propagation_Undistort(){
       const auto& pt = raw_pc->points[idx];
       pt_full.intensity = pt.intensity;
       double query_time = start_time + pt.offset_time;
-      if (query_time > propagate_states_.back().time) {
+      if (propagate_states_.size()<2 || query_time > propagate_states_.back().time) {
         V3 raw(pt.x, pt.y, pt.z);
         V3 eigen_point = TLI_R * raw + TLI_t;
         pt_full.x = eigen_point[0];
@@ -626,7 +632,7 @@ void SuperLIOReLoc::Propagation_Undistort(){
         continue;
       }
       auto match_iter = propagate_states_.begin();
-      for (auto iter = propagate_states_.begin(); iter != propagate_states_.end(); ++iter) {
+      for (auto iter = propagate_states_.begin(); std::next(iter) != propagate_states_.end(); ++iter) {
         auto next_iter = std::next(iter);
         if (iter->time < query_time && next_iter->time >= query_time) {
           match_iter = iter;

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from grinder_chassis_driver.modbus_transport import ModbusTransport
 
@@ -72,6 +73,13 @@ class FakeTransport(ModbusTransport):
 
 
 class ModbusTransportTest(unittest.TestCase):
+    def test_optional_read_timing_is_per_transaction_and_inside_lock(self):
+        transport = FakeTransport("/dev/null", 1)
+        bounds = [1, 2]
+        with patch('grinder_chassis_driver.modbus_transport.time.monotonic', side_effect=[10.0, 10.04]):
+            self.assertEqual([0, 0], transport.read_register_block(0x4017, 2, timing=bounds))
+        self.assertEqual([10.0, 10.04], bounds)
+
     def test_signed_write_and_read(self):
         transport = FakeTransport("/dev/null", 1)
         transport.write_int16(0x4010, -100)
