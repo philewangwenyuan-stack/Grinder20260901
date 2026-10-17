@@ -1,0 +1,7 @@
+<launch>
+  <!-- The fixture supplies a fresh PTY and starts the actual C++ executable.
+       No production launch or hardware serial port is opened by this test. -->
+  <param name="/use_sim_time" value="true" />
+  <test test-name="cpp_chassis_driver" pkg="grinder_chassis_driver"
+        type="ros_driver_fixture.py" time-limit="180" />
+</launch>

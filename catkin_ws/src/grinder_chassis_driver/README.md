@@ -1,8 +1,8 @@
 # grinder_chassis_driver
 
-`grinder_chassis_driver` 是一个面向 `RK3588 + ROS1 Noetic` 的小车底盘驱动包，使用 `Python` 实现，通过 `RS485 / Modbus RTU` 与底盘控制器通信。
+`grinder_chassis_driver` 是一个面向 `RK3588 + ROS1 Noetic` 的 C++14 底盘驱动包，通过 `RS485 / Modbus RTU` 与底盘控制器通信。
 
-这个包的目标是提供一个能直接在板端运行的纯 Python 驱动节点，完成底盘运动控制和基础状态回读，并把底层寄存器接口整理成 ROS 话题和服务，方便上层导航、调度或调试工具接入。
+正式节点是编译出的 `chassis_driver_node`，由原有 `chassis_driver.launch` 启动，ROS 节点名为 `chassis_driver`。话题、消息/服务和单位保持兼容。Python 包保留调度复用的安全库及独立人工诊断工具；正式驱动不启动 Python 解释器。
 
 ## 1. 工程能力
 
@@ -51,27 +51,25 @@
 
 主要文件如下：
 
-- [scripts/chassis_driver_node.py](/home/chersxir/work/Grinder/grinder_chassis_driver/scripts/chassis_driver_node.py)
-  ROS 可执行入口
-- [src/grinder_chassis_driver/chassis_driver_node.py](/home/chersxir/work/Grinder/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py)
-  主节点逻辑，负责 ROS 话题/服务、命令缓存、轮询、状态发布
-- [src/grinder_chassis_driver/modbus_transport.py](/home/chersxir/work/Grinder/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py)
-  纯 Python 串口与 Modbus RTU 传输层
-- [src/grinder_chassis_driver/register_map.py](/home/chersxir/work/Grinder/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py)
-  寄存器地址、枚举值、`int16` 编解码和命令结构
-- [msg/WheelSpeedCommand.msg](/home/chersxir/work/Grinder/grinder_chassis_driver/msg/WheelSpeedCommand.msg)
+- `src/chassis_driver_node.cpp`：ROS 话题、服务、参数和诊断，分离普通命令、急停、服务与遥测回调队列。
+- `src/chassis_controller.cpp`：唯一串口工作线程、最新速度目标、独立单调时钟看门狗、安全状态机和异步持久化。
+- `src/modbus_transport.cpp`：POSIX 非阻塞 Modbus、整笔事务截止时间及有界异步日志。
+- `src/core.cpp`、`include/grinder_chassis_driver/types.h`：寄存器、转速换算、滤波和参数默认值。
+- `src/emergency_record.cpp`：兼容既有 JSON 的急停持久化及限速配置保存。
+- `src/grinder_chassis_driver/motion_safety.py`、`indicator_emergency.py`：调度共享库；Python `modbus_transport.py` 和 `register_map.py` 供 `scripts/motor_response_test.py` 人工诊断使用。
+- [msg/WheelSpeedCommand.msg](msg/WheelSpeedCommand.msg)
   左右轮速度控制消息
-- [msg/WheelSpeedState.msg](/home/chersxir/work/Grinder/grinder_chassis_driver/msg/WheelSpeedState.msg)
+- [msg/WheelSpeedState.msg](msg/WheelSpeedState.msg)
   左右轮目标值和反馈值
-- [msg/ChassisStatus.msg](/home/chersxir/work/Grinder/grinder_chassis_driver/msg/ChassisStatus.msg)
+- [msg/ChassisStatus.msg](msg/ChassisStatus.msg)
   底盘基础状态
-- [srv/EnableChassis.srv](/home/chersxir/work/Grinder/grinder_chassis_driver/srv/EnableChassis.srv)
+- [srv/EnableChassis.srv](srv/EnableChassis.srv)
   底盘使能/停机服务
-- [srv/ClearFault.srv](/home/chersxir/work/Grinder/grinder_chassis_driver/srv/ClearFault.srv)
+- [srv/ClearFault.srv](srv/ClearFault.srv)
   故障清除服务占位
-- [config/chassis_driver.yaml](/home/chersxir/work/Grinder/grinder_chassis_driver/config/chassis_driver.yaml)
+- [config/chassis_driver.yaml](config/chassis_driver.yaml)
   默认参数配置
-- [launch/chassis_driver.launch](/home/chersxir/work/Grinder/grinder_chassis_driver/launch/chassis_driver.launch)
+- [launch/chassis_driver.launch](launch/chassis_driver.launch)
   启动文件
 
 ## 3. 寄存器映射
@@ -94,13 +92,13 @@
 - `0x4012` 按有符号 `int16` 读取；`0x4013 ~ 0x4016` 按 `uint16` 读取
 - `0x4017/0x4018` 按有符号 `int16` 读取，用于轮速反馈和 `/odom_wheel`
 
-如果厂家的“读寄存器地址表”与这份假设不一致，需要同步调整 [register_map.py](/home/chersxir/work/Grinder/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py) 和状态轮询逻辑。
+如果厂家的寄存器表不同，需要同步调整 C++ `types.h`/`core.cpp` 与状态轮询逻辑；使用独立 Python 人工诊断工具时也应同步其寄存器定义。
 
 ## 4. 节点说明
 
 节点名：
 
-- `grinder_chassis_driver`
+- `chassis_driver`（保持原 launch 的节点名）
 
 核心运行逻辑：
 
@@ -109,16 +107,25 @@
 3. 订阅 `/chassis/...` 控制话题，将命令写入对应寄存器
 4. 按 `poll_rate_hz` 读取 `0x4017 ~ 0x4018` 的有符号实际电机速度；按 `status_poll_rate_hz` 将 `0x4012 ~ 0x4016` 状态与当次轮速合并读取
 5. 轮速状态与 `/odom_wheel` 跟随轮速轮询发布，普通状态与诊断分别按配置频率发布
-6. 如果超过 `command_timeout`（默认0.5秒）未收到新的轮速命令，则自动停轮；双轮零速命令绕过轮速斜坡，轮速订阅仅保留最新一条待处理消息
-7. 如果通信连续失败，节点标记为掉线并尝试进入安全状态
+6. 如果超过 `command_timeout`（默认0.5秒）未收到新的轮速命令，则自动停轮；手动双轮零速命令绕过轮速斜坡，导航零输入沿用原有滤波，轮速订阅仅保留最新一条待处理消息
+7. 首次通信异常即撤销运动目标，进入重连和安全同步；`max_retries`（默认3）是兼容配置中额外立即重连的连续失败阈值，不是运动命令的重发次数
 
 软件急停由 `/chassis/emergency_stop=true` 触发，运动锁存独立保存到
 `~/.ros/grinder_safety/chassis_emergency.json`（参数 `motion_emergency_file`），跨重启保留。
 急停、关闭输出和通信故障停车绕过缓存与斜坡；轮速命令超时直接停轮并保留原磨盘策略。
 单寄存器／轮速写入使整块缓存失效，通信异常或部分写失败清空全部缓存。
-所有输出共用串行提交入口，旧代号不能晚于安全帧提交运动；安全同步成功前不接受新运动。
+所有输出经唯一串口线程提交，旧代号不能晚于安全帧提交运动；安全同步成功前不接受新运动。
+启动和通信恢复时，在强制安全写 ACK 后还需两次新的完整停转反馈，才令 `outputs_ready=true`；3秒未确认会重新同步。
+Modbus 没有事务代号，静默和清缓冲不能完全识别任意迟到应答，因此不能仅凭相似 ACK 宣称实机停转。
+输出从禁用切换到使能时清除禁用期间的旧运动目标，需重新发送指令；重复使能不会清除正在执行的目标。
 
-`/chassis/reset_emergency_stop`（std_srvs/Trigger）要求在线、安全写入确认和3秒内两次新的停止读数。
+`timeout` 默认0.1秒，保留单次I/O等待含义；新增 `transaction_timeout` 默认0.1秒，限制整笔请求、分片应答和可选回读的总时间。
+`command_watchdog_period` 默认0.01秒，独立于串口和ROS时钟检查500ms指令超时。
+速度订阅 queue=1、tcpNoDelay，待发速度只保留最新目标；手动零速/超时停车优先于普通输出，连续零速合并以避免饿死反馈。
+原始日志异步写入，`rs485_log_queue_capacity` 默认2048；溢出丢日志并在诊断中计数，不阻塞控制线程。
+新增诊断包含 driver_backend、command_compute_ms、command_wait_ms、transaction_ms、watchdog_lateness_ms、stop_tx_ms、stop_ack_ms、timeout_count、dropped_logs，以及最近256次命令回调的 command_callback_p99_ms / command_callback_max_ms。
+
+`/chassis/reset_emergency_stop`（std_srvs/Trigger）要求在线、安全写入确认，并在该写成功后的3秒反馈窗口取得两次新的停止读数。非零反馈重置连续计数并继续等待，持久化成功才解除。
 成功仅解除软件锁存，目标仍清零、task_enable仍false。新急停可中断复位。
 用户应使用协调入口 `/scheduler/reset_emergency_stop`，以同时解除调度锁存并排队清灯。
 `/chassis/motion_safety`（JSON String）及诊断提供 emergency_latched、safe_write_confirmed、
@@ -329,7 +336,7 @@ outputs_ready、reset_error；ACK及磨盘既有读回值不能证明实机机�
 
 ## 7. 参数说明
 
-默认参数文件见 [chassis_driver.yaml](/home/chersxir/work/Grinder/grinder_chassis_driver/config/chassis_driver.yaml)。
+默认参数文件见 [chassis_driver.yaml](config/chassis_driver.yaml)。
 
 主要参数如下：
 
@@ -476,13 +483,22 @@ string message
 
 ### 9.1 编译
 
-如果包已经放到 catkin 工作空间的 `src/` 下：
+目标环境是 Linux + ROS Noetic，支持 x86_64 和 RK3588（aarch64）。需要 C++14、pkg-config 和 JsonCpp；默认开启测试配置，也需安装 rostest 和 gtest。从仓库根目录执行：
 
 ```bash
-cd /home/chersxir/work/Grinder/catkin_ws
-source /opt/ros/noetic/setup.bash
-catkin_make
+sudo apt install -y libjsoncpp-dev pkg-config ros-noetic-rostest libgtest-dev
+cd catkin_ws
+PROFILE=chassis ./build_grinder_platform.sh
 source devel/setup.bash
+```
+
+这次迁移只需重编底盘包；若同时部署调度改动，可使用 `PROFILE=runtime ./build_grinder_platform.sh`。脚本自动识别架构，RK3588 默认使用2个编译任务。Windows 工作区用于编辑，编译在目标 Linux 或 Ubuntu 20.04 / Noetic 的 WSL 中执行。
+
+性能验收时需显式选择优化构建；profile 脚本沿用 CMake 缓存，不强制构建类型。在 `catkin_ws` 下执行：
+
+```bash
+source /opt/ros/noetic/setup.bash
+catkin_make -DCATKIN_WHITELIST_PACKAGES=grinder_chassis_driver -DCMAKE_BUILD_TYPE=Release
 ```
 
 ### 9.2 启动
@@ -496,6 +512,18 @@ roslaunch grinder_chassis_driver chassis_driver.launch
 ```bash
 roslaunch grinder_chassis_driver chassis_driver.launch port:=/dev/ttyS0
 ```
+
+### 9.3 不连接硬件的验证
+
+```bash
+source /opt/ros/noetic/setup.bash
+catkin_make -DCATKIN_WHITELIST_PACKAGES=grinder_chassis_driver -DCATKIN_ENABLE_TESTING=ON run_tests_grinder_chassis_driver
+catkin_test_results build/test_results/grinder_chassis_driver
+```
+
+`test/test_core.cpp`、`test_emergency_record.cpp`、`test_controller.cpp` 和 `test_modbus_transport.cpp` 直接测试 C++ 实现。
+`test/chassis_driver.test` 使用 PTY 启动真实 C++ executable，覆盖接口、冻结ROS时钟下的看门狗、故障恢复及急停/解除；不会打开生产串口。
+普通 Gazebo 使用独立仿真底盘，不能代替本包的串口回归。板端负载下的P99时延及实体停车时间需要另行台架验证。
 
 ## 10. 调试示例
 
@@ -537,9 +565,9 @@ rostopic echo /diagnostics
 
 ## 11. 当前限制和注意事项
 
-- 当前“状态回读”读取 `0x4010 ~ 0x4016`，实际电机速度读取 `0x4017/0x4018`
+- 当前“状态回读”读取 `0x4012 ~ 0x4016`，实际电机速度读取 `0x4017/0x4018`
 - 如果实际设备的读地址和写地址不同，需要改轮询实现
-- 当前节点没有实现 `/cmd_vel -> 左右轮速` 转换
+- 当前节点已实现 `/cmd_vel -> 左右轮速`，导航输入受 `/chassis/task_enable` 门控
 - 当前节点发布速度来源为真实电机反馈的 `/odom_wheel`，不发布轮式里程计 TF
 - 当前节点没有实现故障清除真实功能
 - 若串口不存在或权限不足，`last_error` 会直接反映在 `/chassis/status` 和 `/diagnostics`
@@ -549,8 +577,36 @@ rostopic echo /diagnostics
 
 建议下一步继续补：
 
-- 串口收发十六进制日志
-- `/cmd_vel` 转左右轮速转换节点
 - 故障码寄存器解析
 - 真实底盘联调记录
-- Modbus 从站模拟器，便于离线自测
+- 目标板压力下的时延分布和下位机失联停车验收
+
+## 13. C++ 迁移更新要点（2026-10-17）
+
+### 接口与功能兼容
+
+- 正式运行节点由 Python 替换为 C++14/roscpp，原 `chassis_driver.launch`、节点名、话题名、消息/服务定义及单位保持兼容，调度与导航无需因语言迁移修改接口。
+- 保留 `/cmd_vel` 换算、手动轮速、任务使能、磨盘、升降、灯光、限速、急停锁存与显式解除；继续发布实际轮速、`/odom_wheel`、有效反馈 `/chassis/wheel_twist` 和状态诊断。
+- 保留原有滤波、符号/左右轮映射、急停文件格式与轮速超时停轮策略；不增加轮式里程计 TF，故障清除服务仍未实现真实寄存器写入。
+- 删除正式 Python 节点及包装入口，保留调度依赖的 Python 安全共享库和人工诊断工具。
+
+### 实现变化及收益
+
+- 单线程独占串口，命令回调只更新目标；速度只保留最新一条，安全停止优先，避免积压后补发旧速度。单条 RS485 总线仍按顺序处理事务。
+- 独立单调时钟看门狗默认每10ms检查，指令超时阈值仍为500ms；轮询受阻和 ROS 时钟暂停不再阻止超时检测。10ms是检查周期，实体停车还取决于在途事务、通信和下位机响应。
+- 新增 `transaction_timeout=0.1` 秒，限制一笔请求（含分片应答及可选回读）的总时间；既有 `timeout=0.1` 秒仍表示单次I/O等待。
+- 原始串口日志改为有界异步队列，默认2048条；写盘慢不占用控制线程，溢出丢日志并计数。
+- 新增计算、排队、事务、看门狗延迟、停车发送/确认及回调P99等诊断，便于在板端定位时延来源。C++ 控制路径不受 Python GIL 限制，实际负载收益需在目标板测量。
+
+### 需要留意的行为变化
+
+- 启动／通信恢复在安全写 ACK 后，还需两次新的完整停转反馈才允许输出；3秒未确认会重试安全同步，恢复过程可能比旧版更长。
+- 输出由禁用切换为使能时清除旧运动目标，必须重新下发运动指令；重复使能不打断当前有效目标。
+- 首次通信异常即撤销运动目标并请求安全输出，不等待连续3次失败才请求停车；串口失效时无法仅靠上位机保证安全帧送达。
+- 拒绝 NaN、Inf 和越界指令，非法输入不刷新轮速命令的超时时间；参数未通过 YAML 提供时，C++ 回退值与当前 YAML 默认值一致。
+
+### 验证记录与部署
+
+- 在 Ubuntu 20.04 / ROS Noetic x86_64 完成 Catkin 编译、安装及安装空间启动验证；71项 C++ 单测、6项 ROS/PTY 集成用例、59项 Python 共享库及调度回归通过，C++ ASan/UBSan 检查通过。
+- RK3588 实机编译、板端负载下的P99时延和实体停车时间尚未验证；此次测试未操作真实底盘。
+- 编译步骤见第9节；只升级本驱动使用 `PROFILE=chassis`，安装依赖后必须重新编译，旧 Python 可执行入口已移除。

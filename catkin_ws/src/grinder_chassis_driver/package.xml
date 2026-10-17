@@ -2,7 +2,7 @@
 <package format="2">
   <name>grinder_chassis_driver</name>
   <version>0.1.0</version>
-  <description>ROS1 Python chassis driver for an RK3588-based grinder robot over RS485 Modbus RTU.</description>
+  <description>ROS1 C++ chassis driver and shared Python safety helpers for an RS485 Modbus RTU grinder robot.</description>
 
   <maintainer email="devnull@example.com">Codex</maintainer>
   <license>MIT</license>
@@ -13,6 +13,9 @@
   <build_depend>diagnostic_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>libjsoncpp-dev</depend>
+  <build_depend>pkg-config</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
@@ -29,6 +32,11 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>gtest</test_depend>
+  <test_depend>rosunit</test_depend>
+  <test_depend>rosgraph_msgs</test_depend>
 
   <export />
 </package>

@@ -1,9 +1,12 @@
 <launch>
+  <arg name="config_file" default="$(find grinder_chassis_driver)/config/chassis_driver.yaml" />
+  <arg name="port" default="" doc="Optional override; empty preserves the port in config_file" />
   <node pkg="grinder_chassis_driver"
-        type="chassis_driver_node.py"
+        type="chassis_driver_node"
         name="chassis_driver"
         output="screen">
-    <param name="config_file" value="$(find grinder_chassis_driver)/config/chassis_driver.yaml" />
-    <rosparam command="load" file="$(find grinder_chassis_driver)/config/chassis_driver.yaml" />
+    <param name="config_file" value="$(arg config_file)" />
+    <rosparam command="load" file="$(arg config_file)" />
+    <param if="$(eval arg('port') != '')" name="port" value="$(arg port)" />
   </node>
 </launch>

@@ -115,23 +115,6 @@ class StopHookTest(unittest.TestCase):
         method(node, False)
         self.assertEqual(2, len(events))
 
-    def test_driver_emergency_keeps_safe_stop(self):
-        events = []
-        namespace = {"rospy": SimpleNamespace(logwarn=lambda *a: None)}
-        method = production_method(ROOT / "catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py",
-                                   "_handle_emergency_stop_cmd", namespace)
-        node = SimpleNamespace(
-            _motion=self.gate,
-            _lock=threading.Lock(), task_enable=True,
-            _indicator_emergency=SimpleNamespace(observe=lambda: events.append("observe")),
-            _reset_cmd_vel_filter=lambda: events.append("filter"),
-            _issue_safe_stop=lambda: events.append("stop"),
-        )
-        method(node, Message(data=True))
-        self.assertFalse(node.task_enable)
-        self.assertEqual(["observe", "filter", "stop"], events)
-        method(node, Message(data=False))
-        self.assertEqual(3, len(events))
 
 
 class NodeIntegrationTest(unittest.TestCase):

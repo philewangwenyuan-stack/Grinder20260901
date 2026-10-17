@@ -12,7 +12,7 @@
 | 范围 | 实际目录 / 约定 |
 | --- | --- |
 | 调度包 / 调度模块 | `catkin_ws/src/grinder_scheduler/` / `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/` |
-| 底盘包 / 底盘模块 | `catkin_ws/src/grinder_chassis_driver/` / `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/` |
+| 底盘包 / C++ 运行模块 | `catkin_ws/src/grinder_chassis_driver/` / `src/*.cpp`、`include/grinder_chassis_driver/`；`src/grinder_chassis_driver/` 保留调度共享 Python 安全库及人工诊断适配 |
 | Super-LIO 算法包 | `catkin_ws/src/localization/Super-LIO/src/super_lio/`；注意仓库目录与 ROS 包名 `super_lio` 不同 |
 | 定位相关包 | `catkin_ws/src/localization/`，含 `super_lio_loop/`、`rf2o_laser_odometry/`、`fast_gicp/` |
 | 建图相关包 | `catkin_ws/src/mapping/`，含 `cloud_to_occupancy_grid/`、`pcd2pgm/` |
@@ -53,7 +53,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | Super-LIO 源码与上游版本 | `catkin_ws/src/localization/Super-LIO/UPSTREAM.md` | 同目录 `LICENSE`、`src/super_lio/`、`src/basic/`；普通源码，无子模块初始化步骤 |
 | Super-LIO 每帧迭代收敛诊断 | `catkin_ws/src/localization/Super-LIO/src/super_lio/src/lio/ESKF.cpp` | `include/lio/ESKF.h` 保存迭代记录；`src/apps/relocation.cpp` 输出 `/super_lio/registration_diagnostics`；字段说明见 `UPSTREAM.md` |
 | Super-LIO IMU 到运动中心位姿、速度与协方差换算 | `catkin_ws/src/localization/Super-LIO/src/super_lio/include/lio/base_kinematics.h` | `src/lio/ROSWrapper.cpp` 发布底盘状态；`src/apps/relocation.cpp` 换算底盘初始位姿；`test/test_base_kinematics.cpp`；标定参数与验证见 `UPSTREAM.md` |
-| Super-LIO 内部轮速融合（默认关闭） | `catkin_ws/src/localization/Super-LIO/src/super_lio/src/lio/wheel_ros.cpp`、`wheel_eskf.cpp` | `include/lio/wheel_fusion.h`、`src/lio/wheel_math.cpp`；底盘有效观测 `/chassis/wheel_twist`；调度 `config/super_lio.yaml` 两模式及两观测开关；`test/test_wheel*.cpp`、底盘 `test_wheel_feedback.py`、调度 `test_super_lio_wheel_config.py` |
+| Super-LIO 内部轮速融合（默认关闭） | `catkin_ws/src/localization/Super-LIO/src/super_lio/src/lio/wheel_ros.cpp`、`wheel_eskf.cpp` | `include/lio/wheel_fusion.h`、`src/lio/wheel_math.cpp`；底盘有效观测 `/chassis/wheel_twist`；调度 `config/super_lio.yaml` 两模式及两观测开关；`test/test_wheel*.cpp`、底盘 `test_core.cpp`、`chassis_driver.test`、调度 `test_super_lio_wheel_config.py` |
 | 地图编辑、区域叠加、预览、持久化 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_service.py` | `scheduler_node.py` 中 `handle_map_*`、`_map_*` |
 | 路径规划输入/输出适配、请求内共享预处理 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/planner_adapter.py` | `third_party/path_planner/mst27/mst27.py` 中 `PreparedPlanningMap`、`mst27/cpp/mst27_cpp.cpp`；离线回归 `mst27/test/test_preprocessing.py`、scheduler `test/test_planner_preprocessing.py` |
 | 手动停止后的任务续跑、作业线方向与轮次 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_continuation.py` | `scheduler_node.py` 中 `_capture_task_continuation` / `_prepare_task_continuation_start`；`planner_adapter.py`；离线回归 `test/test_task_continuation.py`、`test/test_planner_continuation.py` |
@@ -69,11 +69,11 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 地图目录响应 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_catalog_response.py` | `scheduler_node.py` 中 `handle_map_catalog_request` |
 | RTSP / FFmpeg 视频链路 | `local_rtsp_server.py`、`media_streamer.py`（均在调度模块目录） | `tools/mediamtx/`；`catkin_ws/start_grinder_stack.sh` 选择二进制；`LocalRtspStreamServer` 在日志目录生成 `mediamtx.generated.yml` |
 | 平台文件上传、鉴权和 MQTT 上报 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/platform_integration.py` | `mqtt_interface.md`、`scheduler.yaml` |
-| 底盘 ROS 节点、`/cmd_vel`、任务使能 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py` | `config/chassis_driver.yaml`、`launch/chassis_driver.launch` |
+| 底盘 C++ ROS 节点、`/cmd_vel`、任务使能 | `catkin_ws/src/grinder_chassis_driver/src/chassis_driver_node.cpp`、`src/chassis_controller.cpp` | `include/grinder_chassis_driver/types.h` 参数默认值；`config/chassis_driver.yaml`、`launch/chassis_driver.launch`；`test/test_controller.cpp`、`test/chassis_driver.test` |
 | RK3588 控制盒状态灯带、USB 协议与急停提示 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/status_indicator.py`、`status_indicator_node.py` | `launch/status_indicator.launch`、`config/status_indicator.yaml`（`brightness_percent` 1～100，默认65）；scheduler `_pause_execution(reason)` 区分人为/碰撞暂停；底盘 `indicator_emergency.py`；固件、接线、亮度升级见 `firmware/status_strip/README.md` |
-| Modbus 帧、串口、CRC | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py` | `test/test_modbus_transport.py` |
-| 软件急停锁存、取消代号与显式解除 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/motion_safety.py` | 驱动统一输出提交／安全同步；scheduler `_reset_emergency_stop`、`_restore_indicator_reset`（重启恢复已确认解除的清灯请求）；`ignore_chassis_status=true` 允许无底盘测试解除调度锁存；服务及回归见根 README 7.2、`test_motion_safety.py`、`test_emergency_stop_execution.py` |
-| 寄存器地址、编解码、底盘命令模型 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py` | `test/test_register_map.py`、`doc/底盘485指令.png` |
+| Modbus 帧、串口、CRC、事务总时限与异步日志 | `catkin_ws/src/grinder_chassis_driver/src/modbus_transport.cpp` | `test/test_modbus_transport.cpp`；独立人工诊断工具仍用 Python `modbus_transport.py` |
+| 软件急停锁存、取消代号与显式解除 | 底盘 `src/chassis_controller.cpp`、`src/emergency_record.cpp`；调度共享 `src/grinder_chassis_driver/motion_safety.py` | 驱动唯一串口 worker／停转反馈屏障；scheduler `_reset_emergency_stop`、`_restore_indicator_reset`（重启恢复已确认解除的清灯请求）；`ignore_chassis_status=true` 允许无底盘测试解除调度锁存；服务及回归见根 README 7.2、`test_motion_safety.py`、`test_emergency_stop_execution.py` |
+| 寄存器地址、编解码、转速换算与滤波 | 底盘 `include/grinder_chassis_driver/types.h`、`src/core.cpp` | `test/test_core.cpp`；人工诊断用 Python `register_map.py`；`doc/底盘485指令.png` |
 | ROS 消息/服务 | 两个自研包各自的 `msg/`、`srv/` | 对应 `CMakeLists.txt`、`package.xml` |
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |
 | 激光里程计与 EKF | `catkin_ws/src/localization/rf2o_laser_odometry/` | `launch/rf2o_laser_odometry.launch`、`launch/ekf.launch`、`config/ekf.yaml` |
@@ -105,7 +105,7 @@ rg -n 'super_lio|cloud_to_occupancy_grid|include' catkin_ws/src/grinder_schedule
 - 地图问题：`scheduler.yaml` 的存储参数 -> `map_service.py` -> `scheduler_node.py` 中 `handle_map_*`。
 - 路径问题：`scheduler.yaml: planner_script_path` -> `planner_adapter.py` -> `mst27.py`；C++ 加速问题再读 `mst27_cpp.cpp`。
 - 任务不走：`handle_task_config` / `handle_task_command` -> `_plan_current_task` -> `_start_execution` -> `_dispatch_current_goal` / `_tick_path_execution`。
-- 底盘不动：先查 `/chassis/task_enable`，再查 `/cmd_vel`，然后读 `chassis_driver_node.py` 的 `_handle_cmd_vel` 和 `chassis_driver.yaml`。
+- 底盘不动：先查 `/chassis/task_enable`，再查 `/cmd_vel`，然后读 C++ `chassis_driver_node.cpp` 的订阅、`chassis_controller.cpp` 的 `velocity`/`wheels` 和 `chassis_driver.yaml`。
 - 导航行为异常：先查 `robot_diff_drive.launch` 选用的 `teb` 或 `rpp`，再读对应 YAML；不要先改上游 ROS navigation 源码。
 - 视频问题：`local_rtsp_server.py` -> `media_streamer.py` -> `start_grinder_stack.sh` 的 mediamtx 选择逻辑。
 - 建图/定位启停或保存失败：调度 `handle_map_mode_request` / `handle_map_save_request` -> `super_lio_mode_manager.py` -> 对应 managed launch -> 建图包或算法包 launch。
@@ -132,7 +132,7 @@ rg -n 'super_lio|cloud_to_occupancy_grid|include' catkin_ws/src/grinder_schedule
 | 改动范围 | 首选离线回归 |
 | --- | --- |
 | 执行速度、任务续跑、临时参数 | `test_execution_settings.py`、`test_task_continuation.py`、`test_planner_continuation.py`、`test_task_runtime_parameters.py` |
-| 遥控、急停与运动安全 | `test_manual_control_delivery.py`、`test_emergency_stop_execution.py`；底盘包 `test/test_motion_safety.py` |
+| 遥控、急停与运动安全 | `test_manual_control_delivery.py`、`test_emergency_stop_execution.py`；底盘包 `test/test_controller.cpp`、`test/chassis_driver.test`；共享 Python 库 `test/test_motion_safety.py` |
 | 规划预处理、方向 | `test_planner_preprocessing.py`、`test_planning_direction.py`；`third_party/path_planner/mst27/test/test_preprocessing.py` |
 | 地图保存、定位与安装标定 | `test_live_map_save.py`、`test_super_lio_mode_manager.py`、`test_relocalization_initial_pose.py`、`test_super_lio_launch_calibration.py` |
 | 灯带、指标、平台接入 | `test_status_indicator*.py`、`test_metrics.py`、`test_platform_integration.py` |
@@ -154,7 +154,15 @@ PROFILE=chassis ./build_grinder_platform.sh
 PROFILE=nav ./build_grinder_platform.sh
 ```
 
-底盘纯 Python 单测（不连接硬件）：
+底盘 C++ 核心、PTY 和真实节点 ROS 回归（Linux Noetic，不连接硬件）：
+
+```bash
+cd catkin_ws
+catkin_make -DCATKIN_WHITELIST_PACKAGES=grinder_chassis_driver run_tests_grinder_chassis_driver
+catkin_test_results build/test_results/grinder_chassis_driver
+```
+
+底盘保留的共享 Python 库与人工诊断适配单测（Linux，不连接硬件）：
 
 ```bash
 cd catkin_ws
@@ -181,13 +189,13 @@ rostopic hz /cmd_vel
 
 ## 修改约束
 
-- Python 可执行入口只是 `scripts/*.py` 包装器，业务实现应改 `src/<package>/` 下模块。
-- 新增或修改 ROS 参数时，同步检查 YAML 默认值、`rospy.get_param` 回退值和 launch 透传，避免三处不一致。
+- 调度等 Python 可执行入口只是 `scripts/*.py` 包装器，业务实现应改 `src/<package>/` 下模块；底盘正式入口为 C++ `src/chassis_driver_node.cpp`。
+- 新增或修改 ROS 参数时，同步检查 YAML 默认值、Python `rospy.get_param` 或底盘 C++ `Config`/参数读取，以及 launch 透传，避免默认值不一致。
 - 修改 `msg/`、`srv/`、`package.xml` 或 `CMakeLists.txt` 后必须重新 Catkin 构建。
 - 修改 `sl_link.proto` 后运行 `bash third_party/sl_linka/scripts/generate_proto.sh <c|python|kotlin|all>` 的对应目标，并检查调度适配器与各 SDK 一致。
 - 保持 Python 3.8 兼容（板端已有 CPython 3.8 构建产物）；不要无意引入更高版本专用语法。
 - 安全链路优先：任务停止/暂停/异常必须继续确保 `task_enable=false`、轮速清零和磨盘安全状态；不要绕过现有超时与急停保护。
-- `README.md` 与包内 README 可能滞后。已知底盘 README 仍称未实现 `/cmd_vel` 转换，但当前源码和配置已实现；事实以源码、YAML 和 launch 为准，必要时同步修正文档。
+- `README.md` 与包内 README 可能滞后；事实以源码、YAML 和 launch 为准，必要时同步修正文档。底盘正式节点已迁为 C++，保留的 Python 安全模块仍由调度直接导入。
 
 ## 完成任务前
 

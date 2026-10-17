@@ -58,6 +58,9 @@ Grinder/
 
 - 底盘驱动订阅 `/cmd_vel`（默认）
 - 转换为左右轮速度，做限幅/方向处理后通过 Modbus 写入
+- 正式底盘节点为 C++14；原话题、服务和 launch 命令保持兼容。唯一串口线程负责读写，独立单调时钟看门狗处理指令超时，原始收发日志异步保存。
+- `transaction_timeout` 默认100ms限制整笔Modbus事务；启动/通信恢复在安全写后确认两次新鲜停转反馈才开放运动。普通指令超时保持原停轮及磨盘策略，急停/禁用/通信错误执行完整安全停车。
+- 编译、接口兼容、行为变化与验证记录见[底盘驱动说明及更新要点](catkin_ws/src/grinder_chassis_driver/README.md#13-c-迁移更新要点2026-10-17)。
 - 配置文件：
 [chassis_driver.yaml](/home/chersxir/work/Grinder/catkin_ws/src/grinder_chassis_driver/config/chassis_driver.yaml)
 
@@ -927,7 +930,7 @@ cmake --build /tmp/grinder-mst27-build -j2
 sudo grinder-service restart
 ```
 
-ESP32协议未变化，无需重烧。离线回归见 `test_manual_control_delivery.py`、`test_motion_safety.py`；
+ESP32协议未变化，无需重烧。调度离线回归见 `test_manual_control_delivery.py`、`test_motion_safety.py`；底盘 C++ 回归见该包 `test_controller.cpp` 和 `chassis_driver.test`；
 实车验收需记录松手零速发出、板端接收／应用、485写帧及实际轮速归零，不能以灯效作为停车反馈。
 
 ### 8. 常见故障

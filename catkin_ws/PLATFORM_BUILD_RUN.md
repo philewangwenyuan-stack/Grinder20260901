@@ -50,6 +50,11 @@ PROFILE=sim       ./build_grinder_platform.sh   # Gazebo + 调度 + RPP/move_bas
 PROFILE=mapping   ./build_grinder_platform.sh   # Super-LIO + 固定内存二维栅格建图
 ```
 
+底盘正式节点使用 C++14/roscpp；x86_64 和 RK3588 均需 `libjsoncpp-dev`、`pkg-config`，默认测试配置还需 `ros-noetic-rostest`、`libgtest-dev`。
+升级执行 `sudo apt install -y libjsoncpp-dev pkg-config ros-noetic-rostest libgtest-dev` 后使用 `PROFILE=chassis` 构建，原 `roslaunch grinder_chassis_driver chassis_driver.launch` 命令不变。迁移的接口兼容、行为变化与验证记录见[底盘更新要点](src/grinder_chassis_driver/README.md#13-c-迁移更新要点2026-10-17)。
+底盘包保留 Python 安全共享库供调度导入，不能删除其 Python 安装。离线验证执行
+`catkin_make -DCATKIN_WHITELIST_PACKAGES=grinder_chassis_driver -DCATKIN_ENABLE_TESTING=ON run_tests_grinder_chassis_driver`，其中 ROS 集成测试只打开 PTY，不连接真实底盘。
+
 内部轮速融合新增 C++ 代码及底盘消息依赖后，目标 Linux 需构建 `PROFILE=mapping`
 和 `PROFILE=runtime`。两种模式融合默认关闭；受控验证后在调度包
 `config/super_lio.yaml` 分别开启 `super_lio_wheel_fusion_mapping_enabled` 或
