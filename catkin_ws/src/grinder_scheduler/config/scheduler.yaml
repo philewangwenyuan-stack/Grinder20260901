@@ -188,8 +188,8 @@ planner_script_path: third_party/path_planner/mst27/mst27.py
 vehicle_width: 0.8
 # 机器人长度（米），用于转弯半径计算
 vehicle_length: 1.4
-footprint: [[-0.60, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.60, -0.47]]
-base_laser_x: 0.0
+footprint: [[-0.40, 0.47], [1.20, 0.47], [1.20, -0.47], [-0.40, -0.47]]
+base_laser_x: 0.2
 base_laser_y: 0.0
 base_laser_z: 0.0
 base_laser_roll_deg: 0.0
