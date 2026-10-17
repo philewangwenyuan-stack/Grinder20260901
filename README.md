@@ -92,7 +92,7 @@ APP / 上位机 -> SL-LinkA -> grinder_scheduler
 仍是单独的 IMU 频率接口，正式导航使用 `/lio/odom`。
 
 可选内部轮速融合在建图、定位模式下均默认关闭。底盘从同一次实际转速读取
-额外发布有效观测 `/chassis/wheel_twis`，RPP 的 `/odom_wheel` 保持原用途。
+额外发布有效观测 `/chassis/wheel_twist`，RPP 的 `/odom_wheel` 保持原用途。
 `grinder_scheduler/config/super_lio.yaml` 分别配置两模式总开关及线速度、角速度
 观测开关；支持倒车，缺少轮速时继续纯 LIO，不改变定位异常暂停条件或 TF 发布权。
 现场标定前不要开启；参数、回放和诊断说明见

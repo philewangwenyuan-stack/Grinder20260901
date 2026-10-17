@@ -23,7 +23,7 @@ void ROSWrapper::setupWheelFusion() {
   nh_.param("/lio/wheel/single_nis_gate",wheel_single_gate_,9.0);
   nh_.param("/lio/wheel/joint_nis_gate",wheel_joint_gate_,11.83);
   std::string topic;
-  nh_.param<std::string>("/lio/wheel/twist_topic",topic,"/chassis/wheel_twis");
+  nh_.param<std::string>("/lio/wheel/twist_topic",topic,"/chassis/wheel_twist");
   if (wheel_enabled_ && (g_legacy_tf || (!wheel_linear_ && !wheel_angular_) || topic.empty() ||
       !std::isfinite(wheel_max_age_) || wheel_max_age_<=0.0 ||
       !std::isfinite(wheel_single_gate_) || wheel_single_gate_<=0.0 ||

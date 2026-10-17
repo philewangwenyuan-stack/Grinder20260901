@@ -44,7 +44,7 @@ int main(int argc,char** argv) {
   filter->SetX(SysState(100.0));filter->SetLastObsTime(100.0);filter->init_=false;
   wrapper.setESKF(filter);
   wrapper.setWheelInitialized(true);
-  auto publisher=nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("/chassis/wheel_twis",10);
+  auto publisher=nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("/chassis/wheel_twist",10);
   for(int i=0;i<100 && publisher.getNumSubscribers()==0;++i) pump(wrapper);
   assert(publisher.getNumSubscribers()==1);
   geometry_msgs::TwistWithCovarianceStamped message;

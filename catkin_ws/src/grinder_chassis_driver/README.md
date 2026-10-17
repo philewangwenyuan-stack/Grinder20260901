@@ -20,7 +20,7 @@
 - 基础状态发布
 - `/diagnostics` 诊断信息发布
 - 读取 `0x4017/0x4018` 电机实际转速并发布轮式 `nav_msgs/Odometry`
-- `/cmd_vel` 到轮速的转换，以及仅有效反馈的 `/chassis/wheel_twis` 融合观测
+- `/cmd_vel` 到轮速的转换，以及仅有效反馈的 `/chassis/wheel_twist` 融合观测
 
 当前版本暂未实现：
 
@@ -33,7 +33,7 @@
 ### Super-LIO 轮速观测
 
 同一次 Modbus 实际转速读取同时供给 `/odom_wheel`（RPP 原接口）和
-`/chassis/wheel_twis`（`geometry_msgs/TwistWithCovarianceStamped`）。后者只在
+`/chassis/wheel_twist`（`geometry_msgs/TwistWithCovarianceStamped`）。后者只在
 反馈有效且换算成功时发布；有效静止仍发布零速，读取失败则不发布假零速。
 前向速度保持正负号以支持倒车，角速度沿用左转为正、右转为负，frame 为
 `base_link`，不提供位置、不广播 TF、不增加串口轮询。

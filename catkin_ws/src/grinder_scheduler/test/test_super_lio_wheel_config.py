@@ -29,6 +29,7 @@ class WheelLaunchTest(unittest.TestCase):
             self.assertEqual('false',params['/lio/wheel/enabled'])
             self.assertEqual('true',params['/lio/wheel/fuse_linear_velocity'])
             self.assertEqual('false',params['/lio/wheel/fuse_angular_velocity'])
+            self.assertEqual('/chassis/wheel_twist',params['/lio/wheel/twist_topic'])
 
     def test_manager_mode_selection_and_empty_configuration_rejected(self):
         p=PACKAGES['grinder_scheduler']/'src/grinder_scheduler/super_lio_mode_manager.py'

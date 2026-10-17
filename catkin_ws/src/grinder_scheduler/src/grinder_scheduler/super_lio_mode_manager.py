@@ -1029,7 +1029,7 @@ class SuperLioModeManager:
             "wheel_fusion_enabled": enabled,
             "wheel_fuse_linear_velocity": rospy.get_param("~super_lio_wheel_fuse_linear_velocity", True),
             "wheel_fuse_angular_velocity": rospy.get_param("~super_lio_wheel_fuse_angular_velocity", False),
-            "wheel_twist_topic": rospy.get_param("~super_lio_wheel_twist_topic", "/chassis/wheel_twis"),
+            "wheel_twist_topic": rospy.get_param("~super_lio_wheel_twist_topic", "/chassis/wheel_twist"),
             "wheel_max_age_sec": rospy.get_param("~super_lio_wheel_max_age_sec", 0.25),
             "wheel_single_nis_gate": rospy.get_param("~super_lio_wheel_single_nis_gate", 9.0),
             "wheel_joint_nis_gate": rospy.get_param("~super_lio_wheel_joint_nis_gate", 11.83),

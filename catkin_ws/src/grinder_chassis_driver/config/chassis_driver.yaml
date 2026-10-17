@@ -80,7 +80,7 @@ cmd_vel_gear_ratio: 60.0
 # 真实电机转速反馈发布的 Odometry 话题
 wheel_odom_topic: /odom_wheel
 # Dedicated valid-only observations for Super-LIO (RPP keeps /odom_wheel).
-wheel_twist_topic: /chassis/wheel_twis
+wheel_twist_topic: /chassis/wheel_twist
 wheel_feedback_delay_sec: 0.0
 wheel_twist_linear_variance: 0.04      # (m/s)^2, calibrate before enabling fusion
 wheel_twist_angular_variance: 0.04     # (rad/s)^2

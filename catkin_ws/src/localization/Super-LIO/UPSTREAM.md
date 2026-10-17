@@ -22,7 +22,7 @@ directory on the migration workstation; it is not required to build a fresh clon
 ## Optional internal wheel fusion
 
 The Grinder extension consumes valid-only `geometry_msgs/TwistWithCovarianceStamped`
-on `/chassis/wheel_twis` (the spelling is intentional). Existing `/odom_wheel`
+on `/chassis/wheel_twist`. Existing `/odom_wheel`
 remains RPP's velocity feedback; its unavailable pose is never fused. There is
 no additional TF broadcaster or external EKF. Mapping and localization share
 the same chronological IMU/wheel propagation implementation.
@@ -34,7 +34,7 @@ super_lio_wheel_fusion_mapping_enabled: false
 super_lio_wheel_fusion_localization_enabled: false
 super_lio_wheel_fuse_linear_velocity: true
 super_lio_wheel_fuse_angular_velocity: false
-super_lio_wheel_twist_topic: /chassis/wheel_twis
+super_lio_wheel_twist_topic: /chassis/wheel_twist
 super_lio_wheel_max_age_sec: 0.25
 super_lio_wheel_single_nis_gate: 9.0
 super_lio_wheel_joint_nis_gate: 11.83
@@ -96,7 +96,7 @@ ordering and a synthetic biased-IMU trajectory. Synthetic error reduction is not
 a field accuracy claim. With a local test master, run the additional ROS interface
 regression using `rosrun super_lio test_wheel_ros`; it exercises message rejection,
 reverse motion, single consumption, future buffering and reset without hardware.
-Record `/livox/lidar /livox/imu /chassis/wheel_twis
+Record `/livox/lidar /livox/imu /chassis/wheel_twist
 /lio/odom /super_lio/registration_diagnostics /super_lio/wheel_fusion_diagnostics
 /tf /tf_static` and compare the same bag with fusion off, linear only and both
 channels; use bag clock and measured reference poses for accuracy assessment.

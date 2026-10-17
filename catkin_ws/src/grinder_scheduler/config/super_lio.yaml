@@ -33,7 +33,7 @@ super_lio_wheel_fusion_mapping_enabled: false
 super_lio_wheel_fusion_localization_enabled: false
 super_lio_wheel_fuse_linear_velocity: true
 super_lio_wheel_fuse_angular_velocity: false
-super_lio_wheel_twist_topic: /chassis/wheel_twis
+super_lio_wheel_twist_topic: /chassis/wheel_twist
 super_lio_wheel_max_age_sec: 0.25
 super_lio_wheel_single_nis_gate: 9.0
 super_lio_wheel_joint_nis_gate: 11.83

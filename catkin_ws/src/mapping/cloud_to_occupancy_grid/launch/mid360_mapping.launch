@@ -2,7 +2,7 @@
   <arg name="wheel_fusion_enabled" default="false" />
   <arg name="wheel_fuse_linear_velocity" default="true" />
   <arg name="wheel_fuse_angular_velocity" default="false" />
-  <arg name="wheel_twist_topic" default="/chassis/wheel_twis" />
+  <arg name="wheel_twist_topic" default="/chassis/wheel_twist" />
   <arg name="wheel_max_age_sec" default="0.25" />
   <arg name="wheel_single_nis_gate" default="9.0" />
   <arg name="wheel_joint_nis_gate" default="11.83" />
