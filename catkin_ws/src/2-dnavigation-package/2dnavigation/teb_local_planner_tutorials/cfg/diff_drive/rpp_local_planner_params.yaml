@@ -76,7 +76,7 @@ RegulatedPurePursuitController:
   rotate_to_heading_stable_cycles: 3   # 对正并停稳连续5个控制周期后才恢复前进
   use_corner_aware_rotate_to_heading: true  # true：尖角处先走到拐点附近，再对正下一条边
   rotate_to_heading_corner_distance: 0.03  # 后轮中心距尖角8cm内开始原地对准，容纳定位和点间距误差
-  allow_reversing: false                 # false：禁止倒车跟踪，前视点在后方时先旋转
+  allow_reversing: true                # false：禁止倒车跟踪，前视点在后方时先旋转
 
   # 目标到达与静止判定
   goal_dist_tol: 0.12                   # 机器人与目标点的距离容差，单位：m
