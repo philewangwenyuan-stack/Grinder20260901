@@ -15,13 +15,13 @@ RegulatedPurePursuitController:
 
   # 前视点参数
   # 低速机器人建议先使用固定前视距离，便于观察路径跟踪效果。
-  lookahead_dist: 0.8            # 固定前视距离；兼顾贴线与抑制S摆，单位：m
+  lookahead_dist: 0.9           # 固定前视距离；兼顾贴线与抑制S摆，单位：m
   min_lookahead_dist: 0.3           # 速度自适应前视允许的最小距离，单位：m
   max_lookahead_dist: 1.2           # 速度自适应前视允许的最大距离，单位：m
   lookahead_time: 1.5               # 速度自适应前视时间，单位：秒
   use_velocity_scaled_lookahead_dist: false  # false：固定前视；true：按速度调整前视
   use_fixed_curvature_lookahead: true       # 是否使用独立的曲率前视点
-  curvature_lookahead_dist: 0.45    # 缩短曲率前视，减少进入转弯时提前切角，单位：m
+  curvature_lookahead_dist: 0.55    # 缩短曲率前视，减少进入转弯时提前切角，单位：m
   max_robot_pose_search_dist: 2.5   # 搜索机器人最近路径点允许检查的最大累计路径长度，单位：m
   # 长路径仿真必须配合 rolling_start:=true，否则仍会复现固定路径起点问题。
   preserve_plan_progress_on_update: true  # 同一条路径反复刷新时，保持已经裁掉的机器人身后路径点

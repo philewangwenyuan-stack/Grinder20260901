@@ -140,7 +140,7 @@ cmd_vel_filter_angular_accel: 2.0
 
 # 角速度死区，单位 rad/s：
 # |angular.z| 小于 0.02 时直接当作 0，避免很小的纠偏指令让底盘左右抖。
-cmd_vel_filter_angular_deadband: 0.045
+cmd_vel_filter_angular_deadband: 0.025
 
 # 角速度换向确认次数：
 # 当 angular.z 想从正转直接切到反转，或从反转切到正转时，
