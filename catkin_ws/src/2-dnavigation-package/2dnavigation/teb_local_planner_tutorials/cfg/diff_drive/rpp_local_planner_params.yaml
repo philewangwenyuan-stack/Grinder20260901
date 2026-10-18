@@ -1,4 +1,11 @@
 RegulatedPurePursuitController:
+  # 低速角速度补偿：仅在 0.015 <= |v| < 0.10 m/s 且曲率满足原有滞回条件时生效。
+  # 触发死区应与底盘 cmd_vel_filter_angular_deadband 一致；0 表示关闭补偿。
+  low_speed_angular_deadband: 0.025  # 仅对低于该值的小角速度申请补偿，单位：rad/s
+  # 补偿输出幅值，单位：rad/s；必须 >= 上述死区，否则不补偿；不是实测物理启动门槛。
+  # 当前按底盘软件死区设为 0.025，不额外抬至旧值 0.050；轮速量化后能否转动需实测。
+  # 两项可通过 dynamic_reconfigure 调整；旧行为可显式设为 0.045 / 0.050。
+  low_speed_min_angular_vel: 0.025
   # 坐标系与里程计
   odom_topic: /odom_wheel    # 里程计话题，用于获取机器人当前线速度和角速度
   transform_tolerance: 0.3          # 等待 TF 坐标变换的最长时间，单位：秒

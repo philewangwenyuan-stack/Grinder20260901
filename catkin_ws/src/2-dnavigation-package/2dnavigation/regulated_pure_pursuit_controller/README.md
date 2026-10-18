@@ -45,3 +45,6 @@ rosrun dynamic_reconfigure dynparam set \
   /move_base/RegulatedPurePursuitController \
   desired_linear_vel 0.03
 ```
+### 低速角速度补偿
+
+`low_speed_angular_deadband` 和 `low_speed_min_angular_vel` 默认均为 0.025 rad/s，支持 ROS 参数和 dynamic_reconfigure。前者须与底盘导航输入软件死区一致；后者是满足原曲率滞回条件时的补偿输出幅值，不代表实测物理启动阈值。仅在 0.015 ≤ |v| < 0.10 m/s 生效，输入死区设为 0 可关闭补偿；输出幅值小于输入死区或参数无效时不补偿。显式设为 0.045 / 0.050 可恢复历史补偿。补偿之后仍执行原碰撞检查和最终速度限幅，底盘安全处理保持不变。新增参数不加入 APP RPP 位掩码协议。

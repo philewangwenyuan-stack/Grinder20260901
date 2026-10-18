@@ -41,6 +41,8 @@ ParameterHandler::ParameterHandler(
   private_node_->param<bool>("use_command_velocity_for_accel_limit", params_.use_command_velocity_for_accel_limit, true);
   private_node_->param<double>(
     "command_velocity_memory_timeout", params_.command_velocity_memory_timeout, 0.5);
+  private_node_->param<double>("low_speed_angular_deadband", params_.low_speed_angular_deadband, 0.025);
+  private_node_->param<double>("low_speed_min_angular_vel", params_.low_speed_min_angular_vel, 0.025);
   private_node_->param<double>("min_approach_linear_velocity", params_.min_approach_linear_velocity, 0.1);
   private_node_->param<bool>(
     "use_approach_velocity_scaling", params_.use_approach_velocity_scaling, true);
@@ -143,6 +145,8 @@ void ParameterHandler::dynamicParametersCallback(const RegulatedPurePursuitConfi
   params_.use_velocity_scaled_lookahead_dist = cfg.use_velocity_scaled_lookahead_dist;
   params_.use_command_velocity_for_accel_limit = cfg.use_command_velocity_for_accel_limit;
   params_.command_velocity_memory_timeout = cfg.command_velocity_memory_timeout;
+  params_.low_speed_angular_deadband = cfg.low_speed_angular_deadband;
+  params_.low_speed_min_angular_vel = cfg.low_speed_min_angular_vel;
   params_.min_approach_linear_velocity = cfg.min_approach_linear_velocity;
   params_.use_approach_velocity_scaling = cfg.use_approach_velocity_scaling;
   params_.approach_velocity_scaling_dist = cfg.approach_velocity_scaling_dist;

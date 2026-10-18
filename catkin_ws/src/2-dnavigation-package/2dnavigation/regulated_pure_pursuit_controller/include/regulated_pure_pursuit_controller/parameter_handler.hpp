@@ -41,6 +41,8 @@ struct Parameters
   bool use_velocity_scaled_lookahead_dist;
   bool use_command_velocity_for_accel_limit;
   double command_velocity_memory_timeout;
+  double low_speed_angular_deadband;
+  double low_speed_min_angular_vel;
   double min_approach_linear_velocity;
   bool use_approach_velocity_scaling;
   double approach_velocity_scaling_dist;

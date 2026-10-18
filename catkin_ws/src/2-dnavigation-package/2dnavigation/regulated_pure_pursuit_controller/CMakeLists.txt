@@ -79,6 +79,11 @@ add_library(${PROJECT_NAME} SHARED
   )
 
 if(CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(low_speed_steering_test test/low_speed_steering_test.cpp)
+  if(TARGET low_speed_steering_test)
+    target_link_libraries(low_speed_steering_test ${catkin_LIBRARIES})
+  endif()
+
   catkin_add_gtest(command_velocity_memory_test
     test/command_velocity_memory_test.cpp)
   if(TARGET command_velocity_memory_test)
