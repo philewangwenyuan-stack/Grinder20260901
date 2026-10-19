@@ -73,6 +73,59 @@ def fixture():
 
 
 class AdapterPreprocessingTest(unittest.TestCase):
+    def _plan_with_start(self, current, region_start, request_start=None, explicit=None, blocked=False):
+        grid, info, config = fixture()
+        if blocked:
+            grid[:,90] = 100
+        config.work_regions = config.work_regions[:1]
+        config.selected_work_region_ids = []
+        config.region_repeat_config = {}
+        config.current_pose = current
+        config.start_pose = request_start or {}
+        region = config.work_regions[0]
+        region['start_pose'] = region_start
+        if explicit is not None:
+            region['start_pose_explicit'] = explicit
+        starts = []
+        original = mst.MultiStagePathPlanner.plan
+        def record(planner, grid, boundary, stages, *args, **kwargs):
+            starts.append(stages[0].start_point)
+            return original(planner, grid, boundary, stages, *args, **kwargs)
+        with mock.patch.object(mst.MultiStagePathPlanner, 'plan', record):
+            path = adapter().plan('preview', grid, info, config)
+        self.assertTrue(path.points)
+        return starts[0], path
+
+    def test_preview_uses_robot_instead_of_legacy_default_corner(self):
+        start, path = self._plan_with_start(dict(x=4.,y=2.), dict(x=1.,y=8.))
+        self.assertEqual((20,40), (start.row,start.col))
+        self.assertAlmostEqual(4., path.points[0]['x'])
+        self.assertAlmostEqual(2., path.points[0]['y'])
+
+    def test_explicit_request_start_overrides_robot_and_region_start(self):
+        start, path = self._plan_with_start(dict(x=4.,y=2.), dict(x=2.,y=3.),
+                                           request_start=dict(x=3.,y=2.))
+        self.assertEqual((20,30), (start.row,start.col))
+        self.assertAlmostEqual(3., path.points[0]['x'])
+        self.assertAlmostEqual(2., path.points[0]['y'])
+
+    def test_explicit_region_entry_kept_but_path_starts_at_robot(self):
+        start, path = self._plan_with_start(dict(x=4.,y=2.), dict(x=2.,y=3.), explicit=True)
+        self.assertEqual((30,20), (start.row,start.col))
+        self.assertAlmostEqual(4., path.points[0]['x'])
+        self.assertAlmostEqual(2., path.points[0]['y'])
+        self.assertEqual('connection', path.points[0]['path_type'])
+
+    def test_preview_connects_robot_outside_work_region_to_coverage(self):
+        _, path = self._plan_with_start(dict(x=12.,y=2.), {})
+        self.assertAlmostEqual(12., path.points[0]['x'])
+        self.assertAlmostEqual(2., path.points[0]['y'])
+        self.assertEqual('connection', path.points[0]['path_type'])
+
+    def test_preview_refuses_approach_through_disconnected_wall(self):
+        with self.assertRaisesRegex(ValueError, 'collision-free approach'):
+            self._plan_with_start(dict(x=12.,y=2.), {}, blocked=True)
+
     def test_multi_region_shared_context_matches_legacy_and_rebuilds_next_request(self):
         grid,info,config = fixture()
         with mock.patch.object(mst,'_mst27_cpp',None):

@@ -45,11 +45,11 @@ cloud_to_occupancy_grid:
   map_publish_frequency: 1.0
   tablet_publish_frequency: 0.2
 
-  autosave: true
+  autosave: false
   autosave_interval: 30.0
-  save_only_when_changed: true
+  save_only_when_changed: false
   # Keep the live navigation map stable; crop only the saved PGM/YAML.
-  publish_cropped_map: false
+  publish_cropped_map: true
   save_cropped_map: true
   crop_padding: 1.0
   map_directory: /data/maps/current

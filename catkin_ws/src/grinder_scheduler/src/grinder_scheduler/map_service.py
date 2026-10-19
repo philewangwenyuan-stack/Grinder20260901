@@ -12,7 +12,7 @@ try:
 except Exception:
     rospy = None
 
-from grinder_scheduler.models import MapSnapshot, normalize_planning_direction
+from grinder_scheduler.models import MapSnapshot, normalize_planning_direction, explicit_region_start
 
 
 UNKNOWN_MASK_VALUE = 32767
@@ -146,14 +146,16 @@ class MapService:
             existing.get("global_direction", "x"),
         )
         normalized["global_direction"] = region_direction
-        default_start, default_end = self._default_region_start_end(points)
-        start_pose = region.get("start_pose", existing.get("start_pose", {})) or {}
+        _, default_end = self._default_region_start_end(points)
+        # Missing start means use the robot pose, not an invented polygon corner.
+        start_pose = region.get("start_pose", explicit_region_start(existing)) or {}
         end_pose = region.get("end_pose", existing.get("end_pose", {})) or {}
         normalized["start_pose"] = {
-            "x": float(start_pose.get("x", default_start["x"])),
-            "y": float(start_pose.get("y", default_start["y"])),
+            "x": float(start_pose["x"]),
+            "y": float(start_pose["y"]),
             "heading_deg": float(start_pose.get("heading_deg", 0.0)),
-        }
+        } if start_pose else {}
+        normalized["start_pose_explicit"] = bool(start_pose)
         normalized["end_pose"] = {
             "x": float(end_pose.get("x", default_end["x"])),
             "y": float(end_pose.get("y", default_end["y"])),
@@ -950,7 +952,8 @@ class MapService:
                     "closed": bool(item.get("closed", True)),
                     "region_type": int(item.get("region_type", 1)),
                     "global_direction": str(item.get("global_direction", "x") or "x").strip().lower(),
-                    "start_pose": dict(item.get("start_pose", {}) or {}),
+                    "start_pose": explicit_region_start(item),
+                    "start_pose_explicit": bool(explicit_region_start(item)),
                     "end_pose": dict(item.get("end_pose", {}) or {}),
                 }
             for index, item in enumerate(regions.get("obstacle_regions", [])):

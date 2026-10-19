@@ -17,6 +17,7 @@ from grinder_scheduler.models import (
     PlannerPath,
     normalize_planning_direction,
     planning_direction_axis,
+    explicit_region_start,
 )
 
 
@@ -196,6 +197,10 @@ class PlannerAdapter:
         end_y = float(request_end_pose.get("y", 0.0)) if isinstance(request_end_pose, dict) else 0.0
         has_request_start = bool(request_start_pose)
         has_request_end = bool(request_end_pose)
+        has_current_pose = (
+            isinstance(current_pose, dict) and "x" in current_pose and "y" in current_pose
+            and math.isfinite(robot_x) and math.isfinite(robot_y)
+        )
         direction_cfg = normalize_planning_direction(
             getattr(task_config, "global_direction", "x")
         )
@@ -228,7 +233,7 @@ class PlannerAdapter:
             boundary = [self._world_to_point(module, point["x"], point["y"], map_info, ratio) for point in region["points"]]
             if len(boundary) < 3:
                 continue
-            region_start_pose = dict(region.get("start_pose", {}) or {}) if isinstance(region, dict) else {}
+            region_start_pose = explicit_region_start(region) if isinstance(region, dict) else {}
             region_end_pose = dict(region.get("end_pose", {}) or {}) if isinstance(region, dict) else {}
             start_point = None
             start_source = "default_boundary"
@@ -270,6 +275,20 @@ class PlannerAdapter:
                     int(start_point.row),
                     int(start_point.col),
                 )
+            elif has_current_pose:
+                # With no user entry and the robot outside this region, choose
+                # a free interior entry near it; the global approach below
+                # still begins at the actual robot position.
+                region_mask = np.zeros(grid_map.shape, dtype=np.uint8)
+                contour = np.array([[p.col, p.row] for p in boundary], dtype=np.int32)
+                cv2.fillPoly(region_mask, [contour], 1)
+                interior = cv2.erode(region_mask, np.ones((3, 3), dtype=np.uint8))
+                rows, cols = np.where((interior != 0) & (inflated_for_connection == 0))
+                if rows.size:
+                    robot_point = self._world_to_point(module, robot_x, robot_y, map_info, ratio)
+                    nearest = np.argmin((rows - robot_point.row) ** 2 + (cols - robot_point.col) ** 2)
+                    start_point = module.Point(row=int(rows[nearest]), col=int(cols[nearest]))
+                    start_source = "nearest_region_entry"
             end_point = boundary[-1]
             if has_request_end and self._world_point_in_region(end_x, end_y, region):
                 end_point = self._world_to_point(module, end_x, end_y, map_info, ratio)
@@ -469,7 +488,10 @@ class PlannerAdapter:
             )
 
         t3_regions = time.perf_counter()
-        if has_task_info:
+        # Previews and formal tasks share the same starting-position semantics.
+        # A region start remains the coverage entry; the approach starts at the
+        # requested position, or at the current robot pose when omitted.
+        if has_task_info or has_request_start or has_current_pose:
             selected_ids = [str(x).strip() for x in list(getattr(task_config, "selected_work_region_ids", []) or []) if str(x).strip()]
             repeat_cfg = dict(getattr(task_config, "region_repeat_config", {}) or {})
             segment_by_id = {str(item.get("region_id", "")).strip(): item for item in planned_region_segments if str(item.get("region_id", "")).strip()}
@@ -774,6 +796,12 @@ class PlannerAdapter:
                                     col_gap,
                                     tail_added,
                                 )
+                        # Ad-hoc previews now include an approach too. Never
+                        # expose a straight fallback through an obstacle as a
+                        # usable approach when the free-space search failed.
+                        if (not has_task_info and connector
+                                and not planner._path_collision_free(connector, inflated_for_connection)):
+                            raise ValueError("No collision-free approach from start pose to work region")
                         if connector and len(connector) >= 2:
                             for point in connector:
                                 path_points.append(
