@@ -7,6 +7,8 @@
   <arg name="lidar_z" default="0.55" />
   <arg name="lidar_horizontal_samples" default="360" />
   <arg name="lidar_vertical_samples" default="20" />
+  <!-- 虚拟雷达最大量程，单位 m，与顶层启动及 URDF 默认值保持一致。 -->
+  <arg name="lidar_max_range" default="45.0" />
   <arg name="sensor_noise_config" default="$(find grinder_gazebo)/config/sensor_noise.yaml" />
   <arg name="x" default="0.0" />
   <arg name="y" default="0.0" />
@@ -14,7 +16,7 @@
 
   <param name="use_sim_time" value="true" />
   <param name="robot_description"
-         command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh) lidar_x:=$(arg lidar_x) lidar_y:=$(arg lidar_y) lidar_z:=$(arg lidar_z) lidar_horizontal_samples:=$(arg lidar_horizontal_samples) lidar_vertical_samples:=$(arg lidar_vertical_samples) sensor_noise_config:=$(arg sensor_noise_config)" />
+         command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh) lidar_x:=$(arg lidar_x) lidar_y:=$(arg lidar_y) lidar_z:=$(arg lidar_z) lidar_horizontal_samples:=$(arg lidar_horizontal_samples) lidar_vertical_samples:=$(arg lidar_vertical_samples) lidar_max_range:=$(arg lidar_max_range) sensor_noise_config:=$(arg sensor_noise_config)" />
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find grinder_gazebo)/worlds/factory_floor.world" />

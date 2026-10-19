@@ -80,7 +80,7 @@
             <min_angle>${-7*pi/180}</min_angle><max_angle>${52*pi/180}</max_angle>
           </vertical>
         </scan>
-        <range><min>0.10</min><max>100.0</max><resolution>0.01</resolution></range>
+        <range><min>0.10</min><max>$(arg lidar_max_range)</max><resolution>0.01</resolution></range>
         <noise><type>gaussian</type><mean>0.0</mean><stddev>${sensor_noise['lidar_range_stddev_m']}</stddev></noise>
       </ray>
       <plugin name="mid360s_ros" filename="libgrinder_mid360_sensor.so" />

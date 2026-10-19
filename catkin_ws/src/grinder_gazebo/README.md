@@ -85,6 +85,7 @@ grep --line-buffered -v -E \
 - `sl_linka_port:=8002`。
 - `lidar_x:=0.20 lidar_y:=0.0 lidar_z:=0.55`：相对后轮轴中点的雷达安装位置，单位 m；改变位置后需重新建图。
 - `lidar_horizontal_samples:=360 lidar_vertical_samples:=20`：轻量默认每帧最多 7200 条射线，10 Hz；无回波不输出点。高性能机器可用 `720` / `28`（每帧 20160 条射线，约 20 万射线/s）。规则射线采样不等于真实扫描轨迹。
+- `lidar_max_range:=45.0`：虚拟雷达最大量程，单位 m，默认 45 m；必须大于最小量程 0.10 m。重启仿真后生效，仅缩短仿真射线范围，不修改实车参数；CPU 是否能维持 10 Hz 仍需实测。
 - `sensor_noise_config:=/absolute/path/noise.yaml`：测距与 IMU 噪声参数。
 - `super_lio_map_root:=/absolute/path/maps`：默认仓库 `maps/sim_mid360/`，与实机地图隔离；状态目录为 `temp/grinder_scheduler_mid360_sim_state/`。
 
@@ -93,7 +94,7 @@ APP 修改外参会改变定位估计参数，不会移动 Gazebo 模型。调�
 
 ## 传感器与误差模型
 
-虚拟雷达覆盖水平 360°、垂直 -7°～52°、量程 0.1～100 m；参数依据
+虚拟雷达覆盖水平 360°、垂直 -7°～52°；仿真默认量程 0.1～45 m，可通过 `lidar_max_range` 调整。视场参数参考
 [Livox MID-360S 官方规格](https://www.livoxtech.com/mid-360s/specs)。
 CPU 多层射线是规则角度网格近似，不复现真实非重复扫描轨迹、反射率、强光、
 玻璃、多径和入射角造成的距离误差。反射强度使用固定兼容值。

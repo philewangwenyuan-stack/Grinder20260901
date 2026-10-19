@@ -9,6 +9,8 @@
   <xacro:arg name="lidar_z" default="0.55" />
   <xacro:arg name="lidar_horizontal_samples" default="360" />
   <xacro:arg name="lidar_vertical_samples" default="20" />
+  <!-- 仿真最大量程（m），不修改真实 MID-360S 的硬件参数。 -->
+  <xacro:arg name="lidar_max_range" default="45.0" />
   <xacro:arg name="sensor_noise_config" default="$(find grinder_gazebo)/config/sensor_noise.yaml" />
   <xacro:property name="sensor_noise" value="${xacro.load_yaml('$(arg sensor_noise_config)')}" />
   <xacro:property name="lidar_x" value="$(arg lidar_x)" />

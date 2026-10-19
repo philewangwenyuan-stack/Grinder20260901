@@ -9,6 +9,8 @@
   <arg name="lidar_z" default="0.55" />
   <arg name="lidar_horizontal_samples" default="360" />
   <arg name="lidar_vertical_samples" default="20" />
+  <!-- 虚拟雷达最大量程，单位 m；仅影响仿真，缩短射线查询范围以减轻 CPU 负担。 -->
+  <arg name="lidar_max_range" default="45.0" />
   <arg name="sensor_noise_config" default="$(find grinder_gazebo)/config/sensor_noise.yaml" />
   <arg name="super_lio_map_root" default="$(find grinder_gazebo)/../../../maps/sim_mid360" />
   <arg name="start_navigation" default="true" />
@@ -30,6 +32,7 @@
     <arg name="lidar_z" value="$(arg lidar_z)" />
     <arg name="lidar_horizontal_samples" value="$(arg lidar_horizontal_samples)" />
     <arg name="lidar_vertical_samples" value="$(arg lidar_vertical_samples)" />
+    <arg name="lidar_max_range" value="$(arg lidar_max_range)" />
     <arg name="sensor_noise_config" value="$(arg sensor_noise_config)" />
     <arg name="x" value="$(arg x)" />
     <arg name="y" value="$(arg y)" />
