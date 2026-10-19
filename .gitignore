@@ -69,3 +69,17 @@ third_party/path_planner/mst27/build_wsl_*/
 
 # Local documents and archives are not distributed with the repository
 /docs/
+catkin_ws/src/drivers/ws_livox/src/livox_ros_driver2/package.xml
+maps/sim_mid360/sim_check_1792375360/loc_map.pcd
+maps/sim_mid360/sim_check_1792375360/map_info.json
+maps/sim_mid360/sim_check_1792375360/map.yaml
+maps/sim_mid360/sim_check_1792375360/plan_map.pcd
+maps/sim_mid360/sim_check_1792375591/loc_map.pcd
+maps/sim_mid360/sim_check_1792375591/map_info.json
+maps/sim_mid360/sim_check_1792375591/map.yaml
+maps/sim_mid360/sim_check_1792375591/plan_map.pcd
+maps/sim_mid360/20261019_114040/loc_map.pcd
+maps/sim_mid360/20261019_114040/map_info.json
+maps/sim_mid360/20261019_114040/map.yaml
+maps/sim_mid360/20261019_114040/plan_map.pcd
+catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/maps/map.yaml
