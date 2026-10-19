@@ -193,6 +193,53 @@ class SuperLioRunningQualityTest(unittest.TestCase):
 
 
 class SuperLioRawLidarStampTest(unittest.TestCase):
+    def test_localization_waits_for_initial_pose_connection_or_cleans_up_on_timeout(self):
+        from unittest.mock import Mock
+        import rospy
+        import grinder_scheduler.super_lio_mode_manager as module
+
+        for connected in (True, False):
+            with self.subTest(connected=connected), tempfile.TemporaryDirectory() as directory:
+                manager = SuperLioModeManager.__new__(SuperLioModeManager)
+                manager._state = manager.IDLE
+                manager._owned_mode = ""
+                manager._localization_launch = "localization.launch"
+                manager._startup_timeout = 0.3
+                manager._odom_event = threading.Event()
+                manager._map_event = threading.Event()
+                for name in ("_publish_safe", "_assert_no_unowned_nodes", "_assert_livox_single_owner",
+                             "_assert_configured_ports_free", "_clear_health_samples",
+                             "_refresh_owned_node_uris", "_clear_localization_quality"):
+                    setattr(manager, name, lambda: None)
+                manager._stop_owned_launch = Mock()
+                manager._bundle_path = lambda _map_id: directory
+                manager._validate_bundle = lambda _bundle: None
+                manager._start_launch = lambda *_args: None
+                manager._wait_topic_event = lambda *_args, **_kwargs: None
+                manager._assert_livox_stream_health = lambda: True
+                manager._map_is_fresh = lambda: True
+                connections = Mock(side_effect=[0, 0, 1] if connected else None, return_value=0)
+                manager._initial_pose_pub = types.SimpleNamespace(get_num_connections=connections)
+                clock = [1.0]
+
+                def advance(seconds):
+                    self.assertEqual(manager.STARTING, manager._state)
+                    clock[0] += seconds
+
+                with patch.object(rospy, "get_param", lambda _name, default: default, create=True), \
+                        patch.object(rospy, "loginfo", lambda *_args: None, create=True), \
+                        patch.object(rospy, "sleep", advance), \
+                        patch.object(module.time, "monotonic", lambda: clock[0]), \
+                        patch.object(module, "get_or_compute_map_asset_revision", lambda _bundle: "revision"):
+                    if connected:
+                        manager._start_localization_locked("map-id")
+                        self.assertEqual(manager.LOCALIZING, manager._state)
+                        self.assertEqual(3, connections.call_count)
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, "initialpose subscriber"):
+                            manager._start_localization_locked("map-id")
+                        self.assertEqual(2, manager._stop_owned_launch.call_count)
+
     def test_both_managed_starts_pass_calibration_to_child_launch(self):
         from unittest.mock import patch
         import rospy

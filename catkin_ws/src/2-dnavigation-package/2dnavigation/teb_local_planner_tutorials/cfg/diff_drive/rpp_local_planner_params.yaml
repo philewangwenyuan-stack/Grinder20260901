@@ -18,7 +18,7 @@ RegulatedPurePursuitController:
   use_command_velocity_for_accel_limit: false  # true：用上一帧 RPP 指令；false：用 /odom 速度
   use_command_angular_velocity_for_accel_limit: false  # true：用上一帧 RPP 角速度平滑旋转，避免里程计抖动
   command_velocity_memory_timeout: 1.0        # setPlan 刷新后可继承上一帧指令的最长时间，单位：秒
-  max_angular_accel: 0.4           # 研磨机原地旋转采用较缓角加速度，减少越过目标后的摇头
+  max_angular_accel: 0.25           # 研磨机原地旋转采用较缓角加速度，减少越过目标后的摇头
 
   # 前视点参数
   # 低速机器人建议先使用固定前视距离，便于观察路径跟踪效果。
@@ -77,13 +77,13 @@ RegulatedPurePursuitController:
 
   # 差速底盘朝向控制
   use_rotate_to_heading: false    # 路径方向偏差较大时先原地旋转
-  rotate_to_heading_angular_vel: 0.2     # 原地对准路径时的角速度，重型研磨机不宜过快
+  rotate_to_heading_angular_vel: 0.25     # 原地对准路径时的角速度，重型研磨机不宜过快
   rotate_to_heading_min_angle: 0.45      # 进入原地旋转的角度阈值，单位：rad（约 20°）
   rotate_to_heading_exit_angle: 0.08    # 误差小于约2.9度后进入只刹停、不反向追赶的稳定阶段
   rotate_to_heading_stable_cycles: 3   # 对正并停稳连续5个控制周期后才恢复前进
   use_corner_aware_rotate_to_heading: true  # true：尖角处先走到拐点附近，再对正下一条边
-  rotate_to_heading_corner_distance: 0.03  # 后轮中心距尖角8cm内开始原地对准，容纳定位和点间距误差
-  allow_reversing: true                # false：禁止倒车跟踪，前视点在后方时先旋转
+  rotate_to_heading_corner_distance: 0.08  # 后轮中心距尖角8cm内开始原地对准，容纳定位和点间距误差
+  allow_reversing: false                # false：禁止倒车跟踪，前视点在后方时先旋转
 
   # 目标到达与静止判定
   goal_dist_tol: 0.12                   # 机器人与目标点的距离容差，单位：m

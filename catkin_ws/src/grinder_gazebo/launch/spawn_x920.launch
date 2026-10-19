@@ -2,13 +2,19 @@
   <arg name="gui" default="true" />
   <arg name="paused" default="false" />
   <arg name="visual_mesh" default="false" />
+  <arg name="lidar_x" default="0.20" />
+  <arg name="lidar_y" default="0.0" />
+  <arg name="lidar_z" default="0.55" />
+  <arg name="lidar_horizontal_samples" default="360" />
+  <arg name="lidar_vertical_samples" default="20" />
+  <arg name="sensor_noise_config" default="$(find grinder_gazebo)/config/sensor_noise.yaml" />
   <arg name="x" default="0.0" />
   <arg name="y" default="0.0" />
   <arg name="yaw" default="0.0" />
 
   <param name="use_sim_time" value="true" />
   <param name="robot_description"
-         command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh)" />
+         command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh) lidar_x:=$(arg lidar_x) lidar_y:=$(arg lidar_y) lidar_z:=$(arg lidar_z) lidar_horizontal_samples:=$(arg lidar_horizontal_samples) lidar_vertical_samples:=$(arg lidar_vertical_samples) sensor_noise_config:=$(arg sensor_noise_config)" />
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find grinder_gazebo)/worlds/factory_floor.world" />
@@ -22,5 +28,5 @@
   </node>
 
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_x920" output="screen"
-        args="-urdf -param robot_description -model x920_grinder -x $(arg x) -y $(arg y) -z 0.02 -Y $(arg yaw)" />
+        args="-urdf -param robot_description -model x920_grinder -x $(arg x) -y $(arg y) -z 0.1675 -Y $(arg yaw)" />
 </launch>

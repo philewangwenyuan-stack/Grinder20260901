@@ -1202,6 +1202,14 @@ class SuperLioModeManager:
                 "fresh /livox/lidar, /livox/imu and map_server /map",
                 deadline=startup_deadline,
             )
+            # Loading the relocation executable/map can outlast map_server and
+            # the sensor checks. Do not acknowledge startup before its TCPROS
+            # subscription exists: the first non-latched initial pose would be lost.
+            self._wait_for_health(
+                lambda: self._initial_pose_pub.get_num_connections() > 0,
+                "relocation /initialpose subscriber connection",
+                deadline=startup_deadline,
+            )
         except Exception as startup_error:
             try:
                 self._stop_owned_launch()

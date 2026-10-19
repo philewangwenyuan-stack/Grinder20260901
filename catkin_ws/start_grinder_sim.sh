@@ -36,6 +36,14 @@ if [[ "${SIM_PACKAGE_PATH}" != "${WORKSPACE}/src/grinder_gazebo" ]]; then
   exit 1
 fi
 
+for executable in lib/libgrinder_mid360_sensor.so lib/super_lio/super_lio_node lib/super_lio/relocation_node; do
+  if [[ ! -f "${WORKSPACE}/devel/${executable}" ]]; then
+    echo "[ERROR] Missing simulation component: ${executable}" >&2
+    echo "[ERROR] Rebuild with: PROFILE=sim ./build_grinder_platform.sh" >&2
+    exit 1
+  fi
+done
+
 if ! command -v ffmpeg >/dev/null 2>&1; then
   echo "[WARN] ffmpeg is not installed; APP control will work, but local RTSP video will be unavailable." >&2
   echo "[WARN] Install it with: sudo apt-get install -y ffmpeg" >&2
@@ -53,7 +61,8 @@ for port in 8002 8554; do
   fi
 done
 
-echo "[INFO] Starting X920 Gazebo simulator"
+echo "[INFO] Starting X920 + virtual MID-360S + managed Super-LIO simulator"
+echo "[INFO] Start mapping in the APP; keep stationary until Super-LIO initializes."
 echo "[INFO] APP protocol: tcp://0.0.0.0:8002"
 echo "[INFO] Local RTSP:  rtsp://<host>:8554/left and /right"
 exec roslaunch grinder_gazebo grinder_sim.launch "$@"

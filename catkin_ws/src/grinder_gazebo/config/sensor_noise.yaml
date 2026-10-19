@@ -1,0 +1,11 @@
+# Illustrative simulation values, NOT measured MID-360S calibration.
+# Standard deviations are per sensor sample, not continuous-time noise densities.
+# Set the standard deviations to zero for an ideal sensor comparison.
+lidar_range_stddev_m: 0.01
+imu_gyro_stddev_rad_s: 0.001
+imu_accel_stddev_m_s2: 0.02
+imu_gyro_bias_stddev_rad_s: 0.0002
+imu_accel_bias_stddev_m_s2: 0.01
+imu_gyro_dynamic_bias_stddev: 0.0001
+imu_accel_dynamic_bias_stddev: 0.001
+imu_bias_correlation_time_s: 1000.0

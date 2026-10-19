@@ -3,16 +3,36 @@
   <arg name="scheduler_local_config" default="$(optenv GRINDER_SCHEDULER_LOCAL_CONFIG)" />
   <arg name="local_rtsp_enabled" default="true" />
   <arg name="sl_linka_port" default="8002" />
+  <arg name="lidar_x" default="0.20" />
+  <arg name="lidar_y" default="0.0" />
+  <arg name="lidar_z" default="0.55" />
+  <arg name="super_lio_map_root" default="$(find grinder_gazebo)/../../../maps/sim_mid360" />
+
+  <node pkg="grinder_scheduler" type="super_lio_mode_manager.py"
+        name="super_lio_mode_manager" output="screen">
+    <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
+    <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
+    <param name="base_to_laser_x" value="$(arg lidar_x)" type="double" />
+    <param name="base_to_laser_y" value="$(arg lidar_y)" type="double" />
+    <param name="base_to_laser_z" value="$(arg lidar_z)" type="double" />
+  </node>
 
   <node pkg="grinder_scheduler"
         type="scheduler_node.py"
         name="grinder_scheduler"
         output="screen">
     <rosparam command="load" file="$(arg scheduler_config)" />
+    <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
     <rosparam if="$(eval bool(arg('scheduler_local_config')))" command="load" file="$(arg scheduler_local_config)" />
     <rosparam command="load" file="$(find grinder_gazebo)/config/scheduler_sim_overrides.yaml" />
     <param name="local_rtsp_enabled" value="$(arg local_rtsp_enabled)" />
     <param name="local_rtsp_start_server" value="$(arg local_rtsp_enabled)" />
     <param name="sl_linka_port" value="$(arg sl_linka_port)" />
+    <param name="super_lio_map_root" value="$(arg super_lio_map_root)" />
+    <param name="persist_state_dir" value="$(find grinder_gazebo)/../../../temp/grinder_scheduler_mid360_sim_state" />
+    <param name="robot_config_yaml_path" value="$(find grinder_gazebo)/../../../temp/sim/robot_config.yaml" />
+    <param name="base_laser_x" value="$(arg lidar_x)" type="double" />
+    <param name="base_laser_y" value="$(arg lidar_y)" type="double" />
+    <param name="base_laser_z" value="$(arg lidar_z)" type="double" />
   </node>
 </launch>

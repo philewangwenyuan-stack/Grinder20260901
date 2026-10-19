@@ -46,9 +46,15 @@ PROFILE=nav       ./build_grinder_platform.sh   # 导航相关
 PROFILE=aurora    ./build_grinder_platform.sh   # slamware_ros_sdk
 PROFILE=scheduler ./build_grinder_platform.sh
 PROFILE=chassis   ./build_grinder_platform.sh
-PROFILE=sim       ./build_grinder_platform.sh   # Gazebo + 调度 + RPP/move_base 仿真链路
+PROFILE=sim       ./build_grinder_platform.sh   # 虚拟 MID-360S/IMU + Super-LIO + Gazebo + 调度/导航
 PROFILE=mapping   ./build_grinder_platform.sh   # Super-LIO + 固定内存二维栅格建图
 ```
+
+`sim` 复用 `src/drivers/ws_livox/src/` 的 Livox SDK2/ROS1 源码，在仓库
+`temp/grinder_sim_livox/` 中构建 SDK，主工作区显式选择 ROS1 驱动分支。Ubuntu 初次构建需安装
+`libgoogle-glog-dev libgflags-dev libapr1-dev`，其余 ROS/Gazebo 依赖见
+[`grinder_gazebo/README.md`](src/grinder_gazebo/README.md)。仿真运行不启动 Livox
+硬件驱动；APP 开始建图后才启动托管 Super-LIO，地图由虚拟点云生成。
 
 内部轮速融合新增 C++ 代码及底盘消息依赖后，目标 Linux 需构建 `PROFILE=mapping`
 和 `PROFILE=runtime`。两种模式融合默认关闭；受控验证后在调度包
