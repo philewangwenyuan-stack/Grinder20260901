@@ -22,6 +22,27 @@ def planning_direction_axis(value):
     return normalize_planning_direction(value).lstrip("+-")
 
 
+def explicit_region_start(region):
+    """Ignore the bounding-box start synthesized by older map services.
+
+    New edits record provenance so a user can still explicitly choose a corner.
+    Legacy records cannot distinguish a chosen corner from the old default;
+    treat that exact default as automatic, including for rotated polygons.
+    """
+    pose = dict(region.get("start_pose", {}) or {})
+    if not pose:
+        return {}
+    if "start_pose_explicit" in region:
+        return pose if region["start_pose_explicit"] else {}
+    points = region.get("points", []) or []
+    if points and (
+        abs(float(pose.get("x", 0.0)) - min(float(p["x"]) for p in points)) <= 1e-6
+        and abs(float(pose.get("y", 0.0)) - max(float(p["y"]) for p in points)) <= 1e-6
+    ):
+        return {}
+    return pose
+
+
 class SchedulerState(enum.Enum):
     IDLE = "IDLE"
     READY = "READY"

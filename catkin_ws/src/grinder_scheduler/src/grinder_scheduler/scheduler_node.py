@@ -4366,6 +4366,8 @@ class SchedulerNode:
                         item.get("global_direction", "x")
                     ),
                     "start_pose": dict(item.get("start_pose", {}) or {}),
+                    **({"start_pose_explicit": bool(item["start_pose_explicit"])}
+                       if "start_pose_explicit" in item else {}),
                     "end_pose": dict(item.get("end_pose", {}) or {}),
                     "order_index": int(item.get("order_index", 0)),
                     "region_type": region_type,
@@ -12052,19 +12054,12 @@ class SchedulerNode:
             else:
                 rospy.loginfo("MapEdit work_region end_pose: <empty>")
         if request.operation == pb.MAP_EDIT_OP_UPSERT_WORK_REGION and region_points:
-            if (not request_start_pose) or (not request_end_pose):
+            if not request_end_pose:
                 xs = [float(item.get("x", 0.0)) for item in region_points]
                 ys = [float(item.get("y", 0.0)) for item in region_points]
-                min_x, max_x = min(xs), max(xs)
-                min_y, max_y = min(ys), max(ys)
-                if not request_start_pose:
-                    request_start_pose = {"x": min_x, "y": max_y, "heading_deg": 0.0}
-                if not request_end_pose:
-                    request_end_pose = {"x": max_x, "y": min_y, "heading_deg": 0.0}
+                request_end_pose = {"x": max(xs), "y": min(ys), "heading_deg": 0.0}
                 rospy.loginfo(
-                    "MapEdit UPSERT_WORK auto-fill start/end: start=(%.3f,%.3f) end=(%.3f,%.3f)",
-                    float(request_start_pose.get("x", 0.0)),
-                    float(request_start_pose.get("y", 0.0)),
+                    "MapEdit UPSERT_WORK auto-fill end: end=(%.3f,%.3f); omitted start uses robot pose",
                     float(request_end_pose.get("x", 0.0)),
                     float(request_end_pose.get("y", 0.0)),
                 )
