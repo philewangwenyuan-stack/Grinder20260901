@@ -89,6 +89,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |
 | 虚拟 MID-360S 点云、IMU 噪声与安装位置 | `catkin_ws/src/grinder_gazebo/src/mid360_sensor_plugin.cpp`、`config/sensor_noise.yaml`（相对仿真包） | `urdf/x920_grinder.gazebo.xacro`；后轴中点前方 0.20 m，托管 Super-LIO 为唯一位姿 TF 来源 |
 | 本地 Livox SDK2 / ROS 驱动与仿真构建 | `catkin_ws/src/drivers/ws_livox/src/` | `catkin_ws/scripts/build_sim_livox.sh` 在忽略的 `temp/` 中复用源码构建，不启动硬件驱动 |
+| 本地源码、远端 WSL 仿真、MuMu 隧道与本地 RViz 窗口 | `catkin_ws/scripts/remote_sim.ps1`、`catkin_ws/scripts/remote_sim.sh` | `install_remote_sim_deps.sh` 安装远端 Ubuntu 20.04 依赖；仿真包 `config/remote_sim.rviz`；用法见仿真包 README；`scripts/test/test_remote_sim.py` |
 
 `scheduler_node.py` 超过一万行，不要整文件加载。先用符号搜索定位，例如（均从仓库根目录执行）：
 

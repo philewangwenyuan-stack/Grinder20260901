@@ -149,6 +149,53 @@ Windows 10 + WSL2 NAT 下，以管理员 PowerShell 运行以下脚本设置手�
 & "E:\CODE\C++\Grinder\catkin_ws\src\grinder_gazebo\tools\update_wsl_portproxy.ps1"
 ```
 
+## 本地源码 + 远端 WSL 运行
+
+源码继续编辑本机 Windows 的仓库，远端使用专用镜像目录
+`/home/dev/work/Grinder-remote-sim` 编译和运行。`rsync` 增量同步包含未提交源码，
+排除 Git、编译目录、PCD、实机覆盖配置和运行时地图；远端生成物不会回传覆盖本机。
+构建依赖的 Aurora 厂商 SDK 自带库单独同步，项目自身生成的 `.so`/`.a` 仍在远端重新编译。
+镜像目录不作为第二份开发仓库，不要在其中手工修改源码。同步会删除镜像中已从本地删除的
+源码文件，但受排除规则保护的编译目录、地图和运行状态会保留。
+
+默认 SSH 为 `dev@172.20.22.114:2222`，私钥位于本机 `%USERPROFILE%\.ssh\grinder_remote_sim`，
+公钥须事先添加到远端 `~/.ssh/authorized_keys`。安装依赖时，在远端 Ubuntu 20.04 执行
+`sudo bash catkin_ws/scripts/install_remote_sim_deps.sh`；脚本不启动实机服务。
+
+本机 PowerShell 在仓库根目录运行（命令需要多个终端时，分别执行）：
+
+```powershell
+# 检查连接；同步并构建（首次较慢）。构建也会重新编译 MST27 C++ 扩展。
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 doctor
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 build
+
+# 终端 1：远端无 Gazebo 界面运行；相机使用远端 WSLg 渲染。
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 start
+
+# 终端 2：保持 APP/RTSP 隧道；默认本机 18002/18554 避免占用本机仿真端口。
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 tunnel
+
+# 终端 3：MuMu 映射后，APP 仍输入 127.0.0.1:8002。
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 app
+
+# RViz 进程位于远端，窗口通过 SSH X11 转发显示到本机 WSLg。
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 rviz
+
+# 修改源码后：sync 手动同步，或另开终端 watch 每 3 秒增量同步。
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 watch
+```
+
+远端 sshd 需要 `X11Forwarding yes` 和 `xauth`，本机 WSL 需要 WSLg、`ssh`、`rsync`、
+`xauth`。默认 RViz 使用软件 OpenGL，点云和 TF 默认关闭，避免窗口传输占用过多带宽。
+其 ROS 连接始终留在远端，不需要向局域网开放 ROS 的动态 TCP 端口。
+视频的 8554 隧道用于 RTSP TCP 传输；若 APP 强制 UDP 视频，需另行调整视频客户端。
+MuMu 重启后重新执行 `app`；SSH 隧道断开则重新执行 `tunnel`。
+`watch` 只同步，不自动构建或重启；Python/launch 修改需重启相应节点，C++ 修改需再执行 `build`。
+
+可用参数 `-RemoteHost`、`-Port`、`-RemoteUser`、`-RemoteRoot`、`-Identity`、
+`-Distro`、`-Adb`、`-AdbSerial` 覆盖本机默认值。直接在本机 WSL 使用
+`bash catkin_ws/scripts/remote_sim.sh help`，对应环境变量以 `GRINDER_REMOTE_` 开头。
+
 ## 仿真边界
 
 - 不提供 Aurora STCM 及其模拟服务；地图保存为实际 Super-LIO PCD 与二维 YAML/PGM 资产包。

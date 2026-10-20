@@ -23,6 +23,11 @@ Super-LIO 无子模块拉取步骤，上游版本见
 仿真脚本默认只用受控配置，平台上传、MQTT 和远端推流均关闭。
 直接 roslaunch 可传 `scheduler_local_config:=/absolute/path/device.yaml`。
 
+源码保留在本机 Windows、仿真在另一台 WSL 运行时，可使用
+`scripts/remote_sim.ps1` 的 `sync/build/start/tunnel/app/rviz/watch` 入口。
+远端编译和地图保存在其专用 Linux 目录，APP 经本机 SSH 隧道连接，RViz 窗口通过 X11 转发。
+首次依赖安装和完整操作见 [仿真包说明](src/grinder_gazebo/README.md#本地源码--远端-wsl-运行)。
+
 ## 1. 编译（自动识别平台）
 
 脚本：
