@@ -28,7 +28,7 @@ RegulatedPurePursuitController:
   lookahead_time: 1.5               # 速度自适应前视时间，单位：秒
   use_velocity_scaled_lookahead_dist: false  # false：固定前视；true：按速度调整前视
   use_fixed_curvature_lookahead: true       # 是否使用独立的曲率前视点
-  curvature_lookahead_dist: 0.55    # 缩短曲率前视，减少进入转弯时提前切角，单位：m
+  curvature_lookahead_dist: 0.45    # 缩短曲率前视，减少进入转弯时提前切角，单位：m
   max_robot_pose_search_dist: 2.5   # 搜索机器人最近路径点允许检查的最大累计路径长度，单位：m
   # 长路径仿真必须配合 rolling_start:=true，否则仍会复现固定路径起点问题。
   preserve_plan_progress_on_update: true  # 同一条路径反复刷新时，保持已经裁掉的机器人身后路径点
@@ -91,7 +91,12 @@ RegulatedPurePursuitController:
   trans_stopped_vel: 0.01              # 低于该线速度认为已停止平移，单位：m/s
   theta_stopped_vel: 0.01               # 低于该角速度认为已停止旋转，单位：rad/s
 
-  # Vector Pure Pursuit 扩展；当前使用标准 RPP，下面参数暂不参与控制
-  use_vector_pure_pursuit: false        # 是否切换到 Vector Pure Pursuit
-  k: 6.0                                # Vector Pure Pursuit 方向收敛增益
-  min_turning_radius: 0.0               # 最小转弯半径，差速底盘可原地转向，单位：m
+  # Vector Pure Pursuit：同时使用前瞻点位置与该处路径方向计算转向。
+  # 适用于跟踪直线、45°弯及规划好的绕柱路径；不会自行生成避障路径或固定半径U形弧。
+  # 原地对齐仍由 use_rotate_to_heading 独立控制；原曲率减速、限速和停障链路继续执行。
+  use_vector_pure_pursuit: true
+  k: 6.0                               # 无量纲，位置与目标方向在转向半径计算中的权重参数；仅Vector模式生效
+  # 计算转向曲率时的半径下限（m），不是期望半径，也不保证实际半径恒定。
+  # Vector模式应保持正值：禁止倒车且前瞻点落到车后时会直接使用此半径，0会导致求倒数除零。
+  # 0.20为本轮数值验证的起始配置，非实车极限标定；仍可能出现内侧轮反转。
+  min_turning_radius: 0.20
