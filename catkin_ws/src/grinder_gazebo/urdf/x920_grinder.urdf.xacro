@@ -38,12 +38,13 @@
   <xacro:property name="camera_mass" value="0.1" />
   <!-- Front caster contact offset inside the grinding-disc footprint. -->
   <xacro:property name="caster_support_offset_x" value="0.15" />
+  <xacro:property name="caster_radius" value="0.055" />
   <xacro:property name="body_mass" value="${vehicle_mass - disc_mass - caster_mass - 2*drive_wheel_mass - laser_mass - 2*camera_mass}" />
   <!-- This body-link COM makes the complete mass-weighted x COM equal 0.55 m. -->
   <xacro:property name="body_com_x" value="${(vehicle_mass*0.55 - disc_mass*0.55 - caster_mass*(0.55 + caster_support_offset_x) - laser_mass*lidar_x - 2*camera_mass*0.72) / body_mass}" />
   <!-- Put the aggregate COM at the disc centre height as well as its x
        position.  All link origins use base_link at the wheel axle height. -->
-  <xacro:property name="body_com_z" value="${(vehicle_mass*0.04 - disc_mass*0.04 - caster_mass*0.04 - 2*drive_wheel_mass*wheel_radius - laser_mass*(wheel_radius + lidar_z) - 2*camera_mass*(wheel_radius + 0.45)) / body_mass - wheel_radius}" />
+  <xacro:property name="body_com_z" value="${(vehicle_mass*0.04 - disc_mass*0.04 - caster_mass*caster_radius - 2*drive_wheel_mass*wheel_radius - laser_mass*(wheel_radius + lidar_z) - 2*camera_mass*(wheel_radius + 0.45)) / body_mass - wheel_radius}" />
   <!-- Place the hidden frictionless caster contact 150 mm ahead of the disc
        centre, still inside its 0.90 m swept footprint.  This gives the rear
        drive axle a small positive normal load with the aggregate COM at the
@@ -163,10 +164,9 @@
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
     </inertial>
     <collision name="grinding_disc_caster_collision">
-      <!-- The frictionless front caster carries the remaining front load;
-           its center is set for nominal zero-floor clearance. -->
-      <origin xyz="0 0 0.015" rpy="0 0 0" />
-      <geometry><sphere radius="0.055" /></geometry>
+      <!-- Keep the sphere concentric with the rolling joint. An offset here
+           rotates with the link, changing support height and pitching the body. -->
+      <geometry><sphere radius="${caster_radius}" /></geometry>
     </collision>
   </link>
   <joint name="grinding_disc_caster_wheel_joint" type="continuous">
@@ -175,7 +175,7 @@
          with the disc and could move behind the COM while idling. -->
     <parent link="base_link" />
     <child link="grinding_disc_caster_wheel_link" />
-    <origin xyz="${0.55 + caster_support_offset_x} 0 -0.1075" rpy="0 0 0" />
+    <origin xyz="${0.55 + caster_support_offset_x} 0 ${caster_radius - wheel_radius}" rpy="0 0 0" />
     <!-- Free rolling axis for the universal support. -->
     <axis xyz="0 1 0" />
     <dynamics damping="0.1" friction="0.0" />

@@ -14,6 +14,9 @@
   <arg name="y" default="0.0" />
   <arg name="yaw" default="0.0" />
 
+  <!-- Resolve the RVT-derived world meshes in both devel and installed packages. -->
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find grinder_gazebo):$(optenv GAZEBO_RESOURCE_PATH /usr/share/gazebo-11)" />
+
   <param name="use_sim_time" value="true" />
   <param name="robot_description"
          command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh) lidar_x:=$(arg lidar_x) lidar_y:=$(arg lidar_y) lidar_z:=$(arg lidar_z) lidar_horizontal_samples:=$(arg lidar_horizontal_samples) lidar_vertical_samples:=$(arg lidar_vertical_samples) lidar_max_range:=$(arg lidar_max_range) sensor_noise_config:=$(arg sensor_noise_config)" />

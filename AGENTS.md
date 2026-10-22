@@ -87,6 +87,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh`、`catkin_ws/start_grinder_super_lio_base.sh` | Livox UDP 端口预检：`catkin_ws/scripts/check_livox_udp_ports.py`；`catkin_ws/PLATFORM_BUILD_RUN.md` |
 | 板端整套开机自启、配置与 systemd 管理 | `catkin_ws/scripts/grinder-service`、`catkin_ws/install_grinder_service.sh` | 板端 `/etc/grinder/startup.conf`；`start_grinder_super_lio_base.sh` 先启动灯带并监督子进程；离线验证 `scripts/test_grinder_service.py`；根 README 第 12 节 |
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |
+| RVT 梁柱墙板仿真场景与碰撞几何 | `catkin_ws/src/grinder_gazebo/worlds/factory_floor.world` | `meshes/b1_structure/*.stl` 为四类静态网格，`source_report.json` 保存来源/单位/坐标/构件 ID；`launch/spawn_x920.launch` 设置网格资源路径；用法见仿真包 README |
 | 虚拟 MID-360S 点云、IMU 噪声与安装位置 | `catkin_ws/src/grinder_gazebo/src/mid360_sensor_plugin.cpp`、`config/sensor_noise.yaml`（相对仿真包） | `urdf/x920_grinder.gazebo.xacro`；后轴中点前方 0.20 m，托管 Super-LIO 为唯一位姿 TF 来源 |
 | 本地 Livox SDK2 / ROS 驱动与仿真构建 | `catkin_ws/src/drivers/ws_livox/src/` | `catkin_ws/scripts/build_sim_livox.sh` 在忽略的 `temp/` 中复用源码构建，不启动硬件驱动 |
 | 本地源码、远端 WSL 仿真、MuMu 隧道与本地 RViz 窗口 | `catkin_ws/scripts/remote_sim.ps1`、`catkin_ws/scripts/remote_sim.sh` | `install_remote_sim_deps.sh` 安装远端 Ubuntu 20.04 依赖；仿真包 `config/remote_sim.rviz`；用法见仿真包 README；`scripts/test/test_remote_sim.py` |

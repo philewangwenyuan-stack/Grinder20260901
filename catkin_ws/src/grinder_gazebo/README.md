@@ -29,9 +29,22 @@ APP/调度/规划 → move_base + RPP/TEB → 仿真底盘 → Gazebo。APP 的�
 - 驱动轮半径：`0.1475 m`。
 - 减速比：`60.0`。
 - 简化物理碰撞体：`1.30 x 0.94 x 0.30 m`，与仿真代价地图 footprint `[-0.3, 1.0] x [-0.47, 0.47]` 一致；真实导航参数不改。
-- 环境：`50m x 50m` 单层平面，边界墙高 `3m`，`0.9m x 0.9m` 柱子按 `6m` 柱心间距布置，共 `8 x 8 = 64` 根。
+- 环境：从用户提供的 `S_B1混凝土结构模型_V1.0.rvt` 提取梁、柱、墙、板，替换原来的规则柱网、边墙与示例梁板。共有 **767 根梁、199 根柱、191 面墙、557 块板**，平面范围约 `104.45m x 82.57m`，高度范围约 `-0.55m～7.20m`（相对 B1 地面）。
+- 构件保留 Revit 原始面三角化后的轮廓、位置关系、斜面和洞口；不以包围盒或凸包代替构件。四类构件共 `34,530` 个三角面，按类别合并成静态 visual/collision 网格，参与虚拟雷达射线和物理碰撞。28 个没有可提取几何的元素（3 根梁、25 块板）未生成网格，几何提取错误为 0。
+- Revit 内部英尺按 `0.3048` 转成米，保持模型朝向，仅整体平移。源坐标 `(51.22561494, 21.95509716, -6.0)m` 对应 Gazebo 原点；`B1` 标高 `-6m` 对齐仿真 `z=0`。原点选在构件净空范围，机器人原有出生位姿参数保持不变。原有 `ground_plane` 继续提供连续地面支撑；这是仿真支撑面，不是从 RVT 新提取的构件。
 
 默认不加载 STEP，Gazebo collision 和 inertia 使用简化几何，以保证姿态稳定和实时性。仿真启动会用 `navigation_sim_overrides.yaml` 将 global/local costmap footprint 对齐到上述方盒尺寸；真实导航参数保持不改。需要查看 CAD 外观时运行 `./start_grinder_sim.sh visual_mesh:=true`。
+
+楼层场景位于 [`worlds/factory_floor.world`](worlds/factory_floor.world)，其中
+`b1_beam`、`b1_column`、`b1_wall`、`b1_slab` 分别加载
+[`meshes/b1_structure/`](meshes/b1_structure/) 内的四类构件。
+[`source_report.json`](meshes/b1_structure/source_report.json) 保存源文件 SHA-256、单位换算、
+坐标平移、构件 ID、数量和网格校验值；原始 RVT 不随仓库分发，也未被保存或修改。
+`spawn_x920.launch` 将包目录加入 `GAZEBO_RESOURCE_PATH`，用于解析可移植网格 URI。
+只修改 world 无需重新编译；远端使用时先 `sync`，停止旧仿真后重新 `start` 才会加载新几何，
+重新建图后再验证定位，避免旧三维地图与新的楼层结构不一致。
+顶部楼板为不透明实体，Gazebo 从楼顶俯视会被遮挡，可将相机移入楼层观察；
+RViz 的机器人模型显示不包含 world 梁板，应通过建图点云查看扫描到的楼层结构。
 
 ## WSL 启动
 
@@ -135,8 +148,11 @@ python3 src/grinder_gazebo/test/check_mid360_chain.py --map-cycle
 
 ## APP 连接
 
+本节是仿真运行在本机 WSL 时的连接方式；**另一台电脑运行仿真、本机 MuMu 显示 APP**
+请按下一节的 `tunnel` + `app` 操作，不直接套用本节 IP。
+
 - Windows 本机 APP：`127.0.0.1:8002`。
-- 模拟器 本机 APP：`10.0.2.2:8002。
+- Android 模拟器：宿主机地址取决于模拟器网络配置；MuMu 推荐使用下一节的 ADB reverse，映射后连接 `127.0.0.1:8002`。
 - 局域网手机 APP：连接 Windows 电脑局域网 IP 的 `8002` 端口。
 - 左右 RTSP：`rtsp://<Windows-IP>:8554/left` 和 `/right`。
 
@@ -151,50 +167,391 @@ Windows 10 + WSL2 NAT 下，以管理员 PowerShell 运行以下脚本设置手�
 
 ## 本地源码 + 远端 WSL 运行
 
-源码继续编辑本机 Windows 的仓库，远端使用专用镜像目录
-`/home/dev/work/Grinder-remote-sim` 编译和运行。`rsync` 增量同步包含未提交源码，
-排除 Git、编译目录、PCD、实机覆盖配置和运行时地图；远端生成物不会回传覆盖本机。
-构建依赖的 Aurora 厂商 SDK 自带库单独同步，项目自身生成的 `.so`/`.a` 仍在远端重新编译。
-镜像目录不作为第二份开发仓库，不要在其中手工修改源码。同步会删除镜像中已从本地删除的
-源码文件，但受排除规则保护的编译目录、地图和运行状态会保留。
+### 1. 两台电脑分别做什么
 
-默认 SSH 为 `dev@172.20.22.114:2222`，私钥位于本机 `%USERPROFILE%\.ssh\grinder_remote_sim`，
-公钥须事先添加到远端 `~/.ssh/authorized_keys`。安装依赖时，在远端 Ubuntu 20.04 执行
-`sudo bash catkin_ws/scripts/install_remote_sim_deps.sh`；脚本不启动实机服务。
+本机 Windows 编辑源码、运行 MuMu；本机 WSL 提供同步客户端和 WSLg 显示。
+另一台电脑的 WSL 负责 Linux 编译、Gazebo、Super-LIO、调度、导航和 RViz 计算。
+RViz 窗口通过 SSH X11 转发显示在本机，不需要在本机再启动一套 ROS 节点。
 
-本机 PowerShell 在仓库根目录运行（命令需要多个终端时，分别执行）：
+| 内容 | 当前路径或地址 |
+| --- | --- |
+| 本机唯一开发仓库 | `E:\CODE\C++\Grinder`，本机 WSL 中为 `/mnt/e/CODE/C++/Grinder` |
+| 远端 Windows 局域网地址 | `172.20.22.114` |
+| SSH 入口 | `dev@172.20.22.114:2222`，转发到远端 WSL 的 22 端口 |
+| 远端 WSL 内网地址示例 | `172.27.203.246`，重启后可能变化，不作为本机 SSH 目标 |
+| 远端源码副本 | `/home/dev/work/Grinder-remote-sim` |
+| 远端 Catkin 产物 | 上述目录下 `catkin_ws/build`、`catkin_ws/devel` |
+| 远端规划器 C++ 构建目录 | 上述目录下 `temp/remote_mst27` |
+| 远端仿真地图 | 上述目录下 `maps/sim_mid360` |
+| 远端调度持久化状态 | 上述目录下 `temp/grinder_scheduler_mid360_sim_state` |
+
+远端有完整源码副本和远端编译产物。日常只编辑本机这一份，使用 `rsync` 单向增量同步，
+未提交的源码也会同步，不需要先提交或推送 Git。远端镜像不携带 `.git`，不要在镜像内手工改源码。
+
+### 2. 首次准备环境与 SSH
+
+**已经配置成功的电脑跳过本小节，从第 3 步开始。** 以下 Linux 命令在注明的 WSL 中执行，
+不要粘贴到 Windows CMD；本机运行脚本所需的默认发行版名为 `Ubuntu-20.04`。
+
+本机 WSL 安装客户端依赖，并确认 Windows 可通过 WSLg 显示窗口：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y openssh-client rsync xauth
+echo "$DISPLAY"
+```
+
+远端 WSL 使用 Ubuntu 20.04，先安装 SSH 和同步所需的基础工具：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y openssh-server rsync xauth
+sudo service ssh start
+hostname -I
+sudo ss -lntp 'sport = :22'
+```
+
+若使用 WSL NAT，在**远端电脑的管理员 PowerShell** 配置 SSH 转发；
+下面的 `wsl` 查询默认发行版，若目标不是默认发行版，应先用 `wsl -l -v` 确认并增加 `-d <发行版名>`。
 
 ```powershell
-# 检查连接；同步并构建（首次较慢）。构建也会重新编译 MST27 C++ 扩展。
+$simWslIp = ((wsl -- hostname -I) -join ' ').Trim().Split(' ')[0]
+netsh interface portproxy add v4tov4 listenaddress=172.20.22.114 listenport=2222 connectaddress=$simWslIp connectport=22
+New-NetFirewallRule -DisplayName 'Grinder remote WSL SSH 2222' -Direction Inbound -Action Allow -Protocol TCP -LocalAddress 172.20.22.114 -LocalPort 2222 -RemoteAddress LocalSubnet -Profile Private
+netsh interface portproxy show v4tov4
+```
+
+防火墙规则只需创建一次；以上示例要求局域网连接使用 Windows“专用”网络配置。
+WSL IP 变化后重新执行地址查询和 `portproxy add` 更新目标。Windows 局域网 IP 变化时也应更新监听地址和防火墙规则。
+
+本机 PowerShell 查看专用 SSH 公钥；尚未生成密钥时才执行 `ssh-keygen`，不要覆盖已有私钥：
+
+```powershell
+# 仅首次、文件不存在时生成
+ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\grinder_remote_sim" -C grinder-remote-sim
+Get-Content "$env:USERPROFILE\.ssh\grinder_remote_sim.pub"
+```
+
+把输出的**公钥整行**追加到远端 `dev` 用户的 `~/.ssh/authorized_keys`，保留已有内容：
+
+```bash
+# 在远端 WSL 的 dev 终端执行，编辑器中追加公钥
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+nano ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+RViz 转发还要求远端 SSH 配置启用 `X11Forwarding yes`；修改后执行 `sudo service ssh restart`。
+本机私钥不上传仓库或远端，`watch` 需要密钥能非交互登录；若使用带口令的密钥，需预先配置可用的 SSH agent。
+
+### 3. 首次同步、安装依赖和构建
+
+以下所有 `remote_sim.ps1` 命令均在**本机 PowerShell** 的仓库根目录执行：
+
+```powershell
+Set-Location 'E:\CODE\C++\Grinder'
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 doctor
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 sync
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 shell
+```
+
+`doctor` 检查 SSH 和部分基础环境，不代表所有依赖或仿真链路已经通过。
+`shell` 打开远端终端。首次在其中安装依赖，输入远端用户自己的 sudo 密码：
+
+```bash
+cd /home/dev/work/Grinder-remote-sim
+sudo bash catkin_ws/scripts/install_remote_sim_deps.sh
+# 可选：RViz 的 JSK 显示插件；当前远端已安装
+sudo apt-get install -y ros-noetic-jsk-rviz-plugins
+exit
+```
+
+安装脚本配置 ROS 软件源并安装 ROS Noetic、Gazebo、导航、编译工具和 Python 依赖，
+不启动实机服务。JSK 当前是上面单独安装的可选依赖，不在安装脚本默认清单中。
+随后回到本机 PowerShell 构建：
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 build
+```
 
-# 终端 1：远端无 Gazebo 界面运行；相机使用远端 WSLg 渲染。
+`build` 会**先同步源码，再在远端执行 `PROFILE=sim` 构建，并单独构建 MST27 C++ 规划扩展**。
+默认使用 8 个并行构建任务；本机 Windows 的旧 `.so`、`build/devel` 不会被复制过去使用。
+首次构建还需要本机有上述 Livox SDK2/ROS1 驱动源码；缺失时先补齐源码再同步。
+
+### 4. 每次启动：仿真、隧道、APP、RViz
+
+启动前先确认上一套仿真已退出。每个终端都先切换到 `E:\CODE\C++\Grinder`，
+下列前台进程分别使用不同终端，运行期间保持终端打开。
+
+**终端 A：同步并启动远端仿真。** `start` 本身不自动同步、不编译。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 sync
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 start
+```
 
-# 终端 2：保持 APP/RTSP 隧道；默认本机 18002/18554 避免占用本机仿真端口。
+默认 `gui:=false`，只在远端运行 Gazebo 服务；相机仍使用远端 WSLg 渲染。
+调度和导航会启动，Super-LIO 初始为待命，需 APP 开始建图或加载地图才进入对应模式。
+
+**终端 B：建立本机到远端的 APP/视频隧道。** 已有可用隧道时复用，不重复启动。
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 tunnel
+```
 
-# 终端 3：MuMu 映射后，APP 仍输入 127.0.0.1:8002。
+**终端 C：先启动 MuMu，再执行端口映射。** 此命令执行完成后会返回，可继续用该终端。
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 app
+```
 
-# RViz 进程位于远端，窗口通过 SSH X11 转发显示到本机 WSLg。
+打开 MuMu 中的 APP，固定 IP 填 **`127.0.0.1:8002`**。这里能使用回环地址，
+是因为 `app` 已建立 ADB reverse；未映射时，该地址只指向 Android 自己。
+
+| 通路 | 转发过程 |
+| --- | --- |
+| APP 协议 | MuMu `127.0.0.1:8002` → 本机 Windows `127.0.0.1:18002` → SSH → 远端 WSL `127.0.0.1:8002` |
+| RTSP TCP | MuMu `127.0.0.1:8554` → 本机 Windows `127.0.0.1:18554` → SSH → 远端 WSL `127.0.0.1:8554` |
+
+本机隧道端口使用 `18002/18554`，以便与本机仿真的 `8002/8554` 区分。
+`app` 只配置映射，不启动仿真或 SSH 隧道。MuMu 重启后要重新执行 `app`。
+视频还取决于 APP 使用的 RTSP 地址与 TCP 传输方式；隧道端口连通不等于视频播放验证通过。
+APP 若强制 UDP 视频，当前 TCP 隧道不转发其 UDP 数据。
+
+**终端 D：打开本机显示的 RViz。**
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 rviz
+```
 
-# 修改源码后：sync 手动同步，或另开终端 watch 每 3 秒增量同步。
+RViz 进程在远端，ROS 连接留在远端，不需向局域网开放 ROS 动态 TCP 端口。
+默认加载 `config/remote_sim.rviz`，固定坐标系 `map`，显示地图、机器人和规划路径；
+点云和 TF 默认关闭，使用软件 OpenGL、15 FPS 以减少显示开销。
+开始建图前没有 `/map` 或相关 TF、RViz 地图为空属于待命状态。
+
+JSK 安装后重新打开 RViz，在 **Add → By display type → jsk_rviz_plugins** 中选择
+`OverlayText`、`BoundingBoxArray`、`PolygonArray` 等显示类型。
+每种显示仍需对应消息话题，安装插件本身不会自动产生数据。
+RViz 的 Save Config 写入的是**远端文件**；需要保留布局时，将其保存到远端 `temp/`，
+取回本机再维护本机的 `.rviz` 文件，避免下一次同步覆盖远端手改布局。
+
+### 5. APP 建图和任务联调顺序
+
+1. APP 连接成功后开始建图，先保持机器人静止，等待 Super-LIO 初始化。
+2. 再遥控探索，观察 RViz 地图、机器人朝向与 APP 是否一致。
+3. 在 APP 编辑地图、划分工作区、保存地图。保存成功后建图停止。
+4. 加载保存的地图，按 APP 流程提交初始位姿，等待定位达到 `READY`。
+5. 再创建任务、查看规划并开始作业；定位未就绪时不绕过任务启动门控。
+
+地图和状态实际保存在远端，不会自动回传本机。调整雷达物理安装位置后需重新建图，
+原有地图不要直接用于验证新的安装外参。
+
+### 6. 日常修改代码和参数
+
+编辑本机文件并保存后，手动同步：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 sync
+```
+
+也可另开**终端 E** 持续同步，默认每次同步结束后间隔 3 秒，`Ctrl+C` 结束监听：
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 watch
 ```
 
-远端 sshd 需要 `X11Forwarding yes` 和 `xauth`，本机 WSL 需要 WSLg、`ssh`、`rsync`、
-`xauth`。默认 RViz 使用软件 OpenGL，点云和 TF 默认关闭，避免窗口传输占用过多带宽。
-其 ROS 连接始终留在远端，不需要向局域网开放 ROS 的动态 TCP 端口。
-视频的 8554 隧道用于 RTSP TCP 传输；若 APP 强制 UDP 视频，需另行调整视频客户端。
-MuMu 重启后重新执行 `app`；SSH 隧道断开则重新执行 `tunnel`。
-`watch` 只同步，不自动构建或重启；Python/launch 修改需重启相应节点，C++ 修改需再执行 `build`。
+`sync/watch` 只更新磁盘文件，**不自动构建、不重启节点，也不热更新运行中的参数**。
+较大的多文件修改建议关闭 `watch`，改完后一次 `sync`，避免远端在不完整修改期间重启或加载地图模式。
 
-可用参数 `-RemoteHost`、`-Port`、`-RemoteUser`、`-RemoteRoot`、`-Identity`、
-`-Distro`、`-Adb`、`-AdbSerial` 覆盖本机默认值。直接在本机 WSL 使用
-`bash catkin_ws/scripts/remote_sim.sh help`，对应环境变量以 `GRINDER_REMOTE_` 开头。
+| 改动内容 | 同步后如何生效 |
+| --- | --- |
+| 调度、地图、规划适配层等 Python | 停止本次任务/建图，重启相关节点；日常建议按第 8 步重启整套仿真 |
+| YAML 参数、launch | 一般无需编译，重启读取该配置的节点；未明确支持动态加载时按需重启整套仿真 |
+| URDF/Xacro、world、传感器噪声配置 | 重启 Gazebo，重新生成模型；安装位置变化后重新建图 |
+| C++、规划器 C++ 扩展、Gazebo 插件 | 先停止仿真，再执行 `build`，成功后重新 `start` |
+| `msg/srv`、`package.xml`、`CMakeLists.txt` | 执行 `build` 后重启相关节点 |
+| RViz 布局 `.rviz` | 同步后重新打开 RViz 或重新加载配置 |
+
+不要在另一个终端重复 `start` 来代替重启；旧节点会占用相同端口和 ROS 名称。
+编译成功也不代表正在运行的 C++ 进程已经换成新版本。
+
+### 7. 参数改哪个文件，以及覆盖顺序
+
+| 要调整的内容 | 本机仓库相对路径 |
+| --- | --- |
+| 公共调度、规划等默认配置 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` |
+| Super-LIO 模式、定位质量门限 | `catkin_ws/src/grinder_scheduler/config/super_lio.yaml` |
+| 仿真专用调度覆盖、车体尺寸、视频等 | `catkin_ws/src/grinder_gazebo/config/scheduler_sim_overrides.yaml` |
+| 仿真导航 footprint 等覆盖 | `catkin_ws/src/grinder_gazebo/config/navigation_sim_overrides.yaml` |
+| 雷达测距、IMU 噪声和零偏 | `catkin_ws/src/grinder_gazebo/config/sensor_noise.yaml` |
+| 雷达安装位置、采样数、量程等默认启动值 | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch` |
+| RViz 默认显示布局 | `catkin_ws/src/grinder_gazebo/config/remote_sim.rviz` |
+
+调度节点参数按以下顺序加载，后者覆盖前者的同名值：
+`scheduler.yaml` → `super_lio.yaml` → `scheduler_local_config` →
+`scheduler_sim_overrides.yaml` → launch 中显式设置的节点参数。
+模式管理器单独加载 `super_lio.yaml`，安装位置等再由 launch 设置；
+并非调度节点上的每个参数都会同步应用到模式管理器。
+只改仿真行为时优先修改仿真文件；改公共默认值会影响以后部署的实车配置。
+
+**`scheduler.local.yaml` 不参与源码同步。** 它属于设备覆盖文件，不能依靠修改本机该文件来更新远端。
+`start` 每次会重写远端 `temp/remote_sim/scheduler.local.yaml` 并作为本次调度覆盖输入；
+其中同名值仍可能被后加载的仿真 YAML 覆盖，不要手改这个临时文件保存长期配置。
+
+临时实验也可在 `start` 后追加 launch 参数，不改文件。例如先停止旧仿真，再启动：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 start lidar_max_range:=30.0 navigation_local_planner:=teb
+```
+
+参数中的文件路径必须是**远端 Linux 路径**。例如自定义噪声文件同步后，传入：
+`sensor_noise_config:=/home/dev/work/Grinder-remote-sim/catkin_ws/src/grinder_gazebo/config/sensor_noise.yaml`，
+不能传 `E:\...` 或本机 WSL 的 `/mnt/e/...`。
+启动参数只影响这一次进程，下次启动仍要传入，或修改本机 launch 默认值后同步。
+
+### 8. 停止、重启和退出
+
+1. 先在 APP 停止任务，结束当前建图操作；需要的地图先保存。
+2. 在**终端 A** 按 `Ctrl+C` 退出仿真，等待节点清理结束。
+3. 根据修改类型执行 `sync` 或 `build`，然后在终端 A 重新执行 `start`。
+4. 仍在运行的 SSH 隧道和 ADB 映射可继续使用；需要时重新连接 APP、重新加载地图并等待定位就绪。
+5. 完全退出时关闭 RViz，在隧道和 `watch` 终端按 `Ctrl+C`；停止隧道不会代替停止远端仿真。
+
+若启动终端已丢失或 SSH 意外断开，不能仅凭本机窗口消失判断远端已停止。
+在新的本机终端执行 `shell`，在远端检查：
+
+```bash
+pgrep -af 'roslaunch.*grinder_sim.launch'
+ss -lntp 'sport = :8002 or sport = :8554'
+```
+
+若存在上次启动的进程，核对其命令和工作目录确为本次镜像，
+再对该 `roslaunch` 的实际 PID 执行 `kill -INT <实际PID>`，等待清理后复查端口。
+不要使用会影响其他 ROS 实例的全局 `killall`。脚本当前没有独立的 `stop/restart` 动作。
+
+### 9. 检查运行状态与日志
+
+本机执行 `shell` 后，终端位于远端镜像根目录，已加载可用的 ROS/工作区环境：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 shell
+```
+
+以下命令在这个**远端 shell** 中执行，`rostopic hz` 查看几秒后按 `Ctrl+C` 返回：
+
+```bash
+rosnode list
+rosparam get /use_sim_time
+rostopic hz /livox/lidar
+rostopic hz /livox/imu
+rostopic echo -n 1 /super_lio/localization_status
+rosparam get /grinder_scheduler/localization_backend
+ls -lt ~/.ros/log/latest
+python3 catkin_ws/src/grinder_gazebo/test/check_mid360_chain.py
+```
+
+传感器名义频率是仿真时间中的雷达 10 Hz、IMU 200 Hz；墙钟接收速率还受实时因子影响。
+`check_mid360_chain.py` 默认执行传感器只读检查。
+加 `--map-cycle` 会实际建图、保存测试地图并重定位，只在没有 APP 任务的独立测试时使用。
+日志先看终端 A 的输出，再看远端 `~/.ros/log/latest`；编译错误则看 `build` 终端。
+
+#### 定位异常导致任务暂停：记录触发前后的逐帧数据
+
+APP 的“配准质量连续不合格”对应 `registration_quality_failed`，是定位门控触发任务暂停。
+它不单指匹配误差过大，还可能是未收敛、内点比例不足、匹配数量不足或协方差超限。
+只看 APP 的概括原因，无法区分这些条件；定位恢复后任务仍需用户确认继续。
+
+在远端 `shell` 中查看实时话题（`Ctrl+C` 退出查看，不影响任务）：
+
+```bash
+rostopic echo /super_lio/registration_diagnostics
+rostopic echo /super_lio/localization_status
+```
+
+重点对照模式管理器实际参数和以下诊断字段：
+
+| 字段或来源 | 含义 |
+| --- | --- |
+| `fitness_m2`、`inlier_ratio`、`valid_correspondences` | 匹配残差、内点比例、有效匹配数量 |
+| `converged`、诊断 `level` | 本帧是否收敛、算法是否报告有效质量 |
+| `kf_iterations`、`kf_max_iterations` | 实际迭代次数与迭代上限 |
+| `kf_convergence_reason` | 如 `threshold_reached`、`iteration_limit`，区分正常收敛与迭代耗尽 |
+| `kf_final_update_inf`、`kf_quit_eps`、`kf_final_max_component` | 最终状态更新量、收敛阈值及最大更新分量；不同状态分量单位不同，不能统一解释成距离 |
+| `/lio/odom` 的 `pose.covariance[0/7/35]` | X/Y/航向方差，对照模式管理器方差门限 |
+| 定位状态中的 `reason`、`good_frames`、`bad_frames` | 当前原因、连续好帧与坏帧计数 |
+
+要捕获偶发暂停，在单独远端终端记录下面的话题；记录器只订阅，不下发运动指令。
+每段约 32 MB，滚动保留最多 4 段，分段期间另有活动文件与少量格式开销。
+旧段会被淘汰，发生暂停后应及时结束记录并备份，避免故障片段被覆盖。
+若 `/localization_pause_recorder` 已存在，复用已有记录器，不重复启动同名节点。
+
+```bash
+mkdir -p temp/localization_monitor
+rosparam dump temp/localization_monitor/mode_manager_parameters.yaml /super_lio_mode_manager
+rosbag record --split --size=32 --max-splits=4 --buffsize=16 \
+  -O "temp/localization_monitor/pause_$(date +%Y%m%d_%H%M%S)" \
+  /super_lio/registration_diagnostics /super_lio/localization_status \
+  /lio/odom /clock /cmd_vel /chassis/task_enable /scheduler/status /rosout \
+  __name:=localization_pause_recorder
+```
+
+前台记录按 `Ctrl+C` 正常结束；若记录器在后台运行，可在远端执行：
+
+```bash
+rosnode kill /localization_pause_recorder
+ls -lh temp/localization_monitor
+```
+
+结束后 `.bag.active` 会正常关闭为 `.bag`，可用 `rosbag info <文件.bag>` 查看。
+分析时按消息头仿真时间关联暂停前后数据，并保留 APP 看到的墙钟时间作为索引，
+不要直接把仿真时间数字当作 Windows 日期。
+该记录不包含大点云或完整 IMU，适合先定位门控触发条件；算法复现需另行采集输入传感器数据。
+本机 `sync/watch` 不回传或清除远端 `temp/`，需要时用 `scp` 单独取回记录。
+
+### 10. 常见问题
+
+| 现象 | 检查和处理 |
+| --- | --- |
+| SSH `Connection reset/refused` | 在远端 WSL 启动 `ssh`，确认监听 22；在远端 Windows 检查 2222 转发是否指向当前 WSL IP |
+| `Permission denied (publickey)` | 检查 `dev` 的 `authorized_keys`、700/600 权限和本机 `-Identity` 对应私钥；不要把公钥当私钥传入 |
+| `rsync` 不存在 | 本机 WSL 和远端 WSL 都安装 `rsync`，Windows 装了 SSH 不能替代 WSL 客户端依赖 |
+| 拒绝覆盖非空镜像目录 | `sync` 只接管空目录或带正确来源标记的镜像；改用新的专用目录，不往已有工程目录强行添加标记 |
+| 改配置后没变化 | 确认已经 `sync`、相关节点重启、文件实际被加载，并按第 7 步核对覆盖顺序；用 `rosparam get` 查看运行值 |
+| 本机 `18002/18554` 被占用 | 已有隧道时复用；在本机 `Get-NetTCPConnection -LocalPort 18002,18554 -State Listen` 查看，关闭确定属于旧隧道的进程后再建 |
+| 远端 `8002/8554` 被占用 | 按第 8 步检查并退出上一套仿真；不能靠再开一个 `start` 更新 |
+| MuMu 连接失败 | 确认仿真、`tunnel` 均在运行，MuMu 启动后重新 `app`；APP 填 `127.0.0.1:8002` |
+| MuMu ADB 路径/实例不匹配 | 用 `-Adb` 指定实际 `adb.exe`，用其 `devices` 查看实例后设置 `-AdbSerial` |
+| RViz 无窗口或 `DISPLAY` 错误 | 检查本机 WSLg 的 `DISPLAY`、两边 `xauth` 和远端 `X11Forwarding yes`；RViz 使用单独的 `rviz` 动作 |
+| RViz 地图为空 | 先确认 APP 已开始建图或加载地图；再查 `/map`、Super-LIO 状态和 `map` TF，待命时为空正常 |
+| RViz 没有 JSK 类型 | 在远端安装 `ros-noetic-jsk-rviz-plugins`，关闭后重新启动 RViz |
+| 视频连接失败 | 检查远端 8554、两级映射、APP 实际收到的 RTSP 主机地址和 TCP 传输方式；协议连接成功不代表视频连接成功 |
+| startup health timeout | 在远端查 LiDAR/IMU 是否持续更新、实时因子和地图模式日志；不通过关闭就绪检查掩盖问题 |
+
+### 11. 同步范围、改地址与地图取回
+
+同步排除 Git、本地文档缓存、`build/devel/install/logs/temp`、根目录 `maps/`、
+PCD/STCM、设备 `scheduler.local.yaml` 和项目生成的 `.so/.a`。
+构建依赖的 Aurora 厂商 SDK 自带库单独允许同步，项目自身库仍由远端重新编译。
+远端镜像中已从本机删除的源码会在下次同步时删除；排除的构建目录、地图和运行状态保留。
+运行时数据不会反向覆盖本机；需要备份地图时，在保存完成后用独立目录取回，例如本机 PowerShell：
+
+```powershell
+New-Item -ItemType Directory -Force 'E:\Grinder-sim-map-backup' | Out-Null
+scp -i "$env:USERPROFILE\.ssh\grinder_remote_sim" -P 2222 -r dev@172.20.22.114:/home/dev/work/Grinder-remote-sim/maps/sim_mid360 'E:\Grinder-sim-map-backup'
+```
+
+更换电脑时可用 `-RemoteHost`、`-Port`、`-RemoteUser`、`-RemoteRoot`、`-Identity`、
+`-Distro` 覆盖默认连接配置；每个相关命令使用相同的一组参数。例如：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\catkin_ws\scripts\remote_sim.ps1 doctor -RemoteHost 192.168.1.20 -Port 2222
+```
+
+`-Adb`、`-AdbSerial` 用于 MuMu；`-LocalControlPort`、`-LocalRtspPort` 改本机隧道端口时，
+`tunnel` 和 `app` 两个动作必须传入一致的值。Android APP 入口仍为 `127.0.0.1:8002`。
+直接在本机 WSL 使用 `bash catkin_ws/scripts/remote_sim.sh help` 也可操作，
+对应连接、同步间隔和构建并行数使用脚本中的 `GRINDER_REMOTE_*` 环境变量。
 
 ## 仿真边界
 
