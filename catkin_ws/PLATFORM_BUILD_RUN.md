@@ -4,7 +4,14 @@
 
 控制盒 USB 状态灯带默认关闭。ESP32-S3-Zero + 10 cm WS2812B 的接线、
 烧录、模拟验证及启用参数见 [`firmware/status_strip/README.md`](../firmware/status_strip/README.md)。
-新增灯带入口后需执行 `PROFILE=runtime ./build_grinder_platform.sh`。
+新增灯带入口后需重新构建调度运行包；有 Aurora 链接库时可执行 `PROFILE=runtime ./build_grinder_platform.sh`。
+纯 MID-360S 板端使用 [根 README 的选择性构建](../README.md#4-正式-release-编译)，仍需生成 Aurora ROS 消息。
+
+首次部署请先按 [根 README 安装与编译](../README.md#ros-noetic-安装工业级编译与正式启动) 完成依赖安装。
+导航运行必须安装 `ros-noetic-spatio-temporal-voxel-layer` 和 `libjemalloc2`；
+Ubuntu 20.04 的 move_base 预加载配置见 [STVL/jemalloc](../README.md#deployment-stvl)。
+当天完整版本、热点 `.3`、雷达 `.199`、设备配置、自启覆盖和独立踩坑段见
+[2026-10-22 RK3588 部署实录](../README.md#deployment-20261022)。
 
 MID-360 + Super-LIO 主系统与灯带支持统一 systemd 开机自启：在任务停止且已有启动脚本退出后，
 执行 `sudo bash ./install_grinder_service.sh <运行用户>`，编辑 `/etc/grinder/startup.conf`，
@@ -41,7 +48,7 @@ cd /home/chersxir/work/Grinder/catkin_ws
 可选 profile：
 
 ```bash
-PROFILE=runtime   ./build_grinder_platform.sh   # 底盘+调度
+PROFILE=runtime   ./build_grinder_platform.sh   # 底盘+Aurora+调度，需要 Aurora 链接库
 PROFILE=nav       ./build_grinder_platform.sh   # 导航相关
 PROFILE=aurora    ./build_grinder_platform.sh   # slamware_ros_sdk
 PROFILE=scheduler ./build_grinder_platform.sh
@@ -86,6 +93,11 @@ CLEAN_ON_PATH_CHANGE=0 ./build_grinder_platform.sh
 
 ## 2. 启动（自动选择 mediamtx 二进制）
 
+MID-360S + Super-LIO 主链路使用 `./start_grinder_super_lio_base.sh`，
+显式设置 `LIVOX_SETUP` 和 `NAV_MAP_YAML`；统一开机自启见上文链接。
+下列 `start_grinder_stack.sh` 示例用于 Aurora 链路，纯 MID-360S 部署不使用 `AURORA_IP`。
+Linux MediaMTX 可执行文件需另行安装为对应架构，仓库文件存在不代表包含 Linux 二进制。
+
 脚本：
 
 ```bash
@@ -109,3 +121,4 @@ MEDIAMTX_BIN=/home/neardi/work/Grinder/tools/mediamtx/mediamtx AURORA_IP=192.168
 
 - `Exec format error`：通常是二进制架构不匹配（例如在 RK3588 上用了 x86_64 的 mediamtx）。
 - `catkin_make` 指向旧路径：跨机器拷贝后需要重新编译，脚本会自动备份路径错配或架构冲突的 `build/devel/install`。
+- `Cannot apply task process speed to navigation`：先检查地图到车体 TF，再查 move_base 的 STVL 插件加载、jemalloc 环境和 RPP 参数服务。节点存在不代表服务已就绪，见 [当天排障记录](../README.md#deployment-pitfalls-20261022)。

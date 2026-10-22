@@ -302,6 +302,10 @@ roslaunch grinder_scheduler scheduler.launch \
 传感器为 Livox MID-360S。工业回环使用 GTSAM 4.2 iSAM2，并优先使用 fast_gicp
 （FastVGICP）；二维地图由 cloud_to_occupancy_grid 增量维护，不使用 GMapping。
 
+新板部署按本节安装、编译，再配置开机自启。2026-10-22 的实际版本、热点与雷达网口配置、
+systemd 设备覆盖、验收结果和当天踩坑见 [RK3588 部署实录](#deployment-20261022)。
+其中 STVL 与 jemalloc 是导航运行依赖，不能只以 Catkin 编译通过作为部署完成的依据。
+
 工作区路径示例：
 
 ~~~bash
@@ -335,9 +339,10 @@ http://packages.ros.org/ros/ubuntu focal main" \
   | sudo tee /etc/apt/sources.list.d/ros1.list >/dev/null
 
 sudo apt update
-sudo apt install -y ros-noetic-desktop-full
+sudo apt install -y ros-noetic-ros-base
 ~~~
 
+板端无桌面运行使用 `ros-base`；需要 RViz 等桌面工具时再安装 `ros-noetic-desktop-full`。
 如果官方源不可访问，将 /etc/apt/sources.list.d/ros1.list 中的
 packages.ros.org/ros/ubuntu 替换为可用镜像后再执行 sudo apt update。
 
@@ -378,7 +383,17 @@ rosdep install \
 
 sudo apt install -y \
   libboost-all-dev libeigen3-dev libmetis-dev libpcl-dev \
-  libgoogle-glog-dev libyaml-cpp-dev
+  libgoogle-glog-dev libgflags-dev libyaml-cpp-dev libceres-dev libusb-1.0-0-dev \
+  python3-pip python3-yaml python3-serial python3-protobuf python3-paho-mqtt ffmpeg \
+  ros-noetic-navigation ros-noetic-pcl-ros ros-noetic-cv-bridge \
+  ros-noetic-tf2-geometry-msgs ros-noetic-laser-geometry ros-noetic-robot-state-publisher \
+  ros-noetic-xacro ros-noetic-tf-conversions ros-noetic-eigen-conversions \
+  ros-noetic-tf2-sensor-msgs ros-noetic-mbf-costmap-core ros-noetic-mbf-msgs \
+  ros-noetic-spatio-temporal-voxel-layer libjemalloc2
+
+# 当前协议生成代码使用 protobuf 4.25.1；Ubuntu 20.04 自带的 3.6.1 不够。
+sudo python3 -m pip install 'protobuf==4.25.1'
+python3 -c 'import google.protobuf; from google.protobuf.internal import builder; print(google.protobuf.__version__)'
 ~~~
 
 GTSAM 和 fast_gicp 是外部依赖，按下一节安装；不要用 ROS 2 包解决 ROS 1 依赖。
@@ -444,6 +459,50 @@ file "$GRINDER_BASE_DIR/third_party/path_planner/mst27/"_mst27_cpp*.so
 架构不匹配时，只删除该目录下的旧 _mst27_cpp*.so，再在目标板重新编译，不能复用
 x86_64 的 .so。
 
+<a id="deployment-stvl"></a>
+
+### 2.2 导航运行依赖：STVL 与 jemalloc
+
+`spatio_temporal_voxel_layer`（STVL）是导航代价地图的三维障碍物图层。
+本仓库 `local_costmap_params.yaml` 已引用
+`spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer`，所以即使只走 MID-360S + RPP，
+也必须安装 `ros-noetic-spatio-temporal-voxel-layer`。它与 Super-LIO、MST27 分别负责
+障碍物表示、定位建图和作业路径规划，不能相互替代。包管理器会带入 OpenVDB、Blosc 等依赖。
+
+~~~bash
+sudo apt install -y ros-noetic-spatio-temporal-voxel-layer libjemalloc2
+source /opt/ros/noetic/setup.bash
+rospack find spatio_temporal_voxel_layer
+dpkg-query -W ros-noetic-spatio-temporal-voxel-layer libjemalloc2
+~~~
+
+jemalloc 是程序的内存分配库。[STVL 上游说明](https://github.com/SteveMacenski/spatio_temporal_voxel_layer#running)
+指出 Ubuntu 20.04 的 OpenVDB 二进制存在编译选项兼容问题，需要预加载 jemalloc。
+当天 ARM64 插件加载/销毁探针在未预加载时退出码为 139，预加载后为 0；
+因此板端仅给 `move_base` 加载该库，不把 `LD_PRELOAD` 全局写入所有 ROS 进程。
+
+**当前 main 的 launch 尚未包含下述环境透传；这是本次板端额外修改，新板需补齐。**
+在 `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/launch/robot_diff_drive.launch`
+的 `move_base` 节点内部加入一行（保留原有参数和节点内容）：
+
+~~~xml
+<env name="LD_PRELOAD" value="$(optenv GRINDER_NAV_LD_PRELOAD)" />
+~~~
+
+手工启动前设置以下变量；systemd 则写入后文的 `/etc/grinder/hardware.env`：
+
+~~~bash
+# RK3588 / aarch64
+export GRINDER_NAV_LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libjemalloc.so.2
+test -r "$GRINDER_NAV_LD_PRELOAD"
+# x86_64 对应 /usr/lib/x86_64-linux-gnu/libjemalloc.so.2，不能直接照抄 ARM64 路径。
+~~~
+
+仅安装库或仅设置 `GRINDER_NAV_LD_PRELOAD` 都不能替代 launch 中的透传。
+修改 launch 无需 Catkin 重编译；须在任务停止后重启导航，并重新加载地图、完成定位，
+再检查 RPP 参数服务。缺失插件可能直到 `map` 到车体 TF 就绪、代价地图开始初始化时才报错。
+完整排查见 [当天踩坑](#deployment-pitfalls-20261022)。
+
 ### 3. 安装工业回环依赖
 
 | 依赖 | 作用 | 要求 |
@@ -499,75 +558,84 @@ PCL-GICP，不会悄悄切换成轻量回环。
 
 ### 4. 正式 Release 编译
 
-先编译 ROS 1 Livox 驱动。板端驱动包应位于
-src/drivers/ws_livox/src/livox_ros_driver2；不要混用 ROS 2 的 ament_cmake_auto 工程。
+先在独立工作区构建 Livox ROS 1 驱动；本仓库不自带该驱动或 Livox SDK2。
+2026-10-22 的 MID-360S 已验证组合是 SDK2 `v1.3.1` + driver2
+`13eb05e4e6dd7a765b934d0c5fd6236676a57b49`，不要直接换成最新 master。
+以下在普通运行用户下执行；仓库根目录和用户路径按实际部署修改。
+
+~~~bash
+export GRINDER_WS=/home/ztl/work/Grinder/catkin_ws
+export LIVOX_WS="$HOME/Livox/ws_livox"
+mkdir -p "$HOME/Livox" "$LIVOX_WS/src"
+git clone --branch v1.3.1 --depth 1 https://github.com/Livox-SDK/Livox-SDK2.git "$HOME/Livox/Livox-SDK2"
+cmake -S "$HOME/Livox/Livox-SDK2" -B "$HOME/Livox/Livox-SDK2/build" -DCMAKE_BUILD_TYPE=Release
+cmake --build "$HOME/Livox/Livox-SDK2/build" --parallel 2
+sudo cmake --install "$HOME/Livox/Livox-SDK2/build"
+sudo ldconfig
+
+git clone https://github.com/Livox-SDK/livox_ros_driver2.git "$LIVOX_WS/src/livox_ros_driver2"
+git -C "$LIVOX_WS/src/livox_ros_driver2" checkout 13eb05e4e6dd7a765b934d0c5fd6236676a57b49
+cp "$LIVOX_WS/src/livox_ros_driver2/package_ROS1.xml" "$LIVOX_WS/src/livox_ros_driver2/package.xml"
+source /opt/ros/noetic/setup.bash
+cd "$LIVOX_WS"
+catkin_make -DROS_EDITION=ROS1 -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -j2 -l3
+source "$LIVOX_WS/devel/setup.bash"
+~~~
+
+已有目录时检查版本后复用，不要覆盖设备的 `MID360s_config.json`。
+`ROS_EDITION=ROS1` 和 ROS 1 package.xml 必须同时正确；不要加载 ROS 2 环境。
+
+**纯 MID-360S、未安装 Aurora Linux SDK 链接库的板端，使用下面的选择性构建。**
+调度器仍依赖 `slamware_ros_sdk` 的 ROS 消息，须生成消息，但不用构建 Aurora 服务节点。
+第一步只完成 CMake 配置并列出目标，第二步构建实际运行目标，避免默认 `all` 拉入缺库的 Aurora。
 
 ~~~bash
 cd "$GRINDER_WS"
 source /opt/ros/noetic/setup.bash
-catkin_make \
-  -DCATKIN_WHITELIST_PACKAGES=livox_ros_driver2 \
-  -DCMAKE_BUILD_TYPE=Release \
-  -j2 -l2
-~~~
-
-再强制编译工业回环：
-
-~~~bash
-catkin_make \
-  -DCATKIN_WHITELIST_PACKAGES="super_lio;super_lio_loop;cloud_to_occupancy_grid" \
-  -DCMAKE_BUILD_TYPE=Release \
+source "$LIVOX_WS/devel/setup.bash"
+catkin_make --only-pkg-with-deps \
+  grinder_scheduler super_lio_loop cloud_to_occupancy_grid \
+  regulated_pure_pursuit_controller carrot_planner move_base map_server \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=/usr/bin/python3 \
   -DSUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON \
-  -DGTSAM_DIR=/usr/local/lib/cmake/GTSAM \
-  -j2 -l2
-~~~
-
-SUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON 会在 GTSAM 缺失时直接失败，避免误以为已经
-编译成工业版本。确认：
-
-~~~bash
+  -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DCMAKE_SHARED_LINKER_FLAGS=-fuse-ld=gold \
+  --make-args help
+cmake --build build --parallel 2 --target \
+  grinder_chassis_driver_generate_messages grinder_scheduler_generate_messages \
+  slamware_ros_sdk_generate_messages super_lio_node relocation_node \
+  super_lio_loop_node super_lio_graph_backend_node cloud_to_occupancy_grid_node \
+  regulated_pure_pursuit_controller carrot_planner move_base_node map_server \
+  map_server-map_saver clear_costmap_recovery rotate_recovery navfn
 source "$GRINDER_WS/devel/setup.bash"
 rospack find livox_ros_driver2
 ls -lh "$GRINDER_WS/devel/lib/super_lio_loop/"
 ~~~
 
-工业版本必须同时有：
+Ubuntu 20.04 的 `binutils` 提供 `ld.gold`，先用 `command -v ld.gold` 确认。
+当天 PCL/VTK 的 BFD 链接长时间占满单核，改用 gold 后完成；这不改变算法源码。
+`SUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON` 会在 GTSAM 缺失时失败；产物应同时包含
+`super_lio_loop_node`、`super_lio_graph_backend_node`。**编译工业后端不等于开启运行时回环**，
+后者由 `super_lio_loop_closure` 等配置决定。MST27 的原生扩展仍按 2.1 节单独构建。
 
-~~~text
-super_lio_loop_node
-super_lio_graph_backend_node
-~~~
-
-也可以使用平台脚本：
+安装了所需 Aurora 链接库的完整系统也可使用平台脚本：
 
 ~~~bash
 cd "$GRINDER_WS"
 CATKIN_JOBS=2 CATKIN_LOAD=2 PROFILE=mapping ./build_grinder_platform.sh
-~~~
-
-PROFILE=mapping 已自动传入工业后端强制选项。其它 profile：
-
-~~~bash
-PROFILE=runtime ./build_grinder_platform.sh   # 底盘、Aurora、调度器
+PROFILE=runtime ./build_grinder_platform.sh   # 底盘、Aurora、调度器，包含 Aurora 服务编译
 PROFILE=nav     ./build_grinder_platform.sh   # move_base、RPP/TEB
-PROFILE=full    ./build_grinder_platform.sh   # 平台主包
+PROFILE=full    ./build_grinder_platform.sh   # 完整平台，包含 Aurora
 ~~~
 
-如果之前只编译过某个包，先检查旧白名单：
-
-~~~bash
-grep CATKIN_WHITELIST_PACKAGES "$GRINDER_WS/build/CMakeCache.txt"
-~~~
-
-必要时执行一次：
-
-~~~bash
-catkin_make -DCATKIN_WHITELIST_PACKAGES="" -DCMAKE_BUILD_TYPE=Release -j2 -l2
-~~~
-
-不要把 -DCMAKE_BUILD_TYPE=Release 粘贴到 CATKIN_WHITELIST_PACKAGES 的引号内部。
+`PROFILE=mapping` 自动传入工业后端强制选项。切换构建方式前检查
+`build/CMakeCache.txt` 的 `CATKIN_WHITELIST_PACKAGES`；纯 MID-360S 板不要用
+“清空白名单后全量构建”解决缺包问题，否则会重新触发 Aurora 链接失败。
+跨架构/跨路径拷贝只同步源码，在目标机重新生成 `build/devel`，不要复用 Windows 或 x86_64 产物。
 
 ### 4.1 编译 Super-LIO
+
+本小节用于已有依赖和工作区的增量编译；首次部署纯 MID-360S 板端先完成上一节的
+独立 Livox 工作区与选择性目标构建，避免遗漏底盘/调度消息或触发 Aurora 链接。
 
 本次修改包含 Super-LIO 的 C++ 位姿输出、初始定位、速度及协方差换算，以及
 回环代码、launch 和调度模式管理器。**必须在目标 Linux / ROS Noetic 环境重新编译，
@@ -661,7 +729,9 @@ rosrun tf tf_echo base_link base_laser_link
 
 ### 5. MID-360S 网络和驱动验证
 
-雷达直连网口和路由器网口不要使用相同网段，否则 Linux 可能把雷达数据发到错误网卡：
+优先让雷达直连网口与管理网络使用不同网段。同网段时必须配置精确路由，避免数据走错网卡。
+当天热点为 `192.168.1.3/24`、雷达网口为 `192.168.1.50/32`、雷达为 `192.168.1.199`，
+具体 NetworkManager 配置见 [部署网络配置](#deployment-network-20261022)。先检查：
 
 ~~~bash
 ip -br addr
@@ -684,8 +754,7 @@ rostopic hz /livox/imu
 
 ~~~bash
 roslaunch livox_ros_driver2 msg_MID360s.launch \
-  enable_lidar_bag:=false \
-  enable_imu_bag:=false
+  rosbag_enable:=false lidar_bag:=false imu_bag:=false
 ~~~
 
 Release 编译不会关闭 ROS 日志；上面的参数只关闭雷达/IMU bag 录制。
@@ -792,6 +861,9 @@ source /opt/ros/noetic/setup.bash
 PROFILE=runtime ./build_grinder_platform.sh
 source "$GRINDER_WS/devel/setup.bash"
 ~~~
+
+上述 runtime 构建要求 Aurora 链接库齐全。纯 MID-360S 板端改用
+[正式 Release 编译](#4-正式-release-编译) 中的选择性目标，不要为更新灯带而拉起 Aurora 服务编译。
 
 构建成功后，重启底盘和调度节点，使新增的状态话题生效。
 先在独立终端运行模拟后端，不会打开 USB 或发送运动控制命令：
@@ -939,6 +1011,7 @@ ESP32协议未变化，无需重烧。离线回归见 `test_manual_control_deliv
 | unknown node /super_lio_loop | 未进入建图或工业节点启动失败 | 检查 rosnode list、回环日志和工业可执行文件 |
 | ament_cmake_auto 找不到 | 混用了 ROS 2 Livox 工程 | 使用 ROS 1 Noetic 的 livox_ros_driver2，不要 source ROS 2 |
 | /livox/lidar 没有数据 | 网卡、雷达 IP 或 host_ip 不匹配 | 检查 ip route get <雷达IP> 必须走雷达网卡 |
+| `Cannot apply task process speed to navigation` | 导航控制器参数服务未就绪，可能是 TF 等待、STVL 缺失或插件崩溃 | 见 [STVL/jemalloc](#deployment-stvl) 和 [当天排障记录](#deployment-pitfalls-20261022)，先查 move_base 日志与 RPP 服务 |
 | 建图和定位冲突 | 同时运行两种模式 | 先调用 /super_lio_mode/stop，再切换模式 |
 
 ## 手工操作参考（完成上面的安装和编译后）
@@ -1375,6 +1448,340 @@ grinder-service status
 ~~~bash
 python3 catkin_ws/scripts/test_grinder_service.py -v
 ~~~
+
+<a id="deployment-20261022"></a>
+
+## 2026-10-22 RK3588 板端部署实录与复现
+
+本节记录当天实际部署，基线为 main 的 `e623f76e1e072e4e0faa122cafd1be054925297e`。
+通用安装步骤已更新在上文；这里补齐设备配置、执行顺序和问题处理，便于新板复现。
+板端独有的 launch 修改、NetworkManager 配置、systemd drop-in **不随 git clone 自动安装**。
+密码由设备持有人设置并留在板端受限配置中，仓库不保存 SSH 或热点密码。
+
+### 1. 最终部署清单与安装顺序
+
+| 项目 | 当天最终配置 |
+| --- | --- |
+| 板端系统 | RK3588 / aarch64，Ubuntu 20.04.6，ROS 1 Noetic，Python 3.8，约 8 GB 内存 |
+| 源码与运行用户 | `/home/ztl/work/Grinder`，服务以普通用户 `ztl` 运行；SSH 管理用户不等于服务用户 |
+| 链路 | MID-360S → Livox → Super-LIO → 二维地图/定位 → 调度 → RPP/move_base；未启用 Aurora |
+| Livox | SDK2 v1.3.1；driver2 `13eb05e4e6dd7a765b934d0c5fd6236676a57b49`；独立工作区 `/home/ztl/Livox/ws_livox` |
+| 算法依赖 | GTSAM 4.2.2；fast_gicp `0e7ec1441c99f7be453db2ea216d5de029387417`，安装到 `/usr/local` 后执行 `ldconfig` |
+| 导航运行依赖 | STVL `1.4.5-1focal.20250521.012635`、OpenVDB 6.2、Blosc、libjemalloc2；版本号为当天记录，安装时以 focal/arm64 仓库可用包为准 |
+| 规划器/协议 | MST27 Python 依赖和 CPython 3.8 ARM64 原生扩展；protobuf 4.25.1 |
+| 底盘 | `/dev/ttyS3`，19200，Modbus 从站 1；当天未接控制器，未做运动验收 |
+| 灯带 | ESP32-S3 USB CDC，USB 序列号 `AC:27:6E:D2:C4:F0`，亮度 65%；按 USB 身份匹配而非固定 ttyACM 编号 |
+| 视频基础环境 | FFmpeg；MediaMTX v1.21.2 linux_arm64，安装为 `tools/mediamtx/mediamtx_aarch64`，可执行权限；选择 libx264，未验收实际视频 |
+| 开机服务 | `grinder.service` enabled；配置文件和额外覆盖见下文 |
+
+按顺序完成：系统/ROS apt 依赖及 protobuf → Livox SDK/驱动 → GTSAM/fast_gicp →
+选择性 Catkin 构建 → MST27 原生扩展 → 网络与雷达 JSON → 设备 YAML → STVL/jemalloc
+launch 透传 → 手工启动检查 → 安装 systemd 并启用自启 → 重启后检查数据和导航服务。
+前文已给出各项安装命令，不要用“包能编译”替代启动后的检查。
+
+板端网络离线时，先在能联网的环境准备适配 Ubuntu focal **arm64** 的完整依赖，
+核对 `.deb` 的架构、依赖与 SHA256 后再传输；不能拿开发电脑的 amd64 包安装到 RK3588。
+源码可以用 `git bundle` 携带 main 历史传到板端，检出后用 `git rev-parse HEAD` 核对提交，
+不要把本机未提交修改或旧的 `devel` 当成 main 部署。
+
+MediaMTX 从 [官方 v1.21.2 发布页](https://github.com/bluenviron/mediamtx/releases/tag/v1.21.2)
+选择 `linux_arm64` 压缩包，解压其中的 `mediamtx` 为上述 `mediamtx_aarch64`，
+执行 `chmod +x` 并用 `file` 确认 AArch64；x86_64 板应选择相应架构。
+只有 README 或 Windows 可执行文件的目录不能作为 Linux RTSP 服务使用。
+
+当天还配置了 8 GB swap、`vm.swappiness=10`，启用 SSH、NetworkManager 和时间同步；
+journald 持久日志限制 SystemMaxUse=300M、RuntimeMaxUse=100M，项目日志按每日、
+最多 20 MB 轮转并保留 7 份。相关文件在 `/etc/fstab`、`/etc/sysctl.d/`、
+`/etc/systemd/journald.conf.d/`、`/etc/logrotate.d/`；新板先检查已有配置，避免重复建 swap 或叠加轮转规则。
+离线运行前校准时间；启用了时间同步服务不代表断网后仍能联系 NTP。
+
+<a id="deployment-network-20261022"></a>
+
+### 2. 热点、雷达网口与同网段路由
+
+| 用途 | 网卡/配置名 | 地址与说明 |
+| --- | --- | --- |
+| 管理热点 | `wlP2p33s0` / `grinder-hotspot` | SSID `Grinder-MID360S`，板端 `192.168.1.3/24`，WPA2，自动连接 |
+| 管理电脑 | WLAN | 当天固定 DHCP 租约 `192.168.1.10` |
+| 雷达直连口 | `enP3p49s0` / `grinder-mid360s` | 板端 `192.168.1.50/32`，仅添加到雷达的主机路由 |
+| MID-360S | 直连上述网口 | `192.168.1.199`，序列号 `ARMCP7K0034999`；不能把普通 MID-360 配置当成 MID-360S |
+| 原有有线管理口 | `eth0` | `192.168.1.2/24`，后续已拔线；当前从热点 `.3` 登录 |
+
+先用 `ip -br link`、`nmcli device status` 和 `nmcli connection show` 确认实际网卡、已有配置名。
+以下 `connection add` 仅用于尚无对应 profile 的新板；已有 profile 用 `connection modify` 修改。
+网络切换会影响 SSH，应从仍可用的管理链路操作。
+
+~~~bash
+# 新建热点；密码在板端交互输入，避免写进仓库。
+read -r -s -p 'Hotspot password (8+ characters): ' AP_PASSWORD
+printf '\n'
+sudo nmcli connection add type wifi ifname wlP2p33s0 con-name grinder-hotspot ssid Grinder-MID360S
+sudo nmcli connection modify grinder-hotspot \
+  802-11-wireless.mode ap 802-11-wireless.band bg 802-11-wireless.channel 6 \
+  802-11-wireless-security.key-mgmt wpa-psk 802-11-wireless-security.psk "$AP_PASSWORD" \
+  ipv4.method shared ipv4.addresses 192.168.1.3/24 ipv4.route-metric 600 \
+  ipv6.method disabled connection.autoconnect yes connection.autoconnect-priority 100
+unset AP_PASSWORD
+
+# 雷达口用 /32，防止其 /24 路由抢走热点客户端流量。
+sudo nmcli connection add type ethernet ifname enP3p49s0 con-name grinder-mid360s \
+  ipv4.method manual ipv4.addresses 192.168.1.50/32 ipv4.routes '192.168.1.199/32' \
+  ipv4.never-default yes ipv6.method disabled connection.autoconnect yes
+~~~
+
+当天该内核不支持 `ip rule` 策略路由，返回 `Operation not supported`；最终采用主路由表中的
+雷达 `/32` 路由，加热点客户端 `/32` 租约路由。没有使用仍然失败的 NM routing-rules 配置。
+
+创建 `/etc/NetworkManager/dnsmasq-shared.d/grinder-hotspot.conf`。
+下面 MAC 对应当天的电脑、雷达口和雷达，新设备须替换；后两条用于把 `.50`、`.199`
+从热点动态地址分配中保留，防止客户端占用设备静态地址：
+
+~~~ini
+dhcp-host=4c:b7:e0:a4:cc:13,192.168.1.10
+dhcp-host=1a:d1:c1:81:88:d7,192.168.1.50
+dhcp-host=ec:72:f7:89:06:cb,192.168.1.199
+dhcp-script=/usr/local/lib/grinder/hotspot-lease-route
+~~~
+
+创建 `/usr/local/lib/grinder/hotspot-lease-route` 并设为 root 所有、权限 0755：
+
+~~~sh
+#!/bin/sh
+case "${DNSMASQ_INTERFACE:-wlP2p33s0}" in wlP2p33s0) ;; *) exit 0 ;; esac
+case "$3" in 192.168.1.*) ;; *) exit 0 ;; esac
+case "$1" in
+  add|old) /sbin/ip route replace "$3/32" dev wlP2p33s0 src 192.168.1.3 metric 50 ;;
+  del) /sbin/ip route del "$3/32" dev wlP2p33s0 metric 50 2>/dev/null || true ;;
+esac
+~~~
+
+同网段网卡还需配置 ARP 与反向路径检查。写入 `/etc/sysctl.d/91-grinder-hotspot.conf`：
+
+~~~ini
+net.ipv4.conf.all.rp_filter=2
+net.ipv4.conf.default.rp_filter=2
+net.ipv4.conf.all.arp_ignore=1
+net.ipv4.conf.default.arp_ignore=1
+net.ipv4.conf.all.arp_announce=2
+net.ipv4.conf.default.arp_announce=2
+~~~
+
+文件保存后执行 `sudo sysctl --system`，再启用雷达 profile 与热点 profile。
+dnsmasq 配置在热点重新激活后读取；已有客户端需重新取得租约，让租约脚本补上路由。
+网卡名、地址和 hook 必须一起修改，静态 IP 客户端也需显式添加对应 `/32` 路由。
+
+~~~bash
+sudo nmcli connection up grinder-mid360s
+sudo nmcli connection up grinder-hotspot
+ip route get 192.168.1.199  # 应为 enP3p49s0，src 192.168.1.50
+ip route get 192.168.1.10   # 应为 wlP2p33s0，src 192.168.1.3
+~~~
+
+Livox 工作区的 `src/livox_ros_driver2/config/MID360s_config.json` 设置：
+`lidar_summary_info.lidar_type=8`；使用 `Mid360s` 段，`host_net_info` 为列表，
+其中 `host_ip=192.168.1.50`，主机端口为 56101、56201、56301、56401、56501；
+`lidar_configs[0].ip=192.168.1.199`。保留驱动同版本的 JSON 结构，不从普通 MID-360 示例拼字段。
+启动脚本应找到 `msg_MID360s.launch`；启动前按脚本的 Livox UDP 端口预检确认无占用，避免重复起驱动。
+
+热点实测工作在 2.4 GHz、信道 6、20 MHz，发射功率 12 dBm；当天未上调带宽或功率。
+RTL8852BE 的 Wi-Fi 6 能力不等于当前热点已使用 Wi-Fi 6；当天电脑协商为 802.11n，
+没有做吞吐量测试，不能以标称速率作为实际传输带宽。
+
+### 3. 设备配置、启动环境与自启覆盖
+
+底盘 `config/chassis_driver.yaml` 的串口设置为 `/dev/ttyS3`，波特率 19200、从站地址 1。
+配置调度的 `scheduler.local.yaml`，通过启动预检确认选用 Super-LIO 链路。
+当天未开启内部轮速融合，`super_lio_loop_closure=false`；不要因安装了工业依赖就宣称回环已启用。
+灯带设置 `START_INDICATOR=1`、USB 身份和 65% 亮度。
+当前 `status_indicator.yaml` 的 `ignore_chassis_status=true` 是无底盘台架配置，接真实底盘后需改为 false，
+恢复底盘状态参与就绪判断；不要通过忽略底盘状态或清除急停来掩盖硬件故障。
+
+所有 ROS 节点都在板端，使用 `ROS_IP=127.0.0.1`，避免管理网线拔掉后 ROS 仍向 `.2` 宣告。
+APP 使用板端热点地址 `.3` 的 SL-LinkA TCP 8002，视频入口为 RTSP 8554；
+如果未来要跨机器直接运行 ROS 节点，应重新设计可达的 ROS 地址，不能照用 loopback。
+交互终端可在 `/etc/profile.d/grinder-ros.sh` 加载已构建的工作区并设置仓库路径与 ROS_IP；
+systemd 不读取交互 shell 配置，因此还需下面的显式环境。
+
+先按 [统一自启安装](#12-板端开机自启主系统与灯带统一开关) 运行
+`sudo bash ./install_grinder_service.sh ztl`。当天 `/etc/grinder/startup.conf`：
+
+~~~ini
+AUTOSTART=1
+RUN_USER=ztl
+WORKSPACE=/home/ztl/work/Grinder/catkin_ws
+LIVOX_SETUP=/home/ztl/Livox/ws_livox/devel/setup.bash
+NAV_MAP_YAML=/home/ztl/work/Grinder/maps/navigation.yaml
+INDICATOR_USB_SERIAL_NUMBER=AC:27:6E:D2:C4:F0
+INDICATOR_DEVICE=''
+START_INDICATOR=1
+~~~
+
+`NAV_MAP_YAML` 必须指向存在的文件。当天 `maps/navigation.yaml` 是未知栅格的启动占位图，
+不代表已测绘地图，也不在开机时自动进入定位。新板应指向已有地图；尚无地图时可准备独立占位图，
+不得覆盖已有地图资产，后续仍需在 APP 中建图、保存、加载和定位。
+
+仅在新板没有任何地图时，可生成独立的 1×1 未知栅格占位文件。以下命令遇到同名文件即退出，
+不会覆盖地图；先确认 `GRINDER_WS` 指向目标板工作区：
+
+~~~bash
+python3 - <<'PY'
+import os
+from pathlib import Path
+maps = Path(os.environ['GRINDER_WS']).parent / 'maps'
+maps.mkdir(parents=True, exist_ok=True)
+pgm, yaml = maps / 'navigation.pgm', maps / 'navigation.yaml'
+if pgm.exists() or yaml.exists():
+    raise SystemExit('Map file already exists; select an existing map instead.')
+with pgm.open('xb') as f:
+    f.write(b'P5\n1 1\n255\n\xcd')
+with yaml.open('x') as f:
+    f.write('image: navigation.pgm\nresolution: 0.05\norigin: [0, 0, 0]\n'
+            'negate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n')
+PY
+~~~
+
+stock `grinder-service` 对配置键有白名单，并在 `run` 中固定开启 Livox/底盘/导航。
+不要往 `startup.conf` 添加 `START_LIVOX` 或 jemalloc 等未知字段。
+为支持先无雷达安装、后接雷达，以及本次 jemalloc 修复，板端额外创建
+`/etc/grinder/hardware.env`（此文件由下面的 drop-in 读取）：
+
+~~~ini
+START_LIVOX=1
+START_CHASSIS=1
+START_NAV=1
+GRINDER_NAV_LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libjemalloc.so.2
+~~~
+
+无雷达阶段可临时设置 `START_LIVOX=0`；接雷达后改回 1。
+同时完成前文 [move_base 的 LD_PRELOAD 透传](#deployment-stvl)。
+创建 `/etc/systemd/system/grinder.service.d/environment.conf`：
+
+~~~ini
+[Service]
+Environment=GRINDER_BASE_DIR=/home/ztl/work/Grinder
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=2
+Environment=ROS_IP=127.0.0.1
+EnvironmentFile=/etc/grinder/startup.conf
+EnvironmentFile=/etc/grinder/hardware.env
+ExecStart=
+ExecStart=/usr/bin/bash /home/ztl/work/Grinder/catkin_ws/start_grinder_super_lio_base.sh
+WorkingDirectory=/home/ztl/work/Grinder/catkin_ws
+Restart=on-failure
+RestartSec=5
+~~~
+
+此覆盖沿用安装器设置的 `User`、`Group`、串口权限和启动顺序，但将 ExecStart 直接指向主启动脚本。
+因此 `grinder-service run` 的启动前配置校验不再经过；维护时需自行核对路径、地图、USB 身份和环境文件，
+并先通过项目配置预检。`apply` 不负责生成这些额外文件，也不会清除旧 drop-in。
+默认安装器为 `Restart=no`，当天覆盖改为 on-failure；排障时可先停止服务，避免失败反复启动。
+
+在 APP 中先终止任务，确认任务使能已关闭后，再执行：
+
+~~~bash
+sudo grinder-service apply
+sudo systemctl daemon-reload
+sudo grinder-service enable
+sudo grinder-service restart
+systemctl cat grinder.service
+systemctl show grinder.service -p User -p ExecStart -p Restart -p NRestarts
+grinder-service status
+~~~
+
+开机启动 ROS master、Livox、底盘、RPP/move_base、调度、Super-LIO 模式管理器、MediaMTX 和灯带。
+建图/定位由 APP 操作模式管理器启动；开机不自动开始作业。
+服务重启后要重新加载所需地图并定位，再检查导航就绪；`active (running)` 不等于定位和参数服务已就绪。
+不要同时运行独立灯带进程与主系统灯带节点，避免串口被重复占用。
+
+### 4. 部署后验收与当天结果
+
+先 source ROS 和 Livox/Grinder 环境，再执行诊断。`ldd` 也需在该环境下使用，
+否则 `/opt/ros/noetic/lib` 下的传递依赖可能被误报为缺失。
+
+~~~bash
+source /opt/ros/noetic/setup.bash
+source /home/ztl/Livox/ws_livox/devel/setup.bash
+source /home/ztl/work/Grinder/catkin_ws/devel/setup.bash
+export ROS_IP=127.0.0.1
+systemctl is-enabled grinder.service
+systemctl is-active grinder.service
+sudo journalctl -u grinder.service -b -n 100 --no-pager
+rosnode list
+rostopic hz /livox/lidar
+rostopic hz /livox/imu
+rostopic echo -n 1 /indicator/state
+rostopic echo -n 1 /chassis/task_enable
+ss -lnt | grep -E ':8002|:8554'
+~~~
+
+`rostopic hz` 持续采样，观察后 Ctrl+C。
+APP 加载地图并完成定位、保持任务停止后，再检查 TF 和 RPP 服务：
+
+~~~bash
+rosrun tf tf_echo map base_link
+rosservice list | grep /move_base/RegulatedPurePursuitController
+python3 - <<'PY'
+import rospy
+from dynamic_reconfigure.client import Client
+rospy.init_node('check_rpp_configuration', anonymous=True)
+client = Client('/move_base/RegulatedPurePursuitController', timeout=5.0)
+# 空更新触发一次服务往返，不改变速度或下发运动指令。
+result = client.update_configuration({})
+print('desired_linear_vel:', result['desired_linear_vel'])
+PY
+~~~
+
+`tf_echo` 持续输出，观察后 Ctrl+C。实际车体 frame 若有覆盖，以板端配置为准。
+应看到 move_base 进程持续稳定、日志已创建 RPP local_planner，参数服务成功应答，
+而非仅有 rosnode 名称或 rosparam 静态参数。未加载地图时等待 TF 的现象不能直接判定插件修复失败。
+
+| 验收项 | 当天已验证的范围 |
+| --- | --- |
+| 重启与网络 | 板端新 boot 后热点、雷达 profile 自动恢复；grinder enabled、active；两条主机路由指向正确网卡 |
+| 雷达 | 真实 MID-360S 点云约 10.39 Hz，IMU 约 199.77 Hz；重启后重新确认有数据 |
+| 灯带协议 | READY 状态、串口 ACK、65% 亮度下发，无串口错误；ACK 不代替实际颜色和急停提示的现场检查 |
+| 导航修复 | STVL 已安装；move_base 环境确认 jemalloc 预加载；重定位后 RPP 空更新应答，速度约 0.03 m/s，进程持续稳定 |
+| 离线回归 | 服务管理 15 项、调度配置 5 项、MST27 预处理 10 项，共 30 项通过 |
+| 未完成的硬件项 | 底盘未连接，未验收行走、轮速、磨盘与实体急停；未验收真实视频播放；未验收运行时回环效果 |
+
+板端检查记录位于 `/etc/grinder/DEPLOYMENT.md`、`deployment-verification.json`、
+`navigation-repair-verification.json`；它们是设备运行记录，不能替代当前仓库源码和配置。
+
+<a id="deployment-pitfalls-20261022"></a>
+
+### 5. 当天部署遇到的问题与处理
+
+| 问题/现象 | 定位到的原因 | 处理与复查 |
+| --- | --- | --- |
+| Livox 编译提示 `kLivoxLidarDoubleEchoData` / `LivoxLidarDoubleEchoRawPoint` 不存在 | 新 driver master 包含更新的 MID-360L 接口，与 SDK2 v1.3.1 不匹配 | 固定本文 MID-360S 已验证的 driver commit；使用 ROS 1 package.xml 和 `ROS_EDITION=ROS1` 重建 |
+| 协议导入失败，找不到 `google.protobuf.internal.builder` | 系统 protobuf 3.6.1 早于当前生成代码所需版本 | Python 3.8 环境安装 protobuf 4.25.1；用实际服务用户/解释器验证导入 |
+| 找不到 Aurora 的 Linux `.so`，完整构建失败 | runtime/full profile 包含 Aurora；纯 MID-360S 不运行 Aurora，但调度仍需其消息 | 用第 4 节选择性目标构建并生成 `slamware_ros_sdk` 消息；不通过全量构建或开启 Aurora 绕过 |
+| Super-LIO 链接看似卡死，单核 CPU 很高 | 大量 PCL/VTK 依赖使用 BFD 链接较慢 | 改用 `-fuse-ld=gold`，控制并行 2、准备 swap；当天未观察到 OOM，不能把慢链接一概诊断成内存不足 |
+| MST27 已有 Python 文件，但缺少原生内核 | Catkin 构建不会自动替代 MST27 独立 CMake 构建 | 安装 pybind11/科学 Python 依赖，单独生成 CPython 3.8 aarch64 `.so` 并跑预处理回归；不能复制 x86 扩展 |
+| 原管理网口地址前缀错误 | 旧 NM profile 保存为 `192.168.1.2/0` | 修正并持久化为 `/24`；当前管理已切到热点 `.3`，不能继续用拔线的 `.2` 诊断在线状态 |
+| 热点和雷达同网段时 SSH 或雷达走错网口；`ip rule` 不支持 | 两个 `/24` 直连路由竞争，板端内核缺少策略路由支持 | 雷达口 `/32` 加雷达主机路由，热点租约 hook 加客户端 `/32`；保留静态设备地址并核对两个 `ip route get` |
+| 灯带一直黄灯 | 无硬件阶段禁用了灯带节点，ESP32 保持上电待通信状态 | 接入后启用 `START_INDICATOR`、设置 USB 身份，检查 `/indicator/state` 的 ACK 和错误；当天未重新烧录固件 |
+| APP 报 `Cannot apply task process speed to navigation` | 当天直接原因是 STVL 未安装，costmap 初始化抛 `LibraryLoadException`，move_base 退出/重生，RPP 参数服务不可用 | 安装 `ros-noetic-spatio-temporal-voxel-layer` 及依赖；这是导航服务失败，不应修改工艺速度或绕过任务启动检查 |
+| STVL 装好后仍存在插件兼容问题 | Ubuntu 20.04 OpenVDB/jemalloc 加载问题；探针不预加载退出 139，预加载成功 | 安装 libjemalloc2，并在 move_base launch 内透传 LD_PRELOAD；systemd 环境变量与 XML 两步都要配置，检查运行进程环境和稳定性 |
+| 重启后 move_base 可见，但 RPP 服务仍没有 | 未加载地图/未完成定位，缺少 `map` 到车体 TF，导航尚未完成初始化 | APP 重新加载地图和定位后再验证参数服务；不要把等待 TF 与插件崩溃混为一谈，结合日志、进程和服务判断 |
+| 离线包存在却不能安装 | 断电重连后发现此前传输的 6 个 `.deb` 均为 0 字节 | 重传、核对源与板端 SHA256 和包大小，落盘后再安装，不能只检查文件名存在 |
+| `apt-get --no-download install /其他目录/*.deb` 仍报无法取得包 | 当天离线 apt 安装方式未正确满足缓存/依赖解析 | 将验证后的完整依赖放入 `/var/cache/apt/archives/`，再按包名安装；见下面命令 |
+| 底盘串口持续读取超时 | 当天用户确认未连接底盘，串口名正确并不代表设备在线 | 保留超时与安全保护，接好供电/RS485 后另做硬件验收，不把台架启动成功记为底盘已可作业 |
+
+离线修补示例（源目录按实际修改，必须提前准备完整依赖并核对 SHA256）：
+
+~~~bash
+dpkg-deb -f /path/to/validated/package.deb Package Version Architecture
+sha256sum /path/to/validated/*.deb
+sudo cp /path/to/validated/*.deb /var/cache/apt/archives/
+sudo apt-get --yes --no-download --no-install-recommends install \
+  ros-noetic-spatio-temporal-voxel-layer libjemalloc2
+~~~
+
+速度错误的通用排查顺序：查看 scheduler 的具体失败日志 → 检查地图/定位 TF → 检查
+move_base 日志中的插件加载和崩溃 → 检查真实 RPP 命名空间和 `set_parameters` 服务 →
+验证空更新应答。本文记录的是当天原因，其他设备还需核对速度值、控制器选择与配置命名空间。
+涉及重启必须先停止任务；修复验证通过后，再由操作者按正常流程启动任务。
 
 ## 协议库生成
 

@@ -86,6 +86,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | ESP32 灯带固件、串口协议 | `firmware/status_strip/src/main.cpp`、`firmware/status_strip/include/indicator_protocol.h` | `firmware/status_strip/platformio.ini`、`firmware/status_strip/test/protocol_host.cpp`；调度 `status_indicator.py` 与跨语言回归 `test/test_status_indicator_cross_language.py` |
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh`、`catkin_ws/start_grinder_super_lio_base.sh` | Livox UDP 端口预检：`catkin_ws/scripts/check_livox_udp_ports.py`；`catkin_ws/PLATFORM_BUILD_RUN.md` |
 | 板端整套开机自启、配置与 systemd 管理 | `catkin_ws/scripts/grinder-service`、`catkin_ws/install_grinder_service.sh` | 板端 `/etc/grinder/startup.conf`；`start_grinder_super_lio_base.sh` 先启动灯带并监督子进程；离线验证 `scripts/test_grinder_service.py`；根 README 第 12 节 |
+| RK3588 / MID-360S 完整部署、STVL/jemalloc 与部署踩坑 | 根 `README.md` 的安装编译节、`deployment-stvl` / `deployment-20261022` / `deployment-pitfalls-20261022` 锚点 | `catkin_ws/PLATFORM_BUILD_RUN.md` 为快捷入口；当天板端 launch、网络和 systemd 额外配置需按记录复现，不能假定 main 自带 |
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |
 
 `scheduler_node.py` 超过一万行，不要整文件加载。先用符号搜索定位，例如（均从仓库根目录执行）：
