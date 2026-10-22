@@ -17,8 +17,10 @@ cloud_to_occupancy_grid:
   resolution: 0.05
   map_width: 120.0
   map_height: 120.0
-  origin_x: -75.0
-  origin_y: -75.0
+  # Center the 120 m allocation at the mapping origin: [-60, +60] on both axes.
+  # Keeping the former 150 m origin (-75) would truncate the positive side at +45.
+  origin_x: -60.0
+  origin_y: -60.0
 
   min_range: 0.5
   max_range: 30.0

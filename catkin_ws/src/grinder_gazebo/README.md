@@ -22,6 +22,7 @@ APP/调度/规划 → move_base + RPP/TEB → 仿真底盘 → Gazebo。APP 的�
 - 两个后驱动轮轴线中点为 `base_link`，`x=0.00m`；雷达位于其前方 `0.20m`、左右居中，即 `base_link -> laser_link = (0.20, 0, 0.55)m`，零旋转。`+X` 朝磨盘方向。`0.55m` 是沿用的轴心上方高度，约离地 `0.6975m`，不是已测安装高度。URDF 和托管 LIO 使用相同 launch 参数。前置磨盘作为唯一万向支撑。
 - 仿真桥复用实车手动轮速方向参数 `drive_left_sign=-1`、`drive_right_sign=-1`；Gazebo 轮关节轴保持车体坐标 `+Y`，自动 `/cmd_vel` 不再额外翻转。APP 摇杆上推（协议 `remote_y=-1`）和导航正向均朝磨盘 `+X` 前方。
 - 磨盘视觉圆盘朝车体 `+X` 前方，旋转正轴为 `+Z`；其下方使用隐藏球形接触体实现无摩擦全向支撑。支撑固定在 `base_link` 参考系并相对盘心前置 `0.15m`，避免磨盘旋转时支撑点绕到质心后方而抬头；水平盘面本身不参与碰撞。
+- 支撑球半径 `0.055m`，球心、惯性原点和滚动关节中心重合；关节高度为 `caster_radius - wheel_radius`，使支撑球与驱动轮共享名义地平面。不能把碰撞球心偏置放在连续关节的子 link 内，否则偏置会随关节旋转，使支撑高度周期变化、车头抬起。离线几何回归：在已加载 ROS/xacro 环境运行 `python3 -m unittest discover -s src/grinder_gazebo/test -p test_support_geometry.py`（从 `catkin_ws` 执行）。
 - 驱动轮保留 `mu1=mu2=1.0` 的必要牵引力，否则差速驱动无法移动。
 - 接触参数为 `kp=1000000`、`kd=10000`，用于抑制重车接触求解的数值振荡；传感器噪声另由 `sensor_noise.yaml` 注入。
 - STEP 边界：`1.9623 x 1.9327 x 0.9000 m`，详见 `meshes/x920_frame_report.json`。
@@ -45,6 +46,14 @@ APP/调度/规划 → move_base + RPP/TEB → 仿真底盘 → Gazebo。APP 的�
 重新建图后再验证定位，避免旧三维地图与新的楼层结构不一致。
 顶部楼板为不透明实体，Gazebo 从楼顶俯视会被遮挡，可将相机移入楼层观察；
 RViz 的机器人模型显示不包含 world 梁板，应通过建图点云查看扫描到的楼层结构。
+
+二维建图的内部栅格由 `cloud_to_occupancy_grid/config/mid360.yaml` 配置。
+当前分配 `120m x 120m`、原点 `(-60, -60)m`，即每轴 `[-60, +60)m`；
+这与裁剪后发布/保存的 `/map` 尺寸不同。调整宽高时须同步核对原点：
+`120m` 配上旧原点 `-75m` 会使正向边界只有 `+45m`，不足以覆盖本场景。
+车辆或雷达越过内部栅格边界时，建图节点会记录
+`Sensor origin is outside the configured occupancy grid` 并丢弃该帧，地图不会自动扩容。
+修改后需重新开始建图，已丢弃的数据不会因同步文件而自动补回；需要保留的当前地图先保存。
 
 ## WSL 启动
 

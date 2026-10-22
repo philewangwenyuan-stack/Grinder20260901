@@ -2,9 +2,9 @@
 # Keep this override simulation-only: the real robot may still choose STVL.
 move_base:
   global_costmap:
-    footprint: [[-0.30, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.30, -0.47]]
+    footprint: [[-0.30, 0.47], [1.20, 0.47], [1.20, -0.47], [-0.30, -0.47]]
   local_costmap:
-    footprint: [[-0.30, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.30, -0.47]]
+    footprint: [[-0.30, 0.47], [1.20, 0.47], [1.20, -0.47], [-0.30, -0.47]]
     plugins:
       - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
       - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
