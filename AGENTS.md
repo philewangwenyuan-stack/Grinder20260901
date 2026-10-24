@@ -59,6 +59,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 手动停止后的任务续跑、作业线方向与轮次 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_continuation.py` | `scheduler_node.py` 中 `_capture_task_continuation` / `_prepare_task_continuation_start`；`planner_adapter.py`；离线回归 `test/test_task_continuation.py`、`test/test_planner_continuation.py` |
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
 | 遥控指令跟手、忙时松手停车 | `sl_linka_adapter.py` 中手动最新指令队列、scheduler `capture_control_generation` | 排队绑定执行代号；底盘零速绕过斜坡；`test_manual_control_delivery.py`、`test_motion_safety.py`；部署与超时见根 README 7.3 |
+| 手动差速单轮过零 | scheduler `manual_wheel_transition.py`、`scheduler_node.py` | 单轮制动/实测零速/反向加速，另一轮协调；完整前后换向等待；`test_manual_wheel_transition.py`、`test_manual_steering_guard_activity.py`；根 README 7.3 |
 | 当前任务临时直行速度与磨盘转速 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_runtime_parameters.py` | `scheduler_node.py` 中 `handle_task_runtime_settings`；协议 `0x0538/0x0539`；`test/test_task_runtime_parameters.py` |
 | 任务启动时下发工艺速度 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` 中 `_execution_run_speed`、`_start_execution` | `test/test_execution_settings.py`；底盘使能前将工艺速度下发到导航控制器 |
 | APP 消息中心的设备/定位告警 | `scheduler_node.py` 中 `build_device_status_report` | `third_party/sl_linka/proto/sl_link.proto` 的 `DeviceStatusReport`；`test/test_chassis_connection_report.py`；APP 展示逻辑需到 APP 仓库定位 |

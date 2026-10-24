@@ -34,6 +34,7 @@ class ExecutionTest(unittest.TestCase):
             pass
         ros = SimpleNamespace(ROSException=RosError, ServiceException=RosError,
             get_param=lambda key, default=None: default)
+        ros.Time = SimpleNamespace(now=lambda: harness.Stamp(harness.time.monotonic()))
         for name in ('loginfo', 'logwarn', 'logerr', 'loginfo_throttle'):
             setattr(ros, name, lambda *a, **k: None)
         namespace['rospy'] = ros

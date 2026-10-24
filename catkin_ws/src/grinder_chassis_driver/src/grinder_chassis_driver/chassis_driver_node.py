@@ -951,12 +951,13 @@ class ChassisDriverNode:
             consecutive_failures = self.consecutive_failures
 
         wheel_msg = WheelSpeedState()
-        wheel_msg.header.stamp = now
+        # A cached sample must retain its measurement age for wheel reversal confirmation.
+        wheel_msg.header.stamp = feedback_stamp if feedback_stamp is not None else now
         wheel_msg.target_left_wheel_speed = command.left_wheel_speed
         wheel_msg.target_right_wheel_speed = command.right_wheel_speed
         wheel_msg.feedback_left_wheel_speed = actual_left_motor_speed
         wheel_msg.feedback_right_wheel_speed = actual_right_motor_speed
-        wheel_msg.feedback_valid = connected and actual_speed_valid
+        wheel_msg.feedback_valid = connected and actual_speed_valid and feedback_stamp is not None
         self.wheel_speed_pub.publish(wheel_msg)
 
         self._publish_wheel_odom(

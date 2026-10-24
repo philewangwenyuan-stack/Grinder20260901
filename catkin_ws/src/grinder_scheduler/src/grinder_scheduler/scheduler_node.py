@@ -711,6 +711,7 @@ class SchedulerNode:
         )
         self._manual_reverse_guard_sec = max(0.0, float(rospy.get_param("~manual_reverse_guard_sec", 0.25)))
         self._manual_reverse_until = 0.0
+        self._manual_drive_transition = None
         self._manual_last_left_cmd = 0
         self._manual_last_right_cmd = 0
         self._manual_drive_lock = threading.Lock()
@@ -4051,6 +4052,14 @@ class SchedulerNode:
     def _wheel_speed_state_callback(self, msg):
         with self._wheel_speed_state_lock:
             self.last_wheel_speed_state = msg
+        transition = getattr(self, "_manual_drive_transition", None)
+        if transition is not None:
+            try:
+                transition.observe(float(msg.header.stamp.to_sec()), float(rospy.Time.now().to_sec()),
+                    msg.feedback_left_wheel_speed, msg.feedback_right_wheel_speed,
+                    msg.target_left_wheel_speed, msg.target_right_wheel_speed, bool(msg.feedback_valid))
+            except (AttributeError, TypeError, ValueError):
+                transition.observe(0.0, 0.0, 0, 0, 0, 0, False)
 
     def _wheel_odom_callback(self, msg):
         with self._wheel_odom_lock:
@@ -8747,6 +8756,9 @@ class SchedulerNode:
             result = self._reset_emergency_stop(None)
             return result.success, result.message
         self._motion.invalidate(emergency=True)
+        transition = getattr(self, "_manual_drive_transition", None)
+        if transition is not None:
+            transition.reset()
         self._indicator_clear_generation = None
         self._indicator_emergency.observe()
         # Emergency stop sequence:
@@ -8870,36 +8882,17 @@ class SchedulerNode:
         now = time.time()
         next_left = int(wheel.left_wheel_speed)
         next_right = int(wheel.right_wheel_speed)
-        reverse_switch = (
-            (
-                abs(self._manual_last_left_cmd) > 0
-                and abs(next_left) > 0
-                and ((self._manual_last_left_cmd > 0 and next_left < 0) or (self._manual_last_left_cmd < 0 and next_left > 0))
-            )
-            or (
-                abs(self._manual_last_right_cmd) > 0
-                and abs(next_right) > 0
-                and (
-                    (self._manual_last_right_cmd > 0 and next_right < 0)
-                    or (self._manual_last_right_cmd < 0 and next_right > 0)
-                )
-            )
-        )
-        # Protect the motor driver from immediate direction reversal:
-        # on sign flip, force one short zero-speed dwell before allowing reverse.
-        if self._manual_reverse_guard_sec > 0.0:
-            if reverse_switch:
-                self._manual_reverse_until = now + self._manual_reverse_guard_sec
-                wheel.left_wheel_speed = 0
-                wheel.right_wheel_speed = 0
-                rospy.logwarn_throttle(
-                    1.0,
-                    "Manual reverse switch detected, applying %.0fms stop guard."
-                    % (self._manual_reverse_guard_sec * 1000.0),
-                )
-            elif now < self._manual_reverse_until and (abs(next_left) > 0 or abs(next_right) > 0):
-                wheel.left_wheel_speed = 0
-                wheel.right_wheel_speed = 0
+        # Per-wheel zero crossing: a steering reversal must not impose a
+        # fixed whole-vehicle stop. The coordinator preserves the requested
+        # longitudinal bound while only the reversing wheel brakes/holds.
+        from grinder_scheduler.manual_wheel_transition import ManualWheelTransition
+        transition = getattr(self, "_manual_drive_transition", None)
+        if transition is None:
+            transition = ManualWheelTransition(self._manual_reverse_guard_sec,
+                getattr(self, "_manual_command_timeout_sec", 0.5))
+            self._manual_drive_transition = transition
+        wheel.left_wheel_speed, wheel.right_wheel_speed = transition.apply(
+            next_left, next_right, time.monotonic(), float(rospy.Time.now().to_sec()), base_max)
         # If manual drive sends non-zero motion while chassis is disabled,
         # try to re-enable chassis automatically to avoid "no RS485 output" confusion.
         moving = abs(int(wheel.left_wheel_speed)) > 0 or abs(int(wheel.right_wheel_speed)) > 0
@@ -8939,6 +8932,9 @@ class SchedulerNode:
             self._manual_last_left_cmd = 0
             self._manual_last_right_cmd = 0
             self._manual_reverse_until = 0.0
+            transition = getattr(self, "_manual_drive_transition", None)
+            if transition is not None:
+                transition.reset()
             self._manual_command_active = False
             self._set_manual_travel_disc_active(False, reason="manual_drive_watchdog")
         rospy.logwarn(

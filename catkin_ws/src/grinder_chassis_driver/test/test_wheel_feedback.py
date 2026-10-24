@@ -111,6 +111,12 @@ class WheelFeedbackTest(unittest.TestCase):
         n._publish_state(publish_status=False)
         self.assertEqual(1,len(fusion))
         self.assertEqual(Stamp(99),fusion[0][0])
+        self.assertEqual(Stamp(99), n.wheel_speed_pub.messages[-1].header.stamp)
+        n._publish_state(publish_status=False)
+        self.assertEqual(Stamp(99), n.wheel_speed_pub.messages[-1].header.stamp)
+        n._actual_feedback_stamp=None
+        n._publish_state(publish_status=False)
+        self.assertFalse(n.wheel_speed_pub.messages[-1].feedback_valid)
 
 
 if __name__ == '__main__':

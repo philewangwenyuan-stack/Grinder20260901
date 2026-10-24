@@ -342,7 +342,45 @@ sudo apt update
 sudo apt install -y ros-noetic-ros-base
 ~~~
 
-板端无桌面运行使用 `ros-base`；需要 RViz 等桌面工具时再安装 `ros-noetic-desktop-full`。
+板端无桌面运行使用 `ros-base`。需要 RViz 与本仓库 Super-LIO 可视化配置使用的 JSK 插件时，
+可单独补装以下包，无需安装完整桌面套件：
+
+~~~bash
+sudo apt install -y --no-install-recommends \
+  ros-noetic-rviz ros-noetic-jsk-rviz-plugins ros-noetic-jsk-visualization
+source /opt/ros/noetic/setup.bash
+command -v rviz
+rospack find jsk_rviz_plugins
+~~~
+
+`ros-base` 不包含 `rviz`，只 source ROS 环境不会安装缺失命令。
+仓库的 `lio.rviz`、`relocation.rviz` 等使用 `jsk_rviz_plugin/OverlayText`、`Plotter2D`
+等插件，单装 RViz 仍会缺少这些显示类型。启动 RViz 需要可用的图形会话；
+纯 SSH 没有 DISPLAY 时应在板端桌面的终端启动，或使用已配置好的远程图形会话。
+如果确实需要完整 ROS 桌面工具集，再选择 `ros-noetic-desktop-full`。
+
+**RK3588 + MobaXterm 的 X11/OpenGL 兼容配置（2026-10-22 实测）**：
+若 RViz 在 Mali 初始化后报 `Unsupported extension used`、`X connection to localhost:10.0 broken`，
+先核对 `echo "$DISPLAY"`，并保留 MobaXterm 自动设置的转发显示地址，不要手工改成 `:0`。
+当天板端本地 X Server 没有 GLX，直接改到 `:0` 的 RViz 测试在 `glXCreateContext` 崩溃；
+MobaXterm 转发显示有 GLX，选择 Mesa/llvmpipe 后已能创建 OpenGL 上下文并运行 RViz 界面。
+还需覆盖登录会话中的 `QT_XCB_GL_INTEGRATION=xcb_egl`：该设置会让 Qt 继续加载 Mali EGL，
+即使已经设置 Mesa 变量仍会报同样的 X11 错误。RViz 转发启动时显式指定 `xcb_glx`。
+在 MobaXterm 的板端 SSH 终端执行：
+
+~~~bash
+source /opt/ros/noetic/setup.bash
+unset LIBGL_ALWAYS_INDIRECT
+QT_XCB_GL_INTEGRATION=xcb_glx QT_X11_NO_MITSHM=1 LIBGL_ALWAYS_SOFTWARE=1 \
+  __GLX_VENDOR_LIBRARY_NAME=mesa GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS=2 rviz
+~~~
+
+这些设置只作用于该次 RViz。llvmpipe 使用 CPU 渲染，密集点云显示会增加 CPU 开销，
+可降低显示频率/点数；无需把这些变量写入导航服务或替换系统 Mali 库。
+变量含义见 [Mesa 环境变量说明](https://docs.mesa3d.org/envvars.html)。
+当天另在板端 `/usr/local/bin/rviz-x11` 保存了同样设置并加载 Grinder 工作区，
+之后可直接运行 `rviz-x11` 或 `rviz-x11 -d /absolute/path/config.rviz`；该设备脚本不随 clone 自动安装。
+诊断可安装 `mesa-utils` 并在相同环境下运行 `glxinfo -B`，当天 renderer 为 Mesa llvmpipe。
 如果官方源不可访问，将 /etc/apt/sources.list.d/ros1.list 中的
 packages.ros.org/ros/ubuntu 替换为可用镜像后再执行 sudo apt update。
 
@@ -985,6 +1023,13 @@ rostopic echo /chassis/motion_safety
 双轮零速不经过轮速斜坡。调度 `manual_command_timeout_sec` 和底盘 `command_timeout` 默认均为0.5秒。
 正常松手走显式零速，超时只作失联兜底；实际停止时间还包含通信、串口事务和电机响应。
 `manual_reverse_guard_sec` 的换向停顿仍有效，本次保留现有1秒配置。
+
+差速转向的单轮反向由 `manual_wheel_transition.py` 处理：仅该轮有界减速到零，等待两次独立、有效且新鲜的该轮零速测量，或完整保护时间后，再有界反向加速。
+另一轮在当前目标轮速包络内协同保持前后分量，必要时允许低于目标，避免普通弧线转向人为整车停顿；输出不超过所请求的前后速度。
+满杆目标前后速度为零，必要时允许短暂双轮归零，优先避免残余前冲。两轮同时反向仍等待完整保护时间。
+重复、陈旧、无效、仍转动或目标非零的测量不能作为该轮停车确认；停止、急停及失联立即清零并取消过渡，灯态保持真实输出语义。
+`WheelSpeedState.header.stamp` 使用实际测量时刻，避免缓存轮速重发被误当成新测量；需同步更新调度和底盘驱动。
+离线回归：`test_manual_wheel_transition.py`、`test_manual_steering_guard_activity.py`、`test_wheel_feedback.py`。实机连续性和电机响应仍须现场验收。
 
 MST27在完成Python输入解析后，仅对纯C++规划／加密阶段释放GIL，返回Python结果前重新取得锁，
 避免较长规划占用同进程的Python控制回调。
@@ -1761,6 +1806,8 @@ PY
 | 原管理网口地址前缀错误 | 旧 NM profile 保存为 `192.168.1.2/0` | 修正并持久化为 `/24`；当前管理已切到热点 `.3`，不能继续用拔线的 `.2` 诊断在线状态 |
 | 热点和雷达同网段时 SSH 或雷达走错网口；`ip rule` 不支持 | 两个 `/24` 直连路由竞争，板端内核缺少策略路由支持 | 雷达口 `/32` 加雷达主机路由，热点租约 hook 加客户端 `/32`；保留静态设备地址并核对两个 `ip route get` |
 | 灯带一直黄灯 | 无硬件阶段禁用了灯带节点，ESP32 保持上电待通信状态 | 接入后启用 `START_INDICATOR`、设置 USB 身份，检查 `/indicator/state` 的 ACK 和错误；当天未重新烧录固件 |
+| source ROS 后运行 `rviz` 提示未找到命令 | 板端最初安装的是无桌面 `ros-base`，不是 RViz 安装或环境变量损坏 | 单独补装 RViz、JSK RViz 插件及 JSK visualization 套件；离线板按 ARM64 完整依赖下载、校验后安装，图形启动仍需桌面会话 |
+| MobaXterm 启动 RViz 报 X11 `Unsupported extension used` 并断开 | 转发显示与板端原生图形路径不兼容；登录会话的 `QT_XCB_GL_INTEGRATION=xcb_egl` 仍会强制加载 Mali；板端本地显示也缺 GLX | 保留 MobaXterm 的 DISPLAY，显式指定 `QT_XCB_GL_INTEGRATION=xcb_glx`，配合 Mesa/llvmpipe 和禁用 Qt MIT-SHM；修正后的板端 `rviz-x11` 已在带有原始 EGL 环境变量的条件下验证 |
 | APP 报 `Cannot apply task process speed to navigation` | 当天直接原因是 STVL 未安装，costmap 初始化抛 `LibraryLoadException`，move_base 退出/重生，RPP 参数服务不可用 | 安装 `ros-noetic-spatio-temporal-voxel-layer` 及依赖；这是导航服务失败，不应修改工艺速度或绕过任务启动检查 |
 | STVL 装好后仍存在插件兼容问题 | Ubuntu 20.04 OpenVDB/jemalloc 加载问题；探针不预加载退出 139，预加载成功 | 安装 libjemalloc2，并在 move_base launch 内透传 LD_PRELOAD；systemd 环境变量与 XML 两步都要配置，检查运行进程环境和稳定性 |
 | 重启后 move_base 可见，但 RPP 服务仍没有 | 未加载地图/未完成定位，缺少 `map` 到车体 TF，导航尚未完成初始化 | APP 重新加载地图和定位后再验证参数服务；不要把等待 TF 与插件崩溃混为一谈，结合日志、进程和服务判断 |
