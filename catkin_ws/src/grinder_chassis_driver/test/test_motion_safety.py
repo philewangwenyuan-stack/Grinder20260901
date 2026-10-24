@@ -262,6 +262,31 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual(0, node.command.left_wheel_speed)
         self.assertFalse(MotionInterlock(str(self.directory / 'driver.json')).latched)
 
+    def test_reset_uses_disc_speed_not_switch_readback(self):
+        for disc_speed, expected in ((0, True), (30, False)):
+            with self.subTest(disc_speed=disc_speed):
+                node = self.driver()
+                node._handle_emergency_stop_cmd(Message(True))
+                def readback(frame):
+                    if frame[1] == 3:
+                        node._memory_serial.registers[registers.REGISTER_DISC_ENABLE] = 1
+                        node._memory_serial.registers[registers.REGISTER_DISC_SPEED] = disc_speed
+                node._memory_serial.before_write = readback
+                result = []
+                worker = threading.Thread(target=lambda: result.append(node._reset_emergency_stop(None)))
+                worker.start()
+                while worker.is_alive():
+                    node._next_status_poll_monotonic = 0
+                    node._poll_once(None)
+                    time.sleep(.04)
+                self.assertEqual(expected, result[0].success, result[0].message)
+                self.assertEqual(not expected, node._motion.latched)
+                self.assertEqual(1, node.snapshot.disc_enable)
+                self.assertFalse(node.task_enable)
+                self.assertEqual(0, node.command.disc_enable)
+                self.assert_safe_frame(next(frame for frame in reversed(node._memory_serial.frames)
+                                            if frame[1] == 16))
+
     def test_new_emergency_cancels_reset(self):
         node = self.driver()
         node._handle_emergency_stop_cmd(Message(True))

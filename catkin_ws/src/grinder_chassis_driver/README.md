@@ -119,6 +119,8 @@
 所有输出共用串行提交入口，旧代号不能晚于安全帧提交运动；安全同步成功前不接受新运动。
 
 `/chassis/reset_emergency_stop`（std_srvs/Trigger）要求在线、安全写入确认和3秒内两次新的停止读数。
+停止读数要求两轮实际转速及磨盘转速读值均为零；`0x4013` 磨盘开关读值不作为解除条件。
+安全输出仍将磨盘开关写为关闭，并检查写入确认。
 成功仅解除软件锁存，目标仍清零、task_enable仍false。新急停可中断复位。
 用户应使用协调入口 `/scheduler/reset_emergency_stop`，以同时解除调度锁存并排队清灯。
 `/chassis/motion_safety`（JSON String）及诊断提供 emergency_latched、safe_write_confirmed、

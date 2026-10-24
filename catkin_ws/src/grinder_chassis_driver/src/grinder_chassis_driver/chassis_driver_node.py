@@ -806,8 +806,10 @@ class ChassisDriverNode:
                 valid = (self.connected and self.actual_speed_valid and self._safe_write_confirmed
                          and sample > last_sample and time.monotonic() - sample < 1.0)
                 if valid:
+                    # The switch readback can remain on at zero speed. Reset
+                    # verifies speed readbacks; safe writes still turn it off.
                     stopped = (self.actual_left_motor_speed == 0 and self.actual_right_motor_speed == 0
-                               and self.snapshot.disc_speed == 0 and self.snapshot.disc_enable == DISC_ENABLE_OFF)
+                               and self.snapshot.disc_speed == 0)
                     count = count + 1 if stopped else 0
                     last_sample = sample
                 if count >= 2:
