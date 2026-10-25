@@ -7,7 +7,7 @@ port: /dev/ttyS0
 baudrate: 19200
 # Modbus 从站 ID
 slave_id: 1
-# 每次 Modbus 读写超时时间（秒）
+# 单次 Modbus 事务总超时（秒）：发送及响应所有分片共用，碎片到达不会续期。
 timeout: 0.1
 # 0x4017/0x4018 有符号实际轮速轮询频率（Hz）
 poll_rate_hz: 10
@@ -62,7 +62,7 @@ manual_wheel_hyst_exit_rpm: 30
 safe_stop_on_error_interval: 2.0
 # 是否开启 485 原始收发日志（单独文件）
 rs485_raw_log_enabled: true
-# 485 原始收发日志文件路径（开启后按行追加）
+# 485 原始收发日志文件路径（有界后台按行追加，不在串口事务中写盘）
 rs485_raw_log_file: temp/chassis_rs485_raw.log
 
 # 是否启用 /cmd_vel 转轮速功能

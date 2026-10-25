@@ -572,7 +572,7 @@ static std::vector<FPoint> plan_subregion_oriented(
     const Grid& grid,
     const StageInput& stage,
     double angle_deg,
-    int path_spacing,
+    double path_spacing,
     double step,
     Point start_point,
     Point end_point,
@@ -704,20 +704,25 @@ static std::vector<FPoint> plan_subregion_oriented(
         wanted_last_ascending = first_ascending;
         scan_s.push_back(start_s);
     } else {
+        // Only the last 1-3 edge intervals absorb remainder/endpoint parity.
+        // Interior lanes retain the exact floating-point parameter spacing.
+        int intervals = std::max(1, static_cast<int>(std::ceil(span / path_spacing - 1e-9)));
         const bool need_even = first_ascending == wanted_last_ascending;
-        const int nominal = std::max(1, static_cast<int>(std::lround(span / path_spacing)));
-        int intervals = -1;
-        double best_error = std::numeric_limits<double>::infinity();
-        for (int n = std::max(1, nominal - 2); n <= nominal + 2; ++n) {
-            if ((n % 2 == 0) != need_even) continue;
-            const double error = std::abs(span / n - path_spacing);
-            if (error < best_error) { best_error = error; intervals = n; }
-        }
-        if (intervals < 1) intervals = nominal;
-        for (int i = 0; i <= intervals; ++i)
-            scan_s.push_back(start_s + (end_s - start_s) * i / intervals);
+        const bool parity_adjusted = ((intervals % 2 == 0) != need_even);
+        if (parity_adjusted) ++intervals;
+        const double remainder = span - (intervals - 1) * path_spacing;
+        const int edge_count = std::min(intervals,
+            parity_adjusted ? 3 : (remainder < 0.5 * path_spacing ? 2 : 1));
+        const int fixed_count = intervals - edge_count;
+        const double edge_spacing = (span - fixed_count * path_spacing) / edge_count;
+        for (int i = 0; i <= fixed_count; ++i)
+            scan_s.push_back(start_s + std::copysign(i * path_spacing, end_s - start_s));
+        for (int i = 1; i <= edge_count; ++i)
+            scan_s.push_back(start_s + std::copysign(
+                fixed_count * path_spacing + i * edge_spacing, end_s - start_s));
+        scan_s.back() = end_s;
     }
-    // 不再为了终点朝向插入/删除扫描线，末线直接使用终点要求方向。
+    // 中间线保持固定间距，终点方向仅影响末端最多三个边缘间隔。
 
     for (std::size_t k = 0; k < scan_s.size(); ++k) {
         const double s = scan_s[k];
@@ -1403,7 +1408,7 @@ static std::vector<FPoint> plan_subregion_oriented(
 static std::vector<PathItem> plan_all_stages(
     const Grid& grid,
     const std::vector<StageInput>& stages,
-    int spacing_pixels) {
+    double spacing_pixels) {
     std::vector<PathItem> complete_path;
     std::optional<Point> last_stage_end;
 
@@ -1595,10 +1600,10 @@ static std::vector<StageInput> parse_stages(const py::list& stage_specs, const G
 static py::list plan_core(
     const py::array_t<int, py::array::c_style | py::array::forcecast>& grid_array,
     const py::list& stage_specs,
-    int spacing_pixels,
+    double spacing_pixels,
     double output_spacing_pixels) {
-    if (spacing_pixels < 1) {
-        throw std::runtime_error("spacing_pixels must be >= 1");
+    if (!std::isfinite(spacing_pixels) || spacing_pixels <= 0.0) {
+        throw std::runtime_error("spacing_pixels must be finite and > 0");
     }
 
     const Grid grid = parse_grid(grid_array);

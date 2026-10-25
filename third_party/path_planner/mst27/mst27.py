@@ -677,16 +677,27 @@ class ObstacleAwareBoustrophedonPlanner:
             wanted_last_ascending = first_ascending
             scan_s = [s_start]
         else:
-            intervals = max(1, int(round(span / path_spacing)))
+            # 中间线固定推进，余量仅放在末端边缘，不再全宽均分。
+            intervals = max(1, int(math.ceil(span / path_spacing - 1e-9)))
             need_even = (first_ascending == wanted_last_ascending)
-            candidates = [n for n in range(max(1, intervals - 2), intervals + 3)
-                          if (n % 2 == 0) == need_even]
-            intervals = min(candidates,
-                            key=lambda n: abs(span / n - path_spacing))
-            scan_s = [s_start + (s_end - s_start) * i / intervals
-                      for i in range(intervals + 1)]
+            parity_adjusted = ((intervals % 2 == 0) != need_even)
+            if parity_adjusted:
+                intervals += 1
+            # 普通余量只调整末间隔。余量太小或需匹配终点方向时，
+            # 仅均分末端2~3个间隔，避免生成几乎重合的窄条带。
+            remainder = span - (intervals - 1) * path_spacing
+            edge_count = min(intervals, 3 if parity_adjusted else
+                             (2 if remainder < 0.5 * path_spacing else 1))
+            fixed_count = intervals - edge_count
+            edge_spacing = (span - fixed_count * path_spacing) / edge_count
+            offsets = [i * path_spacing for i in range(fixed_count + 1)]
+            offsets.extend(fixed_count * path_spacing + i * edge_spacing
+                           for i in range(1, edge_count + 1))
+            scan_s = [s_start + math.copysign(offset, s_end - s_start)
+                      for offset in offsets]
+            scan_s[-1] = s_end
 
-        # 不再为匹配终点方向增删扫描线；末线在生成时直接采用终点方向。
+        # 仅末端边缘允许调整间距，中间扫描线不随终点朝向重新均分。
 
         n_lines = 0
         max_off = path_spacing * 2.5          # 单侧横移上限(格)
@@ -2038,7 +2049,7 @@ class MultiStagePathPlanner:
         if _mst27_cpp is None or os.environ.get("MST27_DISABLE_CPP") == "1":
             return None
 
-        spacing_pixels = max(1, int(round(effective_spacing * real_to_grid_ratio)))
+        spacing_pixels = effective_spacing * real_to_grid_ratio
         grid_for_cpp = (prepared_map.cpp_inflated_grid() if prepared_map is not None
                         else np.ascontiguousarray(inflated_grid, dtype=np.int32))
         stage_specs = []
@@ -2421,7 +2432,7 @@ class MultiStagePathPlanner:
                 else:
                     print(f"  距离太近，无需连接段")
 
-            spacing_pixels = max(1, int(round(effective_spacing * real_to_grid_ratio)))
+            spacing_pixels = effective_spacing * real_to_grid_ratio
             print(f"[规划] 间距: {spacing_pixels}像素, 方向: {stage.direction}")
 
             if stage.direction_angle is not None:

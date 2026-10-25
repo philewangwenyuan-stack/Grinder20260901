@@ -20,6 +20,34 @@ Worker = namespace['_BoundedLatestWorker']
 
 
 class ManualQueueTest(unittest.TestCase):
+    def test_inflight_control_cannot_publish_after_connection_closes(self):
+        fixture=execution_fixture.ExecutionTest()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        node,_=fixture.node()
+        class Response:
+            def __init__(self):self.applied_command=SimpleNamespace(CopyFrom=lambda _:None)
+            def SerializeToString(self):return self.result
+        node.sl_link_server=SimpleNamespace(pb=SimpleNamespace(ControlCommandResponse=Response,
+            RESULT_SUCCESS=1,RESULT_FAILED=0,MSG_ID_CONTROL_COMMAND_RESPONSE=1,COMP_CONTROL=1))
+        entered,release=threading.Event(),threading.Event()
+        self.addCleanup(release.set)
+        alive=[True];outputs=[];result=[]
+        def apply(request):
+            entered.set();release.wait(2)
+            node._motion.check()
+            outputs.append(100)
+            return True,''
+        node._apply_control_outputs=apply
+        request=SimpleNamespace(HasField=lambda _:False)
+        thread=threading.Thread(target=lambda:result.append(node.handle_control_command(
+            b'',parsed_request=request,connection_valid=lambda:alive[0])[0]))
+        thread.start();self.assertTrue(entered.wait(1))
+        alive[0]=False;release.set();thread.join(2)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual([],outputs)
+        self.assertEqual([0],result)
+
     def worker(self):
         worker = Worker(max_pending=1, name='manual-regression')
         self.addCleanup(lambda: worker.shutdown(wait=True))

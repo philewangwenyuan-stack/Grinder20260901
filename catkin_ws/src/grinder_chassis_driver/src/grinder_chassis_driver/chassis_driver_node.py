@@ -921,17 +921,21 @@ class ChassisDriverNode:
             self._publish_diagnostics()
 
     def _enforce_command_timeout(self):
-        if not self.stop_on_timeout or not self.enabled:
-            return
-        if (rospy.Time.now() - self.last_command_time).to_sec() <= self.command_timeout:
-            return
-        with self._lock:
+        # Fresh command callbacks take motion->state locks in this order too.
+        # Check age and invalidate atomically: a renewal between an unlocked
+        # age check and the zero assignment must not cause a false stop.
+        with self._motion.lock, self._lock:
+            if not self.stop_on_timeout or not self.enabled:
+                return
+            if (rospy.Time.now() - self.last_command_time).to_sec() <= self.command_timeout:
+                return
             already_stopped = self.command.left_wheel_speed == 0 and self.command.right_wheel_speed == 0
             self.command.left_wheel_speed = 0
             self.command.right_wheel_speed = 0
+            if not already_stopped:
+                self._motion.invalidate()
         if not already_stopped:
             rospy.logwarn_throttle(2.0, "Wheel speed command timeout reached. Stopping chassis motion.")
-            self._motion.invalidate()
             try:
                 self._submit_output("all", force=True, safe=False)
             except (MotionCancelled, ModbusTransportError) as exc:
@@ -1085,6 +1089,8 @@ class ChassisDriverNode:
             KeyValue(key="status_combined_read", value=str(self.status_combined_read)),
             KeyValue(key="motion_submit_delay_ms", value=str(getattr(self, "_motion_submit_delay_ms", -1))),
             KeyValue(key="motion_write_ack_ms", value=str(getattr(self, "_motion_write_ack_ms", -1))),
+            KeyValue(key="raw_log_dropped", value=str(getattr(getattr(self.transport, "_raw_log_writer", None), "dropped", 0))),
+            KeyValue(key="raw_log_errors", value=str(getattr(getattr(self.transport, "_raw_log_writer", None), "errors", 0))),
         ]
 
         array = DiagnosticArray()
@@ -1145,7 +1151,7 @@ class ChassisDriverNode:
             self._issue_safe_stop()
         except Exception:
             pass
-        self.transport.close()
+        self.transport.shutdown()
 
 
 def main():

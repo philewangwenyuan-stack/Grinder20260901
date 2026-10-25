@@ -8579,6 +8579,10 @@ class SchedulerNode:
         return self._manual_delivery.capture(session, received_at,
             self._manual_command_timeout_sec, stop), stop
 
+    def is_control_session_current(self, session):
+        with self._manual_delivery.lock:
+            return self._manual_delivery.session is session
+
     def cancel_manual_session(self, session=None):
         delivery = getattr(self, "_manual_delivery", None)
         if delivery is None or not delivery.invalidate(session):
@@ -8592,20 +8596,26 @@ class SchedulerNode:
                 self._manual_last_left_cmd = self._manual_last_right_cmd = 0
                 self._set_manual_travel_disc_active(False, reason="manual_session_end")
 
-    def handle_control_command(self, payload, parsed_request=None, control_generation=None, manual_ticket=None):
+    def handle_control_command(self, payload, parsed_request=None, control_generation=None, manual_ticket=None,
+                               connection_valid=None):
         pb = self.sl_link_server.pb
         request = parsed_request
         if request is None:
             request = pb.ControlCommand()
             request.ParseFromString(payload)
-        if request.HasField("emergency_stop"):
+        if (connection_valid is not None and not connection_valid()
+                and not (request.HasField("emergency_stop") and request.emergency_stop.enabled)):
+            handled, error_message = False, "Control connection closed or replaced"
+        elif request.HasField("emergency_stop"):
             handled, error_message = self._apply_emergency_stop(bool(request.emergency_stop.enabled))
         else:
             try:
                 previous = getattr(self._motion.local, "delivery_validator", None)
                 try:
-                    if manual_ticket is not None:
-                        self._motion.local.delivery_validator = lambda: self._manual_delivery.valid(manual_ticket)
+                    if manual_ticket is not None or connection_valid is not None:
+                        self._motion.local.delivery_validator = lambda: (
+                            (connection_valid is None or connection_valid())
+                            and (manual_ticket is None or self._manual_delivery.valid(manual_ticket)))
                     with self._motion.action(generation=control_generation):
                         handled, error_message = self._apply_control_outputs(request)
                 finally:

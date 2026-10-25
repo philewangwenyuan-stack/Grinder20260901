@@ -4,12 +4,41 @@ import select
 import termios
 import threading
 import time
+from contextlib import contextmanager
 
 from grinder_chassis_driver.register_map import to_int16, to_uint16
+from grinder_chassis_driver.raw_log import RawLogWriter
 
 
 class ModbusTransportError(RuntimeError):
     """Raised when RS485 Modbus communication fails."""
+
+
+class _TransactionGate:
+    """One RTU transaction at a time; pending writes precede pending polls."""
+    def __init__(self):
+        self.condition = threading.Condition()
+        self.busy = False
+        self.writers = 0
+
+    @contextmanager
+    def hold(self, write=False):
+        with self.condition:
+            if write:
+                self.writers += 1
+            try:
+                while self.busy or (not write and self.writers):
+                    self.condition.wait()
+                self.busy = True
+            finally:
+                if write:
+                    self.writers -= 1
+        try:
+            yield
+        finally:
+            with self.condition:
+                self.busy = False
+                self.condition.notify_all()
 
 
 class ModbusExceptionResponse(ModbusTransportError):
@@ -45,6 +74,7 @@ class _SerialPort:
         self.baudrate = baudrate
         self.timeout = timeout
         self._fd = None
+        self._transaction_deadline = None
 
     def open(self):
         if self._fd is not None:
@@ -66,6 +96,7 @@ class _SerialPort:
             ) from exc
 
     def close(self):
+        self._transaction_deadline = None
         if self._fd is None:
             return
         os.close(self._fd)
@@ -73,11 +104,13 @@ class _SerialPort:
 
     def write(self, payload):
         self.open()
+        # One budget covers TX and every response fragment, including headers.
+        self._transaction_deadline = time.monotonic() + self.timeout
         self.flush_input()
         view = memoryview(payload)
         total_written = 0
         while total_written < len(payload):
-            _, writable, _ = select.select([], [self._fd], [], self.timeout)
+            _, writable, _ = select.select([], [self._fd], [], self._remaining_time())
             if not writable:
                 raise ModbusTransportError("Serial write timeout on {}".format(self.port))
             try:
@@ -89,9 +122,11 @@ class _SerialPort:
 
     def read_exactly(self, size):
         self.open()
+        if self._transaction_deadline is None:
+            self._transaction_deadline = time.monotonic() + self.timeout
         chunks = bytearray()
         while len(chunks) < size:
-            readable, _, _ = select.select([self._fd], [], [], self.timeout)
+            readable, _, _ = select.select([self._fd], [], [], self._remaining_time())
             if not readable:
                 raise ModbusTransportError(
                     "Serial read timeout on {} after {} of {} bytes".format(self.port, len(chunks), size)
@@ -105,7 +140,14 @@ class _SerialPort:
             if not chunk:
                 raise ModbusTransportError("Serial port {} returned no data".format(self.port))
             chunks.extend(chunk)
+            self._remaining_time()
         return bytes(chunks)
+
+    def _remaining_time(self):
+        remaining = self._transaction_deadline - time.monotonic()
+        if remaining <= 0.0:
+            raise ModbusTransportError("Serial transaction timeout on {}".format(self.port))
+        return remaining
 
     def flush_input(self):
         if self._fd is not None:
@@ -147,12 +189,14 @@ class ModbusTransport:
         self.raw_log_enabled = bool(raw_log_enabled)
         self.raw_log_file = str(raw_log_file or "").strip()
         self._lock = threading.Lock()
-        self._raw_log_lock = threading.Lock()
+        self._transactions = _TransactionGate()
+        self._raw_log_writer = None
         self._serial_port = _SerialPort(port=self.port, baudrate=self.baudrate, timeout=self.timeout)
         if self.raw_log_enabled and self.raw_log_file:
             log_dir = os.path.dirname(self.raw_log_file)
             if log_dir:
                 os.makedirs(log_dir, exist_ok=True)
+            self._raw_log_writer = RawLogWriter(self.raw_log_file)
 
     def connect(self):
         with self._lock:
@@ -166,6 +210,24 @@ class ModbusTransport:
         self.close()
         self.connect()
 
+    def shutdown(self):
+        self.close()
+        if self._raw_log_writer is not None:
+            self._raw_log_writer.close()
+
+    @contextmanager
+    def _transaction(self, write=False):
+        with self._transactions.hold(write):
+            with self._lock:
+                try:
+                    self._serial_port.open()
+                    yield
+                except Exception:
+                    # Close while still owning the transaction: a failed poll
+                    # must not close a new writer's reopened serial descriptor.
+                    self._serial_port.close()
+                    raise
+
     def write_int16(self, register_address, value):
         self._write_register(register_address, value, signed=True)
 
@@ -173,10 +235,9 @@ class ModbusTransport:
         self._write_register(register_address, value, signed=False)
 
     def write_register_block(self, start_address, values):
-        self.connect()
         encoded_values = [to_uint16(value) for value in values]
         try:
-            with self._lock:
+            with self._transaction(write=True):
                 payload = bytearray()
                 for value in encoded_values:
                     payload.extend(value.to_bytes(2, byteorder="big", signed=False))
@@ -193,10 +254,8 @@ class ModbusTransport:
                 self._log_raw_frame("TX", frame)
                 self._read_write_response(16, start_address, len(encoded_values))
         except ModbusTransportError:
-            self.close()
             raise
         except Exception as exc:
-            self.close()
             raise ModbusTransportError(str(exc))
 
     def read_register_block(self, start_address, count, signed_indices=None, timing=None):
@@ -207,10 +266,9 @@ class ModbusTransport:
         """
         if timing is not None:
             timing[:] = []
-        self.connect()
         signed_indices = set(signed_indices or [])
         try:
-            with self._lock:
+            with self._transaction():
                 frame = self._build_request(
                     function_code=3,
                     payload=(
@@ -242,10 +300,8 @@ class ModbusTransport:
                 for index in range(0, byte_count, 2):
                     values.append(int.from_bytes(response[3 + index : 5 + index], byteorder="big", signed=False))
         except ModbusTransportError:
-            self.close()
             raise
         except Exception as exc:
-            self.close()
             raise ModbusTransportError(str(exc))
 
         result = []
@@ -254,11 +310,10 @@ class ModbusTransport:
         return result
 
     def _write_register(self, register_address, value, signed):
-        self.connect()
         function_code = 16 if self.use_functioncode_16 else 6
         encoded_value = to_uint16(value) if signed else to_uint16(value)
         try:
-            with self._lock:
+            with self._transaction(write=True):
                 if function_code == 16:
                     frame = self._build_request(
                         function_code=16,
@@ -285,10 +340,8 @@ class ModbusTransport:
                     1 if function_code == 16 else encoded_value,
                 )
         except ModbusTransportError:
-            self.close()
             raise
         except Exception as exc:
-            self.close()
             raise ModbusTransportError(str(exc))
         if self.write_verify:
             readback = self.read_register_block(register_address, 1, signed_indices=(0,) if signed else ())
@@ -386,14 +439,5 @@ class ModbusTransport:
             pass
 
     def _append_raw_log_line(self, message):
-        now_ns = time.time_ns()
-        seconds = now_ns // 1000000000
-        milliseconds = (now_ns // 1000000) % 1000
-        ts = "{}.{:03d}".format(
-            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(seconds)),
-            milliseconds,
-        )
-        line = "[{}] {}\n".format(ts, message)
-        with self._raw_log_lock:
-            with open(self.raw_log_file, "a", encoding="utf-8") as f:
-                f.write(line)
+        if self._raw_log_writer is not None:
+            self._raw_log_writer.append(message)

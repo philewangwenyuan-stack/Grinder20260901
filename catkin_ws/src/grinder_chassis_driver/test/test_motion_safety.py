@@ -211,6 +211,24 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual(b'\x00' * 4, frame[7:11])
         self.assertEqual(b'\x03\xe8\x00\x01', frame[11:15])
 
+    def test_timeout_rechecks_renewal_before_zeroing(self):
+        node=self.driver()
+        node.command.left_wheel_speed=node.command.right_wheel_speed=100
+        node.last_command_time=Stamp(time.monotonic()-10)
+        original=node._lock
+        class RenewBeforeSnapshot:
+            def __enter__(self):
+                original.acquire()
+                node.last_command_time=Stamp(time.monotonic())
+            def __exit__(self,*args):original.release()
+        node._lock=RenewBeforeSnapshot()
+        generation=node._motion.generation
+        frames=len(node._memory_serial.frames)
+        node._enforce_command_timeout()
+        self.assertEqual((100,100),(node.command.left_wheel_speed,node.command.right_wheel_speed))
+        self.assertEqual(generation,node._motion.generation)
+        self.assertEqual(frames,len(node._memory_serial.frames))
+
     def test_failure_invalidates_cache_and_recovery_first_writes_safe(self):
         node = self.driver()
         node._memory_serial.fail = True

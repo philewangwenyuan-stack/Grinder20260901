@@ -62,6 +62,17 @@ class _BoundedLatestWorker:
                     rospy.logerr("SL-LinkA bounded worker failed: %s", exc)
 
 
+class _BoundedFifoWorker(_BoundedLatestWorker):
+    """Bounded ordered business work; reject overload without dropping old jobs."""
+    def submit(self, callback, *args):
+        with self._condition:
+            if not self._running or len(self._jobs) >= self._max_pending:
+                return False
+            self._jobs.append((callback, args))
+            self._condition.notify()
+            return True
+
+
 class _DropIfBusyWorker:
     """Run one job at a time and reject arrivals while the job is active."""
 
@@ -345,6 +356,7 @@ class SlLinkAServer:
                 self.request.settimeout(0.5)
                 outer._handler.begin_manual_session(self.session)
                 self.stop_executor = _BoundedLatestWorker(1, "sl_linka_stop")
+                self.control_dispatch_executor = _BoundedFifoWorker(8, "sl_linka_control")
                 try:
                     self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
@@ -441,13 +453,29 @@ class SlLinkAServer:
                                         ticket,
                                     )
                                     self._log_dropped_job("manual control", dropped)
-                                else:
+                                elif (control_request is not None
+                                      and control_request.HasField("emergency_stop")
+                                      and control_request.emergency_stop.enabled):
+                                    # Latch/zero immediately; reset and ordinary
+                                    # output business must never block receiving.
                                     self._dispatch_control_immediately(
                                         frame,
                                         control_request,
                                         False,
                                         received_at,
                                     )
+                                else:
+                                    accepted = self.control_dispatch_executor.submit(
+                                        self._dispatch_control_immediately,
+                                        frame, control_request, False, received_at,
+                                        outer._handler.capture_control_generation())
+                                    if not accepted:
+                                        response = outer.pb.ControlCommandResponse(
+                                            result=outer.pb.RESULT_FAILED,
+                                            message="Control business queue full; request not applied")
+                                        self._queue_control_response(
+                                            response.SerializeToString(), outer.pb.MSG_ID_CONTROL_COMMAND_RESPONSE,
+                                            outer.pb.COMP_CONTROL, int(frame.seq))
                             elif self._is_map_background_request(frame.msg_id):
                                 dropped = self.map_dispatch_executor.submit(
                                     self._dispatch_ordered,
@@ -484,6 +512,7 @@ class SlLinkAServer:
                 self.running = False
                 outer._handler.cancel_manual_session(self.session)
                 self.stop_executor.shutdown(wait=False)
+                self.control_dispatch_executor.shutdown(wait=False)
                 self.dispatch_executor.shutdown(wait=False)
                 self.map_delete_executor.shutdown(wait=False)
                 self.map_dispatch_executor.shutdown(wait=False)
@@ -599,6 +628,7 @@ class SlLinkAServer:
                     parsed_request=control_request,
                     control_generation=control_generation,
                     manual_ticket=manual_ticket,
+                    connection_valid=lambda: (self.running and outer._handler.is_control_session_current(self.session)),
                 )
                 applied_ms = (time.monotonic() - started) * 1000.0
                 if outer._control_apply is not None:
@@ -626,11 +656,14 @@ class SlLinkAServer:
                             int(frame.seq),
                         )
                     return
+                self._queue_control_response(payload, msg_id, comp_id, int(frame.seq))
+
+            def _queue_control_response(self, payload, msg_id, comp_id, ack_seq):
                 if not self.control_response_slots.acquire(blocking=False):
                     if rospy is not None:
                         rospy.logwarn_throttle(
                             2.0,
-                            "Drop SL-LinkA control response because TX queue is full; control was already applied.",
+                            "Drop SL-LinkA control response because TX queue is full.",
                         )
                     return
                 self.control_response_executor.submit(
@@ -638,7 +671,7 @@ class SlLinkAServer:
                     payload,
                     msg_id,
                     comp_id,
-                    int(frame.seq),
+                    ack_seq,
                     True,
                 )
 

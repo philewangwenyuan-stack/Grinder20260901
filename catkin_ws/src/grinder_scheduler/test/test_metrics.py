@@ -6,6 +6,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from types import SimpleNamespace
 
 
@@ -61,6 +62,7 @@ class MetricsTest(unittest.TestCase):
             failing_build()
         self.assertEqual(registry.snapshot()["histograms"]["map_build_ms"]["count"], 1)
 
+    @patch("grinder_scheduler.sl_linka_adapter.rospy", None)
     def test_map_request_records_build_and_socket_send_separately(self):
         registry = MetricsRegistry()
         server = SlLinkAServer.__new__(SlLinkAServer)
