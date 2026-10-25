@@ -70,6 +70,7 @@ from grinder_scheduler.msg import MapPreviewMetadata, SchedulerStatus
 from grinder_scheduler.planner_adapter import PlannerAdapter
 from grinder_scheduler.task_continuation import coverage_continuation
 from grinder_scheduler.task_runtime_parameters import TaskRuntimeParameters
+from grinder_scheduler.work_time_statistics import WorkTimeStatistics
 from grinder_scheduler.platform_integration import MqttDeviceReporter, PlatformFileSync
 from grinder_scheduler.sl_linka_adapter import SlLinkAServer
 from grinder_scheduler.metrics_registry import MetricsRegistry
@@ -824,6 +825,10 @@ class SchedulerNode:
         # State loading may rebuild an offline MapService and query the bridge.
         # The bridge must therefore exist before persisted state is restored.
         self._load_local_state()
+        self._work_time_statistics = WorkTimeStatistics(
+            os.path.join(self._persist_state_dir, "work_time_statistics.json"),
+            self._task_registry_state_file,
+        )
         self.planner = PlannerAdapter(
             _resolve_runtime_path(
                 rospy.get_param("~planner_script_path", "third_party/path_planner/mst27/mst27.py"),
@@ -4046,6 +4051,9 @@ class SchedulerNode:
         return nav_path
 
     def shutdown(self):
+        statistics = getattr(self, "_work_time_statistics", None)
+        if statistics is not None:
+            statistics.close()
         if getattr(self, "_metrics_exporter", None) is not None:
             self._metrics_exporter.stop()
         self._save_local_state()
@@ -7975,6 +7983,9 @@ class SchedulerNode:
             return ""
 
     def _finalize_task_result(self, stop_reason=""):
+        statistics = getattr(self, "_work_time_statistics", None)
+        if statistics is not None:
+            statistics.finish()
         runtime_parameters = getattr(self, "_task_runtime_parameters", None)
         if runtime_parameters is not None:
             try:
@@ -8177,6 +8188,9 @@ class SchedulerNode:
         started_at_ms = int(time.time() * 1000.0)
         started_at = started_at_ms // 1000
         execution_id = "{}_{}".format(task_id, started_at_ms)
+        statistics = getattr(self, "_work_time_statistics", None)
+        if statistics is not None:
+            statistics.start(execution_id)
         trajectory_path = self._task_trajectory_relative_path(execution_id)
         record = {
             "execution_id": execution_id,
@@ -10467,6 +10481,7 @@ class SchedulerNode:
                 "start_time": start_time,
                 "end_time": end_time,
                 "total_record_count": len(records),
+                "work_time_statistics": self._work_time_statistics.snapshot(),
                 "records": records,
             },
             ensure_ascii=False,
@@ -10514,6 +10529,16 @@ class SchedulerNode:
         if not execution_id:
             response.result = pb.RESULT_INVALID_PARAM
             response.message = "execution_id is required"
+            return (
+                response.SerializeToString(),
+                pb.MSG_ID_TASK_EXECUTION_DELETE_RESPONSE,
+                pb.COMP_SCHEDULER,
+            )
+
+        statistics = getattr(self, "_work_time_statistics", None)
+        if statistics is not None and not statistics.snapshot()["available"]:
+            response.result = pb.RESULT_FAILED
+            response.message = "work time counters unavailable; history deletion blocked"
             return (
                 response.SerializeToString(),
                 pb.MSG_ID_TASK_EXECUTION_DELETE_RESPONSE,

@@ -65,6 +65,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | RPP扫描诊断、自滤波与离线采样回放 | RPP `include/regulated_pure_pursuit_controller/scan_classifier.hpp` | `/rpp/collision_detail`；`catkin_ws/scripts/capture_field_diagnostics.py`、`replay_collision_scan.py`；自滤波默认关闭，根README 7.4 |
 | 手动差速单轮过零 | scheduler `manual_wheel_transition.py`、`scheduler_node.py` | 单轮制动/实测零速/反向加速，另一轮协调；完整前后换向等待；`test_manual_wheel_transition.py`、`test_manual_steering_guard_activity.py`；根 README 7.3 |
 | 当前任务临时直行速度与磨盘转速 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_runtime_parameters.py` | `scheduler_node.py` 中 `handle_task_runtime_settings`；协议 `0x0538/0x0539`；`test/test_task_runtime_parameters.py` |
+| 独立累计/今日作业时间、历史删除后的保留 | `work_time_statistics.py`、scheduler `_begin_task_execution_record` / `_finalize_task_result` | `work_time_statistics.json` 独立文件；现有历史JSON根对象 `work_time_statistics`；`test/test_work_time_statistics.py`，包README；不随历史删除重建或清零 |
 | 任务启动时下发工艺速度 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` 中 `_execution_run_speed`、`_start_execution` | `test/test_execution_settings.py`；底盘使能前将工艺速度下发到导航控制器 |
 | APP 消息中心的设备/定位告警 | `scheduler_node.py` 中 `build_device_status_report` | `third_party/sl_linka/proto/sl_link.proto` 的 `DeviceStatusReport`；`test/test_chassis_connection_report.py`；APP 展示逻辑需到 APP 仓库定位 |
 | 平板单按钮急停/解除状态 | `scheduler_node.py` 中 `build_device_status_report` / `_reset_emergency_stop` | `DeviceStatusReport.emergency_stop_latched=22` 上报调度运动锁存；协议生成 Python/Android/nanopb SDK 同步 |

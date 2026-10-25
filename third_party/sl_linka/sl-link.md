@@ -668,6 +668,29 @@ UTF-8 解析完整 JSON。完整 JSON 中的 `records[]` 按 `started_at` 从新
 更多 `TaskExecutionHistoryChunk`，不会按记录数量或单张图片大小截断；若
 `start_time > end_time`，返回 `RESULT_INVALID_PARAM`。
 
+完整历史JSON根对象可附带独立的设备计时对象（2026-10-26起）：
+
+```json
+{
+  "work_time_statistics": {
+    "schema_version": 1,
+    "available": true,
+    "total_work_seconds": 3175,
+    "today_work_seconds": 0,
+    "day": "2026-10-26",
+    "incomplete_record_count": 2,
+    "message": ""
+  }
+}
+```
+
+它与同级 `records[]` 分开：计数由板端独立持久化，删除历史不减、不清零，查询过滤条件也不改变它。
+`day` 是板端本地日期，今日时间按本地午夜切分，单位均为秒，口径为任务经过时长（含暂停）。
+首次迁移仅覆盖仍保留的有效已结束记录；`incomplete_record_count>0` 表示历史/掉电尾段缺失，
+秒数应显示为已确认的下界，不能通过删除历史消除该标记。`available=false` 表示计数存储异常，
+客户端显示读取异常而非0。缺少整个对象表示旧板端，新APP不应把历史求和冒充独立累计时间。
+此扩展仍通过原有 `TaskExecutionHistoryChunk.data` 拼接，无protobuf二进制布局变更；旧客户端可忽略它。
+
 ```json
 {
   "execution_id": "task_001_1780000000123",
