@@ -131,6 +131,22 @@ APP 未指定规划起点时，路径从当前车位出发；区域未指定起�
 - 路径预览异常：看 `handle_path_plan_request`、`planner_adapter.py`、预览图生成逻辑。  
 - 底盘无动作：看 `cmd_vel` 转发、底盘驱动话题连接和 `chassis_driver` 日志。
 
+## 5.1 稀疏全局路径与局部导航段
+
+`planner_adapter.py` 对 MST27 固定设置 `output_point_spacing=0`，使用 `path_geometry.py`
+只移除语义相同且同向共线的中间点，保留转折、回退、连接/区域/轮次边界。
+全局 ROS/协议路径是关键点折线；旧协议 `output_point_spacing` 保留兼容，不再补全局点。
+
+`scheduler_node.py` 的方向段以边为单位推进，共享边界点。切片和进度投影按弧长二分定位当前窗口；
+工艺状态使用当前所在边，任务进度按路径米数计算。续跑检查点仍以原路径和弧长恢复。
+`active_segment_point_spacing` 默认 0.3 米、最小 0.01 米；逐边采样不会越过中间角点。
+路径/版本/窗口/间距改变才重建局部 ROS Path，周期发布继续使用同一结果。
+
+离线测试 `test_sparse_segments.py` 覆盖边界插值、方向段完整性、属性切换、转弯合段、
+续跑、缓存及间距校验；`test_sparse_planner.py` 对照 Python/C++ 后端稀疏/密集输出的
+几何、长度、轮次和全线碰撞检查。`test/benchmark_sparse_segments.py --baseline-ref <提交>`
+使用同一输入对比旧版切片/投影；本机微基准不能代替板端或控制器实测。
+
 ## 6. 板端日志与轻量指标
 
 `sl_linka_adapter.py` 默认每秒只记录一帧 RX 帧头样本，每 60 秒输出接收量统计。异常仍按原有 WARN/ERROR 日志记录。诊断时可在启动参数中设置 `sl_linka_rx_diagnostic_logging:=true`，结束后恢复为 `false`；该开关只记录帧头，不解析或记录 Protobuf 载荷。

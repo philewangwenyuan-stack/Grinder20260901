@@ -25,4 +25,5 @@ stream_play_url: ""
 # Examples of non-secret device overrides:
 # local_rtsp_encoder: mpph264enc
 # manual_command_timeout_sec: 0.5
+# active_segment_point_spacing: 0.3  # >= 0.01 m; only active navigation segment
 # Pass sensor topics/IP and map root through the corresponding launch arguments.

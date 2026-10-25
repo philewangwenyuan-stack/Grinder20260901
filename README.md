@@ -1095,6 +1095,34 @@ Huadu栅格（1252×1529、0.05m）在本地WSL离线基准中，基础预处理
 `test_planner_preprocessing.py`、`test_super_lio_mode_manager.py`，
 底盘 `test_motion_safety.py`，RPP `scan_classifier_test`。本轮只交付代码和离线结果，不部署。
 
+### 7.5 全局关键点路径与当前段补点
+
+调度器保存和通过协议发送的全局路径为关键点折线：不做统一等距补点，保留所有转折、
+绕障往返及区域/轮次/连接属性边界。MST27 通用接口的补点功能保留，但调度适配器固定关闭；
+旧协议字段 `output_point_spacing` 继续读写兼容，不再控制全局点密度。
+
+当前导航段先按累计弧长二分切片，再逐边补点；相邻方向段共享角点，长边内部的进度和
+任务百分比按米数计算，不按关键点个数计算。局部采样不会省略中间拐角，也不会把绕障折线连成捷径。
+在 `scheduler.yaml` 或设备 `scheduler.local.yaml` 配置：
+
+```yaml
+active_segment_point_spacing: 0.3  # 米，有限数且 >= 0.01；当前段最大点间距
+```
+
+`scheduler.launch` 按原顺序加载公共配置及设备覆盖，运行时缺省值同为 0.3 米。
+路径、版本、窗口和间距未变时复用当前段补点结果与 ROS Path；保持原 3 Hz 发布及所有停止保护。
+该配置需要重启调度节点生效，不通过旧的全局补点协议字段调整。
+
+离线回归与基准（不连接硬件）：
+
+```bash
+python3 -m unittest discover -s catkin_ws/src/grinder_scheduler/test -p 'test_sparse*.py'
+python3 catkin_ws/src/grinder_scheduler/test/benchmark_sparse_segments.py --baseline-ref <修改前提交>
+```
+
+基准比较相同总点数、30 米窗口的切片/投影中位耗时，另列局部补点耗时；不包含 ROS
+序列化发布、APP 渲染或实机耗时，也不等同于整次规划耗时。
+
 ### 8. 常见故障
 
 | 现象 | 原因 | 处理 |

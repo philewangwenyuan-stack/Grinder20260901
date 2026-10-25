@@ -9,6 +9,7 @@ from pathlib import Path as FsPath
 
 import cv2
 import numpy as np
+from grinder_scheduler.path_geometry import compact_planner_polyline
 import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path as NavPath
@@ -159,7 +160,9 @@ class PlannerAdapter:
             overlap_ratio=max(0.0, min(task_config.overlap_ratio, 0.95)),
             inflation_radius=max(task_config.inflation_radius, 0.0),
             endpoint_margin=max(getattr(task_config, "endpoint_margin", 2.0), 0.0),
-            output_point_spacing=max(getattr(task_config, "output_point_spacing", 0.3), 0.0),
+            # Keep the global route sparse. Sampling belongs to the active
+            # navigation segment, not every lap/region of the whole task.
+            output_point_spacing=0.0,
             aligned_obstacle_inflation=max(
                 getattr(task_config, "aligned_obstacle_inflation", 0.7), 0.0
             ),
@@ -852,6 +855,9 @@ class PlannerAdapter:
                 len(path_points),
             )
 
+        before_compact = len(path_points)
+        path_points = compact_planner_polyline(path_points)
+        rospy.loginfo("Global path keypoints: before=%d after=%d", before_compact, len(path_points))
         t4_compose = time.perf_counter()
         if prepared_map is not None:
             prep_stats = prepared_map.stats()

@@ -52,6 +52,7 @@ except Exception:
     euler_from_quaternion = None
 
 from grinder_scheduler.aurora_bridge import AuroraBridge
+from grinder_scheduler.path_geometry import sample_segment, segment_point_spacing
 from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
@@ -325,6 +326,9 @@ class SchedulerNode:
         self._active_segment_publish_hz = max(
             0.2, float(rospy.get_param("~active_segment_publish_hz", 3.0))
         )
+        self._active_segment_point_spacing = segment_point_spacing(
+            rospy.get_param("~active_segment_point_spacing", 0.3))
+        self._active_segment_plan_cache = None
         self._segment_switch_distance_m = max(
             0.05, float(rospy.get_param("~path_segment_switch_distance_m", 2.8))
         )
@@ -1088,6 +1092,7 @@ class SchedulerNode:
         self._publish_active_segment_plan(reason="timer")
 
     def _reset_active_segment_state(self):
+        self._active_segment_plan_cache = None
         self._path_arc_lengths = []
         self._active_segments = []
         self._active_segment_index = 0
@@ -1143,7 +1148,7 @@ class SchedulerNode:
                     "start": int(cursor),
                     "end": int(end_idx),
                     "goal": int(end_idx),
-                    "path_type": str(points[end_idx].get("path_type", "") or ""),
+                    "path_type": str(points[cursor].get("path_type", "") or ""),
                     "length": self._segment_length(cached_xy, cursor, end_idx),
                     "yaw": self._segment_yaw(cached_xy, cursor, end_idx),
                     "start_s": float(path_s[cursor]) if path_s else 0.0,
@@ -1152,10 +1157,13 @@ class SchedulerNode:
             )
             if end_idx >= n - 1:
                 break
-            cursor = end_idx + 1
+            # Adjacent edge runs share their boundary vertex. Advancing past
+            # it would omit a whole edge in a sparse corner-only path.
+            cursor = end_idx if end_idx > cursor else cursor + 1
         return runs
 
     def _rebuild_active_segments(self):
+        self._active_segment_plan_cache = None
         self._active_segments = []
         self._active_segment_index = 0
         self._active_segment_start_s = 0.0
@@ -1255,23 +1263,23 @@ class SchedulerNode:
         rospy.loginfo("Active path segments rebuilt: count=%d", len(self._active_segments))
 
     def _interpolate_path_point_at_s(self, target_s):
-        points = list(self.current_path.points if self.current_path is not None else [])
+        points = self.current_path.points if self.current_path is not None else []
         path_s = self._ensure_path_arc_lengths()
         if not points:
             return {}
         if len(points) == 1 or not path_s:
             return dict(points[0])
         target_s = max(0.0, min(float(target_s), float(path_s[-1])))
-        if target_s <= float(path_s[0]) + 1e-9:
-            return dict(points[0])
-        idx = max(0, min(len(points) - 2, int(bisect.bisect_left(path_s, target_s) - 1)))
+        if target_s >= float(path_s[-1]):
+            return dict(points[-1])
+        idx = max(0, min(len(points) - 2, bisect.bisect_right(path_s, target_s) - 1))
         while idx + 1 < len(path_s) - 1 and target_s > float(path_s[idx + 1]) + 1e-9:
             idx += 1
         s0 = float(path_s[idx])
         s1 = float(path_s[idx + 1])
         denom = max(1e-9, s1 - s0)
         ratio = max(0.0, min(1.0, (target_s - s0) / denom))
-        base = dict(points[idx + 1] if ratio >= 0.5 else points[idx])
+        base = dict(points[idx + 1] if ratio >= 1.0 - 1e-12 else points[idx])
         x0 = float(points[idx].get("x", 0.0))
         y0 = float(points[idx].get("y", 0.0))
         x1 = float(points[idx + 1].get("x", 0.0))
@@ -1287,11 +1295,11 @@ class SchedulerNode:
                 float(points[idx + 1].get("col", 0.0)) - float(points[idx].get("col", 0.0))
             ) * ratio
         base["point_type"] = "segment_boundary"
-        base["index"] = self._index_at_arc_length(target_s)
+        base["index"] = min(len(points) - 1, bisect.bisect_right(path_s, target_s) - 1)
         return base
 
     def _slice_path_points_by_arc(self, start_s, end_s):
-        points = list(self.current_path.points if self.current_path is not None else [])
+        points = self.current_path.points if self.current_path is not None else []
         path_s = self._ensure_path_arc_lengths()
         if not points:
             return []
@@ -1300,26 +1308,16 @@ class SchedulerNode:
         start_s = max(0.0, min(float(start_s), float(path_s[-1])))
         end_s = max(start_s, min(float(end_s), float(path_s[-1])))
         sliced = [self._interpolate_path_point_at_s(start_s)]
-        for idx, value in enumerate(path_s):
-            value = float(value)
-            if start_s + 1e-5 < value < end_s - 1e-5:
-                sliced.append(dict(points[idx]))
-        if end_s > start_s + 1e-5:
+        first = bisect.bisect_right(path_s, start_s)
+        last = bisect.bisect_left(path_s, end_s)
+        for idx in range(first, last):
+            sliced.append(dict(points[idx]))
+        if end_s > start_s:
             sliced.append(self._interpolate_path_point_at_s(end_s))
 
-        deduped = []
-        for point in sliced:
-            if not point:
-                continue
-            if deduped:
-                prev = deduped[-1]
-                if math.hypot(
-                    float(point.get("x", 0.0)) - float(prev.get("x", 0.0)),
-                    float(point.get("y", 0.0)) - float(prev.get("y", 0.0)),
-                ) < 1e-4:
-                    continue
-            deduped.append(point)
-        return deduped
+        # Arc bounds already exclude the two synthetic boundary vertices.
+        # Keep original coincident events and very short geometric corners.
+        return sliced
 
     def _path_tangent_quaternion_for_points(self, points, index):
         if not points:
@@ -1340,7 +1338,7 @@ class SchedulerNode:
         return self._yaw_to_quaternion(0.0)
 
     def _path_tangent_quaternion_at_s(self, target_s):
-        points = list(self.current_path.points if self.current_path is not None else [])
+        points = self.current_path.points if self.current_path is not None else []
         path_s = self._ensure_path_arc_lengths()
         if len(points) < 2 or not path_s:
             return self._yaw_to_quaternion(0.0)
@@ -1407,10 +1405,21 @@ class SchedulerNode:
             if window is None:
                 return
             start_s, end_s, _segment = window
-            segment_points = self._slice_path_points_by_arc(start_s, end_s)
-            if not segment_points:
-                return
-            msg = self._build_navigation_path_from_segment_points(segment_points)
+            spacing = self._active_segment_point_spacing
+            cache_key = (id(self.current_path), id(self.current_path.points),
+                         self.current_path.path_version, len(self.current_path.points),
+                         self.current_path.nav_path.header.frame_id if self.current_path.nav_path else self._live_map_source_frame,
+                         start_s, end_s, spacing)
+            cached = self._active_segment_plan_cache
+            if cached is not None and cached[0] == cache_key:
+                msg = cached[1]
+            else:
+                segment_points = self._slice_path_points_by_arc(start_s, end_s)
+                if not segment_points:
+                    return
+                segment_points = sample_segment(segment_points, spacing)
+                msg = self._build_navigation_path_from_segment_points(segment_points)
+                self._active_segment_plan_cache = (cache_key, msg)
             self.active_segment_plan_pub.publish(msg)
             rospy.loginfo_throttle(
                 2.0,
@@ -1453,7 +1462,7 @@ class SchedulerNode:
         )
 
     def _project_pose_to_path_progress(self, x, y, min_s=None, max_s=None):
-        points = list(self.current_path.points if self.current_path is not None else [])
+        points = self.current_path.points if self.current_path is not None else []
         path_s = self._ensure_path_arc_lengths()
         if not points:
             return {"progress_s": 0.0, "index": 0, "distance": float("inf")}
@@ -1463,12 +1472,14 @@ class SchedulerNode:
                 "index": 0,
                 "distance": math.hypot(float(points[0].get("x", 0.0)) - x, float(points[0].get("y", 0.0)) - y),
             }
-        min_bound = 0.0 if min_s is None else max(0.0, float(min_s))
-        max_bound = float(path_s[-1]) if max_s is None else min(float(path_s[-1]), float(max_s))
+        min_bound = 0.0 if min_s is None else min(float(path_s[-1]), max(0.0, float(min_s)))
+        max_bound = float(path_s[-1]) if max_s is None else min(float(path_s[-1]), max(0.0, float(max_s)))
         if max_bound < min_bound:
             max_bound = min_bound
         best = {"progress_s": min_bound, "index": 0, "distance": float("inf")}
-        for idx in range(len(points) - 1):
+        first = max(0, bisect.bisect_left(path_s, min_bound - 1e-6) - 1)
+        last = min(len(points) - 1, bisect.bisect_right(path_s, max_bound + 1e-6))
+        for idx in range(first, last):
             s0 = float(path_s[idx])
             s1 = float(path_s[idx + 1])
             if s1 < min_bound - 1e-6 or s0 > max_bound + 1e-6:
@@ -1497,7 +1508,7 @@ class SchedulerNode:
             if distance < float(best["distance"]):
                 best = {
                     "progress_s": float(raw_s),
-                    "index": self._index_at_arc_length(raw_s),
+                    "index": min(len(points) - 1, max(0, bisect.bisect_right(path_s, raw_s) - 1)),
                     "distance": float(distance),
                 }
         if best["distance"] == float("inf"):
@@ -6685,8 +6696,9 @@ class SchedulerNode:
         end_index = start_index
         for idx in range(start_index, n - 1):
             cur_type = str(points[idx].get("path_type", "") or "")
-            nxt_type = str(points[idx + 1].get("path_type", "") or "")
-            if cur_type != seg_type or nxt_type != seg_type:
+            # Edge i->i+1 is owned by point i; a type change at its end must
+            # not discard that boundary edge.
+            if cur_type != seg_type:
                 break
             angle, seg_len = _dir_angle(idx, idx + 1)
             if seg_len < 1e-6:
@@ -6799,30 +6811,8 @@ class SchedulerNode:
         if self.current_path is None or not self.current_path.points:
             return
         points = self.current_path.points
-        n = len(points)
-        cursor = 0
         cached_xy = [(float(p.get("x", 0.0)), float(p.get("y", 0.0))) for p in points]
-        segments = []
-        while cursor < n:
-            end_idx = self._resolve_straight_segment_end_index(cursor)
-            end_idx = max(cursor, min(n - 1, int(end_idx)))
-            # Publish the penultimate point of each straight segment by default.
-            # If the segment has only one point, fall back to the segment end.
-            goal_idx = end_idx - 1 if end_idx > cursor else end_idx
-            goal_idx = max(cursor, min(n - 1, int(goal_idx)))
-            segments.append(
-                {
-                    "start": int(cursor),
-                    "end": int(end_idx),
-                    "goal": int(goal_idx),
-                    "path_type": str(points[goal_idx].get("path_type", "") or ""),
-                    "length": self._segment_length(cached_xy, cursor, end_idx),
-                    "yaw": self._segment_yaw(cached_xy, cursor, end_idx),
-                }
-            )
-            if end_idx >= n - 1:
-                break
-            cursor = end_idx + 1
+        segments = self._build_path_direction_runs()
 
         for pos, segment in enumerate(segments):
             if self._should_insert_corner_mid(segments, pos):
@@ -6834,9 +6824,10 @@ class SchedulerNode:
                     goal_kind="corner_mid",
                     orientation=self._segment_orientation(cached_xy, segment["start"], segment["end"]),
                 )
-            self._append_goal_point(points, cached_xy, segment["goal"], goal_kind="segment")
-        # Do not force append the final point here: goal points are intentionally
-        # chosen as segment-penultimate points per current execution strategy.
+            if self._append_goal_point(points, cached_xy, segment["goal"], goal_kind="segment"):
+                self._goal_points[-1]["path_type"] = segment["path_type"]
+        # Sparse keypoints are actual corners; there is no penultimate sample.
+        # Retain every run endpoint rather than skipping a whole edge.
         corner_mid_count = sum(1 for item in self._goal_points if item.get("goal_kind") == "corner_mid")
         rospy.loginfo("Precomputed goal points: count=%d corner_mid=%d", len(self._goal_points), corner_mid_count)
 
@@ -6931,7 +6922,7 @@ class SchedulerNode:
         if path_index < 0 or path_index >= len(self.current_path.points):
             return
         endpoint = self.current_path.points[path_index]
-        self._apply_disc_state_for_path_point(endpoint)
+        self._apply_disc_state_for_path_point(goal)
         quat = goal.get("orientation") if isinstance(goal, dict) else None
         if not isinstance(quat, dict):
             cached_xy = [(float(p.get("x", 0.0)), float(p.get("y", 0.0))) for p in self.current_path.points]
@@ -7221,15 +7212,15 @@ class SchedulerNode:
                 self.current_path_index = len(self.current_path.points) - 1
                 self._finish_path_execution(stop_reason="completed_progress")
             return
-        nearest_index = 0
-        nearest_distance = float("inf")
-        for index, point in enumerate(self.current_path.points):
-            distance = math.hypot(point["x"] - pose["x"], point["y"] - pose["y"])
-            if distance < nearest_distance:
-                nearest_distance = distance
-                nearest_index = index
-        self.current_path_index = nearest_index
-        if self.state == SchedulerState.RUNNING and nearest_index >= len(self.current_path.points) - 1:
+        projection = self._project_pose_to_path_progress(float(pose["x"]), float(pose["y"]))
+        self.current_path_index = int(projection["index"])
+        self._active_segment_last_progress_s = float(projection["progress_s"])
+        final_point = self.current_path.points[-1]
+        final_dist = math.hypot(float(final_point["x"]) - float(pose["x"]),
+                                float(final_point["y"]) - float(pose["y"]))
+        remaining_s = float(self._ensure_path_arc_lengths()[-1]) - float(projection["progress_s"])
+        if (self.state == SchedulerState.RUNNING and final_dist <= self._exec_goal_reach_dist
+                and remaining_s <= self._exec_goal_reach_dist):
             self._finish_path_execution(stop_reason="completed_progress")
 
     def _publish_status(self):
@@ -7358,7 +7349,14 @@ class SchedulerNode:
     def _task_progress(self):
         if self.current_path is None or not self.current_path.points:
             return 0.0
-        return float(self.current_path_index) / float(max(1, len(self.current_path.points) - 1))
+        path_s = self._ensure_path_arc_lengths()
+        if not path_s or path_s[-1] <= 1e-9:
+            return 0.0
+        index = max(0, min(len(path_s) - 1, int(self.current_path_index)))
+        if index == len(path_s) - 1:
+            return 1.0
+        progress_s = max(float(path_s[index]), float(getattr(self, "_active_segment_last_progress_s", 0.0)))
+        return max(0.0, min(1.0, progress_s / float(path_s[-1])))
 
     def _polygon_area_m2(self, points):
         if not points or len(points) < 3:
@@ -7733,7 +7731,10 @@ class SchedulerNode:
                 ).reshape((-1, 1, 2))
                 cv2.polylines(image, [poly], True, (0, 200, 0), thickness=2, lineType=cv2.LINE_AA)
 
-            path_points = list(self.current_path.points or [])
+            # A sparse edge may be tens of metres long. Clip the travelled
+            # prefix at actual arc progress, not the nearest keypoint index.
+            travelled_s = self._task_progress() * float(self._ensure_path_arc_lengths()[-1])
+            path_points = self._slice_path_points_by_arc(0.0, travelled_s)
             if len(path_points) < 2:
                 return "", b"", 0, 0
             path_pixels = self._map_points_to_preview_pixels(
@@ -7744,9 +7745,9 @@ class SchedulerNode:
                 preview_w,
                 preview_h,
             )
-            visited_end = int(max(1, min(len(path_points) - 1, int(self.current_path_index or 0))))
+            visited_end = len(path_points) - 1
             for i in range(1, visited_end + 1):
-                p1 = path_points[i]
+                p1 = path_points[i - 1]
                 seg_type = str(p1.get("path_type", "") or "")
                 if seg_type == "connection":
                     # 区域间两点连接路径：固定青色

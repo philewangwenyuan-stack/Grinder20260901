@@ -74,7 +74,7 @@ class TaskConfigModel:
     overlap_ratio: float = 0.1
     inflation_radius: float = 0.6
     endpoint_margin: float = 2.0
-    output_point_spacing: float = 0.3
+    output_point_spacing: float = 0.3  # Legacy protocol field; global routes remain sparse.
     aligned_obstacle_inflation: float = 0.7
     aligned_obstacle_max_extent: float = 3.0
     obstacle_corner_angle_deg: float = 45.0

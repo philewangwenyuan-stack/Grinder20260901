@@ -23,6 +23,11 @@ planner_script_path: third_party/path_planner/mst27/mst27.py
 
 ## 扫掠方向
 
+Grinder 调度适配器以 `RobotConfig.output_point_spacing=0` 请求全局关键点折线，
+当前导航段再按 `scheduler.yaml: active_segment_point_spacing` 补点（默认 0.3 米）。
+本包独立 API/演示的 `output_point_spacing` 行为保留；调度协议中的同名旧字段只保留兼容。
+关键点压缩不删除实际拐角、往返绕障或作业属性边界，完整路径仍按边进行碰撞复检。
+
 `StageConfig.direction` 支持 `x` / `-x` / `y` / `-y`，表示首条作业线的行进方向。
 调度器会先把 `x/y` 换算成旋转后的有效 `direction_angle`，再由 MST27 应用正负号；
 例如地图规划角为 `30°` 时，`x/-x/y/-y` 分别对应

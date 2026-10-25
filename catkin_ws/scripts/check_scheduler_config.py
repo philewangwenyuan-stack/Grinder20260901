@@ -2,6 +2,7 @@
 """Validate public and optional device-local scheduler YAML before launch."""
 
 import argparse
+import math
 from pathlib import Path
 import sys
 
@@ -38,6 +39,14 @@ def validate_configs(default_path, local_path=""):
     for key in ("file_upload_on_map_save", "mqtt_enabled", "stream_enabled"):
         if key in config and not isinstance(config[key], bool):
             raise ValueError("scheduler parameter {} must be a YAML boolean".format(key))
+    if "active_segment_point_spacing" in config:
+        try:
+            value = config["active_segment_point_spacing"]
+            spacing = float(value)
+            if isinstance(value, bool) or not math.isfinite(spacing) or spacing < 0.01:
+                raise ValueError()
+        except (TypeError, ValueError):
+            raise ValueError("active_segment_point_spacing must be finite and >= 0.01 m") from None
     return config
 
 

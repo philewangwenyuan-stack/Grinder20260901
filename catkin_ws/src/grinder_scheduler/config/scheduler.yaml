@@ -205,7 +205,8 @@ overlap_ratio: 0
 inflation_radius: 0.6
 # 扫掠线起止点距作业边界的留边（米）
 endpoint_margin: 2.0
-# 最终输出路径的补点间距（米），0 表示关闭补点
+# 旧协议兼容字段；全局路径固定输出关键点，不再使用此值统一补点。
+# 导航局部补点改用 active_segment_point_spacing。
 output_point_spacing: 0.3
 # 角度对齐后的柱子外接矩形膨胀距离（米）
 aligned_obstacle_inflation: 0.7
@@ -284,6 +285,9 @@ rpp_config_yaml_path: catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local
 # planning/start/resume changes its lifecycle and remains available via latch.
 active_segment_plan_topic: /grinder/navigation/active_segment_plan
 active_segment_publish_hz: 3.0
+# 当前导航段的最大点间距（米），有限数且 >= 0.01；逐边补点保留所有角点。
+# 仅路径/窗口变化时重建，定时发布复用缓存。全局保存和协议路径不补点。
+active_segment_point_spacing: 0.3
 active_segment_goal_refresh_s: 8.0
 active_segment_progress_epsilon_m: 0.03
 path_segment_switch_distance_m: 2.8

@@ -11,6 +11,7 @@ import types
 import unittest
 import tempfile
 from dataclasses import asdict
+from functools import wraps
 from unittest import mock
 
 SOURCE = pathlib.Path(__file__).resolve().parents[1] / 'src/grinder_scheduler'
@@ -32,13 +33,14 @@ def scheduler_class():
              '_capture_task_continuation', '_prepare_task_continuation_start', '_stop_execution',
              '_init_segment_execution_cursor', '_start_execution'}
     cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in names]
-    namespace = dict(json=json, math=math, time=time, asdict=asdict, motion_action=motion_action,
+    namespace = dict(json=json, math=math, time=time, asdict=asdict, motion_action=motion_action, wraps=wraps,
                      coverage_continuation=coverage_continuation, SchedulerState=SchedulerState,
                      Bool=lambda **kw: types.SimpleNamespace(**kw),
                      UInt16=lambda **kw: types.SimpleNamespace(**kw),
                      Int16=lambda **kw: types.SimpleNamespace(**kw),
                      rospy=types.SimpleNamespace(logwarn=lambda *a: None, loginfo=lambda *a: None))
-    exec(compile(ast.Module(body=[cls], type_ignores=[]), str(SOURCE / 'scheduler_node.py'), 'exec'), namespace)
+    arming = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'localization_arming')
+    exec(compile(ast.Module(body=[arming, cls], type_ignores=[]), str(SOURCE / 'scheduler_node.py'), 'exec'), namespace)
     return namespace['SchedulerNode']
 
 
@@ -78,6 +80,9 @@ class SchedulerContinuationTest(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.node._motion = MotionInterlock(str(pathlib.Path(directory.name) / 'motion.json'))
         n = self.node
+        n._localization_arm_lock = threading.Lock()
+        n._localization_arm_count = 0
+        n._localization_arming_cancelled = False
         n.task_config = TaskConfigModel(task_id='task', map_id='map',
             work_regions=[dict(region_id='A', global_direction='x')], selected_work_region_ids=['A'])
         n._current_map_id = lambda: 'map'
@@ -110,7 +115,9 @@ class SchedulerContinuationTest(unittest.TestCase):
         n._chassis_settings = {'run_speed': .1}
         n._collision_imminent_lock = threading.Lock()
         n._collision_imminent_active = False
-        n._super_lio_status_proxy = lambda: types.SimpleNamespace(state='READY', localization_ready=True)
+        n._super_lio_status_proxy = lambda: types.SimpleNamespace(state='READY', localization_ready=True,
+            active_map_id='map', active_map_revision='revision-a')
+        n._localization_motion_status = lambda:(True,'ready',dict(map_id='map',map_revision='revision-a'))
         n._tf_buffer = None
         n._sorted_work_region_ids = lambda: ['A']
         for name in ('_ensure_super_lio_proxies', '_sync_task_regions_from_overlay',

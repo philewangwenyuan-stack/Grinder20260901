@@ -16,6 +16,18 @@ spec.loader.exec_module(module)
 
 
 class SchedulerConfigurationTest(unittest.TestCase):
+    def test_segment_sampling_defaults_and_invalid_values(self):
+        public = ROOT / "catkin_ws/src/grinder_scheduler/config/scheduler.yaml"
+        self.assertEqual(.3, module.validate_configs(public)["active_segment_point_spacing"])
+        with tempfile.TemporaryDirectory() as directory:
+            local = Path(directory) / "device.yaml"
+            for value in ("0", "-1", ".001", ".nan", ".inf", "true", "null"):
+                local.write_text("active_segment_point_spacing: " + value, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    module.validate_configs(public, local)
+            local.write_text("active_segment_point_spacing: 0.2", encoding="utf-8")
+            self.assertEqual(.2, module.validate_configs(public, local)["active_segment_point_spacing"])
+
     def test_public_defaults_disable_external_services_and_clear_credentials(self):
         config = module.validate_configs(ROOT / "catkin_ws/src/grinder_scheduler/config/scheduler.yaml")
         for key in ("file_upload_on_map_save", "mqtt_enabled", "stream_enabled"):
