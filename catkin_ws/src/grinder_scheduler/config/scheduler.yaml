@@ -354,3 +354,7 @@ stream_fps: 10
 stream_width: 640
 stream_bitrate_kbps: 800
 stream_keyframe_interval: 20
+
+# Cross-request immutable planning bases; derived grids remain request-local.
+planning_cache_entries: 2
+planning_cache_max_bytes: 134217728

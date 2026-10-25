@@ -3,6 +3,7 @@ import socketserver
 import threading
 import time
 from collections import deque
+from grinder_scheduler.priority_wire import PriorityWire
 from concurrent.futures import ThreadPoolExecutor
 
 from grinder_scheduler.sl_link_loader import ensure_sl_linka_sdk_on_path
@@ -33,6 +34,10 @@ class _BoundedLatestWorker:
             self._jobs.append((callback, args))
             self._condition.notify()
         return dropped
+
+    def clear(self):
+        with self._condition:
+            self._jobs.clear()
 
     def shutdown(self, wait=False):
         with self._condition:
@@ -142,6 +147,10 @@ class SlLinkAServer:
         self._rx_frames = 0
         self._rx_payload_bytes = 0
         self._rx_frame_counter = metrics_registry.counter("sl_rx_frames") if metrics_registry else None
+        self._control_expired = metrics_registry.counter("control_expired_drops") if metrics_registry else None
+        self._control_overwritten = metrics_registry.counter("control_queue_overwrites") if metrics_registry else None
+        self._control_apply = metrics_registry.histogram("control_apply_ms") if metrics_registry else None
+        self._control_ack_wait = metrics_registry.histogram("control_ack_wait_ms") if metrics_registry else None
         self._control_queue_wait = metrics_registry.histogram("control_queue_wait_ms") if metrics_registry else None
         self._ordered_queue_wait = metrics_registry.histogram("ordered_queue_wait_ms") if metrics_registry else None
         self._map_chunks_sent = metrics_registry.counter("map_chunks_sent") if metrics_registry else None
@@ -331,7 +340,11 @@ class SlLinkAServer:
             def setup(self):
                 self.parser = outer.SlFrameParser()
                 self.running = True
-                self.send_lock = threading.Lock()
+                self.send_lock = PriorityWire()
+                self.session = object()
+                self.request.settimeout(0.5)
+                outer._handler.begin_manual_session(self.session)
+                self.stop_executor = _BoundedLatestWorker(1, "sl_linka_stop")
                 try:
                     self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
@@ -413,13 +426,19 @@ class SlLinkAServer:
                                     and control_request.HasField("manual_drive")
                                     and not control_request.HasField("emergency_stop")
                                 ):
-                                    dropped = self.manual_control_executor.submit(
+                                    ticket, stop = outer._handler.capture_manual_ticket(
+                                        self.session, control_request, received_at)
+                                    if stop:
+                                        self.manual_control_executor.clear()
+                                    executor = self.stop_executor if stop else self.manual_control_executor
+                                    dropped = executor.submit(
                                         self._dispatch_control_immediately,
                                         frame,
                                         control_request,
                                         True,
                                         received_at,
                                         outer._handler.capture_control_generation(),
+                                        ticket,
                                     )
                                     self._log_dropped_job("manual control", dropped)
                                 else:
@@ -463,6 +482,8 @@ class SlLinkAServer:
 
             def finish(self):
                 self.running = False
+                outer._handler.cancel_manual_session(self.session)
+                self.stop_executor.shutdown(wait=False)
                 self.dispatch_executor.shutdown(wait=False)
                 self.map_delete_executor.shutdown(wait=False)
                 self.map_dispatch_executor.shutdown(wait=False)
@@ -502,6 +523,8 @@ class SlLinkAServer:
             def _log_dropped_job(self, queue_name, dropped):
                 if dropped is None:
                     return
+                if queue_name == "manual control" and outer._control_overwritten is not None:
+                    outer._control_overwritten.inc()
                 _, args = dropped
                 frame = args[0] if args else None
                 if rospy is not None:
@@ -561,17 +584,25 @@ class SlLinkAServer:
                 latest_response=False,
                 received_at=None,
                 control_generation=None,
+                manual_ticket=None,
             ):
                 started = time.monotonic()
                 if received_at is not None and outer._control_queue_wait is not None:
                     # 控制等待时间从收到完整帧算到开始执行业务，便于发现排队抖动。
                     outer._control_queue_wait.observe((started - received_at) * 1000.0)
+                if manual_ticket is not None and time.monotonic() > manual_ticket[2]:
+                    if outer._control_expired is not None:
+                        outer._control_expired.inc()
+                    return
                 payload, msg_id, comp_id = outer._handler.handle_control_command(
                     frame.payload,
                     parsed_request=control_request,
                     control_generation=control_generation,
+                    manual_ticket=manual_ticket,
                 )
                 applied_ms = (time.monotonic() - started) * 1000.0
+                if outer._control_apply is not None:
+                    outer._control_apply.observe(applied_ms)
                 if rospy is not None:
                     rospy.loginfo_throttle(
                         5.0,
@@ -613,7 +644,7 @@ class SlLinkAServer:
 
             def _send_control_response(self, payload, msg_id, comp_id, ack_seq, release_slot):
                 try:
-                    self._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=ack_seq)
+                    self._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=ack_seq, control=True)
                 except Exception as exc:
                     if rospy is not None and self.running:
                         rospy.logwarn("SL-LinkA control response send failed: %s", exc)
@@ -629,12 +660,11 @@ class SlLinkAServer:
                 send_ms = 0.0
                 try:
                     index = 0
-                    # Coalesce adjacent protocol frames into about 128 KiB TCP
-                    # writes. Frames remain individually parseable by SL-LinkA.
+                    # Yield at every complete frame so waiting control ACKs win.
                     while self.running and index < len(outputs):
                         batch = bytearray()
-                        with self.send_lock:
-                            while index < len(outputs) and (not batch or len(batch) < 128 * 1024):
+                        with self.send_lock.hold():
+                            while index < len(outputs) and not batch:
                                 payload, msg_id, comp_id = outputs[index]
                                 frame = outer.SlFrame(
                                     version=outer.SL_PROTOCOL_VERSION,
@@ -654,7 +684,7 @@ class SlLinkAServer:
                                 wire_bytes += len(packed)
                                 index += 1
                             send_started = time.monotonic()
-                            self.request.sendall(batch)
+                            self._send_wire(batch)
                             send_ms += (time.monotonic() - send_started) * 1000.0
                     if rospy is not None:
                         rospy.loginfo(
@@ -694,11 +724,28 @@ class SlLinkAServer:
                     self.bulk_response_slots.release()
                     raise
 
-            def _send_payload(self, payload, msg_id, comp_id=None, ack_seq=0):
+            def _send_wire(self, payload):
+                if not self.running:
+                    raise ConnectionError("SL-LinkA session closed")
+                try:
+                    self.request.sendall(payload)
+                except OSError:
+                    self.running = False
+                    outer._handler.cancel_manual_session(self.session)
+                    self.manual_control_executor.clear()
+                    try:
+                        self.request.shutdown(socket.SHUT_RDWR)
+                    except OSError:
+                        pass
+                    raise
+
+            def _send_payload(self, payload, msg_id, comp_id=None, ack_seq=0, control=False):
                 if payload is None or msg_id is None:
                     return
                 total_started = time.monotonic()
-                with self.send_lock:
+                with self.send_lock.hold(control):
+                    if control and outer._control_ack_wait is not None:
+                        outer._control_ack_wait.observe((time.monotonic() - total_started) * 1000.0)
                     pack_started = time.monotonic()
                     frame = outer.SlFrame(
                         version=outer.SL_PROTOCOL_VERSION,
@@ -714,7 +761,7 @@ class SlLinkAServer:
                     packed = frame.pack()
                     pack_elapsed_ms = (time.monotonic() - pack_started) * 1000.0
                     send_started = time.monotonic()
-                    self.request.sendall(packed)
+                    self._send_wire(packed)
                     send_elapsed_ms = (time.monotonic() - send_started) * 1000.0
                 total_elapsed_ms = (time.monotonic() - total_started) * 1000.0
                 if int(msg_id) == int(outer.pb.MSG_ID_MAP_CHUNK):

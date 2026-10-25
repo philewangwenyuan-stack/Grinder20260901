@@ -70,11 +70,14 @@ class MetricsTest(unittest.TestCase):
             MSG_ID_CONTROL_COMMAND=3,
             MSG_ID_TASK_CONFIG=4,
             MSG_ID_TASK_COMMAND=5,
+            MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST=99,
             MSG_ID_PATH_POINT_PLAN_REQUEST=6,
             MSG_ID_CAMERA_FRAME_REQUEST=7,
             MSG_ID_MAP_REQUEST=8,
+            MSG_ID_MAP_REQUEST_RESULT=100,
+            COMP_MEDIA=1,
         )
-        server._handler = SimpleNamespace(build_map_chunks=lambda _payload: [(b"a", 9, 1), (b"b", 9, 1)])
+        server._handler = SimpleNamespace(build_map_chunks=lambda _payload: (b"ready", [(b"a", 9, 1), (b"b", 9, 1)]))
         server._map_chunks_sent = registry.counter("map_chunks_sent")
         server._map_send_total_ms = registry.histogram("map_send_total_ms")
         server._map_socket_send_total_ms = registry.histogram("map_socket_send_total_ms")

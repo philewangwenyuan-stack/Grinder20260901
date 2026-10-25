@@ -231,6 +231,9 @@ class SchedulerNode:
         )
         self._collision_imminent_lock = threading.Lock()
         self._collision_imminent_active = False
+        self._rpp_collision_detail = ""
+        self._rpp_collision_detail_at = 0.0
+        rospy.Subscriber("/rpp/collision_detail", String, self._rpp_detail_callback, queue_size=1)
         self._collision_pause_latched = False
         self._indicator_pause_reason = ""
         self._localization_status_lock = threading.Lock()
@@ -715,6 +718,8 @@ class SchedulerNode:
         self._manual_last_left_cmd = 0
         self._manual_last_right_cmd = 0
         self._manual_drive_lock = threading.Lock()
+        from grinder_scheduler.manual_delivery import ManualDelivery
+        self._manual_delivery = ManualDelivery()
         self._manual_command_timeout_sec = max(
             0.1,
             float(rospy.get_param("~manual_command_timeout_sec", 0.5)),
@@ -2225,7 +2230,10 @@ class SchedulerNode:
                         namespace,
                         timeout=self._navigation_speed_reconfigure_timeout,
                     )
-                result = self._rpp_reconfigure_client.update_configuration(values)
+                client = self._rpp_reconfigure_client
+                current = client.get_configuration(timeout=self._navigation_speed_reconfigure_timeout) if hasattr(client, "get_configuration") else {}
+                delta = {key: value for key, value in values.items() if current.get(key) != value}
+                result = client.update_configuration(delta) if delta else current
             return {
                 name: result.get(name, value)
                 for name, value in values.items()
@@ -4104,6 +4112,10 @@ class SchedulerNode:
             "right_mps": float(right_mps),
             "vehicle_mps": (float(left_mps) + float(right_mps)) * 0.5,
         }
+
+    def _rpp_detail_callback(self, msg):
+        self._rpp_collision_detail = str(msg.data)[:1024]
+        self._rpp_collision_detail_at = time.monotonic()
 
     def _collision_imminent_callback(self, msg):
         active = bool(msg.data)
@@ -7600,6 +7612,10 @@ class SchedulerNode:
         map_info = self.map_service.get_map_info()
         report.map_version = map_info["map_version"] if map_info else 0
         report.message = self.last_error or self.state.value
+        if self._collision_imminent_snapshot():
+            detail = getattr(self, "_rpp_collision_detail", "")
+            age = time.monotonic() - getattr(self, "_rpp_collision_detail_at", 0.0)
+            report.message += "; " + (detail if detail and age <= 2.0 else "rpp: reason=diagnostic_stale")
         pose = self._pose_for_sl_link_report()
         report.position.x = pose["x"]
         report.position.y = pose["y"]
@@ -8552,7 +8568,30 @@ class SchedulerNode:
         with self._motion.lock:
             return self._motion.generation
 
-    def handle_control_command(self, payload, parsed_request=None, control_generation=None):
+    def begin_manual_session(self, session):
+        self.cancel_manual_session()
+        self._manual_delivery.begin(session)
+
+    def capture_manual_ticket(self, session, request, received_at):
+        from grinder_scheduler.manual_delivery import is_manual_stop
+        stop = is_manual_stop(request.manual_drive, self.sl_link_server.pb)
+        return self._manual_delivery.capture(session, received_at,
+            self._manual_command_timeout_sec, stop), stop
+
+    def cancel_manual_session(self, session=None):
+        delivery = getattr(self, "_manual_delivery", None)
+        if delivery is None or not delivery.invalidate(session):
+            return
+        with self._motion.lock:
+            if self._manual_command_active:
+                wheel = WheelSpeedCommand()
+                wheel.left_wheel_speed = wheel.right_wheel_speed = 0
+                self.wheel_cmd_pub.publish(wheel)
+                self._manual_command_active = False
+                self._manual_last_left_cmd = self._manual_last_right_cmd = 0
+                self._set_manual_travel_disc_active(False, reason="manual_session_end")
+
+    def handle_control_command(self, payload, parsed_request=None, control_generation=None, manual_ticket=None):
         pb = self.sl_link_server.pb
         request = parsed_request
         if request is None:
@@ -8562,8 +8601,14 @@ class SchedulerNode:
             handled, error_message = self._apply_emergency_stop(bool(request.emergency_stop.enabled))
         else:
             try:
-                with self._motion.action(generation=control_generation):
-                    handled, error_message = self._apply_control_outputs(request)
+                previous = getattr(self._motion.local, "delivery_validator", None)
+                try:
+                    if manual_ticket is not None:
+                        self._motion.local.delivery_validator = lambda: self._manual_delivery.valid(manual_ticket)
+                    with self._motion.action(generation=control_generation):
+                        handled, error_message = self._apply_control_outputs(request)
+                finally:
+                    self._motion.local.delivery_validator = previous
             except MotionCancelled:
                 handled, error_message = False, "Control cancelled by stop/emergency or execution replacement"
         response = pb.ControlCommandResponse()
@@ -8797,15 +8842,8 @@ class SchedulerNode:
         max_speed_mps=0.0,
         max_turn_speed_ratio=0.0,
     ):
-        with self._manual_drive_lock:
-            self._handle_manual_drive_locked(
-                motion,
-                speed_ratio,
-                remote_x,
-                remote_y,
-                max_speed_mps,
-                max_turn_speed_ratio,
-            )
+        self._handle_manual_drive_locked(
+            motion, speed_ratio, remote_x, remote_y, max_speed_mps, max_turn_speed_ratio)
 
     def _handle_manual_drive_locked(
         self,
@@ -8891,8 +8929,10 @@ class SchedulerNode:
             transition = ManualWheelTransition(self._manual_reverse_guard_sec,
                 getattr(self, "_manual_command_timeout_sec", 0.5))
             self._manual_drive_transition = transition
-        wheel.left_wheel_speed, wheel.right_wheel_speed = transition.apply(
-            next_left, next_right, time.monotonic(), float(rospy.Time.now().to_sec()), base_max)
+        with self._manual_drive_lock:
+            self._motion.check()
+            wheel.left_wheel_speed, wheel.right_wheel_speed = transition.apply(
+                next_left, next_right, time.monotonic(), float(rospy.Time.now().to_sec()), base_max)
         # If manual drive sends non-zero motion while chassis is disabled,
         # try to re-enable chassis automatically to avoid "no RS485 output" confusion.
         moving = abs(int(wheel.left_wheel_speed)) > 0 or abs(int(wheel.right_wheel_speed)) > 0
@@ -8901,21 +8941,23 @@ class SchedulerNode:
             if now - self._last_manual_enable_try > 1.0:
                 self._last_manual_enable_try = now
                 self._set_chassis_enabled(True)
-        non_task_manual = self.state != SchedulerState.RUNNING or not self._exec_active
-        if non_task_manual and moving:
-            # Start the disc before wheel motion on lift-less machines.
-            self._set_manual_travel_disc_active(True, reason="manual_drive_start")
-        elif not non_task_manual:
-            # A stale manual-session flag must not disable a running task's disc.
-            self._manual_travel_disc_active = False
-        self.wheel_cmd_pub.publish(wheel)
-        if non_task_manual and not moving:
-            self._set_manual_travel_disc_active(False, reason="manual_drive_stop")
-        with self._motion.commit():
-            self._manual_last_left_cmd = int(wheel.left_wheel_speed)
-            self._manual_last_right_cmd = int(wheel.right_wheel_speed)
-            self._manual_last_command_monotonic = time.monotonic()
-            self._manual_command_active = bool(moving)
+        with self._manual_drive_lock:
+            self._motion.check()
+            non_task_manual = self.state != SchedulerState.RUNNING or not self._exec_active
+            if non_task_manual and moving:
+                # Start the disc before wheel motion on lift-less machines.
+                self._set_manual_travel_disc_active(True, reason="manual_drive_start")
+            elif not non_task_manual:
+                # A stale manual-session flag must not disable a running task's disc.
+                self._manual_travel_disc_active = False
+            self.wheel_cmd_pub.publish(wheel)
+            if non_task_manual and not moving:
+                self._set_manual_travel_disc_active(False, reason="manual_drive_stop")
+            with self._motion.commit():
+                self._manual_last_left_cmd = int(wheel.left_wheel_speed)
+                self._manual_last_right_cmd = int(wheel.right_wheel_speed)
+                self._manual_last_command_monotonic = time.monotonic()
+                self._manual_command_active = bool(moving)
 
     def _manual_drive_watchdog_tick(self, _event):
         with self._manual_drive_lock:
@@ -8925,6 +8967,9 @@ class SchedulerNode:
             age_sec = now - float(self._manual_last_command_monotonic)
             if age_sec <= self._manual_command_timeout_sec:
                 return
+            delivery = getattr(self, "_manual_delivery", None)
+            if delivery is not None:
+                delivery.invalidate()
             wheel = WheelSpeedCommand()
             wheel.left_wheel_speed = 0
             wheel.right_wheel_speed = 0

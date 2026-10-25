@@ -1,3 +1,5 @@
+#include <std_msgs/String.h>
+#include "regulated_pure_pursuit_controller/scan_classifier.hpp"
 // Copyright (c) 2022 Samsung Research America
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -209,6 +211,10 @@ protected:
     double nearest_side_clearance{std::numeric_limits<double>::infinity()};
     std::size_t front_hits{0};
     std::size_t side_hits{0};
+    std::size_t body_hits{0}, self_hits{0};
+    double nearest_x{0}, nearest_y{0};
+    double scan_age{0};
+    std::string reason{"clear"};
     bool footprint_mode{false};
     bool side_check_active{false};
   };
@@ -300,6 +306,10 @@ protected:
   // Latched safety status for external task supervisors. True means this
   // controller rejected the current command because a collision is imminent.
   ros::Publisher collision_imminent_pub_;
+  ros::Publisher collision_detail_pub_;
+  std::vector<ScanXY> self_filter_polygon_;
+  bool self_filter_invalid_{false};
+  void publishCollisionDetail(const FixedObstacleStats& stats, bool blocked) const;
   ros::Subscriber scan_sub_;
   ros::Timer collision_clear_timer_;
   sensor_msgs::LaserScan::ConstPtr latest_scan_;

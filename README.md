@@ -1048,6 +1048,53 @@ sudo grinder-service restart
 ESP32协议未变化，无需重烧。离线回归见 `test_manual_control_delivery.py`、`test_motion_safety.py`；
 实车验收需记录松手零速发出、板端接收／应用、485写帧及实际轮速归零，不能以灯效作为停车反馈。
 
+### 7.4 现场控制、诊断与规划缓存（2026-10-25）
+
+遥控请求在板端使用接收单调时钟及连接会话绑定，非零指令有效期沿用
+`manual_command_timeout_sec`（默认0.5秒）。执行与输出提交均检查有效性；
+松手、看门狗停车和断连作废旧移动。控制确认优先于地图/路径发送，分片按完整协议帧让出发送机会。
+TCP发送失败关闭本连接并作废该连接旧遥控。停止帧仍走现有安全链路。
+
+诊断指标新增 `control_expired_drops`、`control_queue_overwrites`、`control_apply_ms`、
+`control_ack_wait_ms`；底盘 `/diagnostics` 的 `motion_submit_delay_ms` 和
+`motion_write_ack_ms` 分别表示底盘回调到串口提交、串口写入至ACK耗时，
+不是平板到电机的端到端延迟。
+
+RPP `/rpp/collision_detail` 上报阻挡方向、距离、车体内部/自滤波点数、扫描年龄及TF异常；
+调度在碰撞锁存期间通过已有 TaskStatusReport.message 转发详情，不增加协议字段。
+膨胀避障单独开启时也运行清障定时器，仍须新鲜、有效且连续满足清除条件的扫描。
+`collision_self_filter_enabled` 默认false；`collision_self_filter_polygon` 是
+base_link坐标中的扁平 `[x,y,...]` 列表，必须按真实可滤除车体区域标定，不能直接复制导航footprint。
+边界点不滤除。启用前需核对真实/scan、TF和扫描高度；本次不放宽安全距离。
+
+定位通过已有重定位响应 `detail` 及 `/super_lio/localization_status` 诊断提供
+`failure_reasons`、采样时间、配准各项值和门限。显示的里程计置信度与导航就绪分别解释；
+未改变配准门限及20坏帧/5好帧配置。
+
+规划跨请求缓存最多 `planning_cache_entries: 2`、
+`planning_cache_max_bytes: 134217728`（128 MiB），设entries为0可禁用。
+键覆盖有效栅格摘要、地图几何/版本和机器人配置；基础数组只读，每请求派生缓存独立。
+地图身份改变清空，障碍/参数变化重新构建；不缓存当前位姿连接路径。
+
+只读采样（Linux/ROS已启动时）：
+
+```bash
+python3 catkin_ws/scripts/capture_field_diagnostics.py /tmp/field-new --seconds 60 --max-mib 64
+```
+
+输出目录必须不存在。达到时长或文件大小后发SIGINT停止录制；大小上限允许录包缓冲区和
+0.1秒检查周期的少量超出，不是文件系统硬配额。脚本不启动建图、定位或运动。
+离线扫描回放格式及入口见 `catkin_ws/scripts/replay_collision_scan.py`；
+CMake启用测试后生成 `scan_replay`，与生产扫描点分类共用实现。
+
+Huadu栅格（1252×1529、0.05m）在本地WSL离线基准中，基础预处理冷启动约193ms，
+命中约3.65–4.54ms（保留约3.65MiB基础数组）；障碍和地图变化分别约177/183ms并重新构建。
+这是基础预处理耗时，不是整次规划、平板等待或实机响应时间。算法、导航刷新及通信仍另计。
+
+离线回归：调度 `test_field_safety.py`、`test_manual_control_delivery.py`、
+`test_planner_preprocessing.py`、`test_super_lio_mode_manager.py`，
+底盘 `test_motion_safety.py`，RPP `scan_classifier_test`。本轮只交付代码和离线结果，不部署。
+
 ### 8. 常见故障
 
 | 现象 | 原因 | 处理 |

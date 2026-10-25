@@ -349,6 +349,8 @@ class SuperLioModeManager:
                 "bad_frames": str(self._localization_bad_frames),
                 "quality_valid": str(bool(self._registration_quality_valid)).lower(),
             }
+            values.update({key: str(value) for key, value in
+                           getattr(self, "_registration_explanation", {}).items()})
             status.values = [KeyValue(key=key, value=value) for key, value in values.items()]
             report = DiagnosticArray()
             report.header.stamp = rospy.Time.now()
@@ -579,6 +581,10 @@ class SuperLioModeManager:
             and float(quality.get("inlier_ratio", 0.0)) >= self._inlier_ratio_min
             and int(quality.get("correspondences", 0)) >= self._min_correspondences
         )
+        from grinder_scheduler.registration_health import explain
+        explanation = explain(quality, covariance, data_valid, self._max_xy_variance,
+            self._max_yaw_variance, self._fitness_max, self._inlier_ratio_min, self._min_correspondences)
+        explanation["sample_age_sec"] = time.monotonic() - float(quality.get("arrival", 0.0))
         x = float(position.x)
         y = float(position.y)
         yaw = self._yaw_from_quaternion(pose.orientation)
@@ -590,6 +596,7 @@ class SuperLioModeManager:
             ):
                 return
             self._last_quality_arrival = time.monotonic()
+            self._registration_explanation = explanation
             self._registration_quality_valid = bool(quality_valid)
             self._registration_fitness = float(quality.get("fitness", 0.0) or 0.0)
             self._registration_inlier_ratio = float(quality.get("inlier_ratio", 0.0) or 0.0)
@@ -620,6 +627,9 @@ class SuperLioModeManager:
                     self._last_good_pose_stamp = stamp
                     return
             if not quality_valid:
+                detail = "registration_quality_failed: " + ", ".join(
+                    "{}={}".format(k, v) for k, v in explanation.items())
+                rospy.logwarn_throttle(2.0, "%s", detail)
                 self._localization_good_frames = 0
                 self._localization_bad_frames += 1
                 if self._localization_ready and self._localization_bad_frames >= self._required_bad_frames:
@@ -629,7 +639,8 @@ class SuperLioModeManager:
                     self._message = self._localization_reason
                 elif not self._localization_ready:
                     self._localization_reason = "registration_quality_failed"
-                    self._message = "registration quality below readiness thresholds"
+                    self._message = detail
+                self._message = detail
                 return
             self._localization_bad_frames = 0
             self._last_good_pose = (x, y, yaw)
@@ -1003,6 +1014,7 @@ class SuperLioModeManager:
         }
 
     def _clear_localization_quality(self):
+        self._registration_explanation = {}
         self._initial_pose_received = False
         self._localization_ready = False
         self._localization_good_frames = 0

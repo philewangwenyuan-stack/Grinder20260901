@@ -338,6 +338,7 @@ class ChassisDriverNode:
 
     @motion_action()
     def _handle_wheel_speed_cmd(self, msg):
+        self._motion.local.callback_arrival = time.monotonic()
         if self.cmd_vel_enabled:
             now_mono = time.monotonic()
             recent_cmd_vel = (now_mono - self._last_cmd_vel_recv_monotonic) <= max(0.0, self.cmd_source_hold_sec)
@@ -454,6 +455,7 @@ class ChassisDriverNode:
 
     @motion_action()
     def _handle_cmd_vel(self, msg):
+        self._motion.local.callback_arrival = time.monotonic()
         # if not self.task_enable:
         #     return
         if not self.task_enable:
@@ -701,6 +703,9 @@ class ChassisDriverNode:
                                                REGISTER_DISC_SPEED, REGISTER_DISC_ENABLE) and bool(block[0]))
                     if safe or moving:
                         self._safe_write_confirmed = False
+            serial_started = time.monotonic()
+            if kind == "motion":
+                self._motion_submit_delay_ms = (serial_started - getattr(self._motion.local, "callback_arrival", serial_started)) * 1000.0
             # No state lock held during serial I/O. Emergency may latch now;
             # its forced stop follows this transaction, never precedes it.
             try:
@@ -717,6 +722,8 @@ class ChassisDriverNode:
                     self._invalidate_output_cache()
                     self._safe_write_confirmed = False
                 raise
+            if kind == "motion":
+                self._motion_write_ack_ms = (time.monotonic() - serial_started) * 1000.0
             with self._motion.lock, self._lock:
                 if generation != self._motion.generation:
                     self._invalidate_output_cache()
@@ -1076,6 +1083,8 @@ class ChassisDriverNode:
             KeyValue(key="actual_speed_age_sec", value="{:.3f}".format(actual_age)),
             KeyValue(key="status_age_sec", value="{:.3f}".format(status_age)),
             KeyValue(key="status_combined_read", value=str(self.status_combined_read)),
+            KeyValue(key="motion_submit_delay_ms", value=str(getattr(self, "_motion_submit_delay_ms", -1))),
+            KeyValue(key="motion_write_ack_ms", value=str(getattr(self, "_motion_write_ack_ms", -1))),
         ]
 
         array = DiagnosticArray()

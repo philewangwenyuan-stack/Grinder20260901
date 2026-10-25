@@ -61,6 +61,9 @@ RegulatedPurePursuitController:
   use_fixed_distance_collision_detection: true  # 是否启用前方激光固定距离停车
   use_footprint_expansion_collision_detection: true   # true：读取 costmap footprint，并分别向车头、车身侧面和车尾膨胀；false：使用旧扇区。
   collision_front_clearance_m: 0.25  # 从车体前边缘向前膨胀的停车净距，单位：m
+  # Enable only after measured body geometry and scan/TF verification.
+  collision_self_filter_enabled: false
+  collision_self_filter_polygon: [] # flat [x,y,...] in base_link, not navigation footprint
   collision_side_clearance_m: 0.10     # 从左右侧边及后边缘向外膨胀的停车净距，单位：m
   collision_side_only_when_turning: true # true：侧向外框只在转弯或锁存停车时检测
   collision_side_turning_min_angular_vel: 0.015 # 启用侧向检测的最小绝对角速度，单位：rad/s

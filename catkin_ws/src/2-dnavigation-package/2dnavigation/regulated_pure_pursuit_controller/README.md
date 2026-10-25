@@ -48,3 +48,28 @@ rosrun dynamic_reconfigure dynparam set \
 ### 低速角速度补偿
 
 `low_speed_angular_deadband` 和 `low_speed_min_angular_vel` 默认均为 0.025 rad/s，支持 ROS 参数和 dynamic_reconfigure。前者须与底盘导航输入软件死区一致；后者是满足原曲率滞回条件时的补偿输出幅值，不代表实测物理启动阈值。仅在 0.015 ≤ |v| < 0.10 m/s 生效，输入死区设为 0 可关闭补偿；输出幅值小于输入死区或参数无效时不补偿。显式设为 0.045 / 0.050 可恢复历史补偿。补偿之后仍执行原碰撞检查和最终速度限幅，底盘安全处理保持不变。新增参数不加入 APP RPP 位掩码协议。
+
+
+## Grinder scan diagnostics
+
+`/rpp/collision_detail` reports front/side distance, internal body hits, self-filter hits,
+nearest XY, scan age and failure reason. It supplements the existing collision latch.
+The clear timer runs for both fixed-distance and expanded-footprint modes; invalid or
+repeated scans cannot supply fresh clear confirmations.
+
+Private startup parameters: `collision_self_filter_enabled=false`,
+`collision_self_filter_polygon=[]` (flat XY pairs, base frame). Filter only measured
+body-return regions after scan/TF validation; the navigation footprint is not a self mask.
+Boundary points are retained. Missing/invalid enabled filter configuration fails closed.
+No clearance thresholds are relaxed. The filter is not dynamically reconfigured.
+
+`scan_classifier_test` tests the production geometry and clear-confirmation helper.
+`scan_replay` accepts transformed scan points; `catkin_ws/scripts/replay_collision_scan.py`
+applies an explicitly supplied 4x4 transform from JSON. Never substitute a transform
+from another recording. See root README 7.4 for bounded read-only bag capture.
+
+Offline bag replay also accepts `replay_collision_scan.py recording.bag /path/to/scan_replay
+--bag --bounds MIN_X MAX_X MIN_Y MAX_Y --scan-index 0`. It loads only the bag's TF,
+uses the scan timestamp, and never contacts a ROS master. The rosbag Python module,
+tf2_ros and tf transformations from ROS Noetic are required for bag input; JSON input
+only requires Python's standard library plus the compiled classifier executable.

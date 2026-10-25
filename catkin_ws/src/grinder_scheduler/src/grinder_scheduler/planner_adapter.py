@@ -44,6 +44,10 @@ class PlannerAdapter:
         except Exception as exc:
             self._hybrid_import_error = exc
             rospy.logwarn("Hybrid connector module import failed, falling back to legacy connector: %s", exc)
+        from grinder_scheduler.planning_cache import PlanningCache
+        self._preprocessing_cache = PlanningCache(
+            int(rospy.get_param("~planning_cache_entries", 2)),
+            int(rospy.get_param("~planning_cache_max_bytes", 128 * 1024 * 1024)))
         self._path_version = 0
         self._last_runtime_backend = ""
         if self._planner_module is not None:
@@ -176,7 +180,14 @@ class PlannerAdapter:
             # Own an immutable snapshot for this request only. Overlay/crop edits
             # were applied above; later requests always prepare their own map.
             with contextlib.redirect_stdout(io.StringIO()):
-                prepared_map = planner.prepare_map(grid_map, ratio)
+                cache = getattr(self, "_preprocessing_cache", None)
+                if cache is None:
+                    prepared_map = planner.prepare_map(grid_map, ratio)
+                else:
+                    prepared_map = cache.prepare(grid_map, map_info, robot_config,
+                        lambda: planner.prepare_map(grid_map, ratio))
+                    rospy.loginfo("Planning base cache: hits=%d misses=%d retained_bytes=%d",
+                                  cache.hits, cache.misses, cache.bytes)
             grid_map = prepared_map.raw_grid
             inflated_for_connection = prepared_map.inflated_grid
         else:

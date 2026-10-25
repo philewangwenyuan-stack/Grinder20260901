@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_core
   nav_msgs
   sensor_msgs
+  std_msgs
   pluginlib
   roscpp
   tf
@@ -44,6 +45,7 @@ catkin_package(
   nav_core
   nav_msgs
   sensor_msgs
+  std_msgs
   pluginlib
   roscpp
   tf
@@ -79,6 +81,12 @@ add_library(${PROJECT_NAME} SHARED
   )
 
 if(CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(scan_classifier_test test/scan_classifier_test.cpp)
+  if(TARGET scan_classifier_test)
+    target_link_libraries(scan_classifier_test ${catkin_LIBRARIES})
+  endif()
+  add_executable(scan_replay test/scan_replay.cpp)
+
   catkin_add_gtest(low_speed_steering_test test/low_speed_steering_test.cpp)
   if(TARGET low_speed_steering_test)
     target_link_libraries(low_speed_steering_test ${catkin_LIBRARIES})

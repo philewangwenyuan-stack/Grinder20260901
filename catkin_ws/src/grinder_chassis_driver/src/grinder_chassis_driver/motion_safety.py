@@ -73,6 +73,9 @@ class MotionInterlock:
         return not failed
 
     def check(self):
+        validator = getattr(self.local, "delivery_validator", None)
+        if validator is not None and not validator():
+            raise MotionCancelled("manual command expired or session superseded")
         token = getattr(self.local, "token", self.generation)
         if self.latched or token != self.generation:
             raise MotionCancelled("emergency latched or execution superseded")

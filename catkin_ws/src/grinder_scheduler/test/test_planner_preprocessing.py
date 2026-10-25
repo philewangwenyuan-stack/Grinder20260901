@@ -152,6 +152,21 @@ class AdapterPreprocessingTest(unittest.TestCase):
         self.assertFalse(np.array_equal(contexts[0].raw_grid,contexts[1].raw_grid))
         self.assertEqual(100,grid[42,52])  # caller input was not modified
 
+    def test_cross_request_cache_keeps_complete_paths_equal(self):
+        from grinder_scheduler.planning_cache import PlanningCache
+        grid, info, config = fixture()
+        current = adapter()
+        current._preprocessing_cache = PlanningCache()
+        with mock.patch.object(mst, '_mst27_cpp', None):
+            baseline = adapter().plan('task', grid, info, copy.deepcopy(config))
+            cold = current.plan('task', grid, info, copy.deepcopy(config))
+            warm = current.plan('task', grid, info, copy.deepcopy(config))
+        self.assertEqual(baseline.points, cold.points)
+        self.assertEqual(cold.points, warm.points)
+        self.assertEqual(cold.length_m, warm.length_m)
+        self.assertEqual(1, current._preprocessing_cache.hits)
+        self.assertEqual(1, current._preprocessing_cache.misses)
+
     def test_legacy_planner_without_prepare_map_still_receives_independent_inputs(self):
         grid,info,config = fixture()
         with mock.patch.object(mst,'_mst27_cpp',None), mock.patch.object(mst.MultiStagePathPlanner,'prepare_map',None):
