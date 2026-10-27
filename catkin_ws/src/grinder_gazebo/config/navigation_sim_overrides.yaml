@@ -1,6 +1,10 @@
 # /scan is a near-horizontal projection of the virtual MID-360S point cloud.
 # Keep this override simulation-only: the real robot may still choose STVL.
 move_base:
+  RegulatedPurePursuitController:
+    # The virtual scan has no calibrated self-return polygon. Keep this
+    # optional filter off; keep all collision detector switches unchanged.
+    collision_self_filter_enabled: false
   global_costmap:
     footprint: [[-0.30, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.30, -0.47]]
   local_costmap:

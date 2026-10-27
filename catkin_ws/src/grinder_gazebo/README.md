@@ -79,6 +79,11 @@ grep --line-buffered -v -E \
 `build` 包含独立 MST27 C++ 扩展，不能仅复制 `.py` 而继续使用旧 `.so`。
 当前 main 业务源码不会从旧 Gazebo 分支回退。
 
+仿真覆盖中 `collision_self_filter_enabled=false`，因为未配置独立的车体自身回波多边形。
+只修改该自滤波开关，距离、车体外扩和代价地图碰撞检测保持各自原有配置。若启用该过滤但
+`collision_self_filter_polygon=[]`，RPP 会以 `self_filter_invalid` 停车并在 APP 显示“避障配置异常”。
+该参数在 RPP 初始化时读取，修改后须重启导航节点或整套仿真，单改 ROS 参数不会立即生效。
+
 在独立仿真实例中验证传感器及建图→保存→定位就绪：
 
 ```bash
