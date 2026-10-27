@@ -15,12 +15,15 @@ REGISTER_LIGHT = 0x4016
 REGISTER_LEFT_MOTOR_ACTUAL_SPEED = 0x4017
 REGISTER_RIGHT_MOTOR_ACTUAL_SPEED = 0x4018
 ACTUAL_SPEED_READ_COUNT = 2
+REGISTER_LEFT_MOTOR_FAULT_CODE = 0x4019
+REGISTER_RIGHT_MOTOR_FAULT_CODE = 0x401A
+MOTOR_FAULT_READ_COUNT = 2
 
 READ_BLOCK_START = REGISTER_LEFT_WHEEL_SPEED
 READ_BLOCK_COUNT = 7
 STATUS_READ_START = REGISTER_DISC_SPEED
 STATUS_READ_COUNT = 5
-STATUS_AND_ACTUAL_READ_COUNT = 7
+STATUS_AND_ACTUAL_READ_COUNT = 9  # Status, actual speeds and motor fault codes.
 
 DISC_ENABLE_OFF = 0x0000
 DISC_ENABLE_ON = 0x0001
@@ -123,6 +126,8 @@ class RegisterSnapshot:
     work_mode: int = WORK_MODE_MANUAL
     disc_lift: int = DISC_LIFT_UP
     light: int = LIGHT_OFF
+    left_motor_fault_code: int = 0
+    right_motor_fault_code: int = 0
 
     @classmethod
     def from_registers(cls, registers):
@@ -139,13 +144,19 @@ class RegisterSnapshot:
         )
 
     @classmethod
-    def from_status_registers(cls, registers):
+    def from_status_registers(cls, registers, motor_fault_registers=None):
         if len(registers) < STATUS_READ_COUNT:
             raise ValueError("Expected at least 5 status registers in the snapshot")
+        if motor_fault_registers is None:
+            motor_fault_registers = [0, 0]
+        if len(motor_fault_registers) != MOTOR_FAULT_READ_COUNT:
+            raise ValueError("Expected 2 motor fault registers in the snapshot")
         return cls(
             disc_speed=to_int16(registers[0]),
             disc_enable=registers[1],
             work_mode=registers[2],
             disc_lift=registers[3],
             light=registers[4],
+            left_motor_fault_code=to_int16(motor_fault_registers[0]),
+            right_motor_fault_code=to_int16(motor_fault_registers[1]),
         )

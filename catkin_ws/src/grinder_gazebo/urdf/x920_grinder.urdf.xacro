@@ -3,13 +3,24 @@
   <!-- Stable simplified chassis by default; enable visual_mesh explicitly for CAD review. -->
   <xacro:arg name="visual_mesh" default="false" />
   <xacro:arg name="sim_command_topic" default="/grinder/sim/cmd_vel" />
-  <xacro:arg name="sim_odom_topic" default="/odom" />
+  <xacro:arg name="sim_odom_topic" default="/grinder/sim/ground_truth/odom" />
+  <xacro:arg name="lidar_x" default="0.20" />
+  <xacro:arg name="lidar_y" default="0.0" />
+  <xacro:arg name="lidar_z" default="0.55" />
+  <xacro:arg name="lidar_horizontal_samples" default="360" />
+  <xacro:arg name="lidar_vertical_samples" default="20" />
+  <!-- 仿真最大量程（m），不修改真实 MID-360S 的硬件参数。 -->
+  <xacro:arg name="lidar_max_range" default="45.0" />
+  <xacro:arg name="sensor_noise_config" default="$(find grinder_gazebo)/config/sensor_noise.yaml" />
+  <xacro:property name="sensor_noise" value="${xacro.load_yaml('$(arg sensor_noise_config)')}" />
+  <xacro:property name="lidar_x" value="$(arg lidar_x)" />
+  <xacro:property name="lidar_z" value="$(arg lidar_z)" />
 
   <!-- Values shared with grinder_chassis_driver/config/chassis_driver.yaml. -->
   <xacro:property name="wheel_track" value="0.70" />
   <xacro:property name="wheel_radius" value="0.1475" />
   <xacro:property name="wheel_width" value="0.10" />
-  <!-- Rear edge is x=-0.30; axle/radar center is 0.30 m forward at x=0.00. -->
+  <!-- Rear drive axle midpoint is the motion reference x=0; lidar is +0.20 m. -->
   <xacro:property name="drive_axle_x" value="0.00" />
 
   <!-- Exact diff-drive footprint: x=[-0.30, 1.00], y=[-0.47, 0.47]. -->
@@ -27,12 +38,13 @@
   <xacro:property name="camera_mass" value="0.1" />
   <!-- Front caster contact offset inside the grinding-disc footprint. -->
   <xacro:property name="caster_support_offset_x" value="0.15" />
+  <xacro:property name="caster_radius" value="0.055" />
   <xacro:property name="body_mass" value="${vehicle_mass - disc_mass - caster_mass - 2*drive_wheel_mass - laser_mass - 2*camera_mass}" />
   <!-- This body-link COM makes the complete mass-weighted x COM equal 0.55 m. -->
-  <xacro:property name="body_com_x" value="${(vehicle_mass*0.55 - disc_mass*0.55 - caster_mass*(0.55 + caster_support_offset_x) - 2*camera_mass*0.72) / body_mass}" />
+  <xacro:property name="body_com_x" value="${(vehicle_mass*0.55 - disc_mass*0.55 - caster_mass*(0.55 + caster_support_offset_x) - laser_mass*lidar_x - 2*camera_mass*0.72) / body_mass}" />
   <!-- Put the aggregate COM at the disc centre height as well as its x
        position.  All link origins use base_link at the wheel axle height. -->
-  <xacro:property name="body_com_z" value="${(vehicle_mass*0.04 - disc_mass*0.04 - caster_mass*0.04 - 2*drive_wheel_mass*wheel_radius - laser_mass*(wheel_radius + 0.55) - 2*camera_mass*(wheel_radius + 0.45)) / body_mass - wheel_radius}" />
+  <xacro:property name="body_com_z" value="${(vehicle_mass*0.04 - disc_mass*0.04 - caster_mass*caster_radius - 2*drive_wheel_mass*wheel_radius - laser_mass*(wheel_radius + lidar_z) - 2*camera_mass*(wheel_radius + 0.45)) / body_mass - wheel_radius}" />
   <!-- Place the hidden frictionless caster contact 150 mm ahead of the disc
        centre, still inside its 0.90 m swept footprint.  This gives the rear
        drive axle a small positive normal load with the aggregate COM at the
@@ -96,9 +108,9 @@
   <link name="base_footprint" />
 
   <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_footprint" />
-    <child link="base_link" />
-    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="base_footprint" />
+    <origin xyz="0 0 ${-wheel_radius}" rpy="0 0 0" />
   </joint>
 
   <link name="base_link">
@@ -152,10 +164,9 @@
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
     </inertial>
     <collision name="grinding_disc_caster_collision">
-      <!-- The frictionless front caster carries the remaining front load;
-           its center is set for nominal zero-floor clearance. -->
-      <origin xyz="0 0 0.015" rpy="0 0 0" />
-      <geometry><sphere radius="0.055" /></geometry>
+      <!-- Keep the sphere concentric with the rolling joint. An offset here
+           rotates with the link, changing support height and pitching the body. -->
+      <geometry><sphere radius="${caster_radius}" /></geometry>
     </collision>
   </link>
   <joint name="grinding_disc_caster_wheel_joint" type="continuous">
@@ -164,7 +175,7 @@
          with the disc and could move behind the COM while idling. -->
     <parent link="base_link" />
     <child link="grinding_disc_caster_wheel_link" />
-    <origin xyz="${0.55 + caster_support_offset_x} 0 -0.1075" rpy="0 0 0" />
+    <origin xyz="${0.55 + caster_support_offset_x} 0 ${caster_radius - wheel_radius}" rpy="0 0 0" />
     <!-- Free rolling axis for the universal support. -->
     <axis xyz="0 1 0" />
     <dynamics damping="0.1" friction="0.0" />
@@ -201,7 +212,7 @@
   <link name="laser_link">
     <xacro:box_inertia mass="${laser_mass}" x="0.08" y="0.08" z="0.06" />
     <visual>
-      <geometry><cylinder radius="0.04" length="0.06" /></geometry>
+      <geometry><box size="0.065 0.065 0.060" /></geometry>
       <material name="sensor_black" />
     </visual>
     <collision><geometry><cylinder radius="0.04" length="0.06" /></geometry></collision>
@@ -209,8 +220,16 @@
   <joint name="laser_joint" type="fixed">
     <parent link="base_link" />
     <child link="laser_link" />
-    <!-- Radar is aligned with the two rear drive wheels. -->
-    <origin xyz="${drive_axle_x} 0 0.55" rpy="0 0 0" />
+    <!-- +X is toward the grinding disc; height is relative to the rear axle. -->
+    <origin xyz="$(arg lidar_x) $(arg lidar_y) $(arg lidar_z)" rpy="0 0 0" />
+  </joint>
+
+  <!-- Match the existing Super-LIO T_imu_laser; this is a simulation convention,
+       not a newly measured MID-360S factory calibration. -->
+  <link name="mid360_imu_link" />
+  <joint name="mid360_imu_joint" type="fixed">
+    <parent link="laser_link" /><child link="mid360_imu_link" />
+    <origin xyz="0.011 0.02329 -0.04412" rpy="0 0 0" />
   </joint>
 
   <xacro:macro name="camera_link" params="name y">

@@ -1,87 +1,122 @@
-<?xml version="1.0"?>
+<?xml version='1.0' encoding='utf-8'?>
 <sdf version="1.6">
-  <world name="x920_53m_single_floor">
+  <world name="x920_b1_structure">
+    <!-- Beam/column/wall/slab meshes extracted from the supplied S_B1 RVT. See meshes/b1_structure/source_report.json. -->
     <physics name="default_physics" type="ode">
-      <max_step_size>0.002</max_step_size>
-      <real_time_update_rate>500</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_update_rate>1000</real_time_update_rate>
       <real_time_factor>1.0</real_time_factor>
     </physics>
-    <gravity>0 0 -9.80665</gravity>
-    <scene><ambient>0.55 0.55 0.55 1</ambient><shadows>true</shadows></scene>
-    <include><uri>model://sun</uri></include>
-    <include><uri>model://ground_plane</uri></include>
-
-    <!-- 53 m x 53 m single-floor test area. Perimeter walls are 3 m high. -->
-    <model name="floor_53m"><static>true</static><pose>0 0 -0.05 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>53 53 0.10</size></box></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision><visual name="v"><geometry><box><size>53 53 0.10</size></box></geometry><material><ambient>0.28 0.30 0.32 1</ambient><diffuse>0.40 0.42 0.45 1</diffuse></material></visual></link></model>
-    <model name="north_wall"><static>true</static><pose>0 26.5 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>53 0.20 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>53 0.20 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-    <model name="south_wall"><static>true</static><pose>0 -26.5 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>53 0.20 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>53 0.20 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-    <model name="east_wall"><static>true</static><pose>26.5 0 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.20 53 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.20 53 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-    <model name="west_wall"><static>true</static><pose>-26.5 0 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.20 53 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.20 53 3.0</size></box></geometry><material><ambient>0.22 0.24 0.27 1</ambient><diffuse>0.32 0.34 0.38 1</diffuse></material></visual></link></model>
-
-    <!-- 0.9 m x 0.9 m structural columns, 6 m center-to-center spacing. -->
-    <model name="column_m21_m21"><static>true</static><pose>-21 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_m15"><static>true</static><pose>-21 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_m9"><static>true</static><pose>-21 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_m3"><static>true</static><pose>-21 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_p3"><static>true</static><pose>-21 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_p9"><static>true</static><pose>-21 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_p15"><static>true</static><pose>-21 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m21_p21"><static>true</static><pose>-21 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_m21"><static>true</static><pose>-15 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_m15"><static>true</static><pose>-15 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_m9"><static>true</static><pose>-15 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_m3"><static>true</static><pose>-15 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_p3"><static>true</static><pose>-15 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_p9"><static>true</static><pose>-15 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_p15"><static>true</static><pose>-15 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m15_p21"><static>true</static><pose>-15 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_m21"><static>true</static><pose>-9 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_m15"><static>true</static><pose>-9 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_m9"><static>true</static><pose>-9 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_m3"><static>true</static><pose>-9 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_p3"><static>true</static><pose>-9 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_p9"><static>true</static><pose>-9 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_p15"><static>true</static><pose>-9 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m9_p21"><static>true</static><pose>-9 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_m21"><static>true</static><pose>-3 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_m15"><static>true</static><pose>-3 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_m9"><static>true</static><pose>-3 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_m3"><static>true</static><pose>-3 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_p3"><static>true</static><pose>-3 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_p9"><static>true</static><pose>-3 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_p15"><static>true</static><pose>-3 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_m3_p21"><static>true</static><pose>-3 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_m21"><static>true</static><pose>3 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_m15"><static>true</static><pose>3 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_m9"><static>true</static><pose>3 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_m3"><static>true</static><pose>3 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_p3"><static>true</static><pose>3 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_p9"><static>true</static><pose>3 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_p15"><static>true</static><pose>3 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p3_p21"><static>true</static><pose>3 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_m21"><static>true</static><pose>9 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_m15"><static>true</static><pose>9 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_m9"><static>true</static><pose>9 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_m3"><static>true</static><pose>9 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_p3"><static>true</static><pose>9 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_p9"><static>true</static><pose>9 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_p15"><static>true</static><pose>9 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p9_p21"><static>true</static><pose>9 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_m21"><static>true</static><pose>15 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_m15"><static>true</static><pose>15 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_m9"><static>true</static><pose>15 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_m3"><static>true</static><pose>15 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_p3"><static>true</static><pose>15 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_p9"><static>true</static><pose>15 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_p15"><static>true</static><pose>15 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p15_p21"><static>true</static><pose>15 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_m21"><static>true</static><pose>21 -21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_m15"><static>true</static><pose>21 -15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_m9"><static>true</static><pose>21 -9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_m3"><static>true</static><pose>21 -3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_p3"><static>true</static><pose>21 3 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_p9"><static>true</static><pose>21 9 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_p15"><static>true</static><pose>21 15 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
-    <model name="column_p21_p21"><static>true</static><pose>21 21 1.5 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.9 0.9 3.0</size></box></geometry></collision><visual name="v"><geometry><box><size>0.9 0.9 3.0</size></box></geometry><material><ambient>0.32 0.34 0.38 1</ambient><diffuse>0.44 0.46 0.50 1</diffuse></material></visual></link></model>
+    <gravity>0 0 -9.7946</gravity>
+    <scene>
+      <ambient>0.55 0.55 0.55 1</ambient>
+      <shadows>true</shadows>
+    </scene>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <model name="b1_beam">
+      <static>true</static>
+      <link name="structure">
+        <collision name="beam_collision">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/beam.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name="beam_visual">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/beam.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>.55 .54 .51 1</ambient>
+            <diffuse>.55 .54 .51 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="b1_column">
+      <static>true</static>
+      <link name="structure">
+        <collision name="column_collision">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/column.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name="column_visual">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/column.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>.50 .51 .52 1</ambient>
+            <diffuse>.50 .51 .52 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="b1_wall">
+      <static>true</static>
+      <link name="structure">
+        <collision name="wall_collision">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/wall.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name="wall_visual">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/wall.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>.60 .59 .56 1</ambient>
+            <diffuse>.60 .59 .56 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="b1_slab">
+      <static>true</static>
+      <link name="structure">
+        <collision name="slab_collision">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/slab.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name="slab_visual">
+          <geometry>
+            <mesh>
+              <uri>file://meshes/b1_structure/slab.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>.65 .64 .61 1</ambient>
+            <diffuse>.65 .64 .61 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
   </world>
 </sdf>

@@ -1,4 +1,4 @@
-# Gazebo uses a planar LaserScan, so the standard obstacle layer is sufficient.
+# /scan is a near-horizontal projection of the virtual MID-360S point cloud.
 # Keep this override simulation-only: the real robot may still choose STVL.
 move_base:
   global_costmap:

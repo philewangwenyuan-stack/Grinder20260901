@@ -2,10 +2,12 @@
 # They isolate the simulator from production services while preserving the APP
 # protocol and local video path.
 
-map_topic: /slamware_ros_sdk_server_node/map
-odom_topic: /slamware_ros_sdk_server_node/odom
-left_image_topic: /slamware_ros_sdk_server_node/left_image_raw
-right_image_topic: /slamware_ros_sdk_server_node/right_image_raw
+localization_backend: super_lio
+map_topic: /map
+odom_topic: /lio/odom
+left_image_topic: /grinder/sim/left/image_raw
+right_image_topic: /grinder/sim/right/image_raw
+live_map_align_to_initial_yaw: false
 depth_image_colorized_topic: /slamware_ros_sdk_server_node/depth_image_colorized
 use_depth_colorized_image: false
 
@@ -13,6 +15,7 @@ use_depth_colorized_image: false
 # x=[-0.30, 1.00], y=[-0.47, 0.47].
 vehicle_length: 1.30
 vehicle_width: 0.94
+footprint: [[-0.30, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.30, -0.47]]
 
 persist_state_dir: temp/grinder_scheduler_sim_state
 stcm_local_dir: maps/sim_raw
@@ -23,6 +26,9 @@ save_first_frame_on_startup: false
 
 start_aurora_driver: false
 radar_mapping_mode_default_on_startup: false
+base_laser_roll_deg: 0.0
+base_laser_pitch_deg: 0.0
+base_laser_yaw_deg: 0.0
 radar_clear_before_import_delay_sec: 0.05
 radar_relocalization_after_import_delay_sec: 0.1
 radar_relocalization_service_wait_sec: 1.0
@@ -35,7 +41,6 @@ stream_enabled: false
 # Preserve local APP video using the bundled x86-64 MediaMTX binary.
 local_rtsp_enabled: true
 local_rtsp_host: 0.0.0.0
-local_rtsp_public_host: auto
 local_rtsp_port: 8554
 local_rtsp_fps: 10
 local_rtsp_width: 640

@@ -1,31 +1,43 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Damped contacts for the 800 kg body. Very small kd excites numerical
+       chassis oscillation that overwhelms the configurable sensor noise. -->
+  <xacro:macro name="imu_noise_axis" params="axis stddev bias dynamic">
+    <xacro:element xacro:name="${axis}">
+      <noise type="gaussian">
+        <mean>0.0</mean><stddev>${stddev}</stddev>
+        <bias_mean>0.0</bias_mean><bias_stddev>${bias}</bias_stddev>
+        <dynamic_bias_stddev>${dynamic}</dynamic_bias_stddev>
+        <dynamic_bias_correlation_time>${sensor_noise['imu_bias_correlation_time_s']}</dynamic_bias_correlation_time>
+      </noise>
+    </xacro:element>
+  </xacro:macro>
   <gazebo reference="base_link">
     <material>Gazebo/Orange</material>
     <selfCollide>false</selfCollide>
     <!-- Fixed/lumped grinding-disc collision inherits the base contact surface. -->
-    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10</kd>
+    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10000</kd>
   </gazebo>
 
   <gazebo reference="grinding_disc_link">
     <material>Gazebo/Grey</material>
     <!-- The disc and its spherical universal-support contact are frictionless. -->
-    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10</kd>
+    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10000</kd>
   </gazebo>
   <gazebo reference="grinding_disc_caster_wheel_link">
     <material>Gazebo/Black</material>
-    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10</kd>
+    <mu1>0.0</mu1><mu2>0.0</mu2><kp>1000000</kp><kd>10000</kd>
   </gazebo>
 
   <gazebo reference="left_wheel_link">
     <material>Gazebo/Black</material>
     <!-- Drive wheels retain traction; zero friction here makes diff-drive immobile. -->
-    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000</kp><kd>10</kd>
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000</kp><kd>10000</kd>
   </gazebo>
   <gazebo reference="right_wheel_link">
     <material>Gazebo/Black</material>
     <!-- Drive wheels retain traction; zero friction here makes diff-drive immobile. -->
-    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000</kp><kd>10</kd>
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000</kp><kd>10000</kd>
   </gazebo>
   <gazebo>
     <plugin name="x920_diff_drive" filename="libgazebo_ros_diff_drive.so">
@@ -41,34 +53,59 @@
       <wheelTorque>300</wheelTorque>
       <commandTopic>$(arg sim_command_topic)</commandTopic>
       <odometryTopic>$(arg sim_odom_topic)</odometryTopic>
-      <odometryFrame>odom</odometryFrame>
-      <robotBaseFrame>base_footprint</robotBaseFrame>
+      <odometryFrame>sim_world</odometryFrame>
+      <robotBaseFrame>base_link</robotBaseFrame>
       <publishWheelTF>false</publishWheelTF>
-      <publishOdomTF>true</publishOdomTF>
+      <!-- Only Super-LIO publishes odom -> base_link. -->
+      <publishOdomTF>false</publishOdomTF>
       <publishWheelJointState>true</publishWheelJointState>
       <odometrySource>world</odometrySource>
     </plugin>
   </gazebo>
 
   <gazebo reference="laser_link">
-    <sensor type="ray" name="x920_laser">
+    <sensor type="ray" name="mid360s_lidar">
       <always_on>true</always_on>
-      <visualize>true</visualize>
-      <update_rate>15</update_rate>
+      <visualize>false</visualize>
+      <update_rate>10</update_rate>
       <pose>0 0 0 0 0 0</pose>
       <ray>
         <scan>
           <horizontal>
-            <samples>720</samples><resolution>1</resolution>
-            <min_angle>-${pi}</min_angle><max_angle>${pi}</max_angle>
+            <samples>$(arg lidar_horizontal_samples)</samples><resolution>1</resolution>
+            <min_angle>-${pi}</min_angle><max_angle>${pi - 2*pi/int('$(arg lidar_horizontal_samples)')}</max_angle>
           </horizontal>
+          <vertical>
+            <samples>$(arg lidar_vertical_samples)</samples><resolution>1</resolution>
+            <min_angle>${-7*pi/180}</min_angle><max_angle>${52*pi/180}</max_angle>
+          </vertical>
         </scan>
-        <range><min>0.08</min><max>20.0</max><resolution>0.01</resolution></range>
-        <noise><type>gaussian</type><mean>0.0</mean><stddev>0.005</stddev></noise>
+        <range><min>0.10</min><max>$(arg lidar_max_range)</max><resolution>0.01</resolution></range>
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>${sensor_noise['lidar_range_stddev_m']}</stddev></noise>
       </ray>
-      <plugin name="x920_laser_ros" filename="libgazebo_ros_laser.so">
-        <topicName>/scan</topicName>
-        <frameName>laser_link</frameName>
+      <plugin name="mid360s_ros" filename="libgrinder_mid360_sensor.so" />
+    </sensor>
+    <sensor type="imu" name="mid360s_imu">
+      <always_on>true</always_on><update_rate>200</update_rate>
+      <pose>0.011 0.02329 -0.04412 0 0 0</pose>
+      <imu>
+        <angular_velocity>
+          <xacro:imu_noise_axis axis="x" stddev="${sensor_noise['imu_gyro_stddev_rad_s']}" bias="${sensor_noise['imu_gyro_bias_stddev_rad_s']}" dynamic="${sensor_noise['imu_gyro_dynamic_bias_stddev']}" />
+          <xacro:imu_noise_axis axis="y" stddev="${sensor_noise['imu_gyro_stddev_rad_s']}" bias="${sensor_noise['imu_gyro_bias_stddev_rad_s']}" dynamic="${sensor_noise['imu_gyro_dynamic_bias_stddev']}" />
+          <xacro:imu_noise_axis axis="z" stddev="${sensor_noise['imu_gyro_stddev_rad_s']}" bias="${sensor_noise['imu_gyro_bias_stddev_rad_s']}" dynamic="${sensor_noise['imu_gyro_dynamic_bias_stddev']}" />
+        </angular_velocity>
+        <linear_acceleration>
+          <xacro:imu_noise_axis axis="x" stddev="${sensor_noise['imu_accel_stddev_m_s2']}" bias="${sensor_noise['imu_accel_bias_stddev_m_s2']}" dynamic="${sensor_noise['imu_accel_dynamic_bias_stddev']}" />
+          <xacro:imu_noise_axis axis="y" stddev="${sensor_noise['imu_accel_stddev_m_s2']}" bias="${sensor_noise['imu_accel_bias_stddev_m_s2']}" dynamic="${sensor_noise['imu_accel_dynamic_bias_stddev']}" />
+          <xacro:imu_noise_axis axis="z" stddev="${sensor_noise['imu_accel_stddev_m_s2']}" bias="${sensor_noise['imu_accel_bias_stddev_m_s2']}" dynamic="${sensor_noise['imu_accel_dynamic_bias_stddev']}" />
+        </linear_acceleration>
+      </imu>
+      <plugin name="mid360s_imu_ros" filename="libgazebo_ros_imu_sensor.so">
+        <robotNamespace>/</robotNamespace><topicName>/livox/imu</topicName>
+        <frameName>mid360_imu_link</frameName><updateRateHZ>200</updateRateHZ>
+        <!-- Native IMU sensor already applies separate gyro/accel noise and drift. -->
+        <gaussianNoise>0.0</gaussianNoise>
+        <initialOrientationAsReference>false</initialOrientationAsReference>
       </plugin>
     </sensor>
   </gazebo>

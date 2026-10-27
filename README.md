@@ -1500,6 +1500,9 @@ INDICATOR_DEVICE=''
 ~~~
 
 `LIVOX_SETUP` 可留空，由启动脚本从项目环境和常见 Livox 工作区查找。
+外部 Livox 工作区只在驱动子进程内加载，主启动进程保持 Grinder 环境，
+避免重编译后外部 setup 覆盖包搜索路径、导致底盘包找不到及服务反复重启。
+此修复无需重新 Catkin 编译；同步 `start_grinder_super_lio_base.sh` 后重启服务生效。
 还没有 ESP32 时设置 `START_INDICATOR=0`，两个 USB 身份字段留空，先验证主系统开机自启。
 拿到并烧录 ESP32 后，设置 `START_INDICATOR=1` 并填写 USB 身份，再应用配置、在任务停止后重启服务。
 旧配置没有此字段时默认 `1`，保持原有灯带启动行为；旧版管理命令需先更新并重新运行安装脚本。

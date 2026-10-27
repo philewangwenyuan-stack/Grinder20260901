@@ -34,6 +34,7 @@ from grinder_chassis_driver.register_map import (
     DISC_LIFT_DOWN,
     DISC_LIFT_UP,
     ACTUAL_SPEED_READ_COUNT,
+    MOTOR_FAULT_READ_COUNT,
     INT16_MAX,
     INT16_MIN,
     LIGHT_OFF,
@@ -46,6 +47,7 @@ from grinder_chassis_driver.register_map import (
     REGISTER_DISC_LIFT,
     REGISTER_DISC_SPEED,
     REGISTER_LEFT_MOTOR_ACTUAL_SPEED,
+    REGISTER_LEFT_MOTOR_FAULT_CODE,
     REGISTER_LEFT_WHEEL_SPEED,
     REGISTER_LIGHT,
     REGISTER_RIGHT_MOTOR_ACTUAL_SPEED,
@@ -859,7 +861,7 @@ class ChassisDriverNode:
                     combined_registers = self.transport.read_register_block(
                         STATUS_READ_START,
                         STATUS_AND_ACTUAL_READ_COUNT,
-                        signed_indices=(0, 5, 6),
+                        signed_indices=(0, 5, 6, 7, 8),
                         timing=actual_read_timing,
                     )
                 except ModbusExceptionResponse as exc:
@@ -874,13 +876,19 @@ class ChassisDriverNode:
                     actual_read_end = time.monotonic()
                     actual_read_end_ros = rospy.Time.now()
                     status_registers = combined_registers[:STATUS_READ_COUNT]
-                    actual_speed_registers = combined_registers[STATUS_READ_COUNT:]
+                    actual_speed_registers = combined_registers[STATUS_READ_COUNT:STATUS_READ_COUNT + ACTUAL_SPEED_READ_COUNT]
+                    motor_fault_registers = combined_registers[-MOTOR_FAULT_READ_COUNT:]
 
             if status_due and status_registers is None:
                 status_registers = self.transport.read_register_block(
                     STATUS_READ_START,
                     STATUS_READ_COUNT,
                     signed_indices=(0,),
+                )
+                motor_fault_registers = self.transport.read_register_block(
+                    REGISTER_LEFT_MOTOR_FAULT_CODE,
+                    MOTOR_FAULT_READ_COUNT,
+                    signed_indices=(0, 1),
                 )
             if not status_due or not self.status_combined_read:
                 actual_read_start = time.monotonic()
@@ -895,7 +903,7 @@ class ChassisDriverNode:
                 actual_read_end_ros = rospy.Time.now()
             with self._lock:
                 if status_registers is not None:
-                    self.snapshot = RegisterSnapshot.from_status_registers(status_registers)
+                    self.snapshot = RegisterSnapshot.from_status_registers(status_registers, motor_fault_registers)
                     self._last_status_read_monotonic = read_started
                     status_fresh = True
                 self.actual_left_motor_speed = int(actual_speed_registers[0])
@@ -993,6 +1001,8 @@ class ChassisDriverNode:
             status_msg.disc_enabled = snapshot.disc_enable == DISC_ENABLE_ON
             status_msg.disc_lift_state = snapshot.disc_lift
             status_msg.light_enabled = snapshot.light == LIGHT_ON
+            status_msg.left_motor_fault_code = snapshot.left_motor_fault_code
+            status_msg.right_motor_fault_code = snapshot.right_motor_fault_code
             status_msg.consecutive_failures = consecutive_failures
             status_msg.last_error = last_error or ("status read failed" if not status_fresh else "")
             self.status_pub.publish(status_msg)
@@ -1069,6 +1079,8 @@ class ChassisDriverNode:
             consecutive_failures = self.consecutive_failures
             actual_age = now_monotonic - self._last_actual_read_monotonic if self._last_actual_read_monotonic else -1.0
             status_age = now_monotonic - self._last_status_read_monotonic if self._last_status_read_monotonic else -1.0
+            left_motor_fault_code = self.snapshot.left_motor_fault_code
+            right_motor_fault_code = self.snapshot.right_motor_fault_code
 
         diag = DiagnosticStatus()
         diag.name = "grinder_chassis_driver"
@@ -1084,6 +1096,8 @@ class ChassisDriverNode:
             KeyValue(key="baudrate", value=str(self.baudrate)),
             KeyValue(key="slave_id", value=str(self.slave_id)),
             KeyValue(key="consecutive_failures", value=str(consecutive_failures)),
+            KeyValue(key="left_motor_fault_code", value=str(left_motor_fault_code)),
+            KeyValue(key="right_motor_fault_code", value=str(right_motor_fault_code)),
             KeyValue(key="actual_speed_age_sec", value="{:.3f}".format(actual_age)),
             KeyValue(key="status_age_sec", value="{:.3f}".format(status_age)),
             KeyValue(key="status_combined_read", value=str(self.status_combined_read)),

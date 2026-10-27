@@ -87,12 +87,19 @@
 - `0x4016` 照明控制
 - `0x4017` 左电机实时速度（只读，`int16`，默认按 rpm）
 - `0x4018` 右电机实时速度（只读，`int16`，默认按 rpm）
+- `0x4019` 左电机故障码（只读，`int16`）
+- `0x401A` 右电机故障码（只读，`int16`）
 
 寄存器使用方式：
 
 - `0x4010/0x4011` 保留轮速命令写入；其回显不携带可靠的运动方向，不用于实际轮速判断
 - `0x4012` 按有符号 `int16` 读取；`0x4013 ~ 0x4016` 按 `uint16` 读取
 - `0x4017/0x4018` 按有符号 `int16` 读取，用于轮速反馈和 `/odom_wheel`
+- `0x4019/0x401A` 按有符号 `int16` 原值发布到 `/chassis/status` 的
+  `left_motor_fault_code` / `right_motor_fault_code` 和 `/diagnostics` 同名字段。
+  码值含义需厂家另行提供；读取失败时保留上次值，`status.connected=false`，结合
+  `last_error` 和诊断 `status_age_sec` 判断数据有效性。修改消息后，部署前须在目标 Linux
+  执行 `PROFILE=runtime ./build_grinder_platform.sh`，同步重建底盘和订阅该消息的调度包。
 
 如果厂家的“读寄存器地址表”与这份假设不一致，需要同步调整 [register_map.py](/home/chersxir/work/Grinder/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py) 和状态轮询逻辑。
 
@@ -107,7 +114,7 @@
 1. 节点启动后读取 ROS 参数并初始化串口
 2. 启动／通信恢复时强制下发安全值；`startup_zero_output` 保留兼容但不能关闭安全同步屏障
 3. 订阅 `/chassis/...` 控制话题，将命令写入对应寄存器
-4. 按 `poll_rate_hz` 读取 `0x4017 ~ 0x4018` 的有符号实际电机速度；按 `status_poll_rate_hz` 将 `0x4012 ~ 0x4016` 状态与当次轮速合并读取
+4. 按 `poll_rate_hz` 读取 `0x4017 ~ 0x4018` 的有符号实际电机速度；按 `status_poll_rate_hz` 合并读取 `0x4012 ~ 0x401A`（状态、轮速与故障码）
 5. 轮速状态与 `/odom_wheel` 跟随轮速轮询发布，普通状态与诊断分别按配置频率发布
 6. 如果超过 `command_timeout`（默认0.5秒）未收到新的轮速命令，则自动停轮；双轮零速命令绕过轮速斜坡，轮速订阅仅保留最新一条待处理消息
 7. 如果通信连续失败，节点标记为掉线并尝试进入安全状态
@@ -418,7 +425,7 @@ outputs_ready、reset_error；ACK及磨盘既有读回值不能证明实机机�
 - `max_cmd_step_rpm`
   左右轮每次下发允许变化的最大步进（斜坡限制）
 - `status_combined_read`
-  一次读取 `0x4012 ~ 0x4018`；不支持时分别读取普通状态和实际轮速
+  一次读取 `0x4012 ~ 0x401A`；不支持时分别读取普通状态、故障码和实际轮速
 - `safe_stop_on_error_interval`
   通信异常触发“安全全量写入”的最小时间间隔（秒），用于避免总线刷屏
 
@@ -556,9 +563,9 @@ rostopic echo /diagnostics
 
 ## 11. 当前限制和注意事项
 
-- 当前“状态回读”读取 `0x4010 ~ 0x4016`，实际电机速度读取 `0x4017/0x4018`
+- 当前状态轮询合并读取 `0x4012 ~ 0x401A`，高频实际轮速读取 `0x4017/0x4018`
 - 如果实际设备的读地址和写地址不同，需要改轮询实现
-- 当前节点没有实现 `/cmd_vel -> 左右轮速` 转换
+- 当前节点已实现 `/cmd_vel -> 左右轮速` 转换
 - 当前节点发布速度来源为真实电机反馈的 `/odom_wheel`，不发布轮式里程计 TF
 - 当前节点没有实现故障清除真实功能
 - 若串口不存在或权限不足，`last_error` 会直接反映在 `/chassis/status` 和 `/diagnostics`
@@ -569,7 +576,6 @@ rostopic echo /diagnostics
 建议下一步继续补：
 
 - 串口收发十六进制日志
-- `/cmd_vel` 转左右轮速转换节点
-- 故障码寄存器解析
+- 厂家故障码含义解码
 - 真实底盘联调记录
 - Modbus 从站模拟器，便于离线自测

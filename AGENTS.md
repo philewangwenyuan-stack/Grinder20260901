@@ -80,7 +80,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | Modbus 帧、串口、CRC | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py` | `test/test_modbus_transport.py` |
 | 连续遥控、普通控制阻塞与串口日志争用 | scheduler `sl_linka_adapter.py` 的独立控制 FIFO；chassis `modbus_transport.py` / `raw_log.py` | 完整事务总时限、写优先、有界后台原始日志；`test_continuous_manual.py`、底盘 `test_serial_scheduling.py` / `test_raw_log.py`；根 README 7.6 |
 | 软件急停锁存、取消代号与显式解除 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/motion_safety.py` | 驱动统一输出提交／安全同步；scheduler `_reset_emergency_stop`、`_restore_indicator_reset`（重启恢复已确认解除的清灯请求）；`ignore_chassis_status=true` 允许无底盘测试解除调度锁存；服务及回归见根 README 7.2、`test_motion_safety.py`、`test_emergency_stop_execution.py` |
-| 寄存器地址、编解码、底盘命令模型 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py` | `test/test_register_map.py`、`doc/底盘485指令.png` |
+| 寄存器地址、编解码、底盘命令模型 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py` | `test/test_register_map.py`、`test/test_motor_faults.py`；`0x4019/0x401A` 左右电机故障码原值上报 `/chassis/status` 和诊断；`doc/底盘485指令.png` |
 | ROS 消息/服务 | 两个自研包各自的 `msg/`、`srv/` | 对应 `CMakeLists.txt`、`package.xml` |
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |
 | 激光里程计与 EKF | `catkin_ws/src/localization/rf2o_laser_odometry/` | `launch/rf2o_laser_odometry.launch`、`launch/ekf.launch`、`config/ekf.yaml` |
@@ -94,7 +94,8 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 一键构建/启动 | `catkin_ws/build_grinder_platform.sh`、`catkin_ws/start_grinder_stack.sh`、`catkin_ws/start_grinder_super_lio_base.sh` | Livox UDP 端口预检：`catkin_ws/scripts/check_livox_udp_ports.py`；`catkin_ws/PLATFORM_BUILD_RUN.md` |
 | 板端整套开机自启、配置与 systemd 管理 | `catkin_ws/scripts/grinder-service`、`catkin_ws/install_grinder_service.sh` | 板端 `/etc/grinder/startup.conf`；`start_grinder_super_lio_base.sh` 先启动灯带并监督子进程；离线验证 `scripts/test_grinder_service.py`；根 README 第 12 节 |
 | RK3588 / MID-360S 完整部署、STVL/jemalloc 与部署踩坑 | 根 `README.md` 的安装编译节、`deployment-stvl` / `deployment-20261022` / `deployment-pitfalls-20261022` 锚点 | `catkin_ws/PLATFORM_BUILD_RUN.md` 为快捷入口；当天板端 launch、网络和 systemd 额外配置需按记录复现，不能假定 main 自带 |
-| X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh` |
+| X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `catkin_ws/src/grinder_gazebo/launch/grinder_sim.launch`、`catkin_ws/src/grinder_gazebo/urdf/x920_grinder.urdf.xacro`、`catkin_ws/start_grinder_sim.sh`；远端 WSL 同步/编译/启动与 MuMu 隧道：`catkin_ws/scripts/remote_sim.ps1`、`remote_sim.sh` |
+| 虚拟 MID-360S、IMU 噪声、B1 梁柱墙板场景与全链路验证 | `catkin_ws/src/grinder_gazebo/src/mid360_sensor_plugin.cpp`、`config/sensor_noise.yaml`（相对 Gazebo 包） | `urdf/x920_grinder.gazebo.xacro`、`meshes/b1_structure/source_report.json`、`test/check_mid360_chain.py --map-cycle`（仅独立仿真实例）、`test/test_support_geometry.py`；Livox 仿真构建：`catkin_ws/scripts/build_sim_livox.sh` |
 
 `scheduler_node.py` 超过一万行，不要整文件加载。先用符号搜索定位，例如（均从仓库根目录执行）：
 
@@ -144,7 +145,7 @@ rg -n 'super_lio|cloud_to_occupancy_grid|include' catkin_ws/src/grinder_schedule
 | 规划预处理、方向 | `test_planner_preprocessing.py`、`test_planning_direction.py`；`third_party/path_planner/mst27/test/test_preprocessing.py` |
 | 地图保存、定位与安装标定 | `test_live_map_save.py`、`test_super_lio_mode_manager.py`、`test_relocalization_initial_pose.py`、`test_super_lio_launch_calibration.py` |
 | 灯带、指标、平台接入 | `test_status_indicator*.py`、`test_metrics.py`、`test_platform_integration.py` |
-| 启动配置与 systemd 管理 | `catkin_ws/scripts/test/test_scheduler_config.py`、`catkin_ws/scripts/test_grinder_service.py` |
+| 启动配置与 systemd 管理 | `catkin_ws/scripts/test/test_scheduler_config.py`、`catkin_ws/scripts/test/test_livox_environment.py`（外部环境隔离）、`catkin_ws/scripts/test_grinder_service.py` |
 
 例如从仓库根目录运行单项离线回归（Windows 将 `python3` 换为实际 Python 命令）：
 

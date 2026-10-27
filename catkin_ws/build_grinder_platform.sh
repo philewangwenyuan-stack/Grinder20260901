@@ -182,9 +182,17 @@ case "${PROFILE}" in
     run_catkin_pkg "grinder_chassis_driver"
     ;;
   sim)
+    bash "${WS_DIR}/scripts/build_sim_livox.sh"
+    CATKIN_EXTRA_CMAKE_ARGS=(
+      -DROS_EDITION=ROS1
+      "-DLIVOX_LIDAR_SDK_LIBRARY=${WS_DIR}/../temp/grinder_sim_livox/sdk/sdk_core/liblivox_lidar_sdk_static.a"
+      "-DCMAKE_CXX_FLAGS=-I${WS_DIR}/src/drivers/ws_livox/src/Livox_SDK2/include"
+    )
     run_catkin_with_deps \
       grinder_gazebo \
       grinder_scheduler \
+      super_lio \
+      cloud_to_occupancy_grid \
       move_base \
       carrot_planner \
       regulated_pure_pursuit_controller
