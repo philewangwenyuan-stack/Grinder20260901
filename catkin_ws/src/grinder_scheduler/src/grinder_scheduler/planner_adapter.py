@@ -2,6 +2,7 @@ import contextlib
 import copy
 import importlib.util
 import io
+import json
 import math
 import os
 import time
@@ -394,6 +395,10 @@ class PlannerAdapter:
                 )
                 t_region_plan_end = time.perf_counter()
             planner_output = planner_console.getvalue()
+            native_profile = getattr(planner, 'last_profile', {})
+            if native_profile:
+                rospy.loginfo("MST27 region phases ms: region_id=%s timings=%s",
+                              region_id or "<empty>", json.dumps(native_profile, sort_keys=True))
             cpp_failed = "[C++后端] 调用失败" in planner_output
             runtime_backend = "cpp" if "[C++后端] 使用C++规划内核" in planner_output else "python_fallback"
             if runtime_backend != self._last_runtime_backend:

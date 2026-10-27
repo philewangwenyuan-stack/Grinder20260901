@@ -5,8 +5,8 @@
 ```text
 work/Grinder/third_party/path_planner/mst27/
 ├── mst27.py
-├── _mst27_cpp*.so              # catkin_make 后生成
-├── CMakeLists.txt               # 独立调试用
+├── _mst27_cpp*.so              # 目标平台 CMake 编译生成
+├── CMakeLists.txt               # 独立扩展构建入口
 └── cpp/
     ├── CMakeLists.txt           # catkin_make 使用
     └── mst27_cpp.cpp
@@ -49,7 +49,7 @@ Grinder 调度适配器以 `RobotConfig.output_point_spacing=0` 请求全局关�
 离线回归：`python3 third_party/path_planner/mst27/test/test_spacing.py -v`。
 修改后须在目标 Linux 环境重新构建 `_mst27_cpp` 并重启调度器，已有规划需重新生成。
 
-## 使用 catkin_make 编译（RK3588 / Ubuntu 20.04）
+## 编译原生扩展（RK3588 / Ubuntu 20.04）
 
 ```bash
 # sudo apt update
@@ -61,20 +61,38 @@ Grinder 调度适配器以 `RobotConfig.output_point_spacing=0` 请求全局关�
 
 cd /home/neardi/work/Grinder/third_party/path_planner/mst27
 
-rm -rf build
-rm -f _mst27_cpp*.so
-
-cmake -S . -B build \
+cmake -S . -B build-board-release \
   -DCMAKE_BUILD_TYPE=Release \
   -DPython3_EXECUTABLE="$(which python3)"
 
-cmake --build build -j"$(nproc)"
+cmake --build build-board-release --parallel 2
 
 
 ```
 
-`grinder_scheduler/CMakeLists.txt` 已将本目录作为 CMake 子工程加入。
+正式部署显式构建此独立 CMake 工程，不依赖选择性 Catkin 构建是否覆盖扩展。
 编译成功后，`_mst27_cpp*.so` 会生成在 `mst27.py` 同目录，规划器将自动优先使用 C++ 内核。
+
+## 等价膨胀优化、掉头连接与分段计时
+
+方形障碍膨胀使用横、纵两次最大值滤波，与原方形结构元素二值膨胀逐格等价，
+包含图像边缘；不改变半径、障碍范围或最终碰撞复检。避免大半径结构核的重复邻域扫描。
+最终碰撞复检按最多65536个样本分批向量化，保留原半栅格采样位置、取整和首末点规则，
+不抽样跳点，也不创建整条密集路径。超出地图或命中占据格仍拒绝输出。
+
+相邻作业线优先尝试安全的外侧共同掉头线，延长较短线而不删掉较长线的覆盖端点，
+消除端点量化差形成的厘米级往返。三段连接都必须通过原障碍/区域检查。
+空间不足时保留原安全连接，允许必要回退；不承诺所有场景均无折返，也不生成圆弧U型。
+Python回退路径同样优先尝试外侧连接，segment补点不承担几何修复。
+
+原 `plan_core` 接口不变。新增 `plan_core_profiled` 返回 `path` 和 `timings_ms`，
+计时来自本次调用的局部变量，包含输入解析、扫掠、连接、规范化、核心总时长、补点及序列化。
+Python `planner.last_profile` 另记录阶段预处理、原生输入准备与最终碰撞复检。
+调度每个区域只输出一条 `MST27 region phases ms`，不在每个点上打印日志。
+兼容旧扩展，但要取得完整分段计时及修复需重新编译扩展并重启调度器。
+
+回归：`python3 -m unittest discover -s third_party/path_planner/mst27/test -p 'test_*.py'`。
+包含逐格膨胀等价、多角度掉头、紧边界回退、障碍检查及原间距/起终点测试。
 
 ## 多区域共享预处理
 

@@ -212,8 +212,14 @@ class ObstacleProcessor:
             return np.zeros_like(occupied, dtype=int)
 
         radius = int(inflation_radius_pixels)
-        structure = np.ones((2 * radius + 1, 2 * radius + 1), dtype=bool)
-        inflated = ndimage.binary_dilation(occupied, structure=structure)
+        # A square is the Cartesian product of two 1-D intervals. Two exact
+        # max filters preserve every inflated cell, including image borders,
+        # without the O(radius**2) neighbourhood of binary_dilation.
+        size = 2 * radius + 1
+        horizontal = ndimage.maximum_filter1d(
+            occupied.astype(np.uint8), size=size, axis=1, mode='constant', cval=0)
+        inflated = ndimage.maximum_filter1d(
+            horizontal, size=size, axis=0, mode='constant', cval=0)
 
         print(f"   [矩形障碍物膨胀] 膨胀半径: {radius}像素, "
               f"原始: {np.sum(occupied)}, 膨胀后: {np.sum(inflated)}")
@@ -1133,6 +1139,22 @@ class ObstacleAwareBoustrophedonPlanner:
                 a_t = _pt_t(a)
                 b_t = _pt_t(b)
                 side_max = abs(a_t - d_max) <= abs(a_t - d_min)
+                outer_t = max(a_t, b_t) if side_max else min(a_t, b_t)
+                a_s, b_s = _pt_s(a), _pt_s(b)
+                outer_a = PathPoint(outer_t * dy + a_s * ny,
+                                    outer_t * dx + a_s * nx)
+                outer_b = PathPoint(outer_t * dy + b_s * ny,
+                                    outer_t * dx + b_s * nx)
+                if (_bridge_line_free(a, outer_a)
+                        and _bridge_line_free(outer_a, outer_b)
+                        and _bridge_line_free(outer_b, b)):
+                    _append_path_corner(full_path, outer_a)
+                    _append_path_corner(full_path, outer_b)
+                    last_segment_start = len(full_path)
+                    _extend_path_corners(full_path, seg)
+                    last_added_idx = i
+                    turn_by_line_id += 1
+                    continue
                 # 掉头上限取两条已留边扫描线的共同内侧端点，不能再用原始
                 # d_min/d_max，否则会把2.2m留边重新拉回边界。
                 turn_cap = min(a_t, b_t) if side_max else max(a_t, b_t)
@@ -1957,6 +1979,7 @@ class MultiStagePathPlanner:
         self.robot_config = robot_config
         self.planner_core = ObstacleAwareBoustrophedonPlanner(robot_config)
         self.path_smoother = PathSmoother()
+        self.last_profile = {}
 
         # 安全检查
         self._validate_robot_config()
@@ -2031,15 +2054,19 @@ class MultiStagePathPlanner:
         for seg_idx, (a, b) in enumerate(zip(path, path[1:])):
             dist = math.hypot(b.row - a.row, b.col - a.col)
             count = max(1, int(math.ceil(dist / sample_step)))
-            for q in range(1, count + 1):
-                if seg_idx == len(path) - 2 and q == count:
-                    continue
-                u = q / count
-                row = int(round(a.row + (b.row - a.row) * u))
-                col = int(round(a.col + (b.col - a.col) * u))
-                if not (0 <= row < h and 0 <= col < w):
+            stop = count if seg_idx == len(path) - 2 else count + 1
+            # Same half-cell sample positions and ties-to-even rounding as the
+            # scalar check. Bounded chunks avoid a Python iteration per point
+            # without creating a dense full-route array or skipping any sample.
+            for first in range(1, stop, 65536):
+                u = np.arange(first, min(stop, first + 65536), dtype=np.float64) / count
+                rows = np.rint(a.row + (b.row - a.row) * u)
+                cols = np.rint(a.col + (b.col - a.col) * u)
+                if not (np.all(np.isfinite(rows)) and np.all(np.isfinite(cols))):
                     return False
-                if collision_grid[row, col] != 0:
+                if np.any((rows < 0) | (rows >= h) | (cols < 0) | (cols >= w)):
+                    return False
+                if np.any(collision_grid[rows.astype(np.intp), cols.astype(np.intp)] != 0):
                     return False
         return True
 
@@ -2053,6 +2080,7 @@ class MultiStagePathPlanner:
         grid_for_cpp = (prepared_map.cpp_inflated_grid() if prepared_map is not None
                         else np.ascontiguousarray(inflated_grid, dtype=np.int32))
         stage_specs = []
+        mask_started = time.perf_counter()
 
         for stage_index, stage in enumerate(stages):
             endpoint_margin_m = (self.robot_config.endpoint_margin
@@ -2091,11 +2119,19 @@ class MultiStagePathPlanner:
                         stage_planning_grids[stage_index], dtype=np.int32))
             stage_specs.append(spec)
 
+        self.last_profile['native_inputs_ms'] = (time.perf_counter() - mask_started) * 1000.0
+
         try:
             output_spacing_pixels = max(
                 0.0, self.robot_config.output_point_spacing * real_to_grid_ratio)
-            cpp_path = _mst27_cpp.plan_core(
-                grid_for_cpp, stage_specs, spacing_pixels, output_spacing_pixels)
+            if hasattr(_mst27_cpp, 'plan_core_profiled'):
+                result = _mst27_cpp.plan_core_profiled(
+                    grid_for_cpp, stage_specs, spacing_pixels, output_spacing_pixels)
+                cpp_path = result['path']
+                self.last_profile.update(result['timings_ms'])
+            else:
+                cpp_path = _mst27_cpp.plan_core(
+                    grid_for_cpp, stage_specs, spacing_pixels, output_spacing_pixels)
         except Exception as exc:
             print(f"[C++后端] 调用失败，回退到Python实现: {exc}")
             return None
@@ -2360,6 +2396,8 @@ class MultiStagePathPlanner:
               f"{self.robot_config.obstacle_corner_angle_deg}°")
         print(f"[参数] 路径规划躲避距离: "
               f"{self.robot_config.obstacle_avoidance_distance}m")
+        self.last_profile = {}
+        prepare_started = time.perf_counter()
         stage_planning_grids = []
         for stage in stages:
             stage_angle = self._stage_angle(stage)
@@ -2369,6 +2407,7 @@ class MultiStagePathPlanner:
                               base_inflation_pixels=inflation_pixels,
                               max_component_extent_pixels=aligned_max_extent_pixels))
             stage_planning_grids.append(stage_grid)
+        self.last_profile['stage_prepare_ms'] = (time.perf_counter() - prepare_started) * 1000.0
 
         effective_spacing = self.robot_config.path_spacing * (1 - self.robot_config.overlap_ratio)
         print(f"[参数] 路径间��: {self.robot_config.path_spacing}m, 重叠: {self.robot_config.overlap_ratio}")
@@ -2385,7 +2424,11 @@ class MultiStagePathPlanner:
             prepared_map=prepared_map
         )
         if cpp_path is not None:
-            if not self._path_collision_free(cpp_path, inflated_grid):
+            validation_started = time.perf_counter()
+            collision_free = self._path_collision_free(cpp_path, inflated_grid)
+            self.last_profile['validation_ms'] = (time.perf_counter() - validation_started) * 1000.0
+            print('[MST27 phases ms] ' + json.dumps(self.last_profile, sort_keys=True))
+            if not collision_free:
                 print("[最终碰撞复检] C++路径触碰原始膨胀障碍，拒绝输出")
                 return []
             print("[最终碰撞复检] 通过（原始轮廓膨胀图）")

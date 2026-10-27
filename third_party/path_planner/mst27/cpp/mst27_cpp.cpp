@@ -1,4 +1,4 @@
-// mst27 v4.7.0：60度柱边折角 + 可调膨胀/躲避距离
+// mst27 v4.7.1：安全外侧掉头连接 + 可重入阶段计时
 // pybind11 仅在构建 Python 扩展时需要。若找不到其头文件（例如脱离
 // Python 单独编译内核算法做单元测试），则自动编译掉 pybind 部分。
 // 你们的 catkin/cmake 构建环境带 pybind11，行为与原来完全一致。
@@ -18,6 +18,7 @@
 #endif
 
 #include <algorithm>
+#include <chrono>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
@@ -117,6 +118,23 @@ struct StageInput {
     double obstacle_avoidance_pixels = 0.0;  // 膨胀柱外的额外路径躲避距离
     std::vector<std::uint8_t> region_mask;
     std::optional<Grid> planning_grid;       // 本阶段角度对齐矩形膨胀图
+};
+
+struct CoreTimings {
+    double sweep_ms = 0.0, connect_ms = 0.0, normalize_ms = 0.0;
+};
+struct PhaseTimer {
+    using Clock = std::chrono::steady_clock;
+    double* target;
+    Clock::time_point start = Clock::now();
+    explicit PhaseTimer(double* output) : target(output) {}
+    void finish() {
+        if (target) {
+            *target += std::chrono::duration<double, std::milli>(Clock::now() - start).count();
+            target = nullptr;
+        }
+    }
+    ~PhaseTimer() { finish(); }
 };
 
 static std::string direction_axis(std::string direction) {
@@ -576,7 +594,8 @@ static std::vector<FPoint> plan_subregion_oriented(
     double step,
     Point start_point,
     Point end_point,
-    double endpoint_margin = 0.0) {
+    double endpoint_margin = 0.0, CoreTimings* timings = nullptr) {
+    PhaseTimer sweep_timer(timings ? &timings->sweep_ms : nullptr);
     if (stage.boundary.empty()) {
         return {};
     }
@@ -1052,6 +1071,8 @@ static std::vector<FPoint> plan_subregion_oriented(
 
     // 首末段已在同一旋转扫描线上严格锚定，不会产生跨线尖刺。
 
+    sweep_timer.finish();
+    PhaseTimer connect_timer(timings ? &timings->connect_ms : nullptr);
     auto bridge_line_free = [&](const FPoint& a, const FPoint& b) {
         return line_free_xy(a, b);
     };
@@ -1183,6 +1204,21 @@ static std::vector<FPoint> plan_subregion_oriented(
             const double a_s = point_s(a);
             const double b_s = point_s(b);
             const bool side_max = std::abs(a_t - d_max) <= std::abs(a_t - d_min);
+            // Prefer a common OUTER turn line: extend the shorter work lane
+            // rather than retracing the longer lane. Validate every leg against
+            // both the obstacle grid and region mask; never delete work coverage.
+            const double outer_t = side_max ? std::max(a_t, b_t) : std::min(a_t, b_t);
+            const FPoint outer_a{outer_t * dy + a_s * ny, outer_t * dx + a_s * nx};
+            const FPoint outer_b{outer_t * dy + b_s * ny, outer_t * dx + b_s * nx};
+            if (bridge_line_free(a, outer_a) && bridge_line_free(outer_a, outer_b) &&
+                bridge_line_free(outer_b, b)) {
+                append_path_corner(full_path, outer_a);
+                append_path_corner(full_path, outer_b);
+                last_segment_start = full_path.size();
+                append_path_corners(full_path, seg.begin(), seg.end());
+                last_added_idx = i;
+                continue;
+            }
             const double turn_cap = side_max ? std::min(a_t, b_t)
                                              : std::max(a_t, b_t);
             const int max_inset = std::max(2, std::min(24,
@@ -1316,6 +1352,8 @@ static std::vector<FPoint> plan_subregion_oriented(
         full_path.swap(cleaned);
     }
 
+    connect_timer.finish();
+    PhaseTimer normalize_timer(timings ? &timings->normalize_ms : nullptr);
     // 输出级几何校验：仅保留d轴、n轴和配置柱子折角。
     std::vector<FPoint> normalized;
     normalized.reserve(full_path.size());
@@ -1408,7 +1446,7 @@ static std::vector<FPoint> plan_subregion_oriented(
 static std::vector<PathItem> plan_all_stages(
     const Grid& grid,
     const std::vector<StageInput>& stages,
-    double spacing_pixels) {
+    double spacing_pixels, CoreTimings* timings = nullptr) {
     std::vector<PathItem> complete_path;
     std::optional<Point> last_stage_end;
 
@@ -1443,7 +1481,7 @@ static std::vector<PathItem> plan_all_stages(
         if (stage.direction_angle.has_value()) {
             const auto region_pts = plan_subregion_oriented(
                 active_grid, stage, *stage.direction_angle, spacing_pixels, 0.5,
-                curr_start, stage.end_point, stage.endpoint_margin_pixels);
+                curr_start, stage.end_point, stage.endpoint_margin_pixels, timings);
             if (!region_pts.empty()) {
                 for (const auto& p : region_pts) {
                     complete_path.push_back(PathItem{p.row, p.col, path_type});
@@ -1460,7 +1498,7 @@ static std::vector<PathItem> plan_all_stages(
                 direction_axis(stage.direction) == "x" ? 0.0 : 90.0;
             const auto region_pts = plan_subregion_oriented(
                 active_grid, stage, axis_angle, spacing_pixels, 1.0,
-                curr_start, stage.end_point, stage.endpoint_margin_pixels);
+                curr_start, stage.end_point, stage.endpoint_margin_pixels, timings);
             if (!region_pts.empty()) {
                 for (const auto& point : region_pts) {
                     complete_path.push_back(PathItem{
@@ -1597,37 +1635,62 @@ static std::vector<StageInput> parse_stages(const py::list& stage_specs, const G
     return stages;
 }
 
-static py::list plan_core(
+static py::object plan_core(
     const py::array_t<int, py::array::c_style | py::array::forcecast>& grid_array,
     const py::list& stage_specs,
     double spacing_pixels,
-    double output_spacing_pixels) {
+    double output_spacing_pixels, bool profiled) {
     if (!std::isfinite(spacing_pixels) || spacing_pixels <= 0.0) {
         throw std::runtime_error("spacing_pixels must be finite and > 0");
     }
 
+    double parse_ms=0.0, core_ms=0.0, densify_ms=0.0, serialize_ms=0.0;
+    CoreTimings timings;
+    PhaseTimer parse_timer(&parse_ms);
     const Grid grid = parse_grid(grid_array);
     const auto stages = parse_stages(stage_specs, grid);
+    parse_timer.finish();
     std::vector<PathItem> path;
     {
         // Inputs are now owned C++ data. Let ROS/control Python threads run
         // during expensive planning; reacquire before constructing py::list.
         py::gil_scoped_release release;
-        const auto corner_path = plan_all_stages(grid, stages, spacing_pixels);
+        PhaseTimer core_timer(&core_ms);
+        const auto corner_path = plan_all_stages(grid, stages, spacing_pixels,
+                                               profiled ? &timings : nullptr);
+        core_timer.finish();
+        PhaseTimer densify_timer(&densify_ms);
         path = densify_path(corner_path, output_spacing_pixels);
     }
 
+    PhaseTimer serialize_timer(&serialize_ms);
     py::list result;
     for (const auto& point : path) {
         result.append(py::make_tuple(point.row, point.col, point.path_type));
     }
-    return result;
+    serialize_timer.finish();
+    if (!profiled) return result;
+    py::dict profile;
+    profile["parse_ms"]=parse_ms; profile["core_ms"]=core_ms;
+    profile["sweep_ms"]=timings.sweep_ms; profile["connect_ms"]=timings.connect_ms;
+    profile["normalize_ms"]=timings.normalize_ms;
+    profile["densify_ms"]=densify_ms; profile["serialize_ms"]=serialize_ms;
+    py::dict output; output["path"]=result; output["timings_ms"]=profile;
+    return output;
 }
 
 PYBIND11_MODULE(_mst27_cpp, module) {
     module.doc() = "C++ planning kernel for mst27";
-    module.attr("__version__") = "4.7.0";
-    module.def("plan_core", &plan_core, py::arg("grid_map"), py::arg("stage_specs"),
+    module.attr("__version__") = "4.7.1";
+    module.def("plan_core", [](const py::array_t<int, py::array::c_style | py::array::forcecast>& grid,
+                              const py::list& stages, double spacing, double output_spacing) {
+        return plan_core(grid, stages, spacing, output_spacing, false);
+    }, py::arg("grid_map"), py::arg("stage_specs"),
                py::arg("spacing_pixels"), py::arg("output_spacing_pixels") = 0.0);
+    module.def("plan_core_profiled", [](const py::array_t<int, py::array::c_style | py::array::forcecast>& grid,
+                                       const py::list& stages, double spacing, double output_spacing) {
+        return plan_core(grid, stages, spacing, output_spacing, true);
+    }, py::arg("grid_map"), py::arg("stage_specs"),
+       py::arg("spacing_pixels"), py::arg("output_spacing_pixels") = 0.0);
 }
 #endif  // MST27_HAVE_PYBIND
