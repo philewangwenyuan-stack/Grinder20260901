@@ -115,7 +115,7 @@ rg -n 'super_lio|cloud_to_occupancy_grid|include' catkin_ws/src/grinder_schedule
 - 新增/修改协议：`sl_link.proto` -> `sl_linka_adapter.py` -> `scheduler_node.py` 对应处理函数；之后重新生成相关 SDK。
 - 地图问题：`scheduler.yaml` 的存储参数 -> `map_service.py` -> `scheduler_node.py` 中 `handle_map_*`。
 - 路径问题：`scheduler.yaml: planner_script_path` -> `planner_adapter.py` -> `mst27.py`；C++ 加速问题再读 `mst27_cpp.cpp`。
-- 任务不走：`handle_task_config` / `handle_task_command` -> `_plan_current_task` -> `_start_execution` -> `_dispatch_current_goal` / `_tick_path_execution`。
+- 任务不走：`handle_task_config` / `handle_task_command` -> `_plan_current_task` -> `_start_execution` -> `_publish_active_segment_plan` / `_send_active_segment_goal` / `_tick_path_execution`。
 - 底盘不动：先查 `/chassis/task_enable`，再查 `/cmd_vel`，然后读 `chassis_driver_node.py` 的 `_handle_cmd_vel` 和 `chassis_driver.yaml`。
 - 导航行为异常：先查 `robot_diff_drive.launch` 选用的 `teb` 或 `rpp`，再读对应 YAML；不要先改上游 ROS navigation 源码。
 - 视频问题：`local_rtsp_server.py` -> `media_streamer.py` -> `start_grinder_stack.sh` 的 mediamtx 选择逻辑。

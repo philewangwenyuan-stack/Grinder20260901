@@ -944,15 +944,6 @@ class PlannerAdapter:
             length_m=length_m,
         )
 
-    def _extract_lap_index(self, region_id_text):
-        text = str(region_id_text or "").strip()
-        if "__lap_" not in text:
-            return 1
-        try:
-            return max(1, int(text.rsplit("__lap_", 1)[1]))
-        except Exception:
-            return 1
-
     def _plan_region_connector_hybrid(self, module, map_info, task_config, conn_start, conn_goal):
         if self._hybrid_module is None:
             return []
@@ -1068,38 +1059,6 @@ class PlannerAdapter:
             return points
         except Exception:
             return []
-
-    def _grid_point_in_any_work_region(self, row, col, work_regions, map_info, ratio):
-        if not work_regions:
-            return True
-        for region in work_regions:
-            points = region.get("points", [])
-            if len(points) < 3:
-                continue
-            poly = np.array(
-                [[
-                    float((p["x"] - map_info["origin_x"]) * ratio),
-                    float((p["y"] - map_info["origin_y"]) * ratio),
-                ] for p in points],
-                dtype=np.float32,
-            )
-            # cv2.pointPolygonTest expects (x, y) -> (col, row)
-            if cv2.pointPolygonTest(poly, (float(col), float(row)), False) >= 0:
-                return True
-        return False
-
-    def _grid_point_in_region(self, row, col, region, map_info, ratio):
-        points = region.get("points", []) if isinstance(region, dict) else []
-        if len(points) < 3:
-            return False
-        poly = np.array(
-            [[
-                float((p["x"] - map_info["origin_x"]) * ratio),
-                float((p["y"] - map_info["origin_y"]) * ratio),
-            ] for p in points],
-            dtype=np.float32,
-        )
-        return cv2.pointPolygonTest(poly, (float(col), float(row)), False) >= 0
 
     def _world_point_in_region(self, x, y, region):
         points = region.get("points", []) if isinstance(region, dict) else []
@@ -1233,28 +1192,6 @@ class PlannerAdapter:
         col = max(0, min(map_info["width"] - 1, col))
         row = max(0, min(map_info["height"] - 1, row))
         return module.Point(row=row, col=col)
-
-    def _build_global_boundary(self, module, work_regions, map_info, ratio):
-        all_points = []
-        for region in work_regions:
-            for point in region.get("points", []):
-                p = self._world_to_point(module, point["x"], point["y"], map_info, ratio)
-                all_points.append((p.col, p.row))
-        if len(all_points) < 3:
-            full_region = self._build_full_map_region(
-                (int(map_info["height"]), int(map_info["width"])),
-                float(map_info["resolution"]),
-                map_info,
-            )
-            return [self._world_to_point(module, p["x"], p["y"], map_info, ratio) for p in full_region["points"]]
-        pts = np.array(all_points, dtype=np.int32).reshape((-1, 1, 2))
-        hull = cv2.convexHull(pts)
-        boundary = []
-        for item in hull:
-            col = int(item[0][0])
-            row = int(item[0][1])
-            boundary.append(module.Point(row=row, col=col))
-        return boundary
 
     def _apply_erase_regions_to_grid_map(self, grid_map, map_info, erase_regions):
         if grid_map is None or not erase_regions:

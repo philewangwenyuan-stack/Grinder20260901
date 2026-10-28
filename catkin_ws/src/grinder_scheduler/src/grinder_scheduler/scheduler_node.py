@@ -28,7 +28,7 @@ except Exception:
     DynamicReconfigureClient = None
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from actionlib_msgs.msg import GoalID
-from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped, Twist
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
 from grinder_chassis_driver.srv import EnableChassis
 from nav_msgs.msg import OccupancyGrid, Odometry, Path
@@ -62,7 +62,6 @@ from grinder_scheduler.models import (
     PlannerPath,
     SchedulerState,
     TaskConfigModel,
-    VideoStreamState,
     is_planning_direction,
     normalize_planning_direction,
 )
@@ -1673,16 +1672,6 @@ class SchedulerNode:
             return 0.0
         return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
-    def _quaternion_to_navigation_frame(self, quat, alignment_yaw):
-        if alignment_yaw is None:
-            return quat
-        return self._yaw_to_quaternion(self._yaw_from_quaternion(quat) + float(alignment_yaw))
-
-    def _point_to_navigation_frame(self, x, y, alignment_yaw):
-        if alignment_yaw is None:
-            return float(x), float(y)
-        return self._transform_point_by_yaw(x, y, float(alignment_yaw))
-
     def _pose_for_sl_link_report(self):
         # SL-LinkA previews and APP edit coordinates use the original map
         # frame. Report the robot position and heading in that same frame;
@@ -1726,26 +1715,6 @@ class SchedulerNode:
             float(self._app_rotation_deg_for_map_id(target_map_id))
             - float(self._alignment_yaw_deg_for_sl_link_report(target_map_id))
         )
-
-    def _planning_rotation_yaw(self, map_id=None):
-        target_map_id = str(map_id or "").strip() or self._current_map_id()
-        alignment_yaw = self._alignment_yaw_for_map_id(target_map_id)
-        delta_deg = self._rotation_alignment_delta_deg_for_map_id(target_map_id)
-        if alignment_yaw is None:
-            if abs(float(delta_deg)) <= 1e-9:
-                return None
-            alignment_yaw = 0.0
-        # Keep the signed arithmetic result exactly as configured. Do not fold
-        # it into [-180, 180] or an equivalent 180-degree planning axis.
-        effective_deg = math.degrees(float(alignment_yaw)) + float(delta_deg)
-        # APP angles are clockwise-positive, while the standard XY rotation
-        # matrix is counter-clockwise-positive. Convert only at application.
-        return math.radians(-effective_deg)
-
-    @staticmethod
-    def _normalize_angle_deg(angle_deg):
-        value = (float(angle_deg) + 180.0) % 360.0 - 180.0
-        return 180.0 if value == -180.0 else value
 
     def _apply_alignment_yaw_to_response(self, response, map_id=None):
         alignment_deg = float(self._alignment_yaw_deg_for_sl_link_report(map_id))
@@ -1833,9 +1802,6 @@ class SchedulerNode:
         self.goal_pub.publish(self._build_navigation_goal_msg(endpoint, target_index, quat))
 
     # Backward compatibility for older internal calls; keeps behavior periodic.
-    def _publish_path_endpoint_goal_once(self, reason=""):
-        self._publish_path_endpoint_goal(reason=reason)
-
     def _select_precomputed_goal_index(self, nearest_index):
         if not self._goal_points:
             return self._resolve_straight_segment_end_index(nearest_index)
@@ -2942,50 +2908,6 @@ class SchedulerNode:
             source_pose["heading_deg"] = 0.0
         return source_pose
 
-    def _point_from_source_to_aligned_map(self, point, alignment_yaw):
-        aligned_x, aligned_y = self._transform_point_by_yaw(
-            point.get("x", 0.0),
-            point.get("y", 0.0),
-            float(alignment_yaw),
-        )
-        aligned_point = dict(point)
-        aligned_point["x"] = aligned_x
-        aligned_point["y"] = aligned_y
-        return aligned_point
-
-    def _points_from_source_to_aligned_map(self, points, alignment_yaw):
-        if not points:
-            return []
-        return [self._point_from_source_to_aligned_map(point, alignment_yaw) for point in points]
-
-    def _pose_from_source_to_aligned_map(self, pose, alignment_yaw):
-        if not isinstance(pose, dict) or not pose:
-            return {}
-        aligned_x, aligned_y = self._transform_point_by_yaw(
-            pose.get("x", 0.0),
-            pose.get("y", 0.0),
-            float(alignment_yaw),
-        )
-        aligned_pose = dict(pose)
-        aligned_pose["x"] = aligned_x
-        aligned_pose["y"] = aligned_y
-        try:
-            aligned_pose["heading_deg"] = float(pose.get("heading_deg", 0.0)) + math.degrees(float(alignment_yaw))
-        except Exception:
-            aligned_pose["heading_deg"] = 0.0
-        orientation = pose.get("orientation") if isinstance(pose, dict) else None
-        if isinstance(orientation, dict):
-            aligned_pose["orientation"] = self._yaw_to_quaternion(
-                self._yaw_from_quaternion(orientation) + float(alignment_yaw)
-            )
-        covariance = pose.get("localization_covariance")
-        if isinstance(covariance, dict):
-            aligned_pose["localization_covariance"] = self._rotate_localization_covariance(
-                covariance,
-                float(alignment_yaw),
-            )
-        return aligned_pose
-
     @staticmethod
     def _rotate_localization_covariance(covariance, yaw):
         if not isinstance(covariance, dict) or not bool(covariance.get("valid", False)):
@@ -3026,128 +2948,6 @@ class SchedulerNode:
         message.localization_covariance.xy_covariance = float(covariance.get("xy_covariance", 0.0))
         message.localization_covariance.x_yaw_covariance = float(covariance.get("x_yaw_covariance", 0.0))
         message.localization_covariance.y_yaw_covariance = float(covariance.get("y_yaw_covariance", 0.0))
-
-    def _region_from_source_to_aligned_map(self, region, alignment_yaw):
-        if not isinstance(region, dict):
-            return region
-        aligned_region = deepcopy(region)
-        aligned_region["points"] = self._points_from_source_to_aligned_map(
-            region.get("points", []) or [],
-            alignment_yaw,
-        )
-        if isinstance(region.get("start_pose", None), dict) and region.get("start_pose"):
-            aligned_region["start_pose"] = self._pose_from_source_to_aligned_map(region.get("start_pose"), alignment_yaw)
-        if isinstance(region.get("end_pose", None), dict) and region.get("end_pose"):
-            aligned_region["end_pose"] = self._pose_from_source_to_aligned_map(region.get("end_pose"), alignment_yaw)
-        return aligned_region
-
-    def _build_aligned_planning_map(self, composed_map, map_info, alignment_yaw):
-        resolution = max(1e-9, float((map_info or {}).get("resolution", 0.05)))
-        origin_x = float((map_info or {}).get("origin_x", 0.0))
-        origin_y = float((map_info or {}).get("origin_y", 0.0))
-        aligned_grid, aligned_origin_x, aligned_origin_y = self._rotate_grid_to_aligned_frame(
-            composed_map,
-            origin_x,
-            origin_y,
-            resolution,
-            float(alignment_yaw),
-        )
-        aligned_map_info = dict(map_info or {})
-        aligned_map_info.update(
-            {
-                "width": int(aligned_grid.shape[1]),
-                "height": int(aligned_grid.shape[0]),
-                "origin_x": float(aligned_origin_x),
-                "origin_y": float(aligned_origin_y),
-                "resolution": resolution,
-                "frame_id": self._live_map_aligned_frame,
-                "source_frame_id": str((map_info or {}).get("frame_id", self._live_map_source_frame)),
-                "alignment_yaw": float(alignment_yaw),
-            }
-        )
-        return aligned_grid, aligned_map_info
-
-    def _task_config_for_aligned_planning(self, task_config, alignment_yaw):
-        direction = normalize_planning_direction(
-            getattr(task_config, "global_direction", "x")
-        )
-        return TaskConfigModel(
-            task_id=task_config.task_id,
-            map_id=task_config.map_id,
-            work_regions=[
-                self._region_from_source_to_aligned_map(region, alignment_yaw)
-                for region in list(task_config.work_regions or [])
-            ],
-            obstacle_regions=[
-                self._region_from_source_to_aligned_map(region, alignment_yaw)
-                for region in list(task_config.obstacle_regions or [])
-            ],
-            erase_regions=[
-                self._region_from_source_to_aligned_map(region, alignment_yaw)
-                for region in list(task_config.erase_regions or [])
-            ],
-            crop_region=(
-                self._region_from_source_to_aligned_map(task_config.crop_region, alignment_yaw)
-                if isinstance(task_config.crop_region, dict) and task_config.crop_region
-                else {}
-            ),
-            active_work_region_id=task_config.active_work_region_id,
-            selected_work_region_ids=list(task_config.selected_work_region_ids or []),
-            region_repeat_config=dict(task_config.region_repeat_config or {}),
-            vehicle_width=task_config.vehicle_width,
-            vehicle_length=task_config.vehicle_length,
-            default_path_spacing=task_config.default_path_spacing,
-            global_direction=direction,
-            turn_radius=task_config.turn_radius,
-            overlap_ratio=task_config.overlap_ratio,
-            inflation_radius=task_config.inflation_radius,
-            endpoint_margin=task_config.endpoint_margin,
-            output_point_spacing=task_config.output_point_spacing,
-            aligned_obstacle_inflation=task_config.aligned_obstacle_inflation,
-            aligned_obstacle_max_extent=task_config.aligned_obstacle_max_extent,
-            obstacle_corner_angle_deg=task_config.obstacle_corner_angle_deg,
-            obstacle_avoidance_distance=task_config.obstacle_avoidance_distance,
-            current_pose=self._pose_from_source_to_aligned_map(task_config.current_pose, alignment_yaw),
-            start_pose=self._pose_from_source_to_aligned_map(task_config.start_pose, alignment_yaw),
-            end_pose=self._pose_from_source_to_aligned_map(task_config.end_pose, alignment_yaw),
-        )
-
-    def _planner_path_from_aligned_to_source(self, planner_path, alignment_yaw, source_map_info):
-        if planner_path is None:
-            return None
-        source_frame = str((source_map_info or {}).get("frame_id", self._live_map_source_frame) or self._live_map_source_frame)
-        resolution = max(1e-9, float((source_map_info or {}).get("resolution", 0.05)))
-        origin_x = float((source_map_info or {}).get("origin_x", 0.0))
-        origin_y = float((source_map_info or {}).get("origin_y", 0.0))
-        converted_points = []
-        for point_index, point in enumerate(list(planner_path.points or [])):
-            if not isinstance(point, dict):
-                continue
-            source_point = deepcopy(point)
-            source_x, source_y = self._transform_point_by_yaw(
-                point.get("x", 0.0),
-                point.get("y", 0.0),
-                -float(alignment_yaw),
-            )
-            source_point["index"] = int(point_index)
-            source_point["x"] = float(source_x)
-            source_point["y"] = float(source_y)
-            source_point["col"] = float((source_x - origin_x) / resolution)
-            source_point["row"] = float((source_y - origin_y) / resolution)
-            orientation = point.get("orientation")
-            if isinstance(orientation, dict):
-                source_point["orientation"] = self._yaw_to_quaternion(
-                    self._yaw_from_quaternion(orientation) - float(alignment_yaw)
-                )
-            converted_points.append(source_point)
-        nav_path = self._build_nav_path_from_points(converted_points, source_frame)
-        return PlannerPath(
-            task_id=planner_path.task_id,
-            path_version=int(planner_path.path_version),
-            points=converted_points,
-            nav_path=nav_path,
-            length_m=float(planner_path.length_m),
-        )
 
     def _path_points_for_external_map_frame(self, points):
         # Planned paths are transformed back to the original map frame before
@@ -3421,40 +3221,6 @@ class SchedulerNode:
             seen.add(dirname)
             if self._remove_map_overlay_state_for_map(text):
                 removed += 1
-        return removed
-
-    def _cleanup_orphan_map_overlay_states(self):
-        if not self._persist_state_enabled:
-            return 0
-        root_dir = os.path.join(self._persist_state_dir, "map_states")
-        if not os.path.isdir(root_dir):
-            return 0
-        valid_dirs = {self._map_state_dirname(self._live_map_id)}
-        for record in (self._map_registry or {}).values():
-            if not isinstance(record, dict):
-                continue
-            aliases = [
-                record.get("map_id", ""),
-                record.get("name", ""),
-            ]
-            for alias in aliases:
-                text = str(alias or "").strip()
-                if text:
-                    valid_dirs.add(self._map_state_dirname(text))
-
-        removed = 0
-        for dirname in os.listdir(root_dir):
-            full_path = os.path.join(root_dir, dirname)
-            if not os.path.isdir(full_path):
-                continue
-            if dirname in valid_dirs:
-                continue
-            try:
-                shutil.rmtree(full_path)
-                removed += 1
-                rospy.loginfo("Removed orphan map overlay state dir: %s", full_path)
-            except Exception as exc:
-                rospy.logwarn("Failed to remove orphan map overlay state dir=%s: %s", full_path, exc)
         return removed
 
     def _clear_live_map_files(self):
@@ -4309,21 +4075,6 @@ class SchedulerNode:
                 timestamp_ns,
             )
 
-    def _radar_relocalization_snapshot(self):
-        with self._radar_relocalization_status_lock:
-            raw_available = bool(self._radar_relocalization_raw_available)
-            raw_status = str(self._radar_relocalization_raw_status or "")
-            raw_timestamp_ns = int(self._radar_relocalization_raw_timestamp_ns or 0)
-            aggregate_status = str(self._radar_relocalization_aggregate_status or "idle")
-            aggregate_timestamp_ns = int(self._radar_relocalization_aggregate_timestamp_ns or 0)
-
-        return {
-            "available": raw_available,
-            "status": aggregate_status,
-            "raw_status": raw_status,
-            "timestamp_ns": max(aggregate_timestamp_ns, raw_timestamp_ns),
-        }
-
     def _cmd_vel_callback(self, msg):
         self._last_cmd_vel_linear = math.hypot(float(msg.linear.x), float(msg.linear.y))
         self._last_cmd_vel_angular = abs(float(msg.angular.z))
@@ -4767,25 +4518,6 @@ class SchedulerNode:
         regions = list(self.task_config.work_regions or [])
         regions.sort(key=lambda region: int(region.get("order_index", 0)))
         return self._effective_selected_work_region_ids(regions)
-
-    def _advance_active_work_region_for_request(self):
-        """Round-robin select active work region for each explicit PathPlanRequest."""
-        regions = list(self.task_config.work_regions or [])
-        if not regions:
-            self.task_config.active_work_region_id = ""
-            return
-        regions.sort(key=lambda region: int(region.get("order_index", 0)))
-        region_ids = [str(item.get("region_id", "")).strip() for item in regions]
-        region_ids = [item for item in region_ids if item]
-        if not region_ids:
-            self.task_config.active_work_region_id = ""
-            return
-        current = (self.task_config.active_work_region_id or "").strip()
-        if current not in region_ids:
-            self.task_config.active_work_region_id = region_ids[0]
-            return
-        next_idx = (region_ids.index(current) + 1) % len(region_ids)
-        self.task_config.active_work_region_id = region_ids[next_idx]
 
     def _effective_crop_region(self, allow_overlay_fallback=True):
         crop = self.task_config.crop_region if isinstance(self.task_config.crop_region, dict) else {}
@@ -6005,38 +5737,6 @@ class SchedulerNode:
             ) == abs_path:
                 self._map_registry.pop(map_id, None)
 
-    def _remove_task_bindings_for_map_id(self, map_id, reason=""):
-        target_map_id = str(map_id or "").strip()
-        if not target_map_id:
-            return 0
-        prefix = "{}::".format(target_map_id)
-        removed = 0
-        for key in list(self._task_bindings.keys()):
-            if str(key).startswith(prefix):
-                self._task_bindings.pop(key, None)
-                removed += 1
-        with self._task_obstacle_regions_lock:
-            for key in list(self._task_obstacle_regions.keys()):
-                if str(key).startswith(prefix):
-                    self._task_obstacle_regions.pop(key, None)
-        if removed > 0:
-            rospy.loginfo(
-                "Removed task bindings: map_id=%s count=%d%s",
-                target_map_id,
-                removed,
-                (" reason={}".format(reason) if reason else ""),
-            )
-        if isinstance(self._last_task_result, dict):
-            last_map_id = str(self._last_task_result.get("map_id", "") or "").strip()
-            if last_map_id == target_map_id:
-                self._last_task_result = {}
-                rospy.loginfo(
-                    "Cleared last task result: map_id=%s%s",
-                    target_map_id,
-                    (" reason={}".format(reason) if reason else ""),
-                )
-        return removed
-
     def _remove_task_bindings_for_map_aliases(self, aliases, reason=""):
         alias_set = {str(alias or "").strip() for alias in list(aliases or []) if str(alias or "").strip()}
         if not alias_set:
@@ -6078,51 +5778,6 @@ class SchedulerNode:
                 (" reason={}".format(reason) if reason else ""),
             )
         return removed
-
-    def _remove_saved_map_data_by_map_id(self, map_id, keep_path="", reason=""):
-        target_map_id = str(map_id or "").strip()
-        if not target_map_id:
-            return 0
-        keep_abs = os.path.abspath(str(keep_path or "").strip()) if keep_path else ""
-        removed_records = 0
-        removed_files = 0
-        overlay_aliases = {target_map_id}
-        for registry_key, record in list((self._map_registry or {}).items()):
-            if not isinstance(record, dict):
-                continue
-            record_map_id = str(record.get("map_id", "") or "").strip()
-            if record_map_id != target_map_id:
-                continue
-            abs_path = os.path.abspath(str(record.get("bundle_dir", record.get("path", "")) or "").strip())
-            if keep_abs and abs_path == keep_abs:
-                continue
-            overlay_aliases.update([
-                record_map_id,
-                str(record.get("name", "") or "").strip(),
-            ])
-            self._map_registry.pop(registry_key, None)
-            removed_records += 1
-            try:
-                if abs_path and os.path.isdir(abs_path):
-                    shutil.rmtree(abs_path)
-                    removed_files += 1
-            except Exception as exc:
-                rospy.logwarn("Failed to remove old map file for map_id=%s path=%s: %s", target_map_id, abs_path, exc)
-        removed_overlay_states = self._remove_map_overlay_states_for_aliases(overlay_aliases)
-        removed_path_debug = self._remove_planned_path_debug_for_map(target_map_id)
-        removed_tasks = self._remove_task_bindings_for_map_aliases(overlay_aliases, reason=reason or "map_replace")
-        rospy.loginfo(
-            "Removed old map data by map_id: map_id=%s records=%d files=%d overlay_states=%d path_debug=%d task_bindings=%d keep_path=%s%s",
-            target_map_id,
-            removed_records,
-            removed_files,
-            removed_overlay_states,
-            removed_path_debug,
-            removed_tasks,
-            keep_abs or "<none>",
-            (" reason={}".format(reason) if reason else ""),
-        )
-        return removed_records
 
     def _find_recorded_map_by_id(self, map_id):
         target = str(map_id or "").strip()
@@ -6566,9 +6221,6 @@ class SchedulerNode:
         self.wheel_cmd_pub.publish(wheel)
         self._set_chassis_enabled(False)
 
-    def _normalize_angle(self, rad):
-        return math.atan2(math.sin(rad), math.cos(rad))
-
     def _yaw_to_quaternion(self, yaw):
         half = 0.5 * float(yaw)
         return {
@@ -6845,37 +6497,6 @@ class SchedulerNode:
         corner_mid_count = sum(1 for item in self._goal_points if item.get("goal_kind") == "corner_mid")
         rospy.loginfo("Precomputed goal points: count=%d corner_mid=%d", len(self._goal_points), corner_mid_count)
 
-    def _init_path_execution_cursor(self):
-        if self.current_path is None or not self.current_path.points:
-            self._exec_goal_index = 0
-            return
-        if not self._goal_points:
-            self._rebuild_goal_points()
-        pose = self.aurora_bridge.get_pose()
-        nearest_index = 0
-        nearest_distance = float("inf")
-        for index, point in enumerate(self.current_path.points):
-            distance = math.hypot(float(point["x"]) - pose["x"], float(point["y"]) - pose["y"])
-            if distance < nearest_distance:
-                nearest_distance = distance
-                nearest_index = index
-        self.current_path_index = nearest_index
-        if not self._goal_points:
-            self._exec_goal_index = min(nearest_index + 1, len(self.current_path.points) - 1)
-            return
-
-        # Do not publish the initial point as execution goal:
-        # choose the first precomputed goal strictly ahead of current nearest index.
-        target_goal_index = -1
-        for i, item in enumerate(self._goal_points):
-            if int(item.get("path_index", -1)) > int(nearest_index):
-                target_goal_index = i
-                break
-        if target_goal_index < 0:
-            # Fallback: if already near the final point, keep the last goal.
-            target_goal_index = len(self._goal_points) - 1
-        self._exec_goal_index = max(0, min(target_goal_index, len(self._goal_points) - 1))
-
     @motion_action(cancel_result=False, replace=False)
     def _dispatch_current_goal(self, force=False):
         if not self._exec_active or self.current_path is None or not self.current_path.points:
@@ -6989,41 +6610,6 @@ class SchedulerNode:
         cached_xy = [(float(p.get("x", 0.0)), float(p.get("y", 0.0))) for p in self.current_path.points]
         quat = self._resolve_point_orientation(endpoint, int(nearest_index), cached_xy)
         self.goal_pub.publish(self._build_navigation_goal_msg(endpoint, int(nearest_index), quat))
-
-    def _advance_goal_or_finish(self):
-        if self.current_path is None or not self.current_path.points:
-            return
-        if not self._goal_points:
-            self._rebuild_goal_points()
-        if not self._goal_points:
-            return
-        if self._exec_goal_index >= len(self._goal_points) - 1:
-            self._mark_current_region_repeat_done()
-            if self._try_advance_to_next_region():
-                return
-            self._exec_active = False
-            self._disc_auto_cover_desired = False
-            self._reset_disc_motion_guard()
-            self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="task_complete")
-            self.disc_enable_pub.publish(Bool(data=False))
-            self.light_pub.publish(Bool(data=False))
-            self._safe_stop_motion()
-            self._exec_region_order = []
-            self._exec_region_index = -1
-            with self._motion.commit():
-                self.state = SchedulerState.COMPLETED
-            self._task_stop_reason = "completed"
-            self._finalize_task_result(stop_reason="completed")
-            rospy.loginfo("Path execution completed: task_id=%s path_version=%s", self.current_path.task_id, self.current_path.path_version)
-            return
-        self._exec_goal_index += 1
-        self._exec_goal_start_time = time.time()
-        prev_goal = self._goal_points[max(0, self._exec_goal_index - 1)]
-        self.current_path_index = max(
-            self.current_path_index,
-            int(prev_goal.get("path_index", self.current_path_index)),
-        )
-        self._dispatch_current_goal(force=True)
 
     @motion_action(cancel_result=False)
     def _try_advance_to_next_region(self):
@@ -9837,50 +9423,6 @@ class SchedulerNode:
             response.message = str(exc)
         return response.SerializeToString(), pb.MSG_ID_MAP_IMPORT_TO_RADAR_RESPONSE, pb.COMP_SCHEDULER
 
-    def _attach_runtime_map_paths(self, response, update_navigation_map):
-        raw_map = self.aurora_bridge.get_map()
-        if raw_map is None:
-            return
-        map_info = self.map_service.get_map_info()
-        composed_map = self.map_service.compose_map()
-        out_dir = self._live_map_dir
-        yaml_name = self._live_map_yaml_name
-        image_name = self._live_map_image_name
-        if map_info is not None and composed_map is not None:
-            yaml_path, image_path = self._export_runtime_map(
-                raw_map,
-                out_dir,
-                yaml_name,
-                image_name,
-                grid_override=composed_map,
-                map_info_override=map_info,
-            )
-        else:
-            yaml_path, image_path = self._export_runtime_map(raw_map, out_dir, yaml_name, image_name)
-        response.map_yaml_path = yaml_path
-        response.map_image_path = image_path
-        response.navigation_map_reloaded = False
-        if not update_navigation_map:
-            return
-        nav_dir = os.path.dirname(self._nav_map_yaml_path)
-        nav_yaml_name = os.path.basename(self._nav_map_yaml_path)
-        nav_image_name = "map1.pgm"
-        if map_info is not None and composed_map is not None:
-            nav_yaml_path, nav_image_path = self._export_runtime_map(
-                raw_map,
-                nav_dir,
-                nav_yaml_name,
-                nav_image_name,
-                grid_override=composed_map,
-                map_info_override=map_info,
-            )
-        else:
-            nav_yaml_path, nav_image_path = self._export_runtime_map(raw_map, nav_dir, nav_yaml_name, nav_image_name)
-        reloaded, _ = self._reload_navigation_map(nav_yaml_path)
-        response.map_yaml_path = nav_yaml_path
-        response.map_image_path = nav_image_path
-        response.navigation_map_reloaded = bool(reloaded)
-
     def handle_map_save_request(self, payload):
         pb = self.sl_link_server.pb
         request = pb.MapSaveRequest()
@@ -10998,14 +10540,6 @@ class SchedulerNode:
             )
 
         return response.SerializeToString(), pb.MSG_ID_MAP_ALIGNMENT_RESPONSE, pb.COMP_SCHEDULER
-
-    def _is_sub_path(self, child_path, parent_path):
-        try:
-            child = os.path.realpath(child_path)
-            parent = os.path.realpath(parent_path)
-            return os.path.commonpath([child, parent]) == parent
-        except Exception:
-            return False
 
     def handle_map_catalog_request(self, payload):
         pb = self.sl_link_server.pb
