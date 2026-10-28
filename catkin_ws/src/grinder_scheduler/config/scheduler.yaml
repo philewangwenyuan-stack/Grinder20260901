@@ -231,6 +231,12 @@ sl_linka_python_sdk_dir: third_party/sl_linka/sdk/python
 sl_linka_host: 0.0.0.0
 # SL-LinkA 监听端口
 sl_linka_port: 8002
+# 独立控制通道；同一平板通过令牌绑定两个端口。
+sl_linka_control_port: 8003
+sl_linka_session_timeout_sec: 3.0
+sl_linka_bulk_bytes_per_sec: 1048576
+sl_linka_bulk_manual_bytes_per_sec: 262144
+sl_linka_bulk_burst_bytes: 8192
 # 生产默认每秒采样一帧，并按周期汇总接收量；排查问题时才开启逐帧帧头日志。
 sl_linka_rx_diagnostic_logging: false
 sl_linka_rx_sample_interval_sec: 1.0

@@ -28,6 +28,8 @@ enum MessageId {
 
   MSG_ID_CONTROL_COMMAND = 0x0401;
   MSG_ID_CONTROL_COMMAND_RESPONSE = 0x0402;
+  MSG_ID_CHANNEL_SESSION_REQUEST = 0x0403;
+  MSG_ID_CHANNEL_SESSION_RESPONSE = 0x0404;
 
   MSG_ID_TASK_CONFIG = 0x0500;
   MSG_ID_TASK_CONFIG_RESPONSE = 0x0501;
@@ -1208,6 +1210,38 @@ message ChassisPowerControl {
 message DiscControl {
   bool enabled = 1;
   uint32 speed_rpm = 2;
+}
+
+// Data OPEN obtains an opaque tablet token. Control BIND and channel RECOVER
+// require that token. Heartbeats never renew a manual-motion command lease.
+enum ChannelRole {
+  CHANNEL_ROLE_DATA = 0;
+  CHANNEL_ROLE_CONTROL = 1;
+}
+
+enum ChannelSessionAction {
+  CHANNEL_SESSION_OPEN = 0;
+  CHANNEL_SESSION_BIND = 1;
+  CHANNEL_SESSION_HEARTBEAT = 2;
+  CHANNEL_SESSION_RELEASE = 3;
+  CHANNEL_SESSION_RECOVER = 4;
+}
+
+message ChannelSessionRequest {
+  ChannelSessionAction action = 1;
+  ChannelRole role = 2;
+  string token = 3;
+}
+
+message ChannelSessionResponse {
+  ResultCode result = 1;
+  string message = 2;
+  ChannelRole role = 3;
+  string token = 4;
+  uint32 heartbeat_interval_ms = 5;
+  uint32 session_timeout_ms = 6;
+  bool control_ready = 7;
+  bool emergency_stop_latched = 8;
 }
 
 message EmergencyStopControl {

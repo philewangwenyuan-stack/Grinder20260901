@@ -4,6 +4,7 @@ import threading
 import time
 from collections import deque
 from grinder_scheduler.priority_wire import PriorityWire
+from grinder_scheduler.channel_sessions import ChannelSessions, BulkBudget
 from concurrent.futures import ThreadPoolExecutor
 
 from grinder_scheduler.sl_link_loader import ensure_sl_linka_sdk_on_path
@@ -133,6 +134,12 @@ class SlLinkAServer:
         rx_sample_interval_sec=1.0,
         rx_stats_interval_sec=60.0,
         metrics_registry=None,
+        control_port=8003,
+        session_timeout_sec=3.0,
+        manual_timeout_sec=0.5,
+        bulk_bytes_per_sec=1048576,
+        bulk_manual_bytes_per_sec=262144,
+        bulk_burst_bytes=8192,
     ):
         ensure_sl_linka_sdk_on_path(sdk_dir)
         from sl_link.frame import SL_PROTOCOL_VERSION, SlFrame, SlFrameParser
@@ -144,6 +151,14 @@ class SlLinkAServer:
         self.pb = pb
         self.host = host
         self.port = port
+        self.control_port = control_port
+        self.sessions = ChannelSessions(timeout=session_timeout_sec)
+        self.bulk_budget = BulkBudget(bulk_bytes_per_sec, bulk_manual_bytes_per_sec, bulk_burst_bytes)
+        self.manual_timeout_sec = max(0.1, float(manual_timeout_sec))
+        self._listeners = []
+        self._peers = set()
+        self._peers_lock = threading.Lock()
+        self._stopping = threading.Event()
         self._handler = callback_handler
         self._server = None
         self._thread = None
@@ -173,6 +188,9 @@ class SlLinkAServer:
         self._map_wire_bytes_sent = metrics_registry.counter("map_wire_bytes_sent") if metrics_registry else None
         self._map_send_failures = metrics_registry.counter("map_send_failures") if metrics_registry else None
         self._map_build_failures = metrics_registry.counter("map_build_failures") if metrics_registry else None
+        self._session_busy = metrics_registry.counter("channel_busy_rejections") if metrics_registry else None
+        self._session_expired = metrics_registry.counter("channel_lease_expirations") if metrics_registry else None
+        self._disconnect_apply = metrics_registry.histogram("control_disconnect_apply_ms") if metrics_registry else None
 
     def _enum_name(self, enum_type_name, value):
         enum_type = getattr(self.pb, enum_type_name, None)
@@ -353,13 +371,20 @@ class SlLinkAServer:
                 self.running = True
                 self.send_lock = PriorityWire()
                 self.session = object()
-                self.request.settimeout(0.5)
-                outer._handler.begin_manual_session(self.session)
+                self.role = self.server.channel_role
+                self.admitted = False
+                self.legacy = False
+                self.created_at = time.monotonic()
+                self.manual_received_at = None
+                self.close_lock = threading.Lock()
+                self.closed_once = False
+                self.request.settimeout(0.1)
                 self.stop_executor = _BoundedLatestWorker(1, "sl_linka_stop")
                 self.control_dispatch_executor = _BoundedFifoWorker(8, "sl_linka_control")
                 try:
                     self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                    self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
+                    self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF,
+                                           16 * 1024 if self.role == "control" else 64 * 1024)
                 except OSError as exc:
                     if rospy is not None:
                         rospy.logwarn("SL-LinkA TCP send tuning failed: %s", exc)
@@ -399,14 +424,17 @@ class SlLinkAServer:
                     thread_name_prefix="sl_linka_bulk_tx",
                 )
                 self.bulk_response_slots = threading.BoundedSemaphore(2)
+                with outer._peers_lock:
+                    outer._peers.add(self)
                 self.status_thread = threading.Thread(target=self._periodic_reports, daemon=True)
                 self.status_thread.start()
 
             def _periodic_reports(self):
                 while self.running:
                     try:
-                        self._send_payload(*outer._handler.build_device_status_report())
-                        self._send_payload(*outer._handler.build_task_status_report())
+                        if self.role == "data" and self._valid():
+                            self._send_payload(*outer._handler.build_device_status_report())
+                            self._send_payload(*outer._handler.build_task_status_report())
                     except Exception:
                         pass
                     time.sleep(1.0)
@@ -425,12 +453,48 @@ class SlLinkAServer:
 
                     if not data:
                         break
+                    # The historical APP sent a single NUL as its transport heartbeat.
+                    # Only an admitted readonly connection may renew via that format.
+                    if self.legacy and data == b"\x00":
+                        outer.sessions.touch(self.role, self)
+                        continue
                     for frame in self.parser.parse(data):
                         if frame.dst_id not in (outer.pb.DEVICE_LOWER, outer.pb.DEVICE_BROADCAST):
                             continue
                         received_at = time.monotonic()
                         outer._log_rx_frame(frame)
                         try:
+                            if int(frame.msg_id) == int(outer.pb.MSG_ID_CHANNEL_SESSION_REQUEST):
+                                self._session_request(frame)
+                                continue
+                            if not self.admitted:
+                                if self.role == "data" and self._readonly(frame.msg_id):
+                                    if not self._admit(legacy=True):
+                                        self._reject(frame, "Device is occupied", outer.pb.RESULT_BUSY)
+                                        self._close()
+                                        return
+                                else:
+                                    self._reject(frame, "Channel handshake required", outer.pb.RESULT_UNSUPPORTED)
+                                    self._close()
+                                    return
+                            if not outer.sessions.touch(self.role, self):
+                                self._close()
+                                return
+                            if not self._allowed(frame):
+                                self._reject(frame, "Request is not allowed on this channel", outer.pb.RESULT_UNSUPPORTED)
+                                continue
+                            if int(frame.msg_id) == int(outer.pb.MSG_ID_TASK_COMMAND) and self.role == "control":
+                                # Revoke queued manual output on receipt, before any slow task cleanup.
+                                outer._handler.cancel_manual_session(self.session)
+                                self.manual_control_executor.clear()
+                                capture = getattr(outer._handler, "capture_stop_generation", None)
+                                generation = capture(self.session) if capture else outer._handler.capture_control_generation()
+                                outer._stop_pending.set()
+                                outer._stop_generation = generation
+                                dropped = outer._task_stop_executor.submit(self._dispatch_task_stop, frame, generation)
+                                if dropped is not None:
+                                    self._reject(dropped[1][0], "Superseded by a newer stop", outer.pb.RESULT_BUSY)
+                                continue
                             if int(frame.msg_id) == int(outer.pb.MSG_ID_CONTROL_COMMAND):
                                 control_request = self._parse_control_command(frame)
                                 if (
@@ -442,6 +506,10 @@ class SlLinkAServer:
                                         self.session, control_request, received_at)
                                     if stop:
                                         self.manual_control_executor.clear()
+                                        self.manual_received_at = None
+                                    else:
+                                        self.manual_received_at = received_at
+                                        outer.bulk_budget.manual(outer.manual_timeout_sec)
                                     executor = self.stop_executor if stop else self.manual_control_executor
                                     dropped = executor.submit(
                                         self._dispatch_control_immediately,
@@ -497,6 +565,10 @@ class SlLinkAServer:
                                     frame,
                                     received_at,
                                     "ordered",
+                                    outer._handler.capture_control_generation()
+                                    if int(frame.msg_id) in (int(outer.pb.MSG_ID_TASK_COMMAND),
+                                        int(outer.pb.MSG_ID_SETTINGS_WRITE_REQUEST),
+                                        int(outer.pb.MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST)) else None,
                                 )
                                 self._log_dropped_job("ordered request", dropped)
                         except Exception as exc:
@@ -509,8 +581,9 @@ class SlLinkAServer:
                                 )
 
             def finish(self):
-                self.running = False
-                outer._handler.cancel_manual_session(self.session)
+                self._close()
+                with outer._peers_lock:
+                    outer._peers.discard(self)
                 self.stop_executor.shutdown(wait=False)
                 self.control_dispatch_executor.shutdown(wait=False)
                 self.dispatch_executor.shutdown(wait=False)
@@ -520,6 +593,154 @@ class SlLinkAServer:
                 self.manual_response_executor.shutdown(wait=False)
                 self.control_response_executor.shutdown(wait=False)
                 self.bulk_response_executor.shutdown(wait=False)
+
+            def _valid(self):
+                return self.running and outer.sessions.valid(self.role, self)
+
+            def _close(self):
+                with self.close_lock:
+                    if self.closed_once:
+                        return
+                    self.closed_once = True
+                    self.running = False
+                    outer.sessions.detach(self)
+                try:
+                    self.request.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+                started = time.monotonic()
+                if self.role == "control" and self.admitted:
+                    outer._handler.cancel_manual_session(self.session)
+                    if outer._disconnect_apply is not None:
+                        outer._disconnect_apply.observe((time.monotonic() - started) * 1000.0)
+                self.manual_control_executor.clear()
+
+            def _admit(self, token="", legacy=False):
+                if outer._stopping.is_set():
+                    return False
+                accepted, issued, retired = outer.sessions.attach(self.role, self, token, legacy)
+                for peer in retired:
+                    peer._close()
+                if not accepted:
+                    if outer._session_busy is not None:
+                        outer._session_busy.inc()
+                    return False
+                first = not self.admitted
+                self.admitted = True
+                self.legacy = legacy
+                if self.role == "control" and first:
+                    outer._handler.begin_manual_session(self.session)
+                return issued
+
+            def _session_response(self, frame, result, message="", token=""):
+                response = outer.pb.ChannelSessionResponse(
+                    result=result, message=message,
+                    role=outer.pb.CHANNEL_ROLE_CONTROL if self.role == "control" else outer.pb.CHANNEL_ROLE_DATA,
+                    token=token, heartbeat_interval_ms=1000,
+                    session_timeout_ms=int(outer.sessions.timeout * 1000),
+                    control_ready=outer.sessions.control_ready(),
+                    emergency_stop_latched=bool(getattr(getattr(outer._handler, "_motion", None), "latched", False)))
+                self._send_payload(response.SerializeToString(), outer.pb.MSG_ID_CHANNEL_SESSION_RESPONSE,
+                                   comp_id=outer.pb.COMP_CONTROL, ack_seq=frame.seq, control=True)
+
+            def _session_request(self, frame):
+                pb = outer.pb
+                request = pb.ChannelSessionRequest()
+                request.ParseFromString(frame.payload)
+                role = pb.CHANNEL_ROLE_CONTROL if self.role == "control" else pb.CHANNEL_ROLE_DATA
+                if request.role != role:
+                    self._session_response(frame, pb.RESULT_INVALID_PARAM, "Wrong channel role")
+                    return
+                if request.action in (pb.CHANNEL_SESSION_OPEN, pb.CHANNEL_SESSION_BIND, pb.CHANNEL_SESSION_RECOVER):
+                    if (self.role == "control" and not request.token) or self.legacy:
+                        self._session_response(frame, pb.RESULT_INVALID_PARAM, "A valid tablet token is required")
+                        self._close()
+                        return
+                    token = self._admit(request.token)
+                    self._session_response(frame, pb.RESULT_SUCCESS if token else pb.RESULT_BUSY,
+                                           "Channel ready" if token else "Device is occupied or token expired", token or "")
+                    if not token:
+                        self._close()
+                elif request.action == pb.CHANNEL_SESSION_HEARTBEAT:
+                    valid = outer.sessions.touch(self.role, self)
+                    self._session_response(frame, pb.RESULT_SUCCESS if valid else pb.RESULT_FAILED,
+                                           "Alive" if valid else "Session expired")
+                    if not valid:
+                        self._close()
+                elif request.action == pb.CHANNEL_SESSION_RELEASE:
+                    retired = outer.sessions.release(self.role, self)
+                    self._session_response(frame, pb.RESULT_SUCCESS if retired else pb.RESULT_FAILED, "Released")
+                    for peer in retired:
+                        peer._close()
+                else:
+                    self._session_response(frame, pb.RESULT_INVALID_PARAM, "Unknown session action")
+
+            def _readonly(self, msg_id):
+                names = ("SETTINGS_READ_REQUEST", "MAP_REQUEST", "MAP_PREVIEW_REQUEST", "MAP_CATALOG_REQUEST",
+                         "MAP_METRICS_REQUEST", "MAP_REGION_POINT_REQUEST", "TASK_RESULT_REQUEST",
+                         "TASK_EXECUTION_HISTORY_REQUEST", "TASK_TRAJECTORY_REQUEST", "VIDEO_STREAM_INFO_REQUEST",
+                         "RADAR_SYSTEM_STATUS_REQUEST", "RADAR_RELOCALIZATION_STATUS_REQUEST", "CAMERA_FRAME_REQUEST")
+                return int(msg_id) in {int(getattr(outer.pb, "MSG_ID_" + name)) for name in names}
+
+            def _allowed(self, frame):
+                pb = outer.pb
+                if self.legacy:
+                    return self._readonly(frame.msg_id)
+                if int(frame.msg_id) == int(pb.MSG_ID_TASK_COMMAND):
+                    request = pb.TaskCommand()
+                    request.ParseFromString(frame.payload)
+                    urgent = request.command in (pb.TASK_CMD_STOP, pb.TASK_CMD_PAUSE)
+                    return urgent if self.role == "control" else (
+                        not urgent and outer.sessions.control_ready() and not outer._stop_pending.is_set())
+                if self.role == "control":
+                    if int(frame.msg_id) != int(pb.MSG_ID_CONTROL_COMMAND):
+                        return False
+                    request = self._parse_control_command(frame)
+                    if request is not None and request.HasField("manual_drive"):
+                        from grinder_scheduler.manual_delivery import is_manual_stop
+                        if getattr(outer._handler, "_exec_active", False) and not is_manual_stop(request.manual_drive, pb):
+                            return False
+                    return True
+                if int(frame.msg_id) == int(pb.MSG_ID_SETTINGS_WRITE_REQUEST):
+                    return outer.sessions.control_ready() and not outer._stop_pending.is_set()
+                if int(frame.msg_id) == int(pb.MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST):
+                    request = pb.TaskRuntimeSettingsRequest()
+                    request.ParseFromString(frame.payload)
+                    if request.HasField("run_speed") or request.HasField("disc_speed_rpm"):
+                        return outer.sessions.control_ready() and not outer._stop_pending.is_set()
+                return int(frame.msg_id) != int(pb.MSG_ID_CONTROL_COMMAND)
+
+            def _reject(self, frame, message, result):
+                pb = outer.pb
+                if int(frame.msg_id) == int(pb.MSG_ID_CONTROL_COMMAND):
+                    response = pb.ControlCommandResponse(result=result, message=message)
+                    self._send_payload(response.SerializeToString(), pb.MSG_ID_CONTROL_COMMAND_RESPONSE,
+                                       comp_id=pb.COMP_CONTROL, ack_seq=frame.seq, control=True)
+                elif int(frame.msg_id) == int(pb.MSG_ID_TASK_COMMAND):
+                    response = pb.TaskCommandResponse(result=result, message=message)
+                    self._send_payload(response.SerializeToString(), pb.MSG_ID_TASK_COMMAND_RESPONSE,
+                                       comp_id=pb.COMP_SCHEDULER, ack_seq=frame.seq, control=True)
+                elif int(frame.msg_id) in (int(pb.MSG_ID_SETTINGS_WRITE_REQUEST), int(pb.MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST)):
+                    settings = int(frame.msg_id) == int(pb.MSG_ID_SETTINGS_WRITE_REQUEST)
+                    response_type = pb.SettingsWriteResponse if settings else pb.TaskRuntimeSettingsResponse
+                    response = response_type(result=result, message=message)
+                    response_id = pb.MSG_ID_SETTINGS_WRITE_RESPONSE if settings else pb.MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE
+                    self._send_payload(response.SerializeToString(), response_id,
+                                       comp_id=pb.COMP_SETTINGS if settings else pb.COMP_SCHEDULER,
+                                       ack_seq=frame.seq, control=True)
+                else:
+                    self._session_response(frame, result, message)
+
+            def _dispatch_task_stop(self, frame, generation):
+                try:
+                    # An accepted stop must finish cleanup even if its socket closes.
+                    payload, msg_id, comp_id = outer._handler.handle_task_command(
+                        frame.payload, control_generation=generation)
+                    if self._valid():
+                        self._queue_control_response(payload, msg_id, comp_id, int(frame.seq))
+                finally:
+                    if outer._stop_generation == generation:
+                        outer._stop_pending.clear()
 
             def _parse_control_command(self, frame):
                 try:
@@ -583,7 +804,15 @@ class SlLinkAServer:
                     except Exception:
                         pass
 
-            def _dispatch_ordered(self, frame, received_at, queue_name="ordered"):
+            def _dispatch_ordered(self, frame, received_at, queue_name="ordered", control_generation=None):
+                if not self._valid():
+                    return
+                if control_generation is not None and control_generation != outer._handler.capture_control_generation():
+                    self._reject(frame, "Request cancelled by stop/emergency", outer.pb.RESULT_FAILED)
+                    return
+                if not self._allowed(frame):
+                    self._reject(frame, "Channel is not ready for this request", outer.pb.RESULT_BUSY)
+                    return
                 queue_delay_ms = (time.monotonic() - float(received_at)) * 1000.0
                 if outer._ordered_queue_wait is not None:
                     outer._ordered_queue_wait.observe(queue_delay_ms)
@@ -596,7 +825,7 @@ class SlLinkAServer:
                         queue_delay_ms,
                     )
                 try:
-                    outer._dispatch_frame(self, frame, log_rx=False)
+                    outer._dispatch_frame(self, frame, log_rx=False, control_generation=control_generation)
                 except Exception as exc:
                     if rospy is not None:
                         rospy.logerr(
@@ -615,6 +844,16 @@ class SlLinkAServer:
                 control_generation=None,
                 manual_ticket=None,
             ):
+                if not self._valid():
+                    return
+                if outer._stop_pending.is_set() and control_request is not None:
+                    from grinder_scheduler.manual_delivery import is_manual_stop
+                    urgent = (control_request.HasField("emergency_stop") and control_request.emergency_stop.enabled)
+                    urgent = urgent or (control_request.HasField("manual_drive")
+                                        and is_manual_stop(control_request.manual_drive, outer.pb))
+                    if not urgent:
+                        self._reject(frame, "Task stop is still being applied", outer.pb.RESULT_BUSY)
+                        return
                 started = time.monotonic()
                 if received_at is not None and outer._control_queue_wait is not None:
                     # 控制等待时间从收到完整帧算到开始执行业务，便于发现排队抖动。
@@ -628,7 +867,7 @@ class SlLinkAServer:
                     parsed_request=control_request,
                     control_generation=control_generation,
                     manual_ticket=manual_ticket,
-                    connection_valid=lambda: (self.running and outer._handler.is_control_session_current(self.session)),
+                    connection_valid=lambda: (self._valid() and outer._handler.is_control_session_current(self.session)),
                 )
                 applied_ms = (time.monotonic() - started) * 1000.0
                 if outer._control_apply is not None:
@@ -641,20 +880,7 @@ class SlLinkAServer:
                         applied_ms,
                     )
                 if latest_response:
-                    accepted = self.manual_response_executor.submit(
-                        self._send_control_response,
-                        payload,
-                        msg_id,
-                        comp_id,
-                        int(frame.seq),
-                        False,
-                    )
-                    if not accepted and rospy is not None:
-                        rospy.logwarn_throttle(
-                            1.0,
-                            "Drop incoming SL-LinkA manual response while previous response is sending: ack=%d",
-                            int(frame.seq),
-                        )
+                    self._queue_control_response(payload, msg_id, comp_id, int(frame.seq))
                     return
                 self._queue_control_response(payload, msg_id, comp_id, int(frame.seq))
 
@@ -695,30 +921,14 @@ class SlLinkAServer:
                     index = 0
                     # Yield at every complete frame so waiting control ACKs win.
                     while self.running and index < len(outputs):
-                        batch = bytearray()
-                        with self.send_lock.hold():
-                            while index < len(outputs) and not batch:
-                                payload, msg_id, comp_id = outputs[index]
-                                frame = outer.SlFrame(
-                                    version=outer.SL_PROTOCOL_VERSION,
-                                    flags=0,
-                                    seq=outer._next_seq(),
-                                    ack_seq=ack_seq,
-                                    src_id=outer.pb.DEVICE_LOWER,
-                                    dst_id=outer.pb.DEVICE_APP,
-                                    comp_id=comp_id if comp_id is not None else outer.pb.COMP_SYSTEM,
-                                    msg_id=msg_id,
-                                    payload=payload,
-                                )
-                                packed = frame.pack()
-                                batch.extend(packed)
-                                frame_count += 1
-                                payload_bytes += len(payload or b"")
-                                wire_bytes += len(packed)
-                                index += 1
-                            send_started = time.monotonic()
-                            self._send_wire(batch)
-                            send_ms += (time.monotonic() - send_started) * 1000.0
+                        payload, msg_id, comp_id = outputs[index]
+                        sent = self._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=ack_seq)
+                        frame_count += 1
+                        payload_bytes += len(payload or b'')
+                        if sent:
+                            wire_bytes += sent[2]
+                            send_ms += sent[1]
+                        index += 1
                     if rospy is not None:
                         rospy.loginfo(
                             "SL-LinkA bulk response sent: ack=%d frames=%d payload_bytes=%d wire_bytes=%d total_ms=%.1f send_ms=%.1f",
@@ -764,17 +974,14 @@ class SlLinkAServer:
                     self.request.sendall(payload)
                 except OSError:
                     self.running = False
-                    outer._handler.cancel_manual_session(self.session)
-                    self.manual_control_executor.clear()
-                    try:
-                        self.request.shutdown(socket.SHUT_RDWR)
-                    except OSError:
-                        pass
+                    self._close()
                     raise
 
             def _send_payload(self, payload, msg_id, comp_id=None, ack_seq=0, control=False):
                 if payload is None or msg_id is None:
                     return
+                if int(msg_id) in outer._bulk_message_ids:
+                    outer.bulk_budget.consume(len(payload) + 32, self._valid)
                 total_started = time.monotonic()
                 with self.send_lock.hold(control):
                     if control and outer._control_ack_wait is not None:
@@ -820,17 +1027,59 @@ class SlLinkAServer:
             daemon_threads = True
             request_queue_size = 16
 
-        self._server = ThreadedServer((self.host, self.port), RequestHandler)
-        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
-        self._thread.start()
+        self._bulk_message_ids = {int(getattr(self.pb, "MSG_ID_" + name)) for name in (
+            "MAP_CHUNK", "PATH_PLAN_RESPONSE", "PATH_POINT_PLAN_RESPONSE", "TASK_EXECUTION_HISTORY_CHUNK",
+            "TASK_TRAJECTORY_CHUNK", "TASK_RESULT_RESPONSE", "CAMERA_FRAME_CHUNK")}
+        self._stopping.clear()
+        self._stop_pending = threading.Event()
+        try:
+            for role, port in (("data", self.port), ("control", self.control_port)):
+                listener = ThreadedServer((self.host, port), RequestHandler)
+                listener.channel_role = role
+                self._listeners.append(listener)
+            self._server = self._listeners[0]
+            self._task_stop_executor = _BoundedLatestWorker(1, "sl_linka_task_stop")
+            for listener in self._listeners:
+                threading.Thread(target=listener.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True).start()
+            self._thread = threading.Thread(target=self._watch_sessions, daemon=True, name="sl_linka_leases")
+            self._thread.start()
+        except Exception:
+            for listener in self._listeners:
+                listener.server_close()
+            self._listeners.clear()
+            self._server = None
+            raise
         if rospy is not None:
-            rospy.loginfo("SL-LinkA listening on %s:%s", self.host, self.port)
+            rospy.loginfo("SL-LinkA data/control listening on %s:%s/%s", self.host, self.port, self.control_port)
 
     def stop(self):
-        if self._server is not None:
-            self._server.shutdown()
-            self._server.server_close()
-            self._server = None
+        self._stopping.set()
+        if hasattr(self, "_task_stop_executor"):
+            self._task_stop_executor.shutdown(wait=False)
+        with self._peers_lock:
+            peers = list(self._peers)
+        for peer in peers:
+            peer._close()
+        for listener in self._listeners:
+            listener.shutdown()
+            listener.server_close()
+        self._listeners.clear()
+        self._server = None
+
+    def _watch_sessions(self):
+        while not self._stopping.wait(0.05):
+            for peer in self.sessions.expire():
+                if self._session_expired is not None:
+                    self._session_expired.inc()
+                peer._close()
+            with self._peers_lock:
+                peers = list(self._peers)
+            now = time.monotonic()
+            for peer in peers:
+                if ((not peer.admitted and now - peer.created_at >= self.sessions.timeout)
+                        or (peer.manual_received_at is not None
+                            and now - peer.manual_received_at >= self.manual_timeout_sec)):
+                    peer._close()
 
     def _next_seq(self):
         with self._seq_lock:
@@ -838,7 +1087,21 @@ class SlLinkAServer:
             self._seq = (self._seq + 1) & 0xFFFF
             return value
 
-    def _dispatch_frame(self, request_handler, frame, log_rx=True):
+    def _call_data_mutation(self, peer, frame, callback, generation):
+        """Every positive publish rechecks the owner and receipt-time generation."""
+        gate = getattr(self._handler, "_motion", None)
+        if gate is None:
+            return callback(frame.payload)
+        previous = getattr(gate.local, "delivery_validator", None)
+        gate.local.delivery_validator = lambda: (
+            peer._valid() and (generation is None or generation == gate.generation)
+            and (previous is None or previous()))
+        try:
+            return callback(frame.payload)
+        finally:
+            gate.local.delivery_validator = previous
+
+    def _dispatch_frame(self, request_handler, frame, log_rx=True, control_generation=None):
         pb = self.pb
         if log_rx:
             self._log_rx_frame(frame)
@@ -847,7 +1110,8 @@ class SlLinkAServer:
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_SETTINGS_WRITE_REQUEST:
-            payload, msg_id, comp_id = self._handler.handle_settings_write_request(frame.payload)
+            payload, msg_id, comp_id = self._call_data_mutation(
+                request_handler, frame, self._handler.handle_settings_write_request, control_generation)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_CONTROL_COMMAND:
@@ -859,11 +1123,14 @@ class SlLinkAServer:
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_TASK_COMMAND:
-            payload, msg_id, comp_id = self._handler.handle_task_command(frame.payload)
+            payload, msg_id, comp_id = self._handler.handle_task_command(
+                frame.payload, connection_valid=request_handler._valid,
+                control_generation=control_generation)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST:
-            payload, msg_id, comp_id = self._handler.handle_task_runtime_settings(frame.payload)
+            payload, msg_id, comp_id = self._call_data_mutation(
+                request_handler, frame, self._handler.handle_task_runtime_settings, control_generation)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_PATH_POINT_PLAN_REQUEST:

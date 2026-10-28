@@ -38,7 +38,7 @@ Grinder/
 
 ### 1. 协议链路（APP/上位机 <-> 调度）
 
-- 调度监听 `8002`（SL-LinkA）
+- 调度监听同一 IP 的 `8002` 数据通道与 `8003` 控制通道（SL-LinkA），详见 7.7。
 - 地图类：`MapPreview/MapEdit/MapCatalog/MapSave/MapDelete/MapMetrics`
 - 任务类：`TaskConfig/TaskCommand/TaskStatus/TaskResult`
 - 新增：`LiveMapCacheClearRequest/Response (0x051E/0x051F)`
@@ -1145,11 +1145,41 @@ Modbus 待写事务优先于待处理状态轮询，已经发出的 RTU 事务�
 `raw_log_dropped` / `raw_log_errors` 可用于区分日志丢失与链路故障。
 
 遥控与底盘 500ms 命令超时、断连停车、松手零速和急停保护均保留；真实通信中断仍应停车。
-APP 现有遥控控制器每 100ms 续发最新输入，不等待上条 ACK；本轮未修改其生产发送逻辑。
+APP 当前由独立后台发送器每 100ms 续发最新目标，最多一条未确认速度；见 7.7。
 
 离线回归：调度 `test_continuous_manual.py`（本机 TCP/Protobuf、普通业务阻塞时持续遥控），
 底盘 `test_serial_scheduling.py` / `test_raw_log.py`（碎片时限、写优先及磁盘阻塞）。
 这些测试不驱动串口/机器，不能替代实际 Wi-Fi、RS485 及长时间运动验收。
+
+### 7.7 双通道、单平板占用与亮屏恢复
+
+同一 IP 的 `8002` 承载地图、路径、配置、状态、历史和任务 START/RESUME；`8003` 承载
+直接控制、遥控、任务 PAUSE/STOP、软件急停/解除和控制回执。两个端口须同时开放。
+只允许一台平板拥有连接组：数据端握手获取随机令牌，再用令牌绑定控制端；第二台返回占用。
+裸 TCP 探测不改变控制权；旧单端口客户端仅允许只读查询，运动操作须升级，不自动回退。
+
+会话每秒心跳，通道连续 3 秒失效后清理，明确关闭立即处理。有效令牌可恢复对应旧通道，
+数据端重连不撤销正常控制端；令牌失效后重新准入，不能抢占另一台平板。
+遥控断连/过期只清理遥控，已经运行的自动任务继续受原有定位、碰撞和急停保护。
+停止先撤销执行代号，旧的排队 START/RESUME 不会在停止后复活。
+
+APP 后台发送器只保留最新速度；停止优先、急停最高优先。主线程每 100ms 更新健康标记，
+超过 300ms 撤销遥控；控制写入或遥控 ACK 超过 500ms 关闭控制端。调度与底盘驱动的
+500ms 超时继续保留；这些 Linux 软件保护不证明底盘 MCU 自带独立失联停车。
+
+平板黑屏、后台、失焦或退出遥控页面时清零；亮屏不恢复旧速度。亮屏与 Wi-Fi 恢复立即检测，
+健康通道复用，无响应通道在 300ms 探测后重连；跳过固定 5 秒等待，失败退避 0.5/1/2/3 秒。
+Wi-Fi 已恢复且设备空闲时，以亮屏后 1～3 秒恢复控制就绪为实机目标，地图重载不阻挡控制恢复。
+
+大数据共享限速默认 1 MiB/s，遥控期间 256 KiB/s、突发 8 KiB，配置为 `sl_linka_bulk_*`。
+监听端口按合并后的 YAML 读取，启动脚本显式 `SL_LINKA_PORT` / `SL_LINKA_CONTROL_PORT` 优先。
+APP 正式部署使用 8002/8003；改非默认控制端口须同步客户端配置。仿真 SSH/ADB 隧道已同时映射 8003。
+协议 `0x0403/0x0404` 是 SL-LinkA 会话消息，不是底盘寄存器，见 `third_party/sl_linka/sl-link.md`。
+
+板端保留控制排队/应用/ACK 指标，增加 `control_disconnect_apply_ms`、`channel_busy_rejections`、
+`channel_lease_expirations`；APP `ControlChannel` 日志采样记录恢复耗时、遥控 RTT 和撤销原因，不记录令牌。
+离线回归为 `test_dual_channel.py`、`test_continuous_manual.py` 和原有安全测试；APP
+`PairedTcpServiceTest` 使用本机 TCP 验证。整机挂死、弱网和实际停车时间/距离仍需受控实机验收。
 
 ### 8. 常见故障
 

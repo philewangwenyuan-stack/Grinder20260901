@@ -16,6 +16,17 @@ spec.loader.exec_module(module)
 
 
 class SchedulerConfigurationTest(unittest.TestCase):
+    def test_channel_validation_uses_merged_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            public = Path(directory) / "public.yaml"
+            local = Path(directory) / "local.yaml"
+            public.write_text("sl_linka_port: 8002\nsl_linka_control_port: 8004\n", encoding="utf-8")
+            local.write_text("sl_linka_port: 8003\n", encoding="utf-8")
+            self.assertEqual(8003, module.validate_configs(public, local)["sl_linka_port"])
+            for value in ("8004", "0", "65536", "true", "null", "1.2"):
+                local.write_text("sl_linka_port: " + value, encoding="utf-8")
+                with self.assertRaises(ValueError): module.validate_configs(public, local)
+
     def test_segment_sampling_defaults_and_invalid_values(self):
         public = ROOT / "catkin_ws/src/grinder_scheduler/config/scheduler.yaml"
         self.assertEqual(.3, module.validate_configs(public)["active_segment_point_spacing"])

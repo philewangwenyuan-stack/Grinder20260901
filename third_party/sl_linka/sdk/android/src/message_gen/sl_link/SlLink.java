@@ -77,6 +77,14 @@ public final class SlLink {
      */
     MSG_ID_CONTROL_COMMAND_RESPONSE(1026),
     /**
+     * <code>MSG_ID_CHANNEL_SESSION_REQUEST = 1027;</code>
+     */
+    MSG_ID_CHANNEL_SESSION_REQUEST(1027),
+    /**
+     * <code>MSG_ID_CHANNEL_SESSION_RESPONSE = 1028;</code>
+     */
+    MSG_ID_CHANNEL_SESSION_RESPONSE(1028),
+    /**
      * <code>MSG_ID_TASK_CONFIG = 1280;</code>
      */
     MSG_ID_TASK_CONFIG(1280),
@@ -372,6 +380,14 @@ public final class SlLink {
      */
     public static final int MSG_ID_CONTROL_COMMAND_RESPONSE_VALUE = 1026;
     /**
+     * <code>MSG_ID_CHANNEL_SESSION_REQUEST = 1027;</code>
+     */
+    public static final int MSG_ID_CHANNEL_SESSION_REQUEST_VALUE = 1027;
+    /**
+     * <code>MSG_ID_CHANNEL_SESSION_RESPONSE = 1028;</code>
+     */
+    public static final int MSG_ID_CHANNEL_SESSION_RESPONSE_VALUE = 1028;
+    /**
      * <code>MSG_ID_TASK_CONFIG = 1280;</code>
      */
     public static final int MSG_ID_TASK_CONFIG_VALUE = 1280;
@@ -641,6 +657,8 @@ public final class SlLink {
         case 774: return MSG_ID_MAP_REQUEST_RESULT;
         case 1025: return MSG_ID_CONTROL_COMMAND;
         case 1026: return MSG_ID_CONTROL_COMMAND_RESPONSE;
+        case 1027: return MSG_ID_CHANNEL_SESSION_REQUEST;
+        case 1028: return MSG_ID_CHANNEL_SESSION_RESPONSE;
         case 1280: return MSG_ID_TASK_CONFIG;
         case 1281: return MSG_ID_TASK_CONFIG_RESPONSE;
         case 1282: return MSG_ID_TASK_COMMAND;
@@ -2778,6 +2796,216 @@ public final class SlLink {
     }
 
     // @@protoc_insertion_point(enum_scope:sl_link.MapRequestStatus)
+  }
+
+  /**
+   * <pre>
+   * Data OPEN obtains an opaque tablet token. Control BIND and channel RECOVER
+   * require that token. Heartbeats never renew a manual-motion command lease.
+   * </pre>
+   *
+   * Protobuf enum {@code sl_link.ChannelRole}
+   */
+  public enum ChannelRole
+      implements com.google.protobuf.Internal.EnumLite {
+    /**
+     * <code>CHANNEL_ROLE_DATA = 0;</code>
+     */
+    CHANNEL_ROLE_DATA(0),
+    /**
+     * <code>CHANNEL_ROLE_CONTROL = 1;</code>
+     */
+    CHANNEL_ROLE_CONTROL(1),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>CHANNEL_ROLE_DATA = 0;</code>
+     */
+    public static final int CHANNEL_ROLE_DATA_VALUE = 0;
+    /**
+     * <code>CHANNEL_ROLE_CONTROL = 1;</code>
+     */
+    public static final int CHANNEL_ROLE_CONTROL_VALUE = 1;
+
+
+    @java.lang.Override
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The number of the enum to look for.
+     * @return The enum associated with the given number.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static ChannelRole valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static ChannelRole forNumber(int value) {
+      switch (value) {
+        case 0: return CHANNEL_ROLE_DATA;
+        case 1: return CHANNEL_ROLE_CONTROL;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ChannelRole>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        ChannelRole> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ChannelRole>() {
+            @java.lang.Override
+            public ChannelRole findValueByNumber(int number) {
+              return ChannelRole.forNumber(number);
+            }
+          };
+
+    public static com.google.protobuf.Internal.EnumVerifier
+        internalGetVerifier() {
+      return ChannelRoleVerifier.INSTANCE;
+    }
+
+    private static final class ChannelRoleVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
+            static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new ChannelRoleVerifier();
+            @java.lang.Override
+            public boolean isInRange(int number) {
+              return ChannelRole.forNumber(number) != null;
+            }
+          };
+
+    private final int value;
+
+    private ChannelRole(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:sl_link.ChannelRole)
+  }
+
+  /**
+   * Protobuf enum {@code sl_link.ChannelSessionAction}
+   */
+  public enum ChannelSessionAction
+      implements com.google.protobuf.Internal.EnumLite {
+    /**
+     * <code>CHANNEL_SESSION_OPEN = 0;</code>
+     */
+    CHANNEL_SESSION_OPEN(0),
+    /**
+     * <code>CHANNEL_SESSION_BIND = 1;</code>
+     */
+    CHANNEL_SESSION_BIND(1),
+    /**
+     * <code>CHANNEL_SESSION_HEARTBEAT = 2;</code>
+     */
+    CHANNEL_SESSION_HEARTBEAT(2),
+    /**
+     * <code>CHANNEL_SESSION_RELEASE = 3;</code>
+     */
+    CHANNEL_SESSION_RELEASE(3),
+    /**
+     * <code>CHANNEL_SESSION_RECOVER = 4;</code>
+     */
+    CHANNEL_SESSION_RECOVER(4),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>CHANNEL_SESSION_OPEN = 0;</code>
+     */
+    public static final int CHANNEL_SESSION_OPEN_VALUE = 0;
+    /**
+     * <code>CHANNEL_SESSION_BIND = 1;</code>
+     */
+    public static final int CHANNEL_SESSION_BIND_VALUE = 1;
+    /**
+     * <code>CHANNEL_SESSION_HEARTBEAT = 2;</code>
+     */
+    public static final int CHANNEL_SESSION_HEARTBEAT_VALUE = 2;
+    /**
+     * <code>CHANNEL_SESSION_RELEASE = 3;</code>
+     */
+    public static final int CHANNEL_SESSION_RELEASE_VALUE = 3;
+    /**
+     * <code>CHANNEL_SESSION_RECOVER = 4;</code>
+     */
+    public static final int CHANNEL_SESSION_RECOVER_VALUE = 4;
+
+
+    @java.lang.Override
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The number of the enum to look for.
+     * @return The enum associated with the given number.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static ChannelSessionAction valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static ChannelSessionAction forNumber(int value) {
+      switch (value) {
+        case 0: return CHANNEL_SESSION_OPEN;
+        case 1: return CHANNEL_SESSION_BIND;
+        case 2: return CHANNEL_SESSION_HEARTBEAT;
+        case 3: return CHANNEL_SESSION_RELEASE;
+        case 4: return CHANNEL_SESSION_RECOVER;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ChannelSessionAction>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        ChannelSessionAction> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ChannelSessionAction>() {
+            @java.lang.Override
+            public ChannelSessionAction findValueByNumber(int number) {
+              return ChannelSessionAction.forNumber(number);
+            }
+          };
+
+    public static com.google.protobuf.Internal.EnumVerifier
+        internalGetVerifier() {
+      return ChannelSessionActionVerifier.INSTANCE;
+    }
+
+    private static final class ChannelSessionActionVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
+            static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new ChannelSessionActionVerifier();
+            @java.lang.Override
+            public boolean isInRange(int number) {
+              return ChannelSessionAction.forNumber(number) != null;
+            }
+          };
+
+    private final int value;
+
+    private ChannelSessionAction(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:sl_link.ChannelSessionAction)
   }
 
   public interface WifiConfigOrBuilder extends
@@ -75315,6 +75543,1350 @@ public final class SlLink {
     private static volatile com.google.protobuf.Parser<DiscControl> PARSER;
 
     public static com.google.protobuf.Parser<DiscControl> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface ChannelSessionRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.ChannelSessionRequest)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     * @return The enum numeric value on the wire for action.
+     */
+    int getActionValue();
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     * @return The action.
+     */
+    sl_link.SlLink.ChannelSessionAction getAction();
+
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     * @return The enum numeric value on the wire for role.
+     */
+    int getRoleValue();
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     * @return The role.
+     */
+    sl_link.SlLink.ChannelRole getRole();
+
+    /**
+     * <code>string token = 3;</code>
+     * @return The token.
+     */
+    java.lang.String getToken();
+    /**
+     * <code>string token = 3;</code>
+     * @return The bytes for token.
+     */
+    com.google.protobuf.ByteString
+        getTokenBytes();
+  }
+  /**
+   * Protobuf type {@code sl_link.ChannelSessionRequest}
+   */
+  public  static final class ChannelSessionRequest extends
+      com.google.protobuf.GeneratedMessageLite<
+          ChannelSessionRequest, ChannelSessionRequest.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.ChannelSessionRequest)
+      ChannelSessionRequestOrBuilder {
+    private ChannelSessionRequest() {
+      token_ = "";
+    }
+    public static final int ACTION_FIELD_NUMBER = 1;
+    private int action_;
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     * @return The enum numeric value on the wire for action.
+     */
+    @java.lang.Override
+    public int getActionValue() {
+      return action_;
+    }
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     * @return The action.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ChannelSessionAction getAction() {
+      sl_link.SlLink.ChannelSessionAction result = sl_link.SlLink.ChannelSessionAction.forNumber(action_);
+      return result == null ? sl_link.SlLink.ChannelSessionAction.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     * @param value The enum numeric value on the wire for action to set.
+     */
+    private void setActionValue(int value) {
+        action_ = value;
+    }
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     * @param value The action to set.
+     */
+    private void setAction(sl_link.SlLink.ChannelSessionAction value) {
+      action_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ChannelSessionAction action = 1;</code>
+     */
+    private void clearAction() {
+
+      action_ = 0;
+    }
+
+    public static final int ROLE_FIELD_NUMBER = 2;
+    private int role_;
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     * @return The enum numeric value on the wire for role.
+     */
+    @java.lang.Override
+    public int getRoleValue() {
+      return role_;
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     * @return The role.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ChannelRole getRole() {
+      sl_link.SlLink.ChannelRole result = sl_link.SlLink.ChannelRole.forNumber(role_);
+      return result == null ? sl_link.SlLink.ChannelRole.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     * @param value The enum numeric value on the wire for role to set.
+     */
+    private void setRoleValue(int value) {
+        role_ = value;
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     * @param value The role to set.
+     */
+    private void setRole(sl_link.SlLink.ChannelRole value) {
+      role_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 2;</code>
+     */
+    private void clearRole() {
+
+      role_ = 0;
+    }
+
+    public static final int TOKEN_FIELD_NUMBER = 3;
+    private java.lang.String token_;
+    /**
+     * <code>string token = 3;</code>
+     * @return The token.
+     */
+    @java.lang.Override
+    public java.lang.String getToken() {
+      return token_;
+    }
+    /**
+     * <code>string token = 3;</code>
+     * @return The bytes for token.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTokenBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(token_);
+    }
+    /**
+     * <code>string token = 3;</code>
+     * @param value The token to set.
+     */
+    private void setToken(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      token_ = value;
+    }
+    /**
+     * <code>string token = 3;</code>
+     */
+    private void clearToken() {
+
+      token_ = getDefaultInstance().getToken();
+    }
+    /**
+     * <code>string token = 3;</code>
+     * @param value The bytes for token to set.
+     */
+    private void setTokenBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      token_ = value.toStringUtf8();
+
+    }
+
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.ChannelSessionRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.ChannelSessionRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.ChannelSessionRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.ChannelSessionRequest prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.ChannelSessionRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.ChannelSessionRequest, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.ChannelSessionRequest)
+        sl_link.SlLink.ChannelSessionRequestOrBuilder {
+      // Construct using sl_link.SlLink.ChannelSessionRequest.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>.sl_link.ChannelSessionAction action = 1;</code>
+       * @return The enum numeric value on the wire for action.
+       */
+      @java.lang.Override
+      public int getActionValue() {
+        return instance.getActionValue();
+      }
+      /**
+       * <code>.sl_link.ChannelSessionAction action = 1;</code>
+       * @param value The action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setActionValue(int value) {
+        copyOnWrite();
+        instance.setActionValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ChannelSessionAction action = 1;</code>
+       * @return The action.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ChannelSessionAction getAction() {
+        return instance.getAction();
+      }
+      /**
+       * <code>.sl_link.ChannelSessionAction action = 1;</code>
+       * @param value The enum numeric value on the wire for action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAction(sl_link.SlLink.ChannelSessionAction value) {
+        copyOnWrite();
+        instance.setAction(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ChannelSessionAction action = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAction() {
+        copyOnWrite();
+        instance.clearAction();
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.ChannelRole role = 2;</code>
+       * @return The enum numeric value on the wire for role.
+       */
+      @java.lang.Override
+      public int getRoleValue() {
+        return instance.getRoleValue();
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 2;</code>
+       * @param value The role to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRoleValue(int value) {
+        copyOnWrite();
+        instance.setRoleValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 2;</code>
+       * @return The role.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ChannelRole getRole() {
+        return instance.getRole();
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 2;</code>
+       * @param value The enum numeric value on the wire for role to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRole(sl_link.SlLink.ChannelRole value) {
+        copyOnWrite();
+        instance.setRole(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRole() {
+        copyOnWrite();
+        instance.clearRole();
+        return this;
+      }
+
+      /**
+       * <code>string token = 3;</code>
+       * @return The token.
+       */
+      @java.lang.Override
+      public java.lang.String getToken() {
+        return instance.getToken();
+      }
+      /**
+       * <code>string token = 3;</code>
+       * @return The bytes for token.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getTokenBytes() {
+        return instance.getTokenBytes();
+      }
+      /**
+       * <code>string token = 3;</code>
+       * @param value The token to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToken(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setToken(value);
+        return this;
+      }
+      /**
+       * <code>string token = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearToken() {
+        copyOnWrite();
+        instance.clearToken();
+        return this;
+      }
+      /**
+       * <code>string token = 3;</code>
+       * @param value The bytes for token to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTokenBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setTokenBytes(value);
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.ChannelSessionRequest)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.ChannelSessionRequest();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "action_",
+              "role_",
+              "token_",
+            };
+            java.lang.String info =
+                "\u0000\u0003\u0000\u0000\u0001\u0003\u0003\u0000\u0000\u0000\u0001\f\u0002\f\u0003" +
+                "\u0208";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.ChannelSessionRequest> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.ChannelSessionRequest.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.ChannelSessionRequest>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.ChannelSessionRequest)
+    private static final sl_link.SlLink.ChannelSessionRequest DEFAULT_INSTANCE;
+    static {
+      ChannelSessionRequest defaultInstance = new ChannelSessionRequest();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        ChannelSessionRequest.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.ChannelSessionRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<ChannelSessionRequest> PARSER;
+
+    public static com.google.protobuf.Parser<ChannelSessionRequest> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface ChannelSessionResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.ChannelSessionResponse)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The result.
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     * @return The enum numeric value on the wire for role.
+     */
+    int getRoleValue();
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     * @return The role.
+     */
+    sl_link.SlLink.ChannelRole getRole();
+
+    /**
+     * <code>string token = 4;</code>
+     * @return The token.
+     */
+    java.lang.String getToken();
+    /**
+     * <code>string token = 4;</code>
+     * @return The bytes for token.
+     */
+    com.google.protobuf.ByteString
+        getTokenBytes();
+
+    /**
+     * <code>uint32 heartbeat_interval_ms = 5;</code>
+     * @return The heartbeatIntervalMs.
+     */
+    int getHeartbeatIntervalMs();
+
+    /**
+     * <code>uint32 session_timeout_ms = 6;</code>
+     * @return The sessionTimeoutMs.
+     */
+    int getSessionTimeoutMs();
+
+    /**
+     * <code>bool control_ready = 7;</code>
+     * @return The controlReady.
+     */
+    boolean getControlReady();
+
+    /**
+     * <code>bool emergency_stop_latched = 8;</code>
+     * @return The emergencyStopLatched.
+     */
+    boolean getEmergencyStopLatched();
+  }
+  /**
+   * Protobuf type {@code sl_link.ChannelSessionResponse}
+   */
+  public  static final class ChannelSessionResponse extends
+      com.google.protobuf.GeneratedMessageLite<
+          ChannelSessionResponse, ChannelSessionResponse.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.ChannelSessionResponse)
+      ChannelSessionResponseOrBuilder {
+    private ChannelSessionResponse() {
+      message_ = "";
+      token_ = "";
+    }
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    @java.lang.Override
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ResultCode getResult() {
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.forNumber(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @param value The enum numeric value on the wire for result to set.
+     */
+    private void setResultValue(int value) {
+        result_ = value;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @param value The result to set.
+     */
+    private void setResult(sl_link.SlLink.ResultCode value) {
+      result_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    private void clearResult() {
+
+      result_ = 0;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private java.lang.String message_;
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      return message_;
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(message_);
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @param value The message to set.
+     */
+    private void setMessage(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      message_ = value;
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    private void clearMessage() {
+
+      message_ = getDefaultInstance().getMessage();
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @param value The bytes for message to set.
+     */
+    private void setMessageBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      message_ = value.toStringUtf8();
+
+    }
+
+    public static final int ROLE_FIELD_NUMBER = 3;
+    private int role_;
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     * @return The enum numeric value on the wire for role.
+     */
+    @java.lang.Override
+    public int getRoleValue() {
+      return role_;
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     * @return The role.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ChannelRole getRole() {
+      sl_link.SlLink.ChannelRole result = sl_link.SlLink.ChannelRole.forNumber(role_);
+      return result == null ? sl_link.SlLink.ChannelRole.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     * @param value The enum numeric value on the wire for role to set.
+     */
+    private void setRoleValue(int value) {
+        role_ = value;
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     * @param value The role to set.
+     */
+    private void setRole(sl_link.SlLink.ChannelRole value) {
+      role_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ChannelRole role = 3;</code>
+     */
+    private void clearRole() {
+
+      role_ = 0;
+    }
+
+    public static final int TOKEN_FIELD_NUMBER = 4;
+    private java.lang.String token_;
+    /**
+     * <code>string token = 4;</code>
+     * @return The token.
+     */
+    @java.lang.Override
+    public java.lang.String getToken() {
+      return token_;
+    }
+    /**
+     * <code>string token = 4;</code>
+     * @return The bytes for token.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTokenBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(token_);
+    }
+    /**
+     * <code>string token = 4;</code>
+     * @param value The token to set.
+     */
+    private void setToken(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      token_ = value;
+    }
+    /**
+     * <code>string token = 4;</code>
+     */
+    private void clearToken() {
+
+      token_ = getDefaultInstance().getToken();
+    }
+    /**
+     * <code>string token = 4;</code>
+     * @param value The bytes for token to set.
+     */
+    private void setTokenBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      token_ = value.toStringUtf8();
+
+    }
+
+    public static final int HEARTBEAT_INTERVAL_MS_FIELD_NUMBER = 5;
+    private int heartbeatIntervalMs_;
+    /**
+     * <code>uint32 heartbeat_interval_ms = 5;</code>
+     * @return The heartbeatIntervalMs.
+     */
+    @java.lang.Override
+    public int getHeartbeatIntervalMs() {
+      return heartbeatIntervalMs_;
+    }
+    /**
+     * <code>uint32 heartbeat_interval_ms = 5;</code>
+     * @param value The heartbeatIntervalMs to set.
+     */
+    private void setHeartbeatIntervalMs(int value) {
+
+      heartbeatIntervalMs_ = value;
+    }
+    /**
+     * <code>uint32 heartbeat_interval_ms = 5;</code>
+     */
+    private void clearHeartbeatIntervalMs() {
+
+      heartbeatIntervalMs_ = 0;
+    }
+
+    public static final int SESSION_TIMEOUT_MS_FIELD_NUMBER = 6;
+    private int sessionTimeoutMs_;
+    /**
+     * <code>uint32 session_timeout_ms = 6;</code>
+     * @return The sessionTimeoutMs.
+     */
+    @java.lang.Override
+    public int getSessionTimeoutMs() {
+      return sessionTimeoutMs_;
+    }
+    /**
+     * <code>uint32 session_timeout_ms = 6;</code>
+     * @param value The sessionTimeoutMs to set.
+     */
+    private void setSessionTimeoutMs(int value) {
+
+      sessionTimeoutMs_ = value;
+    }
+    /**
+     * <code>uint32 session_timeout_ms = 6;</code>
+     */
+    private void clearSessionTimeoutMs() {
+
+      sessionTimeoutMs_ = 0;
+    }
+
+    public static final int CONTROL_READY_FIELD_NUMBER = 7;
+    private boolean controlReady_;
+    /**
+     * <code>bool control_ready = 7;</code>
+     * @return The controlReady.
+     */
+    @java.lang.Override
+    public boolean getControlReady() {
+      return controlReady_;
+    }
+    /**
+     * <code>bool control_ready = 7;</code>
+     * @param value The controlReady to set.
+     */
+    private void setControlReady(boolean value) {
+
+      controlReady_ = value;
+    }
+    /**
+     * <code>bool control_ready = 7;</code>
+     */
+    private void clearControlReady() {
+
+      controlReady_ = false;
+    }
+
+    public static final int EMERGENCY_STOP_LATCHED_FIELD_NUMBER = 8;
+    private boolean emergencyStopLatched_;
+    /**
+     * <code>bool emergency_stop_latched = 8;</code>
+     * @return The emergencyStopLatched.
+     */
+    @java.lang.Override
+    public boolean getEmergencyStopLatched() {
+      return emergencyStopLatched_;
+    }
+    /**
+     * <code>bool emergency_stop_latched = 8;</code>
+     * @param value The emergencyStopLatched to set.
+     */
+    private void setEmergencyStopLatched(boolean value) {
+
+      emergencyStopLatched_ = value;
+    }
+    /**
+     * <code>bool emergency_stop_latched = 8;</code>
+     */
+    private void clearEmergencyStopLatched() {
+
+      emergencyStopLatched_ = false;
+    }
+
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.ChannelSessionResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.ChannelSessionResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.ChannelSessionResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.ChannelSessionResponse prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.ChannelSessionResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.ChannelSessionResponse, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.ChannelSessionResponse)
+        sl_link.SlLink.ChannelSessionResponseOrBuilder {
+      // Construct using sl_link.SlLink.ChannelSessionResponse.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return The enum numeric value on the wire for result.
+       */
+      @java.lang.Override
+      public int getResultValue() {
+        return instance.getResultValue();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultValue(int value) {
+        copyOnWrite();
+        instance.setResultValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return The result.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ResultCode getResult() {
+        return instance.getResult();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @param value The enum numeric value on the wire for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        copyOnWrite();
+        instance.setResult(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        copyOnWrite();
+        instance.clearResult();
+        return this;
+      }
+
+      /**
+       * <code>string message = 2;</code>
+       * @return The message.
+       */
+      @java.lang.Override
+      public java.lang.String getMessage() {
+        return instance.getMessage();
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return The bytes for message.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        return instance.getMessageBytes();
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMessage(value);
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        copyOnWrite();
+        instance.clearMessage();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMessageBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.ChannelRole role = 3;</code>
+       * @return The enum numeric value on the wire for role.
+       */
+      @java.lang.Override
+      public int getRoleValue() {
+        return instance.getRoleValue();
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 3;</code>
+       * @param value The role to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRoleValue(int value) {
+        copyOnWrite();
+        instance.setRoleValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 3;</code>
+       * @return The role.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ChannelRole getRole() {
+        return instance.getRole();
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 3;</code>
+       * @param value The enum numeric value on the wire for role to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRole(sl_link.SlLink.ChannelRole value) {
+        copyOnWrite();
+        instance.setRole(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ChannelRole role = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRole() {
+        copyOnWrite();
+        instance.clearRole();
+        return this;
+      }
+
+      /**
+       * <code>string token = 4;</code>
+       * @return The token.
+       */
+      @java.lang.Override
+      public java.lang.String getToken() {
+        return instance.getToken();
+      }
+      /**
+       * <code>string token = 4;</code>
+       * @return The bytes for token.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getTokenBytes() {
+        return instance.getTokenBytes();
+      }
+      /**
+       * <code>string token = 4;</code>
+       * @param value The token to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToken(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setToken(value);
+        return this;
+      }
+      /**
+       * <code>string token = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearToken() {
+        copyOnWrite();
+        instance.clearToken();
+        return this;
+      }
+      /**
+       * <code>string token = 4;</code>
+       * @param value The bytes for token to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTokenBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setTokenBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 heartbeat_interval_ms = 5;</code>
+       * @return The heartbeatIntervalMs.
+       */
+      @java.lang.Override
+      public int getHeartbeatIntervalMs() {
+        return instance.getHeartbeatIntervalMs();
+      }
+      /**
+       * <code>uint32 heartbeat_interval_ms = 5;</code>
+       * @param value The heartbeatIntervalMs to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeartbeatIntervalMs(int value) {
+        copyOnWrite();
+        instance.setHeartbeatIntervalMs(value);
+        return this;
+      }
+      /**
+       * <code>uint32 heartbeat_interval_ms = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeartbeatIntervalMs() {
+        copyOnWrite();
+        instance.clearHeartbeatIntervalMs();
+        return this;
+      }
+
+      /**
+       * <code>uint32 session_timeout_ms = 6;</code>
+       * @return The sessionTimeoutMs.
+       */
+      @java.lang.Override
+      public int getSessionTimeoutMs() {
+        return instance.getSessionTimeoutMs();
+      }
+      /**
+       * <code>uint32 session_timeout_ms = 6;</code>
+       * @param value The sessionTimeoutMs to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionTimeoutMs(int value) {
+        copyOnWrite();
+        instance.setSessionTimeoutMs(value);
+        return this;
+      }
+      /**
+       * <code>uint32 session_timeout_ms = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSessionTimeoutMs() {
+        copyOnWrite();
+        instance.clearSessionTimeoutMs();
+        return this;
+      }
+
+      /**
+       * <code>bool control_ready = 7;</code>
+       * @return The controlReady.
+       */
+      @java.lang.Override
+      public boolean getControlReady() {
+        return instance.getControlReady();
+      }
+      /**
+       * <code>bool control_ready = 7;</code>
+       * @param value The controlReady to set.
+       * @return This builder for chaining.
+       */
+      public Builder setControlReady(boolean value) {
+        copyOnWrite();
+        instance.setControlReady(value);
+        return this;
+      }
+      /**
+       * <code>bool control_ready = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearControlReady() {
+        copyOnWrite();
+        instance.clearControlReady();
+        return this;
+      }
+
+      /**
+       * <code>bool emergency_stop_latched = 8;</code>
+       * @return The emergencyStopLatched.
+       */
+      @java.lang.Override
+      public boolean getEmergencyStopLatched() {
+        return instance.getEmergencyStopLatched();
+      }
+      /**
+       * <code>bool emergency_stop_latched = 8;</code>
+       * @param value The emergencyStopLatched to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEmergencyStopLatched(boolean value) {
+        copyOnWrite();
+        instance.setEmergencyStopLatched(value);
+        return this;
+      }
+      /**
+       * <code>bool emergency_stop_latched = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEmergencyStopLatched() {
+        copyOnWrite();
+        instance.clearEmergencyStopLatched();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.ChannelSessionResponse)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.ChannelSessionResponse();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "result_",
+              "message_",
+              "role_",
+              "token_",
+              "heartbeatIntervalMs_",
+              "sessionTimeoutMs_",
+              "controlReady_",
+              "emergencyStopLatched_",
+            };
+            java.lang.String info =
+                "\u0000\b\u0000\u0000\u0001\b\b\u0000\u0000\u0000\u0001\f\u0002\u0208\u0003\f\u0004" +
+                "\u0208\u0005\u000b\u0006\u000b\u0007\u0007\b\u0007";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.ChannelSessionResponse> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.ChannelSessionResponse.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.ChannelSessionResponse>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.ChannelSessionResponse)
+    private static final sl_link.SlLink.ChannelSessionResponse DEFAULT_INSTANCE;
+    static {
+      ChannelSessionResponse defaultInstance = new ChannelSessionResponse();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        ChannelSessionResponse.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.ChannelSessionResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<ChannelSessionResponse> PARSER;
+
+    public static com.google.protobuf.Parser<ChannelSessionResponse> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

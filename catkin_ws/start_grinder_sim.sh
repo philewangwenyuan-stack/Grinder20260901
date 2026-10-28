@@ -54,7 +54,7 @@ if ! python3 -c 'import scipy' >/dev/null 2>&1; then
   echo "[WARN] Install it with: sudo apt-get install -y python3-scipy" >&2
 fi
 
-for port in 8002 8554; do
+for port in "${SL_LINKA_PORT}" "${SL_LINKA_CONTROL_PORT}" 8554; do
   if command -v ss >/dev/null 2>&1 && ss -ltn "sport = :${port}" | grep -q LISTEN; then
     echo "[ERROR] TCP port ${port} is already in use. Stop the previous simulator/device stack first." >&2
     exit 1
@@ -63,6 +63,7 @@ done
 
 echo "[INFO] Starting X920 + virtual MID-360S + managed Super-LIO simulator"
 echo "[INFO] Start mapping in the APP; keep stationary until Super-LIO initializes."
-echo "[INFO] APP protocol: tcp://0.0.0.0:8002"
+echo "[INFO] APP protocol: tcp://0.0.0.0:${SL_LINKA_PORT}"
+echo "[INFO] APP control: tcp://0.0.0.0:${SL_LINKA_CONTROL_PORT}"
 echo "[INFO] Local RTSP:  rtsp://<host>:8554/left and /right"
 exec roslaunch grinder_gazebo grinder_sim.launch "$@"

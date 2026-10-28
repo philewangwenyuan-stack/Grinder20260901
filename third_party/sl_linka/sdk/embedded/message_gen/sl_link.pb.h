@@ -26,6 +26,8 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_MAP_REQUEST_RESULT = 774,
     sl_link_MessageId_MSG_ID_CONTROL_COMMAND = 1025,
     sl_link_MessageId_MSG_ID_CONTROL_COMMAND_RESPONSE = 1026,
+    sl_link_MessageId_MSG_ID_CHANNEL_SESSION_REQUEST = 1027,
+    sl_link_MessageId_MSG_ID_CHANNEL_SESSION_RESPONSE = 1028,
     sl_link_MessageId_MSG_ID_TASK_CONFIG = 1280,
     sl_link_MessageId_MSG_ID_TASK_CONFIG_RESPONSE = 1281,
     sl_link_MessageId_MSG_ID_TASK_COMMAND = 1282,
@@ -225,6 +227,21 @@ typedef enum _sl_link_MapRequestStatus {
     sl_link_MapRequestStatus_MAP_REQUEST_STATUS_ERROR = 4
 } sl_link_MapRequestStatus;
 
+/* Data OPEN obtains an opaque tablet token. Control BIND and channel RECOVER
+ require that token. Heartbeats never renew a manual-motion command lease. */
+typedef enum _sl_link_ChannelRole {
+    sl_link_ChannelRole_CHANNEL_ROLE_DATA = 0,
+    sl_link_ChannelRole_CHANNEL_ROLE_CONTROL = 1
+} sl_link_ChannelRole;
+
+typedef enum _sl_link_ChannelSessionAction {
+    sl_link_ChannelSessionAction_CHANNEL_SESSION_OPEN = 0,
+    sl_link_ChannelSessionAction_CHANNEL_SESSION_BIND = 1,
+    sl_link_ChannelSessionAction_CHANNEL_SESSION_HEARTBEAT = 2,
+    sl_link_ChannelSessionAction_CHANNEL_SESSION_RELEASE = 3,
+    sl_link_ChannelSessionAction_CHANNEL_SESSION_RECOVER = 4
+} sl_link_ChannelSessionAction;
+
 /* Struct definitions */
 typedef struct _sl_link_WifiConfig {
     pb_callback_t ssid;
@@ -287,32 +304,20 @@ typedef struct _sl_link_MapSettings {
     float base_laser_roll_deg;
     float base_laser_pitch_deg;
     float base_laser_yaw_deg;
-    pb_size_t which__endpoint_margin;
-    union _sl_link_MapSettings__endpoint_margin {
-        /* Global path-planner parameters used by the MST27 planner. Optional keeps
-     older geometry-only writes from overwriting values they do not edit. */
-        float endpoint_margin;
-    } _endpoint_margin;
-    pb_size_t which__output_point_spacing;
-    union _sl_link_MapSettings__output_point_spacing {
-        float output_point_spacing;
-    } _output_point_spacing;
-    pb_size_t which__aligned_obstacle_inflation;
-    union _sl_link_MapSettings__aligned_obstacle_inflation {
-        float aligned_obstacle_inflation;
-    } _aligned_obstacle_inflation;
-    pb_size_t which__aligned_obstacle_max_extent;
-    union _sl_link_MapSettings__aligned_obstacle_max_extent {
-        float aligned_obstacle_max_extent;
-    } _aligned_obstacle_max_extent;
-    pb_size_t which__obstacle_corner_angle_deg;
-    union _sl_link_MapSettings__obstacle_corner_angle_deg {
-        float obstacle_corner_angle_deg;
-    } _obstacle_corner_angle_deg;
-    pb_size_t which__obstacle_avoidance_distance;
-    union _sl_link_MapSettings__obstacle_avoidance_distance {
-        float obstacle_avoidance_distance;
-    } _obstacle_avoidance_distance;
+    /* Global path-planner parameters used by the MST27 planner. Optional keeps
+ older geometry-only writes from overwriting values they do not edit. */
+    bool has_endpoint_margin;
+    float endpoint_margin;
+    bool has_output_point_spacing;
+    float output_point_spacing;
+    bool has_aligned_obstacle_inflation;
+    float aligned_obstacle_inflation;
+    bool has_aligned_obstacle_max_extent;
+    float aligned_obstacle_max_extent;
+    bool has_obstacle_corner_angle_deg;
+    float obstacle_corner_angle_deg;
+    bool has_obstacle_avoidance_distance;
+    float obstacle_avoidance_distance;
 } sl_link_MapSettings;
 
 typedef struct _sl_link_RppSettings {
@@ -462,26 +467,18 @@ typedef struct _sl_link_DeviceStatusReport {
     pb_callback_t radar_system_status;
     /* Vehicle linear speed computed from left/right wheel feedback, in m/s. */
     float vehicle_speed;
-    pb_size_t which__chassis_connected;
-    union _sl_link_DeviceStatusReport__chassis_connected {
-        /* Absent on older firmware or before the first chassis status sample. */
-        bool chassis_connected;
-    } _chassis_connected;
-    pb_size_t which__emergency_stop_latched;
-    union _sl_link_DeviceStatusReport__emergency_stop_latched {
-        /* Scheduler emergency latch; absence means firmware does not report this state. */
-        bool emergency_stop_latched;
-    } _emergency_stop_latched;
-    pb_size_t which__localization_ready;
-    union _sl_link_DeviceStatusReport__localization_ready {
-        /* Composite Super-LIO readiness. Absence means unknown/older board. */
-        bool localization_ready;
-    } _localization_ready;
-    pb_size_t which__localization_pause_latched;
-    union _sl_link_DeviceStatusReport__localization_pause_latched {
-        /* True while a task remains paused due to confirmed localization failure. */
-        bool localization_pause_latched;
-    } _localization_pause_latched;
+    /* Absent on older firmware or before the first chassis status sample. */
+    bool has_chassis_connected;
+    bool chassis_connected;
+    /* Scheduler emergency latch; absence means firmware does not report this state. */
+    bool has_emergency_stop_latched;
+    bool emergency_stop_latched;
+    /* Composite Super-LIO readiness. Absence means unknown/older board. */
+    bool has_localization_ready;
+    bool localization_ready;
+    /* True while a task remains paused due to confirmed localization failure. */
+    bool has_localization_pause_latched;
+    bool localization_pause_latched;
     /* Stable reason code; clients own presentation language. */
     pb_callback_t localization_status_reason;
 } sl_link_DeviceStatusReport;
@@ -596,28 +593,20 @@ typedef struct _sl_link_TaskCommandResponse {
  Updates apply only to this task; no persistent configuration or enable state changes. */
 typedef struct _sl_link_TaskRuntimeSettingsRequest {
     pb_callback_t task_id;
-    pb_size_t which__run_speed;
-    union _sl_link_TaskRuntimeSettingsRequest__run_speed {
-        float run_speed;
-    } _run_speed;
-    pb_size_t which__disc_speed_rpm;
-    union _sl_link_TaskRuntimeSettingsRequest__disc_speed_rpm {
-        uint32_t disc_speed_rpm;
-    } _disc_speed_rpm;
+    bool has_run_speed;
+    float run_speed;
+    bool has_disc_speed_rpm;
+    uint32_t disc_speed_rpm;
 } sl_link_TaskRuntimeSettingsRequest;
 
 typedef struct _sl_link_TaskRuntimeSettingsResponse {
     sl_link_ResultCode result;
     pb_callback_t message;
     pb_callback_t task_id;
-    pb_size_t which__run_speed;
-    union _sl_link_TaskRuntimeSettingsResponse__run_speed {
-        float run_speed;
-    } _run_speed;
-    pb_size_t which__disc_speed_rpm;
-    union _sl_link_TaskRuntimeSettingsResponse__disc_speed_rpm {
-        uint32_t disc_speed_rpm;
-    } _disc_speed_rpm;
+    bool has_run_speed;
+    float run_speed;
+    bool has_disc_speed_rpm;
+    uint32_t disc_speed_rpm;
     float max_run_speed;
     uint32_t max_disc_speed_rpm;
     bool temporary;
@@ -1287,6 +1276,23 @@ typedef struct _sl_link_DiscControl {
     uint32_t speed_rpm;
 } sl_link_DiscControl;
 
+typedef struct _sl_link_ChannelSessionRequest {
+    sl_link_ChannelSessionAction action;
+    sl_link_ChannelRole role;
+    pb_callback_t token;
+} sl_link_ChannelSessionRequest;
+
+typedef struct _sl_link_ChannelSessionResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    sl_link_ChannelRole role;
+    pb_callback_t token;
+    uint32_t heartbeat_interval_ms;
+    uint32_t session_timeout_ms;
+    bool control_ready;
+    bool emergency_stop_latched;
+} sl_link_ChannelSessionResponse;
+
 typedef struct _sl_link_EmergencyStopControl {
     bool enabled;
 } sl_link_EmergencyStopControl;
@@ -1408,6 +1414,14 @@ extern "C" {
 #define _sl_link_MapRequestStatus_MIN sl_link_MapRequestStatus_MAP_REQUEST_STATUS_UNKNOWN
 #define _sl_link_MapRequestStatus_MAX sl_link_MapRequestStatus_MAP_REQUEST_STATUS_ERROR
 #define _sl_link_MapRequestStatus_ARRAYSIZE ((sl_link_MapRequestStatus)(sl_link_MapRequestStatus_MAP_REQUEST_STATUS_ERROR+1))
+
+#define _sl_link_ChannelRole_MIN sl_link_ChannelRole_CHANNEL_ROLE_DATA
+#define _sl_link_ChannelRole_MAX sl_link_ChannelRole_CHANNEL_ROLE_CONTROL
+#define _sl_link_ChannelRole_ARRAYSIZE ((sl_link_ChannelRole)(sl_link_ChannelRole_CHANNEL_ROLE_CONTROL+1))
+
+#define _sl_link_ChannelSessionAction_MIN sl_link_ChannelSessionAction_CHANNEL_SESSION_OPEN
+#define _sl_link_ChannelSessionAction_MAX sl_link_ChannelSessionAction_CHANNEL_SESSION_RECOVER
+#define _sl_link_ChannelSessionAction_ARRAYSIZE ((sl_link_ChannelSessionAction)(sl_link_ChannelSessionAction_CHANNEL_SESSION_RECOVER+1))
 
 
 #define sl_link_WifiStatusReport_result_ENUMTYPE sl_link_WifiResult
@@ -1549,6 +1563,12 @@ extern "C" {
 
 
 
+#define sl_link_ChannelSessionRequest_action_ENUMTYPE sl_link_ChannelSessionAction
+#define sl_link_ChannelSessionRequest_role_ENUMTYPE sl_link_ChannelRole
+
+#define sl_link_ChannelSessionResponse_result_ENUMTYPE sl_link_ResultCode
+#define sl_link_ChannelSessionResponse_role_ENUMTYPE sl_link_ChannelRole
+
 
 #define sl_link_ManualDriveControl_motion_ENUMTYPE sl_link_ManualMotionCommand
 
@@ -1562,7 +1582,7 @@ extern "C" {
 #define sl_link_PolygonPoint_init_default        {0, 0}
 #define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
 #define sl_link_ChassisSettings_init_default     {0, 0, 0, _sl_link_WorkMode_MIN, 0}
-#define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}}
+#define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define sl_link_RppSettings_init_default         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define sl_link_SettingsReadRequest_init_default {0, 0, 0}
 #define sl_link_SettingsReadResponse_init_default {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, {{NULL}, NULL}, false, sl_link_RppSettings_init_default}
@@ -1570,7 +1590,7 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
 #define sl_link_Pose2D_init_default              {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_default {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, {{NULL}, NULL}}
+#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define sl_link_CameraFrameRequest_init_default  {0, 0}
 #define sl_link_CameraFrameChunk_init_default    {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}, 0}
@@ -1582,8 +1602,8 @@ extern "C" {
 #define sl_link_TaskConfigResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_default         {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, 0, {0}, 0, {0}}
-#define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {0}, 0, {0}, 0, 0, 0}
+#define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, false, 0, false, 0}
+#define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_default    {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default}
 #define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
@@ -1646,6 +1666,8 @@ extern "C" {
 #define sl_link_LightingControl_init_default     {0}
 #define sl_link_ChassisPowerControl_init_default {0}
 #define sl_link_DiscControl_init_default         {0, 0}
+#define sl_link_ChannelSessionRequest_init_default {_sl_link_ChannelSessionAction_MIN, _sl_link_ChannelRole_MIN, {{NULL}, NULL}}
+#define sl_link_ChannelSessionResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_ChannelRole_MIN, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_EmergencyStopControl_init_default {0}
 #define sl_link_ManualDriveControl_init_default  {_sl_link_ManualMotionCommand_MIN, 0, 0, 0, 0, 0}
 #define sl_link_ControlCommand_init_default      {0, {sl_link_DiscLiftControl_init_default}}
@@ -1655,7 +1677,7 @@ extern "C" {
 #define sl_link_PolygonPoint_init_zero           {0, 0}
 #define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
 #define sl_link_ChassisSettings_init_zero        {0, 0, 0, _sl_link_WorkMode_MIN, 0}
-#define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}, 0, {0}}
+#define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define sl_link_RppSettings_init_zero            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define sl_link_SettingsReadRequest_init_zero    {0, 0, 0}
 #define sl_link_SettingsReadResponse_init_zero   {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, {{NULL}, NULL}, false, sl_link_RppSettings_init_zero}
@@ -1663,7 +1685,7 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
 #define sl_link_Pose2D_init_zero                 {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_zero {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {0}, 0, {0}, 0, {0}, 0, {0}, {{NULL}, NULL}}
+#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define sl_link_CameraFrameRequest_init_zero     {0, 0}
 #define sl_link_CameraFrameChunk_init_zero       {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}, 0}
@@ -1675,8 +1697,8 @@ extern "C" {
 #define sl_link_TaskConfigResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_zero            {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, 0, {0}, 0, {0}}
-#define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {0}, 0, {0}, 0, 0, 0}
+#define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, false, 0, false, 0}
+#define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_zero       {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero}
 #define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
@@ -1739,6 +1761,8 @@ extern "C" {
 #define sl_link_LightingControl_init_zero        {0}
 #define sl_link_ChassisPowerControl_init_zero    {0}
 #define sl_link_DiscControl_init_zero            {0, 0}
+#define sl_link_ChannelSessionRequest_init_zero  {_sl_link_ChannelSessionAction_MIN, _sl_link_ChannelRole_MIN, {{NULL}, NULL}}
+#define sl_link_ChannelSessionResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_ChannelRole_MIN, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_EmergencyStopControl_init_zero   {0}
 #define sl_link_ManualDriveControl_init_zero     {_sl_link_ManualMotionCommand_MIN, 0, 0, 0, 0, 0}
 #define sl_link_ControlCommand_init_zero         {0, {sl_link_DiscLiftControl_init_zero}}
@@ -2384,6 +2408,17 @@ extern "C" {
 #define sl_link_ChassisPowerControl_enabled_tag  1
 #define sl_link_DiscControl_enabled_tag          1
 #define sl_link_DiscControl_speed_rpm_tag        2
+#define sl_link_ChannelSessionRequest_action_tag 1
+#define sl_link_ChannelSessionRequest_role_tag   2
+#define sl_link_ChannelSessionRequest_token_tag  3
+#define sl_link_ChannelSessionResponse_result_tag 1
+#define sl_link_ChannelSessionResponse_message_tag 2
+#define sl_link_ChannelSessionResponse_role_tag  3
+#define sl_link_ChannelSessionResponse_token_tag 4
+#define sl_link_ChannelSessionResponse_heartbeat_interval_ms_tag 5
+#define sl_link_ChannelSessionResponse_session_timeout_ms_tag 6
+#define sl_link_ChannelSessionResponse_control_ready_tag 7
+#define sl_link_ChannelSessionResponse_emergency_stop_latched_tag 8
 #define sl_link_EmergencyStopControl_enabled_tag 1
 #define sl_link_ManualDriveControl_motion_tag    1
 #define sl_link_ManualDriveControl_speed_ratio_tag 2
@@ -2461,12 +2496,12 @@ X(a, STATIC,   SINGULAR, FLOAT,    base_laser_z,     12) \
 X(a, STATIC,   SINGULAR, FLOAT,    base_laser_roll_deg,  13) \
 X(a, STATIC,   SINGULAR, FLOAT,    base_laser_pitch_deg,  14) \
 X(a, STATIC,   SINGULAR, FLOAT,    base_laser_yaw_deg,  15) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_endpoint_margin,endpoint_margin,_endpoint_margin.endpoint_margin),  16) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_output_point_spacing,output_point_spacing,_output_point_spacing.output_point_spacing),  17) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_aligned_obstacle_inflation,aligned_obstacle_inflation,_aligned_obstacle_inflation.aligned_obstacle_inflation),  18) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_aligned_obstacle_max_extent,aligned_obstacle_max_extent,_aligned_obstacle_max_extent.aligned_obstacle_max_extent),  19) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_obstacle_corner_angle_deg,obstacle_corner_angle_deg,_obstacle_corner_angle_deg.obstacle_corner_angle_deg),  20) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_obstacle_avoidance_distance,obstacle_avoidance_distance,_obstacle_avoidance_distance.obstacle_avoidance_distance),  21)
+X(a, STATIC,   OPTIONAL, FLOAT,    endpoint_margin,  16) \
+X(a, STATIC,   OPTIONAL, FLOAT,    output_point_spacing,  17) \
+X(a, STATIC,   OPTIONAL, FLOAT,    aligned_obstacle_inflation,  18) \
+X(a, STATIC,   OPTIONAL, FLOAT,    aligned_obstacle_max_extent,  19) \
+X(a, STATIC,   OPTIONAL, FLOAT,    obstacle_corner_angle_deg,  20) \
+X(a, STATIC,   OPTIONAL, FLOAT,    obstacle_avoidance_distance,  21)
 #define sl_link_MapSettings_CALLBACK pb_default_field_callback
 #define sl_link_MapSettings_DEFAULT NULL
 #define sl_link_MapSettings_obstacle_regions_MSGTYPE sl_link_PolygonRegion
@@ -2615,10 +2650,10 @@ X(a, STATIC,   SINGULAR, BOOL,     collision_imminent,  17) \
 X(a, STATIC,   SINGULAR, BOOL,     radar_system_status_available,  18) \
 X(a, CALLBACK, SINGULAR, STRING,   radar_system_status,  19) \
 X(a, STATIC,   SINGULAR, FLOAT,    vehicle_speed,    20) \
-X(a, STATIC,   ONEOF,    BOOL,     (_chassis_connected,chassis_connected,_chassis_connected.chassis_connected),  21) \
-X(a, STATIC,   ONEOF,    BOOL,     (_emergency_stop_latched,emergency_stop_latched,_emergency_stop_latched.emergency_stop_latched),  22) \
-X(a, STATIC,   ONEOF,    BOOL,     (_localization_ready,localization_ready,_localization_ready.localization_ready),  23) \
-X(a, STATIC,   ONEOF,    BOOL,     (_localization_pause_latched,localization_pause_latched,_localization_pause_latched.localization_pause_latched),  24) \
+X(a, STATIC,   OPTIONAL, BOOL,     chassis_connected,  21) \
+X(a, STATIC,   OPTIONAL, BOOL,     emergency_stop_latched,  22) \
+X(a, STATIC,   OPTIONAL, BOOL,     localization_ready,  23) \
+X(a, STATIC,   OPTIONAL, BOOL,     localization_pause_latched,  24) \
 X(a, CALLBACK, SINGULAR, STRING,   localization_status_reason,  25)
 #define sl_link_DeviceStatusReport_CALLBACK pb_default_field_callback
 #define sl_link_DeviceStatusReport_DEFAULT NULL
@@ -2742,8 +2777,8 @@ X(a, CALLBACK, SINGULAR, STRING,   task_id,           3)
 
 #define sl_link_TaskRuntimeSettingsRequest_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           1) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_run_speed,run_speed,_run_speed.run_speed),   2) \
-X(a, STATIC,   ONEOF,    UINT32,   (_disc_speed_rpm,disc_speed_rpm,_disc_speed_rpm.disc_speed_rpm),   3)
+X(a, STATIC,   OPTIONAL, FLOAT,    run_speed,         2) \
+X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    3)
 #define sl_link_TaskRuntimeSettingsRequest_CALLBACK pb_default_field_callback
 #define sl_link_TaskRuntimeSettingsRequest_DEFAULT NULL
 
@@ -2751,8 +2786,8 @@ X(a, STATIC,   ONEOF,    UINT32,   (_disc_speed_rpm,disc_speed_rpm,_disc_speed_r
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
 X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
 X(a, CALLBACK, SINGULAR, STRING,   task_id,           3) \
-X(a, STATIC,   ONEOF,    FLOAT,    (_run_speed,run_speed,_run_speed.run_speed),   4) \
-X(a, STATIC,   ONEOF,    UINT32,   (_disc_speed_rpm,disc_speed_rpm,_disc_speed_rpm.disc_speed_rpm),   5) \
+X(a, STATIC,   OPTIONAL, FLOAT,    run_speed,         4) \
+X(a, STATIC,   OPTIONAL, UINT32,   disc_speed_rpm,    5) \
 X(a, STATIC,   SINGULAR, FLOAT,    max_run_speed,     6) \
 X(a, STATIC,   SINGULAR, UINT32,   max_disc_speed_rpm,   7) \
 X(a, STATIC,   SINGULAR, BOOL,     temporary,         8)
@@ -3455,6 +3490,25 @@ X(a, STATIC,   SINGULAR, UINT32,   speed_rpm,         2)
 #define sl_link_DiscControl_CALLBACK NULL
 #define sl_link_DiscControl_DEFAULT NULL
 
+#define sl_link_ChannelSessionRequest_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    action,            1) \
+X(a, STATIC,   SINGULAR, UENUM,    role,              2) \
+X(a, CALLBACK, SINGULAR, STRING,   token,             3)
+#define sl_link_ChannelSessionRequest_CALLBACK pb_default_field_callback
+#define sl_link_ChannelSessionRequest_DEFAULT NULL
+
+#define sl_link_ChannelSessionResponse_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, STATIC,   SINGULAR, UENUM,    role,              3) \
+X(a, CALLBACK, SINGULAR, STRING,   token,             4) \
+X(a, STATIC,   SINGULAR, UINT32,   heartbeat_interval_ms,   5) \
+X(a, STATIC,   SINGULAR, UINT32,   session_timeout_ms,   6) \
+X(a, STATIC,   SINGULAR, BOOL,     control_ready,     7) \
+X(a, STATIC,   SINGULAR, BOOL,     emergency_stop_latched,   8)
+#define sl_link_ChannelSessionResponse_CALLBACK pb_default_field_callback
+#define sl_link_ChannelSessionResponse_DEFAULT NULL
+
 #define sl_link_EmergencyStopControl_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     enabled,           1)
 #define sl_link_EmergencyStopControl_CALLBACK NULL
@@ -3583,6 +3637,8 @@ extern const pb_msgdesc_t sl_link_DiscLiftControl_msg;
 extern const pb_msgdesc_t sl_link_LightingControl_msg;
 extern const pb_msgdesc_t sl_link_ChassisPowerControl_msg;
 extern const pb_msgdesc_t sl_link_DiscControl_msg;
+extern const pb_msgdesc_t sl_link_ChannelSessionRequest_msg;
+extern const pb_msgdesc_t sl_link_ChannelSessionResponse_msg;
 extern const pb_msgdesc_t sl_link_EmergencyStopControl_msg;
 extern const pb_msgdesc_t sl_link_ManualDriveControl_msg;
 extern const pb_msgdesc_t sl_link_ControlCommand_msg;
@@ -3678,6 +3734,8 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_LightingControl_fields &sl_link_LightingControl_msg
 #define sl_link_ChassisPowerControl_fields &sl_link_ChassisPowerControl_msg
 #define sl_link_DiscControl_fields &sl_link_DiscControl_msg
+#define sl_link_ChannelSessionRequest_fields &sl_link_ChannelSessionRequest_msg
+#define sl_link_ChannelSessionResponse_fields &sl_link_ChannelSessionResponse_msg
 #define sl_link_EmergencyStopControl_fields &sl_link_EmergencyStopControl_msg
 #define sl_link_ManualDriveControl_fields &sl_link_ManualDriveControl_msg
 #define sl_link_ControlCommand_fields &sl_link_ControlCommand_msg
@@ -3752,6 +3810,8 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_RadarRelocalizationRequest_size depends on runtime parameters */
 /* sl_link_RadarRelocalizationResponse_size depends on runtime parameters */
 /* sl_link_RadarRelocalizationStatusResponse_size depends on runtime parameters */
+/* sl_link_ChannelSessionRequest_size depends on runtime parameters */
+/* sl_link_ChannelSessionResponse_size depends on runtime parameters */
 /* sl_link_ControlCommandResponse_size depends on runtime parameters */
 #define SL_LINK_SL_LINK_PB_H_MAX_SIZE            sl_link_RppSettings_size
 #define sl_link_CameraFrameRequest_size          8

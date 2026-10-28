@@ -8,6 +8,7 @@ param(
     [string]$RemoteRoot = '/home/dev/work/Grinder-remote-sim',
     [string]$Identity = "$env:USERPROFILE\.ssh\grinder_remote_sim",
     [int]$LocalControlPort = 18002,
+    [int]$LocalMotionPort = 18003,
     [int]$LocalRtspPort = 18554,
     [string]$Adb = 'D:\Program Files\Netease\MuMu Player 12\nx_main\adb.exe',
     [string]$AdbSerial = '127.0.0.1:16384',
@@ -19,6 +20,7 @@ if ($Action -eq 'tunnel') {
     & ssh -N -i $Identity -p $Port -o IdentitiesOnly=yes -o ExitOnForwardFailure=yes `
         -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=accept-new `
         -L "127.0.0.1:${LocalControlPort}:127.0.0.1:8002" `
+        -L "127.0.0.1:${LocalMotionPort}:127.0.0.1:8003" `
         -L "127.0.0.1:${LocalRtspPort}:127.0.0.1:8554" "$RemoteUser@$RemoteHost"
     exit $LASTEXITCODE
 }
@@ -26,7 +28,7 @@ if ($Action -eq 'app') {
     if (!(Test-Path -LiteralPath $Adb)) { throw "MuMu adb not found: $Adb" }
     & $Adb connect $AdbSerial
     if ($LASTEXITCODE -ne 0) { throw 'MuMu ADB connection failed' }
-    foreach ($mapping in @(@(8002,$LocalControlPort),@(8554,$LocalRtspPort))) {
+    foreach ($mapping in @(@(8002,$LocalControlPort),@(8003,$LocalMotionPort),@(8554,$LocalRtspPort))) {
         & $Adb -s $AdbSerial reverse "tcp:$($mapping[0])" "tcp:$($mapping[1])"
         if ($LASTEXITCODE -ne 0) { throw "MuMu port mapping failed: $($mapping[0])" }
     }

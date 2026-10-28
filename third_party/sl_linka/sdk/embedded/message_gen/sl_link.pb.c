@@ -273,6 +273,12 @@ PB_BIND(sl_link_ChassisPowerControl, sl_link_ChassisPowerControl, AUTO)
 PB_BIND(sl_link_DiscControl, sl_link_DiscControl, AUTO)
 
 
+PB_BIND(sl_link_ChannelSessionRequest, sl_link_ChannelSessionRequest, AUTO)
+
+
+PB_BIND(sl_link_ChannelSessionResponse, sl_link_ChannelSessionResponse, AUTO)
+
+
 PB_BIND(sl_link_EmergencyStopControl, sl_link_EmergencyStopControl, AUTO)
 
 
@@ -283,46 +289,3 @@ PB_BIND(sl_link_ControlCommand, sl_link_ControlCommand, AUTO)
 
 
 PB_BIND(sl_link_ControlCommandResponse, sl_link_ControlCommandResponse, AUTO)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

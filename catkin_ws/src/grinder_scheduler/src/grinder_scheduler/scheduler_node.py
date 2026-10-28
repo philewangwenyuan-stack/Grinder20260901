@@ -966,6 +966,12 @@ class SchedulerNode:
             ),
             host=rospy.get_param("~sl_linka_host", "0.0.0.0"),
             port=rospy.get_param("~sl_linka_port", 8002),
+            control_port=rospy.get_param("~sl_linka_control_port", 8003),
+            session_timeout_sec=rospy.get_param("~sl_linka_session_timeout_sec", 3.0),
+            manual_timeout_sec=self._manual_command_timeout_sec,
+            bulk_bytes_per_sec=rospy.get_param("~sl_linka_bulk_bytes_per_sec", 1048576),
+            bulk_manual_bytes_per_sec=rospy.get_param("~sl_linka_bulk_manual_bytes_per_sec", 262144),
+            bulk_burst_bytes=rospy.get_param("~sl_linka_bulk_burst_bytes", 8192),
             callback_handler=self,
             rx_diagnostic_logging=rospy.get_param("~sl_linka_rx_diagnostic_logging", False),
             rx_sample_interval_sec=rospy.get_param("~sl_linka_rx_sample_interval_sec", 1.0),
@@ -8583,6 +8589,16 @@ class SchedulerNode:
         with self._motion.lock:
             return self._motion.generation
 
+    def capture_stop_generation(self, session):
+        """Short safety phase on receipt; task history/service cleanup runs later."""
+        generation = self._motion.invalidate()
+        self.cancel_manual_session(session)
+        self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="control_channel_stop")
+        self.task_enable_pub.publish(Bool(data=False))
+        self._safe_stop_motion()
+        self.disc_enable_pub.publish(Bool(data=False))
+        return generation
+
     def begin_manual_session(self, session):
         self.cancel_manual_session()
         self._manual_delivery.begin(session)
@@ -8602,7 +8618,7 @@ class SchedulerNode:
         if delivery is None or not delivery.invalidate(session):
             return
         with self._motion.lock:
-            if self._manual_command_active:
+            if self._manual_command_active or getattr(self, "_manual_travel_disc_active", False):
                 wheel = WheelSpeedCommand()
                 wheel.left_wheel_speed = wheel.right_wheel_speed = 0
                 self.wheel_cmd_pub.publish(wheel)
@@ -8620,6 +8636,9 @@ class SchedulerNode:
         if (connection_valid is not None and not connection_valid()
                 and not (request.HasField("emergency_stop") and request.emergency_stop.enabled)):
             handled, error_message = False, "Control connection closed or replaced"
+        elif (request.HasField("emergency_stop") and not request.emergency_stop.enabled
+              and control_generation is not None and control_generation != self._motion.generation):
+            handled, error_message = False, "Emergency reset cancelled by a newer stop/emergency"
         elif request.HasField("emergency_stop"):
             handled, error_message = self._apply_emergency_stop(bool(request.emergency_stop.enabled))
         else:
@@ -8975,14 +8994,16 @@ class SchedulerNode:
             elif not non_task_manual:
                 # A stale manual-session flag must not disable a running task's disc.
                 self._manual_travel_disc_active = False
-            self.wheel_cmd_pub.publish(wheel)
-            if non_task_manual and not moving:
-                self._set_manual_travel_disc_active(False, reason="manual_drive_stop")
             with self._motion.commit():
+                # Publish and activity bookkeeping form one short commit: a
+                # disconnect cannot miss a command published just before its flag.
+                self.wheel_cmd_pub.publish(wheel)
                 self._manual_last_left_cmd = int(wheel.left_wheel_speed)
                 self._manual_last_right_cmd = int(wheel.right_wheel_speed)
                 self._manual_last_command_monotonic = time.monotonic()
                 self._manual_command_active = bool(moving)
+            if non_task_manual and not moving:
+                self._set_manual_travel_disc_active(False, reason="manual_drive_stop")
 
     def _manual_drive_watchdog_tick(self, _event):
         with self._manual_drive_lock:
@@ -9178,28 +9199,44 @@ class SchedulerNode:
         rospy.loginfo("Task runtime settings: task=%s result=%s message=%s", request.task_id, response.result, response.message)
         return response.SerializeToString(), pb.MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE, pb.COMP_SCHEDULER
 
-    def handle_task_command(self, payload):
+    def handle_task_command(self, payload, connection_valid=None, control_generation=None):
         pb = self.sl_link_server.pb
         request = pb.TaskCommand()
         request.ParseFromString(payload)
         response = pb.TaskCommandResponse()
         response.task_id = request.task_id or self.task_config.task_id
-        if request.command == pb.TASK_CMD_START:
-            success, message = self._start_execution()
-            if success:
-                try:
-                    self._publish_task_path_to_mqtt()
-                except Exception as exc:
-                    rospy.logwarn(
-                        "MQTT task path report failed without blocking task start response: %s",
-                        exc,
-                    )
-        elif request.command == pb.TASK_CMD_PAUSE:
-            success, message = self._pause_execution()
-        elif request.command == pb.TASK_CMD_RESUME:
-            success, message = self._resume_execution()
-        else:
-            success, message = self._stop_execution()
+        if ((connection_valid is not None and not connection_valid())
+                or (control_generation is not None and control_generation != self._motion.generation)):
+            response.result = pb.RESULT_FAILED
+            response.message = "Task command session expired or superseded"
+            return response.SerializeToString(), pb.MSG_ID_TASK_COMMAND_RESPONSE, pb.COMP_SCHEDULER
+        previous_validator = getattr(self._motion.local, 'delivery_validator', None)
+        if connection_valid is not None:
+            self._motion.local.delivery_validator = lambda: (
+                connection_valid() and (previous_validator is None or previous_validator()))
+        try:
+            if request.command == pb.TASK_CMD_START:
+                with self._motion.action(replace=True, generation=control_generation):
+                    success, message = self._start_execution()
+                if success:
+                    try:
+                        self._publish_task_path_to_mqtt()
+                    except Exception as exc:
+                        rospy.logwarn(
+                            "MQTT task path report failed without blocking task start response: %s",
+                            exc,
+                        )
+            elif request.command == pb.TASK_CMD_PAUSE:
+                success, message = self._pause_execution()
+            elif request.command == pb.TASK_CMD_RESUME:
+                with self._motion.action(replace=True, generation=control_generation):
+                    success, message = self._resume_execution()
+            else:
+                success, message = self._stop_execution()
+        except MotionCancelled:
+            success, message = False, 'Task command cancelled by disconnect/stop/emergency'
+        finally:
+            self._motion.local.delivery_validator = previous_validator
         response.result = pb.RESULT_SUCCESS if success else pb.RESULT_FAILED
         response.message = message
         return response.SerializeToString(), pb.MSG_ID_TASK_COMMAND_RESPONSE, pb.COMP_SCHEDULER

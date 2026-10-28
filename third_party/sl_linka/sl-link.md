@@ -17,6 +17,32 @@ SL-LinkA 当前面向单下位机模型：
 
 ## 2. 帧格式
 
+### 双端口与连接组
+
+生成使用 protoc 25.1；`scripts/generate_proto.sh all` 将同一编译器加入 PATH，保证 nanopb 不会调用系统旧版本。
+重新生成后的 C SDK 使用 `has_*` 表示 proto3 optional 字段；使用旧合成 oneof 字段的 C 调用方须同步编译适配。
+
+同一 IP 的 8002 为数据通道，8003 为控制通道，既有帧头/CRC/业务消息 ID 保持不变。
+`0x0403 ChannelSessionRequest` / `0x0404 ChannelSessionResponse` 是 SL-LinkA 消息，不是 Modbus 地址。
+
+请求字段：`action`（OPEN/BIND/HEARTBEAT/RELEASE/RECOVER）、`role`（DATA/CONTROL）、`token`。
+响应：`result/message`、`role/token`、`heartbeat_interval_ms/session_timeout_ms`、
+`control_ready/emergency_stop_latched`。ACK_SEQ 对应请求 SEQ，按通道与连接代号隔离。
+
+1. DATA OPEN：空闲设备签发随机令牌；被占用时 RESULT_BUSY 并关闭。
+2. CONTROL BIND：携带同一令牌，每组最多一条 DATA 和一条 CONTROL；TCP 接入本身不获取控制权。
+3. 每秒 HEARTBEAT，3 秒无有效活动清理通道；明确断开立即处理。心跳不续期遥控速度。
+4. RECOVER/BIND 的有效令牌可替换同角色旧连接，不影响另一健康通道；旧连接收尾不能取消新连接。
+5. RELEASE 释放整组，全部通道失效后令牌作废；原令牌不可用时重新 OPEN，禁止接管其他平板。
+
+8003 仅接受 ControlCommand、TaskCommand(PAUSE/STOP) 及会话消息，并返回对应控制确认。
+8002 承载其他数据业务及 START/RESUME；开始/继续还要求控制通道就绪。请求绑定接收时执行代号，
+停止/急停使旧启动请求失效。控制断连/遥控超时清零遥控，不暂停独立自动任务；重连不重放速度。
+旧客户端首个合法只读查询可建立只读占用（兼容原 NUL 心跳），不能升级为控制或执行写操作。
+拒绝返回 RESULT_BUSY/RESULT_UNSUPPORTED 或对应业务失败响应，不存在单端口控制回退。
+
+### 既有帧头
+
 | 偏移 | 字段 | 长度 | 说明 |
 |------|------|------|------|
 | 0 | `STX1` | 1 | `0xFD` |

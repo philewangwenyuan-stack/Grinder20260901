@@ -37,6 +37,15 @@ if [ ! -x "$PROTOC" ]; then
     PROTOC="protoc"
 fi
 
+# nanopb invokes `protoc` itself. Use the same pinned compiler for all SDKs,
+# rather than silently picking an older system protoc from PATH.
+PROTOC="$(command -v "$PROTOC")"
+if [ "$("$PROTOC" --version)" != "libprotoc 25.1" ]; then
+    echo "Error: protoc 25.1 is required for proto3 optional fields and runtime compatibility." >&2
+    exit 1
+fi
+export PATH="$(dirname "$PROTOC"):$PATH"
+
 generate_c() {
     echo "=== Generating C/nanopb code ==="
     mkdir -p "$C_OUT"
@@ -45,6 +54,13 @@ generate_c() {
         -I"$PROJECT_ROOT/proto" \
         -D"$C_OUT" \
         "$PROTO_FILE"
+
+    python3 - "$C_OUT/sl_link.pb.c" <<'PY'
+import pathlib
+import sys
+path = pathlib.Path(sys.argv[1])
+path.write_text(path.read_text().rstrip() + "\n")
+PY
     
     echo "Generated: sdk/embedded/message_gen/sl_link.pb.c, sl_link.pb.h"
 }

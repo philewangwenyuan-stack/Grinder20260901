@@ -43,12 +43,31 @@ class ContinuousManualTest(unittest.TestCase):
                 response=server.pb.ControlCommandResponse(result=server.pb.RESULT_SUCCESS,message='applied')
                 return response.SerializeToString(),server.pb.MSG_ID_CONTROL_COMMAND_RESPONSE,server.pb.COMP_CONTROL
             def build_device_status_report(self):raise RuntimeError('periodic reports excluded')
-        server=SlLinkAServer(str(ROOT/'third_party/sl_linka/sdk/python'),'127.0.0.1',0,Handler())
+        server=SlLinkAServer(str(ROOT/'third_party/sl_linka/sdk/python'),'127.0.0.1',0,Handler(), control_port=0)
         server.start()
         self.addCleanup(server.stop)
         self.addCleanup(release.set)
-        connection=socket.create_connection(server._server.server_address,timeout=1)
+        data_connection=socket.create_connection(server._server.server_address,timeout=1)
+        self.addCleanup(data_connection.close)
+        def handshake(peer, control=False, token=''):
+            pb=server.pb
+            request=pb.ChannelSessionRequest(action=pb.CHANNEL_SESSION_BIND if control else pb.CHANNEL_SESSION_OPEN,
+                role=pb.CHANNEL_ROLE_CONTROL if control else pb.CHANNEL_ROLE_DATA,token=token)
+            frame=server.SlFrame(version=server.SL_PROTOCOL_VERSION,flags=0,seq=60000,ack_seq=0,
+                src_id=pb.DEVICE_APP,dst_id=pb.DEVICE_LOWER,comp_id=pb.COMP_CONTROL,
+                msg_id=pb.MSG_ID_CHANNEL_SESSION_REQUEST,payload=request.SerializeToString())
+            peer.sendall(frame.pack())
+            parser=server.SlFrameParser()
+            while True:
+                for reply in parser.parse(peer.recv(4096)):
+                    if reply.msg_id==pb.MSG_ID_CHANNEL_SESSION_RESPONSE:
+                        result=pb.ChannelSessionResponse.FromString(reply.payload)
+                        self.assertEqual(pb.RESULT_SUCCESS,result.result)
+                        return result.token
+        token=handshake(data_connection)
+        connection=socket.create_connection(server._listeners[1].server_address,timeout=1)
         self.addCleanup(connection.close)
+        handshake(connection,True,token)
         sequence=[0]
         def send(request):
             sequence[0]+=1

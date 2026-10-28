@@ -17,7 +17,9 @@ START_RF2O="${START_RF2O:-1}"
 START_EKF_TEST="${START_EKF_TEST:-1}"
 RESET_STATE="${RESET_STATE:-0}"
 NAV_MAP_YAML="${NAV_MAP_YAML:-${WORKSPACE}/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/maps/map.yaml}"
-SL_LINKA_PORT="${SL_LINKA_PORT:-8002}"
+SL_LINKA_PORT="${SL_LINKA_PORT:-}"
+SL_LINKA_CONTROL_PORT="${SL_LINKA_CONTROL_PORT:-}"
+export SL_LINKA_PORT SL_LINKA_CONTROL_PORT
 SL_LINKA_READY_TIMEOUT="${SL_LINKA_READY_TIMEOUT:-45}"
 HOST_ARCH="$(uname -m)"
 MEDIAMTX_BIN="${MEDIAMTX_BIN:-}"
@@ -112,8 +114,8 @@ tcp_port_open() {
 
 echo "[INFO] logs: ${LOG_DIR}"
 echo "[INFO] host arch: ${HOST_ARCH}"
-if tcp_port_open "127.0.0.1" "${SL_LINKA_PORT}"; then
-  echo "[ERROR] SL-LinkA port ${SL_LINKA_PORT} is already open before startup."
+if tcp_port_open "127.0.0.1" "${SL_LINKA_PORT}" || tcp_port_open "127.0.0.1" "${SL_LINKA_CONTROL_PORT}"; then
+  echo "[ERROR] SL-LinkA data/control port (${SL_LINKA_PORT}/${SL_LINKA_CONTROL_PORT}) is already open before startup."
   echo "[ERROR] A previous grinder_scheduler may still be running. Please stop stale ROS processes before launching again."
   echo "[ERROR] Useful checks: pgrep -af 'scheduler_node.py|grinder_scheduler|roslaunch'"
   exit 1
@@ -169,6 +171,7 @@ else
 fi
 
 wait_for_tcp_port "SL-LinkA service" "127.0.0.1" "${SL_LINKA_PORT}" "${SL_LINKA_READY_TIMEOUT}"
+wait_for_tcp_port "SL-LinkA control service" "127.0.0.1" "${SL_LINKA_CONTROL_PORT}" "${SL_LINKA_READY_TIMEOUT}"
 
 echo
 echo "[INFO] grinder stack started."

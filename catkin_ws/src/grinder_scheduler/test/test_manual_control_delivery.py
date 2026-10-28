@@ -20,6 +20,47 @@ Worker = namespace['_BoundedLatestWorker']
 
 
 class ManualQueueTest(unittest.TestCase):
+    def test_disconnect_stops_travel_disc_before_first_wheel_activity_flag(self):
+        from grinder_scheduler.manual_delivery import ManualDelivery
+        fixture = execution_fixture.ExecutionTest()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        node, _ = fixture.node()
+        node._manual_delivery = ManualDelivery()
+        session = object()
+        node._manual_delivery.begin(session)
+        node._manual_command_active = False
+        node._manual_travel_disc_active = True
+        outputs = []
+        node.wheel_cmd_pub = SimpleNamespace(publish=lambda wheel: outputs.append(
+            (wheel.left_wheel_speed, wheel.right_wheel_speed)))
+        node._set_manual_travel_disc_active = lambda active, reason: setattr(node, '_manual_travel_disc_active', active)
+        node.cancel_manual_session(session)
+        self.assertEqual([(0, 0)], outputs)
+        self.assertFalse(node._manual_travel_disc_active)
+
+    def test_queued_reset_cannot_clear_newer_emergency(self):
+        fixture = execution_fixture.ExecutionTest()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        node, _ = fixture.node()
+        class Response:
+            def __init__(self): self.applied_command = SimpleNamespace(CopyFrom=lambda _: None)
+            def SerializeToString(self): return self.result
+        node.sl_link_server = SimpleNamespace(pb=SimpleNamespace(ControlCommandResponse=Response,
+            RESULT_SUCCESS=1, RESULT_FAILED=0, MSG_ID_CONTROL_COMMAND_RESPONSE=1, COMP_CONTROL=1))
+        old_generation = node._motion.generation
+        node._motion.invalidate(emergency=True)
+        calls = []
+        node._apply_emergency_stop = lambda value: (calls.append(value) or True, '')
+        request = SimpleNamespace(HasField=lambda name: name == 'emergency_stop',
+                                  emergency_stop=SimpleNamespace(enabled=False))
+        result = node.handle_control_command(b'', parsed_request=request,
+            control_generation=old_generation, connection_valid=lambda: True)[0]
+        self.assertEqual(0, result)
+        self.assertEqual([], calls)
+        self.assertTrue(node._motion.latched)
+
     def test_inflight_control_cannot_publish_after_connection_closes(self):
         fixture=execution_fixture.ExecutionTest()
         fixture.setUp()

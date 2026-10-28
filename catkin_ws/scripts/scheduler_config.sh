@@ -21,5 +21,19 @@ configure_scheduler_config() {
 
   python3 "${workspace}/scripts/check_scheduler_config.py" \
     --default-config "${config_dir}/scheduler.yaml" \
-    --local-config "${GRINDER_SCHEDULER_LOCAL_CONFIG}"
+    --local-config "${GRINDER_SCHEDULER_LOCAL_CONFIG}" || return 1
+  local channel_ports configured_data configured_control
+  channel_ports="$(python3 "${workspace}/scripts/check_scheduler_config.py" \
+    --default-config "${config_dir}/scheduler.yaml" \
+    --local-config "${GRINDER_SCHEDULER_LOCAL_CONFIG}" --print-ports)" || return 1
+  read -r configured_data configured_control <<< "${channel_ports}"
+  SL_LINKA_PORT="${SL_LINKA_PORT:-${configured_data}}"
+  SL_LINKA_CONTROL_PORT="${SL_LINKA_CONTROL_PORT:-${configured_control}}"
+  if [[ ! "${SL_LINKA_PORT}" =~ ^[0-9]+$ || ! "${SL_LINKA_CONTROL_PORT}" =~ ^[0-9]+$ ]] ||
+     (( SL_LINKA_PORT < 1 || SL_LINKA_PORT > 65535 || SL_LINKA_CONTROL_PORT < 1 || SL_LINKA_CONTROL_PORT > 65535 )) ||
+     [[ "${SL_LINKA_PORT}" == "${SL_LINKA_CONTROL_PORT}" ]]; then
+    echo "[ERROR] SL-LinkA data/control ports must be different integers in 1..65535" >&2
+    return 1
+  fi
+  export SL_LINKA_PORT SL_LINKA_CONTROL_PORT
 }

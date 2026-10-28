@@ -15,7 +15,9 @@ INDICATOR_USB_SERIAL_NUMBER="${INDICATOR_USB_SERIAL_NUMBER:-}"
 INDICATOR_DEVICE="${INDICATOR_DEVICE:-}"
 NAV_MAP_YAML="${NAV_MAP_YAML:-/home/neardi/work/Grinder/maps/grinder_map.yaml}"
 SUPER_LIO_MAP_ROOT="${SUPER_LIO_MAP_ROOT:-${WORKSPACE}/../maps}"
-SL_LINKA_PORT="${SL_LINKA_PORT:-8002}"
+SL_LINKA_PORT="${SL_LINKA_PORT:-}"
+SL_LINKA_CONTROL_PORT="${SL_LINKA_CONTROL_PORT:-}"
+export SL_LINKA_PORT SL_LINKA_CONTROL_PORT
 mkdir -p "${WORKSPACE}/logs"
 exec 9>"${WORKSPACE}/logs/super_lio_base.lock"
 if ! flock -n 9; then
@@ -116,8 +118,9 @@ wait_for_master() {
   done
 }
 
-if bash -c ":</dev/tcp/127.0.0.1/${SL_LINKA_PORT}" >/dev/null 2>&1; then
-  echo "[ERROR] TCP ${SL_LINKA_PORT} is already occupied; grinder_scheduler may already be running."
+if bash -c ":</dev/tcp/127.0.0.1/${SL_LINKA_PORT}" >/dev/null 2>&1 ||
+   bash -c ":</dev/tcp/127.0.0.1/${SL_LINKA_CONTROL_PORT}" >/dev/null 2>&1; then
+  echo "[ERROR] TCP ${SL_LINKA_PORT}/${SL_LINKA_CONTROL_PORT} is already occupied; grinder_scheduler may already be running."
   exit 1
 fi
 
