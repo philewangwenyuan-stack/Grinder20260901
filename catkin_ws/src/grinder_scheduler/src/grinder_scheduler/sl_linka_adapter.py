@@ -74,55 +74,6 @@ class _BoundedFifoWorker(_BoundedLatestWorker):
             return True
 
 
-class _DropIfBusyWorker:
-    """Run one job at a time and reject arrivals while the job is active."""
-
-    def __init__(self, name):
-        self._condition = threading.Condition()
-        self._job = None
-        self._busy = False
-        self._running = True
-        self._thread = threading.Thread(target=self._run, name=name, daemon=True)
-        self._thread.start()
-
-    def submit(self, callback, *args):
-        with self._condition:
-            if not self._running:
-                raise RuntimeError("worker is shut down")
-            if self._busy or self._job is not None:
-                return False
-            self._job = (callback, args)
-            self._condition.notify()
-            return True
-
-    def shutdown(self, wait=False):
-        with self._condition:
-            self._running = False
-            self._job = None
-            self._condition.notify_all()
-        if wait and threading.current_thread() is not self._thread:
-            self._thread.join()
-
-    def _run(self):
-        while True:
-            with self._condition:
-                while self._running and self._job is None:
-                    self._condition.wait()
-                if not self._running:
-                    return
-                callback, args = self._job
-                self._job = None
-                self._busy = True
-            try:
-                callback(*args)
-            except Exception as exc:
-                if rospy is not None:
-                    rospy.logerr("SL-LinkA drop-if-busy worker failed: %s", exc)
-            finally:
-                with self._condition:
-                    self._busy = False
-
-
 class SlLinkAServer:
     def __init__(
         self,
@@ -204,106 +155,6 @@ class SlLinkAServer:
     def _msg_id_name(self, msg_id):
         return self._enum_name("MessageId", msg_id)
 
-    def _message_to_log_dict(self, message, depth=0):
-        if depth > 2:
-            return "<nested>"
-        out = {}
-        try:
-            fields = message.ListFields()
-        except Exception:
-            return str(message)
-        for field, value in fields:
-            if getattr(field, "type", None) == getattr(field, "TYPE_ENUM", None):
-                out[field.name] = self._enum_field_value_to_log(field, value)
-            else:
-                out[field.name] = self._value_to_log(value, depth=depth + 1)
-        return out
-
-    def _enum_field_value_to_log(self, field, value):
-        def one(enum_value):
-            try:
-                enum_desc = field.enum_type.values_by_number.get(int(enum_value))
-                if enum_desc is not None:
-                    return enum_desc.name
-            except Exception:
-                pass
-            return int(enum_value)
-
-        if hasattr(value, "__iter__") and not isinstance(value, (str, bytes, bytearray)):
-            try:
-                return [one(item) for item in value]
-            except Exception:
-                return str(value)
-        return one(value)
-
-    def _value_to_log(self, value, depth=0):
-        if isinstance(value, (bytes, bytearray)):
-            return "<bytes {}>".format(len(value))
-        if isinstance(value, str):
-            if len(value) > 160:
-                return value[:160] + "...<truncated>"
-            return value
-        if isinstance(value, (int, float, bool)) or value is None:
-            return value
-        if isinstance(value, (list, tuple)) or hasattr(value, "__iter__") and not hasattr(value, "ListFields"):
-            values = []
-            try:
-                for index, item in enumerate(value):
-                    if index >= 8:
-                        values.append("...<{} more>".format(max(0, len(value) - 8) if hasattr(value, "__len__") else "?"))
-                        break
-                    values.append(self._value_to_log(item, depth=depth + 1))
-                return values
-            except Exception:
-                return str(value)
-        if hasattr(value, "ListFields"):
-            return self._message_to_log_dict(value, depth=depth + 1)
-        return str(value)
-
-    def _request_message_class_name(self, msg_id):
-        pb = self.pb
-        pairs = [
-            ("MSG_ID_SETTINGS_READ_REQUEST", "SettingsReadRequest"),
-            ("MSG_ID_SETTINGS_WRITE_REQUEST", "SettingsWriteRequest"),
-            ("MSG_ID_CONTROL_COMMAND", "ControlCommand"),
-            ("MSG_ID_TASK_CONFIG", "TaskConfig"),
-            ("MSG_ID_TASK_COMMAND", "TaskCommand"),
-            ("MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST", "TaskRuntimeSettingsRequest"),
-            ("MSG_ID_PATH_POINT_PLAN_REQUEST", "PathPointPlanRequest"),
-            ("MSG_ID_CAMERA_FRAME_REQUEST", "CameraFrameRequest"),
-            ("MSG_ID_MAP_REQUEST", "MapRequest"),
-            ("MSG_ID_MAP_PREVIEW_REQUEST", "MapPreviewRequest"),
-            ("MSG_ID_MAP_REGION_POINT_REQUEST", "MapRegionPointRequest"),
-            ("MSG_ID_MAP_EDIT_COMMAND", "MapEditCommand"),
-            ("MSG_ID_VIDEO_STREAM_INFO_REQUEST", "VideoStreamInfoRequest"),
-            ("MSG_ID_MAP_SYNC_REQUEST", "MapSyncRequest"),
-            ("MSG_ID_MAP_IMPORT_TO_RADAR_REQUEST", "MapImportToRadarRequest"),
-            ("MSG_ID_MAP_MODE_REQUEST", "MapModeRequest"),
-            ("MSG_ID_MAP_CATALOG_REQUEST", "MapCatalogRequest"),
-            ("MSG_ID_MAP_DELETE_REQUEST", "MapDeleteRequest"),
-            ("MSG_ID_MAP_SAVE_REQUEST", "MapSaveRequest"),
-            ("MSG_ID_MAP_METRICS_REQUEST", "MapMetricsRequest"),
-            ("MSG_ID_TASK_RESULT_REQUEST", "TaskResultRequest"),
-            ("MSG_ID_TASK_EXECUTION_HISTORY_REQUEST", "TaskExecutionHistoryRequest"),
-            ("MSG_ID_TASK_EXECUTION_DELETE_REQUEST", "TaskExecutionDeleteRequest"),
-            ("MSG_ID_TASK_TRAJECTORY_REQUEST", "TaskTrajectoryRequest"),
-            ("MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST", "SystemCacheClearRequest"),
-            ("MSG_ID_LIVE_MAP_CACHE_CLEAR_REQUEST", "LiveMapCacheClearRequest"),
-            ("MSG_ID_RADAR_MAP_CACHE_CLEAR_REQUEST", "RadarMapCacheClearRequest"),
-            ("MSG_ID_MAP_ALIGNMENT_REQUEST", "MapAlignmentRequest"),
-            ("MSG_ID_RADAR_SYSTEM_STATUS_REQUEST", "RadarSystemStatusRequest"),
-            ("MSG_ID_RADAR_MAP_SYNC_REQUEST", "RadarMapSyncRequest"),
-            ("MSG_ID_RADAR_RELOCALIZATION_REQUEST", "RadarRelocalizationRequest"),
-            (
-                "MSG_ID_RADAR_RELOCALIZATION_STATUS_REQUEST",
-                "RadarRelocalizationStatusRequest",
-            ),
-            ("MSG_ID_PATH_PLAN_REQUEST", "PathPlanRequest"),
-        ]
-        for msg_const_name, class_name in pairs:
-            if hasattr(pb, msg_const_name) and int(msg_id) == int(getattr(pb, msg_const_name)):
-                return class_name
-        return ""
 
     def _log_rx_frame(self, frame):
         # 每帧只更新内存计数；采样日志和指标文件写入不在 TCP 接收热路径执行。
@@ -407,9 +258,6 @@ class SlLinkAServer:
                 self.manual_control_executor = _BoundedLatestWorker(
                     max_pending=1,
                     name="sl_linka_manual",
-                )
-                self.manual_response_executor = _DropIfBusyWorker(
-                    name="sl_linka_manual_tx",
                 )
                 self.control_response_executor = ThreadPoolExecutor(
                     max_workers=1,
@@ -515,7 +363,6 @@ class SlLinkAServer:
                                         self._dispatch_control_immediately,
                                         frame,
                                         control_request,
-                                        True,
                                         received_at,
                                         outer._handler.capture_control_generation(),
                                         ticket,
@@ -529,13 +376,12 @@ class SlLinkAServer:
                                     self._dispatch_control_immediately(
                                         frame,
                                         control_request,
-                                        False,
                                         received_at,
                                     )
                                 else:
                                     accepted = self.control_dispatch_executor.submit(
                                         self._dispatch_control_immediately,
-                                        frame, control_request, False, received_at,
+                                        frame, control_request, received_at,
                                         outer._handler.capture_control_generation())
                                     if not accepted:
                                         response = outer.pb.ControlCommandResponse(
@@ -590,7 +436,6 @@ class SlLinkAServer:
                 self.map_delete_executor.shutdown(wait=False)
                 self.map_dispatch_executor.shutdown(wait=False)
                 self.manual_control_executor.shutdown(wait=False)
-                self.manual_response_executor.shutdown(wait=False)
                 self.control_response_executor.shutdown(wait=False)
                 self.bulk_response_executor.shutdown(wait=False)
 
@@ -839,7 +684,6 @@ class SlLinkAServer:
                 self,
                 frame,
                 control_request=None,
-                latest_response=False,
                 received_at=None,
                 control_generation=None,
                 manual_ticket=None,
@@ -879,9 +723,6 @@ class SlLinkAServer:
                         int(frame.seq),
                         applied_ms,
                     )
-                if latest_response:
-                    self._queue_control_response(payload, msg_id, comp_id, int(frame.seq))
-                    return
                 self._queue_control_response(payload, msg_id, comp_id, int(frame.seq))
 
             def _queue_control_response(self, payload, msg_id, comp_id, ack_seq):

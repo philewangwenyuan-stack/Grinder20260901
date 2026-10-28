@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[4]
 SOURCE = ROOT / 'catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py'
 tree = ast.parse(SOURCE.read_text(encoding='utf-8'))
 classes = [n for n in tree.body if isinstance(n, ast.ClassDef)
-           and n.name in ('_BoundedLatestWorker', '_DropIfBusyWorker')]
+           and n.name == '_BoundedLatestWorker']
 namespace = dict(threading=threading, deque=deque, rospy=None)
 exec(compile(ast.Module(body=classes, type_ignores=[]), str(SOURCE), 'exec'), namespace)
 Worker = namespace['_BoundedLatestWorker']
