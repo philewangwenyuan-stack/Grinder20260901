@@ -66,7 +66,7 @@ RegulatedPurePursuitController:
   collision_self_filter_polygon: [] # flat [x,y,...] in base_link, not navigation footprint
   collision_side_clearance_m: 0.10     # 从左右侧边及后边缘向外膨胀的停车净距，单位：m
   collision_side_only_when_turning: true # true：侧向外框只在转弯或锁存停车时检测
-  collision_side_turning_min_angular_vel: 0.015 # 启用侧向检测的最小绝对角速度，单位：rad/s
+  collision_side_turning_min_angular_vel: 0.025 # 启用侧向检测的最小绝对角速度，单位：rad/s
   # 雷达位于后轮中点，车头相对雷达向前 1.25 m；当前 1.80 m 阈值对应
   # 机器人车头与正前方障碍物保留约 0.55 m 距离。
   collision_stop_distance_m: 1.8       # 仅旧扇区模式生效：以雷达原点为参考的距离
