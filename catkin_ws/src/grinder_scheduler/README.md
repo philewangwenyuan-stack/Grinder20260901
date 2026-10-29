@@ -9,6 +9,45 @@
 
 本文档说明 `catkin_ws/src/grinder_scheduler` 目录下各文件/子目录的作用，便于开发、联调和排障。
 
+## 原始地图取图与缓存
+
+`map_grid_utils.py` 不依赖 ROS。保存地图的 MapRequest PNG 直接从 PGM 以 LUT
+映射为底图，不再经过 OccupancyGrid 整数列表往返；任务结果的原始地图快照复用同一条路径。
+规划/导航仍使用原来的栅格坐标方向，保存地图需返回 ROS 消息时才生成列表。
+实时地图回调只记录消息及帧序号，首次使用才转换为共享只读 int8 数组；MapService
+合成、擦除前复制为可写 int16 数组，彩色区域叠加逻辑保持原样。
+首次平面整数序列转换使用 `np.fromiter`，避免通用嵌套序列的形状探测；它仍在调度
+进程内运行。缓存命中不能代表新帧的控制延迟，新帧并发应单独验收。
+
+缓存同时按条数和保留数据的估算字节限制：实时数组最近2帧/64MiB（包含原消息序列），
+保存图像4项/32MiB、保存栅格4项/32MiB、编码负载8项/32MiB。超大项仍可处理，
+但不进入缓存；上限不包含正在处理的请求及其他业务内存。同一键的并发构建合并，
+耗时转换期间不持有全局缓存锁。保存文件以路径、设备/inode、mtime_ns、ctime_ns和大小
+校验，并在读取前后复查；删除不复用旧缓存，项目保存/删除也主动清理缓存。
+仅缓存图像/栅格/编码字节，每次请求重新分片并填写 request_id、snapshot_id、地图版本及位姿信息。
+
+`map_preview_grayscale` 默认 `false`，经平板和任务结果接收平台核对后可开启。
+只影响原始底图 PNG/JPEG，不影响带区域叠加的彩色预览；关闭时维持旧三通道像素路径。
+参数可通过 scheduler.yaml、本地覆盖或 scheduler.launch 同名参数设置，launch 参数留空时
+保留 YAML 值。没有修改 cloud_to_occupancy_grid 的建图/发布频率。
+
+细分指标：`map_saved_file_read_ms`（PGM读取）、`map_saved_gray_to_grid_ms`、
+`map_saved_grid_to_list_ms`、`map_grid_convert_ms`（实时帧首次转换）、`map_colorize_ms`
+（LUT与实时图翻转）、`map_resize_ms`、`map_png_encode_ms`/`map_jpg_encode_ms`。
+`map_payload_cache_hit_total`/`map_payload_cache_miss_total` 统计编码缓存，实时数组与保存图像
+另有 `map_grid_cache_*`、`map_saved_cache_*`。命中不重复记录转换/编码耗时，因此须结合计数解读；
+`map_load_ms`、`map_build_ms`、`map_request_total_ms` 等外层指标继续保留。
+
+`socket_io.py` 将100ms接收轮询与发送总期限分离。数据通道每帧发送默认2秒
+（限制0.1～5秒），控制通道默认0.5秒（限制0.05～0.5秒），分别配置
+`sl_linka_data_send_timeout_sec` 和 `sl_linka_control_send_timeout_sec`。
+非阻塞发送期间检查会话有效性，超过期限关闭连接，不能在部分帧后直接重发整帧。
+遥控指令500ms有效期、断线停车及急停保护保持原样。
+
+离线验证：`test/test_map_request_payload.py`、`test/test_socket_io.py`、
+`test/test_dual_channel.py`、`test/test_continuous_manual.py`。实际背压用目标Linux环境验证；
+Windows回环会缓冲完整写入，对应3项背压用例在Windows跳过。
+
 ## 独立作业时间累计
 
 `work_time_statistics.py` 将任务起止经过时长（含暂停，不含手动遥控/空闲/服务停机）独立保存在

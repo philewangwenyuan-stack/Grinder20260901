@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import types
 import unittest
 from types import SimpleNamespace
@@ -31,7 +32,8 @@ class _Dummy:
 
 
 # Generated ROS modules are unavailable before Catkin runs on edit-only hosts.
-_stub_module("rospy", logwarn=lambda *_args, **_kwargs: None)
+_stub_module("rospy", logwarn=lambda *_args, **_kwargs: None,
+             loginfo=lambda *_args, **_kwargs: None)
 _stub_module("diagnostic_msgs")
 _stub_module(
     "diagnostic_msgs.msg",
@@ -53,7 +55,7 @@ _stub_module("nav_msgs")
 _stub_module("nav_msgs.msg", OccupancyGrid=_Dummy, Odometry=_Dummy, Path=_Dummy)
 _stub_module("nav_msgs.srv", LoadMap=_Dummy)
 _stub_module("std_msgs")
-_stub_module("std_msgs.msg", Bool=_Dummy, Int16=_Dummy, UInt16=_Dummy)
+_stub_module("std_msgs.msg", Bool=_Dummy, Int16=_Dummy, UInt16=_Dummy, String=_Dummy)
 _stub_module("std_srvs")
 _stub_module("std_srvs.srv", Empty=_Dummy, Trigger=_Dummy, TriggerResponse=_Dummy)
 _stub_module(
@@ -73,6 +75,7 @@ _stub_module(
     GetSuperLioStatus=_Dummy,
     SaveSuperLioMap=_Dummy,
     StartSuperLioLocalization=_Dummy,
+    SetSuperLioInitialPose=_Dummy,
 )
 _stub_module("grinder_scheduler.aurora_bridge", AuroraBridge=_Dummy)
 _stub_module("grinder_scheduler.local_rtsp_server", LocalRtspStreamServer=_Dummy)
@@ -111,6 +114,7 @@ def _node(map_root=""):
     node._live_map_id = "LIVE_MAP"
     node._map_registry = {}
     node._super_lio_map_root = map_root
+    node._map_mode_delete_lock = threading.Lock()
     return node
 
 

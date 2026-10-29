@@ -33,6 +33,8 @@ initial_map_preview_dir: temp
 initial_map_preview_enabled: false
 # 预览图最大边长上限（像素，所有 preview 类请求都会受此限制）
 preview_max_edge_cap: 640
+# Pure raw-map PNG/JPEG only; enable after checking grayscale on the tablet/platform.
+map_preview_grayscale: false
 # 初始地图预览图最大边长（像素）
 initial_map_preview_max_edge: 512
 # 初始地图预览图格式（jpg/png）
@@ -237,6 +239,9 @@ sl_linka_session_timeout_sec: 3.0
 sl_linka_bulk_bytes_per_sec: 1048576
 sl_linka_bulk_manual_bytes_per_sec: 262144
 sl_linka_bulk_burst_bytes: 8192
+# Nonblocking sockets: receive polling stays at 100ms; each frame write is bounded separately.
+sl_linka_data_send_timeout_sec: 2.0
+sl_linka_control_send_timeout_sec: 0.5
 # 生产默认每秒采样一帧，并按周期汇总接收量；排查问题时才开启逐帧帧头日志。
 sl_linka_rx_diagnostic_logging: false
 sl_linka_rx_sample_interval_sec: 1.0

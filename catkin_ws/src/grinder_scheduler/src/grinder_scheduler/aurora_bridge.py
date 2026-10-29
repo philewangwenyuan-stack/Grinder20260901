@@ -30,6 +30,7 @@ class AuroraBridge:
         self._lock = threading.Lock()
         self._bridge = CvBridge()
         self._map_msg = None
+        self._map_seq = 0
         self._pose = {
             "x": 0.0,
             "y": 0.0,
@@ -115,6 +116,7 @@ class AuroraBridge:
             return
         with self._lock:
             self._map_msg = msg
+            self._map_seq += 1
 
     def _odom_callback(self, msg):
         orientation = msg.pose.pose.orientation
@@ -254,6 +256,10 @@ class AuroraBridge:
     def get_map(self):
         with self._lock:
             return self._map_msg
+
+    def get_map_with_seq(self):
+        with self._lock:
+            return self._map_msg, self._map_seq
 
     def get_pose(self):
         with self._lock:

@@ -55,6 +55,7 @@ from grinder_scheduler.aurora_bridge import AuroraBridge
 from grinder_scheduler.path_geometry import sample_segment, segment_point_spacing
 from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
+from grinder_scheduler.map_grid_utils import LIVE_GRID_CACHE, MapGridSource, MapPayloadBuilder
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
 from grinder_scheduler.map_catalog_response import fill_map_catalog_response
 from grinder_scheduler.map_asset_revision import get_or_compute_map_asset_revision
@@ -789,6 +790,9 @@ class SchedulerNode:
         self._radar_relocalization_aggregate_timestamp_ns = 0
         self._change_map_proxy = None
 
+        LIVE_GRID_CACHE.metrics = metrics
+        self._map_payload_builder = MapPayloadBuilder(metrics=metrics)
+        self._map_preview_grayscale = bool(rospy.get_param("~map_preview_grayscale", False))
         self.map_service = MapService()
         self._draw_region_id_on_preview = bool(rospy.get_param("~draw_region_id_on_preview", True))
         self._draw_region_label_on_preview = bool(rospy.get_param("~draw_region_label_on_preview", True))
@@ -971,6 +975,8 @@ class SchedulerNode:
             bulk_bytes_per_sec=rospy.get_param("~sl_linka_bulk_bytes_per_sec", 1048576),
             bulk_manual_bytes_per_sec=rospy.get_param("~sl_linka_bulk_manual_bytes_per_sec", 262144),
             bulk_burst_bytes=rospy.get_param("~sl_linka_bulk_burst_bytes", 8192),
+            data_send_timeout_sec=rospy.get_param("~sl_linka_data_send_timeout_sec", 2.0),
+            control_send_timeout_sec=rospy.get_param("~sl_linka_control_send_timeout_sec", 0.5),
             callback_handler=self,
             rx_diagnostic_logging=rospy.get_param("~sl_linka_rx_diagnostic_logging", False),
             rx_sample_interval_sec=rospy.get_param("~sl_linka_rx_sample_interval_sec", 1.0),
@@ -2496,6 +2502,7 @@ class SchedulerNode:
         target_map_id = str(map_id or "").strip()
         if not target_map_id or raw_map is None:
             return "", ""
+        self._invalidate_raw_map_caches()
         out_dir = os.path.join(self._map_state_dir(target_map_id), "raw_grid")
         yaml_path, image_path = self._export_runtime_map(
             raw_map,
@@ -2606,45 +2613,56 @@ class SchedulerNode:
                 data[key.strip()] = value.strip()
         return data
 
+    def _get_map_payload_builder(self):
+        # __new__-based offline fixtures do not run node initialization.
+        if not hasattr(self, "_map_payload_builder"):
+            self._map_payload_builder = MapPayloadBuilder(metrics=metrics)
+        return self._map_payload_builder
+
+    def _invalidate_raw_map_caches(self):
+        builder = getattr(self, "_map_payload_builder", None)
+        if builder is not None:
+            builder.clear()
+
+    def _load_saved_raw_grid(self, map_id):
+        yaml_path, image_path = self._saved_raw_grid_paths_for_map(map_id)
+        return self._get_map_payload_builder().saved.load(
+            str(map_id), yaml_path, image_path, self._load_raw_grid_yaml)
+
+    def _map_grid_source(self, map_id):
+        if self._is_live_map_id(map_id):
+            msg, seq = self.aurora_bridge.get_map_with_seq()
+            if msg is None:
+                return None
+            info = msg.info
+            stamp = msg.header.stamp
+            stamp_ms = int(getattr(stamp, "secs", 0)) * 1000 + int(getattr(stamp, "nsecs", 0)) // 1000000
+            return MapGridSource(
+                ("live", seq, id(msg)), int(info.width), int(info.height), float(info.resolution),
+                float(info.origin.position.x), float(info.origin.position.y), str(msg.header.frame_id),
+                stamp_ms, message=msg)
+        raster = self._load_saved_raw_grid(map_id)
+        stamp = rospy.Time.now()
+        stamp_ms = int(stamp.secs) * 1000 + int(stamp.nsecs) // 1000000
+        return MapGridSource(
+            ("saved", str(map_id), raster.signature), raster.image.shape[1], raster.image.shape[0],
+            raster.resolution, raster.origin_x, raster.origin_y, "map", stamp_ms, raster=raster)
+
     def _load_saved_raw_grid_map(self, map_id):
-        target_map_id = str(map_id or "").strip()
-        yaml_path, image_path = self._saved_raw_grid_paths_for_map(target_map_id)
-        if not yaml_path or not os.path.isfile(yaml_path):
-            raise FileNotFoundError("saved raw grid yaml not found for map_id={}: {}".format(target_map_id, yaml_path))
-        meta = self._load_raw_grid_yaml(yaml_path)
-        image_name = str(meta.get("image", "") or "").strip()
-        if image_name:
-            candidate = image_name
-            if not os.path.isabs(candidate):
-                candidate = os.path.join(os.path.dirname(yaml_path), candidate)
-            image_path = candidate
-        if not image_path or not os.path.isfile(image_path):
-            raise FileNotFoundError("saved raw grid image not found for map_id={}: {}".format(target_map_id, image_path))
-        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        if image is None:
-            raise RuntimeError("failed to read saved raw grid image: {}".format(image_path))
-        grid_image = np.flipud(image)
-        grid = np.full(grid_image.shape, -1, dtype=np.int16)
-        grid[grid_image >= 250] = 0
-        grid[grid_image <= 10] = 100
-
-        resolution = float(meta.get("resolution", 0.05) or 0.05)
-        origin_text = str(meta.get("origin", "[0, 0, 0]") or "[0, 0, 0]").strip()
-        origin_values = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", origin_text)
-        origin_x = float(origin_values[0]) if len(origin_values) >= 1 else 0.0
-        origin_y = float(origin_values[1]) if len(origin_values) >= 2 else 0.0
-
+        raster = self._load_saved_raw_grid(map_id)
+        grid = self._get_map_payload_builder().saved.grid(raster)
         msg = OccupancyGrid()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = "map"
         msg.info.width = int(grid.shape[1])
         msg.info.height = int(grid.shape[0])
-        msg.info.resolution = float(resolution)
-        msg.info.origin.position.x = float(origin_x)
-        msg.info.origin.position.y = float(origin_y)
+        msg.info.resolution = raster.resolution
+        msg.info.origin.position.x = raster.origin_x
+        msg.info.origin.position.y = raster.origin_y
         msg.info.origin.position.z = 0.0
         msg.info.origin.orientation.w = 1.0
-        msg.data = [int(value) for value in grid.reshape(-1)]
+        with metrics.timer("map_saved_grid_to_list_ms"):
+            msg.data = grid.reshape(-1).tolist()
         return msg
 
     def _build_offline_map_service_for_map(self, map_id):
@@ -7381,39 +7399,12 @@ class SchedulerNode:
             cap_edge=self._preview_max_edge_cap,
         )
         live_map = self._is_live_map_id(target_map_id)
-        raw_map = (
-            self.aurora_bridge.get_map()
-            if live_map
-            else self._load_saved_raw_grid_map(target_map_id)
-        )
-        if raw_map is None:
+        source = self._map_grid_source(target_map_id)
+        if source is None:
             raise RuntimeError("raw occupancy grid is unavailable")
-        source_width = int(raw_map.info.width)
-        source_height = int(raw_map.info.height)
-        if source_width <= 0 or source_height <= 0:
-            raise RuntimeError("raw occupancy grid dimensions are invalid")
-        raw_grid = np.asarray(raw_map.data, dtype=np.int16).reshape(
-            (source_height, source_width)
-        )
-        image = np.full((source_height, source_width, 3), 180, dtype=np.uint8)
-        image[raw_grid == 0] = (245, 245, 245)
-        image[raw_grid >= 100] = (45, 45, 45)
-        image = cv2.flip(image, 0)
-        image_width, image_height, _ = self._preview_meta(
-            source_width,
-            source_height,
-            max_edge,
-        )
-        if image_width != source_width or image_height != source_height:
-            image = cv2.resize(
-                image,
-                (image_width, image_height),
-                interpolation=cv2.INTER_AREA,
-            )
-        encode_ext = ".png" if image_format == "png" else ".jpg"
-        encoded_ok, encoded_map = cv2.imencode(encode_ext, image)
-        if not encoded_ok:
-            raise RuntimeError("raw map image encoding failed")
+        source_width, source_height = source.width, source.height
+        data, image_width, image_height, _, _ = self._get_map_payload_builder().encode(
+            source, max_edge, image_format, getattr(self, "_map_preview_grayscale", False))
         if live_map:
             map_version = int(self.map_service.get_map_version())
         else:
@@ -7427,10 +7418,10 @@ class SchedulerNode:
             "version": map_version,
             "source_width": source_width,
             "source_height": source_height,
-            "resolution": float(raw_map.info.resolution),
-            "origin_x": float(raw_map.info.origin.position.x),
-            "origin_y": float(raw_map.info.origin.position.y),
-            "frame_id": str(raw_map.header.frame_id or ""),
+            "resolution": source.resolution,
+            "origin_x": source.origin_x,
+            "origin_y": source.origin_y,
+            "frame_id": source.frame_id,
             "image_format": image_format,
             "image_width": int(image_width),
             "image_height": int(image_height),
@@ -7442,7 +7433,7 @@ class SchedulerNode:
                 self._rotation_alignment_delta_deg_for_map_id(target_map_id)
             ),
             "captured_at_ms": int(time.time() * 1000.0),
-            "image_data": encoded_map.tobytes(),
+            "image_data": data,
         }
 
     def _save_task_execution_raw_map_snapshot(self, execution_id, map_id):
@@ -9102,127 +9093,43 @@ class SchedulerNode:
         result = pb.MapRequestResult()
         result.request_id = int(request.request_id)
         result.map_id = requested_map_id or DEFAULT_LIVE_MAP_ID
-        with metrics.timer("map_load_ms"):
-            if self._is_live_map_id(requested_map_id):
-                raw_map = self.aurora_bridge.get_map()
-                raw_map_source = "live"
-            else:
-                try:
-                    raw_map = self._load_saved_raw_grid_map(requested_map_id)
-                    raw_map_source = "saved"
-                    rospy.loginfo("MapRequest using saved raw grid: map_id=%s", requested_map_id)
-                except Exception as exc:
-                    rospy.logwarn("MapRequest failed to load saved raw grid: map_id=%s error=%s", requested_map_id, exc)
-                    result.status = (
-                        pb.MAP_REQUEST_STATUS_NOT_FOUND
-                        if isinstance(exc, FileNotFoundError)
-                        else pb.MAP_REQUEST_STATUS_ERROR
-                    )
-                    result.message = (
-                        "saved map was not found"
-                        if isinstance(exc, FileNotFoundError)
-                        else "saved map could not be loaded"
-                    )
-                    return result.SerializeToString(), []
-        if raw_map is None:
-            rospy.logwarn_throttle(
-                2.0,
-                "MapRequest received but raw map is unavailable: map_id=%s source=%s",
-                requested_map_id or "<empty>",
-                raw_map_source,
-            )
-            result.status = (
-                pb.MAP_REQUEST_STATUS_NOT_READY
-                if raw_map_source == "live"
-                else pb.MAP_REQUEST_STATUS_NOT_FOUND
-            )
-            if raw_map_source == "live":
-                result.retry_after_ms = 500
-                result.message = "live map is not ready"
-            else:
-                result.message = "saved map was not found"
+        live_map = self._is_live_map_id(requested_map_id)
+        raw_map_source = "live" if live_map else "saved"
+        try:
+            with metrics.timer("map_load_ms"):
+                source = self._map_grid_source(requested_map_id)
+        except Exception as exc:
+            rospy.logwarn("MapRequest failed to load raw map: map_id=%s error=%s", requested_map_id, exc)
+            result.status = (pb.MAP_REQUEST_STATUS_NOT_FOUND if isinstance(exc, FileNotFoundError)
+                             else pb.MAP_REQUEST_STATUS_ERROR)
+            result.message = "saved map was not found" if isinstance(exc, FileNotFoundError) else "map could not be loaded"
             return result.SerializeToString(), []
-
-        # SL-LinkA uses a uint16 payload length. A 4 KiB data chunk plus
-        # MapChunk metadata stays well below that limit and cuts frame count.
-        chunk_size = int(request.max_chunk_size) if request.max_chunk_size else 4096
-        chunk_size = max(256, min(4096, chunk_size))
-
-        info = raw_map.info
-        width = int(info.width)
-        height = int(info.height)
-        resolution = float(info.resolution)
-        origin_x = float(info.origin.position.x)
-        origin_y = float(info.origin.position.y)
-        frame_id = str(raw_map.header.frame_id)
-        with metrics.timer("map_grid_convert_ms"):
-            grid = np.array(raw_map.data, dtype=np.int16).reshape((height, width))
-        preview_scale_x = 1.0
-        preview_scale_y = 1.0
-        output_width = width
-        output_height = height
-        rospy.loginfo(
-            "MapRequest raw map output without rotation: source=%s map_id=%s frame_id=%s map_size=%sx%s",
-            raw_map_source,
-            requested_map_id or self._live_map_id,
-            frame_id or "<empty>",
-            int(width),
-            int(height),
-        )
-
-        # Default to image payload for Android-friendly rendering.
-        # Fallback: set ~map_request_encoding:=grid to output raw OccupancyGrid bytes.
-        if self._map_request_encoding in ("grid", "occupancy", "occupancy_grid"):
+        if source is None:
+            result.status = pb.MAP_REQUEST_STATUS_NOT_READY
+            result.retry_after_ms = 500
+            result.message = "live map is not ready"
+            return result.SerializeToString(), []
+        chunk_size = max(256, min(4096, int(request.max_chunk_size or 4096)))
+        width, height = source.width, source.height
+        resolution, origin_x, origin_y = source.resolution, source.origin_x, source.origin_y
+        frame_id = source.frame_id
+        builder = self._get_map_payload_builder()
+        grid_encoding = self._map_request_encoding in ("grid", "occupancy", "occupancy_grid")
+        encoding = pb.MAP_ENCODING_OCCUPANCY_GRID if grid_encoding else pb.MAP_ENCODING_PNG
+        max_edge = max(64, int(self._preview_max_edge_cap))
+        try:
+            data, output_width, output_height, preview_scale_x, preview_scale_y = builder.encode(
+                source, max_edge, "grid" if grid_encoding else "png",
+                getattr(self, "_map_preview_grayscale", False))
+        except IOError:
+            if grid_encoding:
+                raise
+            rospy.logwarn("MapRequest PNG encode failed, fallback to OccupancyGrid bytes")
             encoding = pb.MAP_ENCODING_OCCUPANCY_GRID
-            with metrics.timer("map_grid_encode_ms"):
-                data = grid.astype(np.int8).tobytes()
-        else:
-            encoding = pb.MAP_ENCODING_PNG
-            with metrics.timer("map_colorize_ms"):
-                image = np.zeros((grid.shape[0], grid.shape[1], 3), dtype=np.uint8)
-                image[:, :] = (180, 180, 180)
-                image[grid == 0] = (245, 245, 245)
-                image[grid >= 100] = (45, 45, 45)
-            # 当前仅做图像上下翻转，未执行二维地图旋转；不要把此项标作“旋转耗时”。
-            with metrics.timer("map_vertical_flip_ms"):
-                image = cv2.flip(image, 0)
-            max_edge = max(64, int(self._preview_max_edge_cap))
-            output_width, output_height, _ = self._preview_meta(width, height, max_edge)
-            if output_width != width or output_height != height:
-                with metrics.timer("map_resize_ms"):
-                    image = cv2.resize(
-                        image,
-                        (output_width, output_height),
-                        interpolation=cv2.INTER_AREA,
-                    )
-                preview_scale_x = float(output_width) / float(max(1, width))
-                preview_scale_y = float(output_height) / float(max(1, height))
-            with metrics.timer("map_png_encode_ms"):
-                ok, buffer = cv2.imencode(".png", image)
-                if ok:
-                    data = buffer.tobytes()
-            if not ok:
-                rospy.logwarn("MapRequest PNG encode failed, fallback to OccupancyGrid bytes")
-                encoding = pb.MAP_ENCODING_OCCUPANCY_GRID
-                with metrics.timer("map_grid_encode_ms"):
-                    data = grid.astype(np.int8).tobytes()
-                output_width = width
-                output_height = height
-                preview_scale_x = 1.0
-                preview_scale_y = 1.0
-            else:
-                rospy.loginfo(
-                    "MapRequest PNG prepared: source_size=%sx%s output_size=%sx%s "
-                    "scale_x=%.6f scale_y=%.6f max_edge=%d bytes=%d",
-                    width,
-                    height,
-                    output_width,
-                    output_height,
-                    preview_scale_x,
-                    preview_scale_y,
-                    max_edge,
-                    len(data),
-                )
+            data, output_width, output_height, preview_scale_x, preview_scale_y = builder.encode(source, max_edge, "grid")
+        rospy.loginfo(
+            "MapRequest payload prepared: source=%s map_id=%s source_size=%dx%d output_size=%dx%d bytes=%d",
+            raw_map_source, requested_map_id or self._live_map_id, width, height, output_width, output_height, len(data))
         total = max(1, int(math.ceil(len(data) / float(chunk_size))))
         snapshot_id = secrets.randbits(64) or 1
         result.status = pb.MAP_REQUEST_STATUS_READY
@@ -9241,8 +9148,7 @@ class SchedulerNode:
         else:
             # map_version is often 0 when only raw map is used.
             # Fallback to a stable non-zero id generated from stamp or map data.
-            stamp = raw_map.header.stamp
-            stamp_ms = int(getattr(stamp, "secs", 0)) * 1000 + int(getattr(stamp, "nsecs", 0)) // 1000000
+            stamp_ms = source.stamp_ms
             if stamp_ms > 0:
                 base_map_id = stamp_ms & 0xFFFFFFFF
             else:
@@ -10723,6 +10629,7 @@ class SchedulerNode:
                     record_id,
                     target_path,
                 )
+            self._invalidate_raw_map_caches()
             self._unregister_saved_map(record_id)
             target_map_id = str(record_id or requested_map_id or "").strip()
             deleted_aliases = {

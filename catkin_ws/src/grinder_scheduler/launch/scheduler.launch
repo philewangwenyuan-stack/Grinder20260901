@@ -18,6 +18,9 @@
   <arg name="sl_linka_rx_diagnostic_logging" default="false" />
   <arg name="sl_linka_port" default="$(optenv SL_LINKA_PORT)" />
   <arg name="sl_linka_control_port" default="$(optenv SL_LINKA_CONTROL_PORT)" />
+  <arg name="map_preview_grayscale" default="" />
+  <arg name="sl_linka_data_send_timeout_sec" default="" />
+  <arg name="sl_linka_control_send_timeout_sec" default="" />
   <arg name="enable_status_indicator" default="false" />
   <arg name="indicator_backend" default="mock" />
   <arg name="indicator_usb_serial_number" default="" />
@@ -77,6 +80,9 @@
     <param name="sl_linka_rx_diagnostic_logging" value="$(arg sl_linka_rx_diagnostic_logging)" />
     <param if="$(eval arg('sl_linka_port') != '')" name="sl_linka_port" value="$(arg sl_linka_port)" type="int" />
     <param if="$(eval arg('sl_linka_control_port') != '')" name="sl_linka_control_port" value="$(arg sl_linka_control_port)" type="int" />
+    <param if="$(eval arg('map_preview_grayscale') != '')" name="map_preview_grayscale" value="$(arg map_preview_grayscale)" type="bool" />
+    <param if="$(eval arg('sl_linka_data_send_timeout_sec') != '')" name="sl_linka_data_send_timeout_sec" value="$(arg sl_linka_data_send_timeout_sec)" type="double" />
+    <param if="$(eval arg('sl_linka_control_send_timeout_sec') != '')" name="sl_linka_control_send_timeout_sec" value="$(arg sl_linka_control_send_timeout_sec)" type="double" />
     <param name="live_map_align_to_initial_yaw" value="false" />
   </node>
 </launch>

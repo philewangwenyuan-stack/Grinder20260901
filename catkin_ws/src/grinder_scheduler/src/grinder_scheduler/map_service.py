@@ -13,6 +13,7 @@ except Exception:
     rospy = None
 
 from grinder_scheduler.models import MapSnapshot, normalize_planning_direction, explicit_region_start
+from grinder_scheduler.map_grid_utils import cached_occupancy_grid_array
 
 
 UNKNOWN_MASK_VALUE = 32767
@@ -271,8 +272,12 @@ class MapService:
                 return None
             return self._compose_grid_locked()
 
+    def _raw_grid_int16_locked(self):
+        # Shared raw arrays are immutable; overlays must modify their own int16 copy.
+        return cached_occupancy_grid_array(self._raw_msg).astype(np.int16)
+
     def _compose_grid_locked(self):
-        raw = np.array(self._raw_msg.data, dtype=np.int16).reshape((self._raw_msg.info.height, self._raw_msg.info.width))
+        raw = self._raw_grid_int16_locked()
         overlay = self._overlay.copy()
         for value in (0, 100, -1):
             mask = overlay == value
@@ -575,7 +580,7 @@ class MapService:
         self._overlay[patch_mask > 0] = 0
 
         # Step 2: linear gap heal (horizontal + vertical close) inside patch only.
-        raw = np.array(self._raw_msg.data, dtype=np.int16).reshape((self._raw_msg.info.height, self._raw_msg.info.width))
+        raw = self._raw_grid_int16_locked()
         composed = raw.copy()
         for value in (0, 100, -1):
             mask = self._overlay == value

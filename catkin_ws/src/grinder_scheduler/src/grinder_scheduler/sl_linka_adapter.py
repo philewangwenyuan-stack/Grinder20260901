@@ -4,6 +4,7 @@ import threading
 import time
 from collections import deque
 from grinder_scheduler.priority_wire import PriorityWire
+from grinder_scheduler.socket_io import recv_poll, send_with_deadline
 from grinder_scheduler.channel_sessions import ChannelSessions, BulkBudget
 from concurrent.futures import ThreadPoolExecutor
 
@@ -91,6 +92,8 @@ class SlLinkAServer:
         bulk_bytes_per_sec=1048576,
         bulk_manual_bytes_per_sec=262144,
         bulk_burst_bytes=8192,
+        data_send_timeout_sec=2.0,
+        control_send_timeout_sec=0.5,
     ):
         ensure_sl_linka_sdk_on_path(sdk_dir)
         from sl_link.frame import SL_PROTOCOL_VERSION, SlFrame, SlFrameParser
@@ -105,6 +108,8 @@ class SlLinkAServer:
         self.control_port = control_port
         self.sessions = ChannelSessions(timeout=session_timeout_sec)
         self.bulk_budget = BulkBudget(bulk_bytes_per_sec, bulk_manual_bytes_per_sec, bulk_burst_bytes)
+        self.data_send_timeout_sec = max(0.1, min(5.0, float(data_send_timeout_sec)))
+        self.control_send_timeout_sec = max(0.05, min(0.5, float(control_send_timeout_sec)))
         self.manual_timeout_sec = max(0.1, float(manual_timeout_sec))
         self._listeners = []
         self._peers = set()
@@ -229,7 +234,8 @@ class SlLinkAServer:
                 self.manual_received_at = None
                 self.close_lock = threading.Lock()
                 self.closed_once = False
-                self.request.settimeout(0.1)
+                # A read poll must not become a 100ms sendall deadline for maps.
+                self.request.setblocking(False)
                 self.stop_executor = _BoundedLatestWorker(1, "sl_linka_stop")
                 self.control_dispatch_executor = _BoundedFifoWorker(8, "sl_linka_control")
                 try:
@@ -290,7 +296,9 @@ class SlLinkAServer:
             def handle(self):
                 while self.running:
                     try:
-                        data = self.request.recv(32 * 1024)
+                        data = recv_poll(self.request, 32 * 1024)
+                        if data is None:
+                            continue
                     except socket.timeout:
                         # Keep the connection alive on idle timeout.
                         continue
@@ -812,7 +820,10 @@ class SlLinkAServer:
                 if not self.running:
                     raise ConnectionError("SL-LinkA session closed")
                 try:
-                    self.request.sendall(payload)
+                    timeout = (outer.control_send_timeout_sec if self.role == "control"
+                               else outer.data_send_timeout_sec)
+                    send_with_deadline(self.request, payload, timeout,
+                                       lambda: self.running and (not self.admitted or self._valid()))
                 except OSError:
                     self.running = False
                     self._close()
