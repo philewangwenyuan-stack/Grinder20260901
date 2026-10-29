@@ -63,7 +63,7 @@ RegulatedPurePursuitController:
   collision_front_clearance_m: 0.25  # 从车体前边缘向前膨胀的停车净距，单位：m
   # Enable only after measured body geometry and scan/TF verification.
   collision_self_filter_enabled: true
-  collision_self_filter_polygon: [] # flat [x,y,...] in base_link, not navigation footprint
+  collision_self_filter_polygon: [-0.4, -0.47, 1.2, -0.47, 1.2, 0.47, -0.4, 0.47] # flat [x,y,...] in base_link, not navigation footprint
   collision_side_clearance_m: 0.10     # 从左右侧边及后边缘向外膨胀的停车净距，单位：m
   collision_side_only_when_turning: true # true：侧向外框只在转弯或锁存停车时检测
   collision_side_turning_min_angular_vel: 0.025 # 启用侧向检测的最小绝对角速度，单位：rad/s

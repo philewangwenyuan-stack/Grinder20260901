@@ -6,7 +6,7 @@
 # footprint_padding: 0.00
 robot_radius: 0.0
 footprint_padding: 0.00
-footprint: [[-0.6, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.6, -0.47]]
+footprint: [[-0.4, 0.47], [1.20, 0.47], [1.20, -0.47], [-0.4, -0.47]]
 
 
 transform_tolerance: 0.2
@@ -42,7 +42,7 @@ static_layer:
 # footprint_padding: 0.00
 robot_radius: 0.0
 footprint_padding: 0.00
-footprint: [[-0.6, 0.47], [1.00, 0.47], [1.00, -0.47], [-0.6, -0.47]]
+footprint: [[-0.4, 0.47], [1.20, 0.47], [1.20, -0.47], [-0.4, -0.47]]
 
 
 transform_tolerance: 0.2

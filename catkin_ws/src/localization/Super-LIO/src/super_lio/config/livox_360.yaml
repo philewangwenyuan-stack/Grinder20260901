@@ -5,7 +5,7 @@ lio:
     if_filter: false
     save_map_dir: "map"
     map_name: "map.pcd"
-    ds_size: 0.25
+    ds_size: 0.15
     # Keep the existing single in-memory map until fragment merging is wired into
     # the map-save service. Keyframe admission below prevents stationary growth.
     save_interval: -1
