@@ -34,6 +34,7 @@ namespace LI2Sup{
   string g_world_frame = "map";
   string g_base_frame = "base_laser_link";
   bool   g_legacy_tf = true;
+  bool   g_scan_filter_livox_dust = true;
 
   int    g_lidar_type;
   float  g_blind2;

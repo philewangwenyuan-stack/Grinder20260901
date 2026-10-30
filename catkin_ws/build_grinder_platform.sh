@@ -120,6 +120,15 @@ run_catkin_with_deps() {
   )
 }
 
+prepare_livox_ros1() {
+  bash "${WS_DIR}/scripts/build_livox_ros1.sh"
+  CATKIN_EXTRA_CMAKE_ARGS=(
+    -DROS_EDITION=ROS1
+    "-DLIVOX_LIDAR_SDK_LIBRARY=${WS_DIR}/../temp/grinder_sim_livox/sdk/sdk_core/liblivox_lidar_sdk_static.a"
+    "-DCMAKE_CXX_FLAGS=-I${WS_DIR}/src/drivers/ws_livox/src/Livox_SDK2/include"
+  )
+}
+
 build_nav_stack() {
   local nav_pkgs=(
     "voxel_grid"
@@ -182,12 +191,7 @@ case "${PROFILE}" in
     run_catkin_pkg "grinder_chassis_driver"
     ;;
   sim)
-    bash "${WS_DIR}/scripts/build_sim_livox.sh"
-    CATKIN_EXTRA_CMAKE_ARGS=(
-      -DROS_EDITION=ROS1
-      "-DLIVOX_LIDAR_SDK_LIBRARY=${WS_DIR}/../temp/grinder_sim_livox/sdk/sdk_core/liblivox_lidar_sdk_static.a"
-      "-DCMAKE_CXX_FLAGS=-I${WS_DIR}/src/drivers/ws_livox/src/Livox_SDK2/include"
-    )
+    prepare_livox_ros1
     run_catkin_with_deps \
       grinder_gazebo \
       grinder_scheduler \
@@ -198,7 +202,8 @@ case "${PROFILE}" in
       regulated_pure_pursuit_controller
     ;;
   mapping)
-    CATKIN_EXTRA_CMAKE_ARGS=(-DSUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON)
+    prepare_livox_ros1
+    CATKIN_EXTRA_CMAKE_ARGS+=(-DSUPER_LIO_REQUIRE_INDUSTRIAL_BACKEND=ON)
     run_catkin_with_deps super_lio super_lio_loop cloud_to_occupancy_grid
     ;;
   *)

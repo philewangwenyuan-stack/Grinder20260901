@@ -48,6 +48,7 @@ namespace LI2Sup{
   extern std::string g_world_frame;
   extern std::string g_base_frame;
   extern bool g_legacy_tf;
+  extern bool g_scan_filter_livox_dust;
   extern std::string g_init_pose_topic;
   extern std::string g_map_topic;
   extern std::string g_path_topic;

@@ -1051,6 +1051,11 @@ class SuperLioModeManager:
         return ["{}:={}".format(key, str(value).lower() if isinstance(value, bool) else value)
                 for key, value in values.items()]
 
+    @staticmethod
+    def _scan_filter_launch_args():
+        enabled = rospy.get_param("~super_lio_scan_filter_livox_dust", True)
+        return ["scan_filter_livox_dust:={}".format(str(enabled).lower())]
+
     def _start_mapping_locked(self):
         self._publish_safe()
         if self._state == self.MAPPING and self._owned_mode == "mapping":
@@ -1075,6 +1080,7 @@ class SuperLioModeManager:
         ]
         args.extend(self._base_laser_launch_args())
         args.extend(self._wheel_fusion_launch_args("mapping"))
+        args.extend(self._scan_filter_launch_args())
         try:
             rospy.loginfo("Starting managed Super-LIO mapping launch")
             launch_started = time.monotonic()
@@ -1200,6 +1206,7 @@ class SuperLioModeManager:
         args = ["bundle_dir:={}".format(bundle)]
         args.extend(self._base_laser_launch_args())
         args.extend(self._wheel_fusion_launch_args("localization"))
+        args.extend(self._scan_filter_launch_args())
         try:
             launch_started = time.monotonic()
             self._start_launch(self._localization_launch, args, "localization")

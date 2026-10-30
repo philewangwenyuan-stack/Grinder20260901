@@ -270,7 +270,8 @@ class SuperLioRawLidarStampTest(unittest.TestCase):
                     raise RuntimeError("captured launch")
 
                 manager._start_launch = capture
-                values = {"~base_to_laser_x": 0.10, "~base_to_laser_yaw": 0.35}
+                values = {"~base_to_laser_x": 0.10, "~base_to_laser_yaw": 0.35,
+                          "~super_lio_scan_filter_livox_dust": False}
                 with patch.object(rospy, "get_param", lambda name, default: values.get(name, default), create=True), \
                         patch.object(rospy, "loginfo", lambda *_args: None, create=True), \
                         patch.object(module, "get_or_compute_map_asset_revision", lambda _bundle: "revision"):
@@ -283,6 +284,7 @@ class SuperLioRawLidarStampTest(unittest.TestCase):
                 self.assertIn("base_to_laser_x:=0.1", captured[0][0])
                 self.assertIn("base_to_laser_yaw:=0.35", captured[0][0])
                 self.assertIn("base_to_laser_z:=0.0", captured[0][0])
+                self.assertIn("scan_filter_livox_dust:=false", captured[0][0])
 
     def test_mounting_launch_arguments_preserve_metres_and_radians(self):
         import rospy

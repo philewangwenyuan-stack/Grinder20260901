@@ -23,6 +23,12 @@ MID-360 + Super-LIO 主系统与灯带支持统一 systemd 开机自启：在任
 新克隆已包含 Super-LIO 源码和不含凭据的 `grinder_scheduler/config/scheduler.yaml`。
 Super-LIO 无子模块拉取步骤，上游版本见
 `src/localization/Super-LIO/UPSTREAM.md`。
+`mapping` / `sim` 首次构建会补齐本地 Livox 依赖：driver2 固定提交
+`13eb05e4e6dd7a765b934d0c5fd6236676a57b49`、SDK2 `v1.3.1`，下载后校验
+SHA-256。源码位于被忽略的 `src/drivers/ws_livox/src/`，压缩包及 SDK 静态库
+缓存在仓库 `temp/`；已有文件（包括设备配置）保留，不初始化子仓库，也不启动驱动。
+依赖齐全后重复构建不联网；可单独执行 `bash scripts/build_livox_ros1.sh` 准备。
+平台构建显式传 `ROS_EDITION=ROS1`、SDK 静态库及头文件路径，不要求系统安装 SDK。
 设备服务配置请从 `src/grinder_scheduler/config/scheduler.local.example.yaml`
 复制为被忽略的 `scheduler.local.yaml`；两个真实启动脚本自动发现该文件，
 也可通过 `GRINDER_SCHEDULER_LOCAL_CONFIG` 指定绝对路径（显式为空表示不用本地覆盖）。

@@ -19,6 +19,79 @@ future changes and compare upstream updates against the checkout above.
 The former nested Git history remains in an ignored `.git.nested-backup-*`
 directory on the migration workstation; it is not required to build a fresh clone.
 
+## MID-360S scan-only dust filtering
+
+The MID-360 series [communication protocol, section 1.2.1.3.4](https://livox-wiki-cn.readthedocs.io/zh-cn/latest/tutorials/new_product/mid360/livox_eth_protocol_mid360.html)
+also applies to MID-360S. Tag bits 2..3 describe rain/fog/dust confidence:
+0 = good, 1 = medium, 2 = poor, 3 = reserved. The default scan-only filter
+rejects 1 and 2 before converting Livox points to PCL. Reserved value 3 is
+retained and counted; it is not interpreted as dust. The existing bits 4..5
+other-confidence check (accept 0/1) remains in effect, regardless of this switch.
+Bits 0..1 and 6..7 add no new rejection criteria.
+
+This changes only `livox2pcl` -> `pub_scan_body` -> `/scan`, used by both RPP
+collision detection and the STVL obstacle layer. The separate `livoxHandler`
+LIO input loop, downsampling, per-point times and frame end time are unchanged.
+Scan conversion traverses immutable raw points sequentially; adjacent duplicate
+checks have no concurrent cloud reads or packed-boolean writes. The historical
+first-point omission remains. A predecessor excluded by tag cannot erase a
+normal point at the same coordinates. Height/range/angle projection and nearest
+accepted return per bin are unchanged. If every candidate is filtered, a scan
+with the original message stamp and `+inf` empty bins is still published.
+
+Configuration (all defaults are boolean `true`):
+
+- Managed startup: `super_lio_scan_filter_livox_dust` in the scheduler's
+  `config/super_lio.yaml`, overridable in `scheduler.local.yaml`.
+- Direct/managed launch argument: `scan_filter_livox_dust`; supported by both
+  managed launches, `mid360_mapping.launch`, `Livox_mid360.launch`, and
+  `relocation.launch`.
+- Algorithm parameter: `/lio/scan/filter_livox_dust`, read on startup after
+  loading `livox_360.yaml` or `relocation.yaml`.
+
+For A/B comparison, set the managed parameter to `false` and restart the mode,
+or pass `scan_filter_livox_dust:=false` to the direct launch. Setting a ROS
+parameter on an already running algorithm does not change the active setting.
+No collision thresholds, confirmation counts or localization quality gates
+are changed. Only dust carrying the corresponding tag can be removed.
+
+Every five wall-clock seconds while clouds arrive, `Livox /scan tag filter`
+logs the accumulated `input_points`, `dust_tag_rejected`, and
+`reserved_dust_tag_points`. Rejections count candidates after the existing
+other-confidence check but before duplicate/range/height checks, excluding the
+historically skipped first point; reserved counts cover all input points.
+These are prefilter counts, not counts of finite LaserScan bins. No new ROS
+topic/message is added. Mapping node output is configured as `log`, so inspect
+its ROS log as well as the localization console output.
+
+Offline configuration regression:
+
+```bash
+python3 -m unittest discover -s catkin_ws/src/grinder_scheduler/test \
+  -p 'test_super_lio_scan_filter_config.py'
+```
+
+Standalone C++ tag/conversion regression (all 256 tags, both settings):
+
+```bash
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  -Icatkin_ws/src/localization/Super-LIO/src/super_lio/include \
+  catkin_ws/src/localization/Super-LIO/src/super_lio/test/test_livox_scan_filter.cpp \
+  -o /tmp/test_livox_scan_filter
+/tmp/test_livox_scan_filter
+```
+
+After a Linux `PROFILE=mapping ./build_grinder_platform.sh` build, CTest includes
+`super_lio_livox_scan_filter` when `CATKIN_ENABLE_TESTING` is enabled.
+For ROS integration, source the workspace and run
+`rosrun super_lio test_livox_scan_ros` against a **separate test roscore**, with
+no navigation, sensor, chassis or grinder nodes attached. The test publishes
+only synthetic Livox/IMU input on `/test/livox_scan/*` and verifies actual scan
+publication, normal obstacles behind dust, empty frames, projection boundaries,
+and identical LIO points/offsets/frame timing with the filter enabled/disabled.
+It sets the test master's `/lio/wheel/enabled` to false and does not require a
+saved map.
+
 ## Optional internal wheel fusion
 
 The Grinder extension consumes valid-only `geometry_msgs/TwistWithCovarianceStamped`

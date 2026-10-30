@@ -43,6 +43,10 @@ super_lio_preflight_ports: []
 super_lio_loop_closure: false              # 回环检测，默认关闭
 super_lio_autosave: false                  # 自动保存地图，默认关闭（由服务调用显式保存）
 
+# Only /scan: reject Livox dust confidence 1/2; keep 0 and reserved 3.
+# LIO mapping/localization points are unchanged. Restart the mode after changes.
+super_lio_scan_filter_livox_dust: true
+
 # Optional internal wheel observations. Enable only after replay/calibration.
 super_lio_wheel_fusion_mapping_enabled: false        # 建图模式下是否融合轮速
 super_lio_wheel_fusion_localization_enabled: true    # 定位模式下是否融合轮速

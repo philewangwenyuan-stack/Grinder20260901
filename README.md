@@ -98,6 +98,14 @@ APP / 上位机 -> SL-LinkA -> grinder_scheduler
 现场标定前不要开启；参数、回放和诊断说明见
 [`Super-LIO/UPSTREAM.md`](catkin_ws/src/localization/Super-LIO/UPSTREAM.md#optional-internal-wheel-fusion)。
 
+MID-360S 的 `/scan` 默认按原始 tag 的 bit 2～3 去掉雨雾/粉尘置信度为
+1（中）、2（差）的点；0 和保留值 3 保留，原有 bit 4～5 筛选继续生效。
+过滤同时作用于订阅 `/scan` 的 RPP 碰撞检测和 STVL 障碍层，LIO 建图/定位
+输入及点时间不变。调度参数 `super_lio_scan_filter_livox_dust: false` 可关闭
+新增筛选，需重启对应模式；直接启动传 `scan_filter_livox_dust:=false`。
+未被雷达打上对应标签的粉尘仍可能进入扫描。统计日志、回放和验证说明见
+[`scan-only dust filtering`](catkin_ws/src/localization/Super-LIO/UPSTREAM.md#mid-360s-scan-only-dust-filtering)。
+
 ### 5. 建图、保存和定位的两条分支
 
 **建图分支**由 `super_lio_mode_manager` 启动 `super_lio_node` 和
@@ -240,8 +248,9 @@ LIO 同时使用新参数。更换代码后还需先在 Linux / ROS Noetic 环�
 只负责雷达与底盘的关系，不自动定义磨盘中心。
 
 本次坐标修复已通过独立 C++ 数学回归、14 项调度 / 启动链测试及轻量回环节点
-Catkin 编译。完整 Super-LIO 构建在本地 WSL 因缺少 `livox_ros_driver2` 被阻断；
-完整构建、录包回放、旧地图一致性与 30°/0° 实车定位仍需在目标环境验收。
+Catkin 编译。补齐固定版本 Livox 依赖后，本地 WSL 的 `PROFILE=mapping` 完整构建
+已通过，包含驱动、Super-LIO 建图/定位、工业回环后端及二维栅格节点；录包回放、
+旧地图一致性与 30°/0° 实车定位仍需在目标环境验收。
 实现和验证入口见 [Super-LIO 集成说明](catkin_ws/src/localization/Super-LIO/UPSTREAM.md#base-pose-and-mounting-calibration)。
 
 ## 关键配置文件
@@ -596,7 +605,13 @@ PCL-GICP，不会悄悄切换成轻量回环。
 
 ### 4. 正式 Release 编译
 
-先在独立工作区构建 Livox ROS 1 驱动；本仓库不自带该驱动或 Livox SDK2。
+本仓库不分发 Livox ROS 1 驱动或 SDK2 源码。根工作区的 `PROFILE=mapping` / `sim`
+构建会按下述固定版本自动补齐被忽略的本地依赖，校验下载 SHA-256，并构建 SDK
+静态库；已有设备配置保留。单独准备可执行 `bash catkin_ws/scripts/build_livox_ros1.sh`。
+下载源码位于 `catkin_ws/src/drivers/ws_livox/src/`，源码包和静态库缓存位于 `temp/`，
+不需将第三方源码或产物提交进仓库。构建不会启动雷达驱动。
+
+板端按下面的独立工作区方式构建 Livox ROS 1 驱动：
 2026-10-22 的 MID-360S 已验证组合是 SDK2 `v1.3.1` + driver2
 `13eb05e4e6dd7a765b934d0c5fd6236676a57b49`，不要直接换成最新 master。
 以下在普通运行用户下执行；仓库根目录和用户路径按实际部署修改。

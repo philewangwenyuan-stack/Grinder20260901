@@ -1,4 +1,5 @@
 <launch>
+  <arg name="scan_filter_livox_dust" default="true" />
   <arg name="wheel_fusion_enabled" default="false" />
   <arg name="wheel_fuse_linear_velocity" default="true" />
   <arg name="wheel_fuse_angular_velocity" default="false" />
@@ -25,6 +26,7 @@
   <param name="/lio/extrinsic/base_to_laser_yaw" value="$(arg base_to_laser_yaw)" type="double" />
 
   <param name="/lio/wheel/enabled" value="$(arg wheel_fusion_enabled)" />
+  <param name="/lio/scan/filter_livox_dust" value="$(arg scan_filter_livox_dust)" type="bool" />
   <param name="/lio/wheel/mode" value="mapping" />
   <param name="/lio/wheel/fuse_linear_velocity" value="$(arg wheel_fuse_linear_velocity)" />
   <param name="/lio/wheel/fuse_angular_velocity" value="$(arg wheel_fuse_angular_velocity)" />

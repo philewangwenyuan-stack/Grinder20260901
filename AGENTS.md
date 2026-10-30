@@ -47,6 +47,8 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 
 | 要修改/排查的内容 | 首选文件 | 相关文件 |
 | --- | --- | --- |
+| Livox ROS1 构建依赖缺失、仅剩 package.xml | `catkin_ws/scripts/prepare_livox_sources.py`、`catkin_ws/scripts/build_livox_ros1.sh` | 固定版本和 SHA-256；仅补缺失文件，保留设备配置；`catkin_ws/build_grinder_platform.sh` 的 mapping/sim 共用；旧 `scripts/build_sim_livox.sh` 入口保留；`scripts/test/test_prepare_livox_sources.py`（scripts 均相对 catkin_ws） |
+| MID-360S `/scan` 粉尘 tag 过滤 | Super-LIO `include/lio/livox_scan_filter.h`、`src/lio/ROSWrapper.cpp: livox2pcl` | 仅扫描丢弃 bit 2～3 为 1/2 的点，LIO 不变；`super_lio_scan_filter_livox_dust` 默认开启；两模式 managed/direct launch 透传；`test_livox_scan_filter.cpp`、`test_livox_scan_ros.cpp`、调度 `test_super_lio_scan_filter_config.py`；参数/日志见 `UPSTREAM.md` |
 | 调度入口、任务状态机、协议处理函数 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py` | `models.py`、`scripts/scheduler_node.py` |
 | 调度参数与设备覆盖 | `catkin_ws/src/grinder_scheduler/config/scheduler.yaml` | `config/scheduler.local.example.yaml`、被忽略的 `scheduler.local.yaml`；`config/super_lio.yaml`、`launch/scheduler.launch` |
 | 调度配置启动预检 | `catkin_ws/scripts/check_scheduler_config.py` | `scripts/scheduler_config.sh`、`start_grinder_stack.sh`、`start_grinder_super_lio_base.sh`、`start_grinder_sim.sh` |

@@ -128,6 +128,15 @@ catkin_install_python(PROGRAMS
 )
 
 if(CATKIN_ENABLE_TESTING)
+  add_executable(test_livox_scan_filter test/test_livox_scan_filter.cpp)
+  target_compile_options(test_livox_scan_filter PRIVATE -UNDEBUG)
+  add_test(NAME super_lio_livox_scan_filter COMMAND test_livox_scan_filter)
+  add_executable(test_livox_scan_ros test/test_livox_scan_ros.cpp)
+  # Keep synthetic replay debuggable; production LIO retains Release/LTO flags.
+  target_compile_options(test_livox_scan_ros PRIVATE -UNDEBUG -O0 -fno-lto)
+  target_link_options(test_livox_scan_ros PRIVATE -fno-lto)
+  add_dependencies(test_livox_scan_ros ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(test_livox_scan_ros lio)
   add_executable(test_wheel_fusion test/test_wheel_fusion.cpp src/lio/wheel_math.cpp)
   target_compile_options(test_wheel_fusion PRIVATE -UNDEBUG)
   add_test(NAME super_lio_wheel_fusion COMMAND test_wheel_fusion)

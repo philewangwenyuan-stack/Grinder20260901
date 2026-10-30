@@ -1,4 +1,8 @@
 lio:
+  # MID-360 tag bits 2..3: reject medium/poor tiny-particle confidence for /scan only.
+  scan:
+    filter_livox_dust: true
+
   # Map settings
   map:
     save_map: true

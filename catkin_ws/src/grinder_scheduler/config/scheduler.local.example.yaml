@@ -26,4 +26,5 @@ stream_play_url: ""
 # local_rtsp_encoder: mpph264enc
 # manual_command_timeout_sec: 0.5
 # active_segment_point_spacing: 0.3  # >= 0.01 m; only active navigation segment
+# super_lio_scan_filter_livox_dust: false  # /scan A/B comparison; restart LIO mode
 # Pass sensor topics/IP and map root through the corresponding launch arguments.

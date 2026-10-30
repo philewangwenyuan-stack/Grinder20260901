@@ -69,7 +69,8 @@ third_party/path_planner/mst27/build_wsl_*/
 
 # Local documents and archives are not distributed with the repository
 /docs/
-catkin_ws/src/drivers/ws_livox/src/livox_ros_driver2/package.xml
+# Downloaded Livox SDK/driver source trees (restored by prepare_livox_sources.py).
+catkin_ws/src/drivers/ws_livox/
 maps/sim_mid360/sim_check_1792375360/loc_map.pcd
 maps/sim_mid360/sim_check_1792375360/map_info.json
 maps/sim_mid360/sim_check_1792375360/map.yaml

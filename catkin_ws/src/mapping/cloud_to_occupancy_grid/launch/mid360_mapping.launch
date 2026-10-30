@@ -1,4 +1,5 @@
 <launch>
+  <arg name="scan_filter_livox_dust" default="true" />
   <arg name="wheel_fusion_enabled" default="false" />
   <arg name="wheel_fuse_linear_velocity" default="true" />
   <arg name="wheel_fuse_angular_velocity" default="false" />
@@ -24,6 +25,7 @@
   <!-- Start the Livox driver separately before this launch file. -->
   <include file="$(find super_lio)/launch/Livox_mid360.launch">
     <arg name="wheel_fusion_enabled" value="$(arg wheel_fusion_enabled)" />
+    <arg name="scan_filter_livox_dust" value="$(arg scan_filter_livox_dust)" />
     <arg name="wheel_fuse_linear_velocity" value="$(arg wheel_fuse_linear_velocity)" />
     <arg name="wheel_fuse_angular_velocity" value="$(arg wheel_fuse_angular_velocity)" />
     <arg name="wheel_twist_topic" value="$(arg wheel_twist_topic)" />

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 #include "lio/base_kinematics.h"
+#include "lio/livox_scan_filter.h"
 #include "super_lio/CloudPose.h"
 #include "super_lio/CloudPose2.h"
 #include "super_lio/DoubleCloudPose.h"
@@ -48,6 +49,9 @@ void LoadParamFromRos(ros::NodeHandle& nh){
   nh.param<std::string>("/lio/ros/world_frame", g_world_frame, "map");
   nh.param<std::string>("/lio/ros/base_frame", g_base_frame, "base_laser_link");
   nh.param<bool>("/lio/ros/legacy_tf", g_legacy_tf, true);
+  nh.param<bool>("/lio/scan/filter_livox_dust", g_scan_filter_livox_dust, true);
+  ROS_INFO("Livox /scan dust tag filter: %s (LIO input unchanged)",
+           g_scan_filter_livox_dust ? "enabled" : "disabled");
   nh.getParam("/lio/ros/init_pose_topic", g_init_pose_topic);
   nh.getParam("/lio/ros/map_topic", g_map_topic);
   nh.getParam("/lio/ros/path_topic", g_path_topic);
@@ -190,43 +194,31 @@ std::tuple<float, float, float> getColorFromVelocity(float velocity, float max_v
 
 void livox2pcl(const livox_ros_driver2::CustomMsg::ConstPtr& msg, CloudPtr& point_cloud){
   point_cloud->clear();
-  CloudPtr cloud_full(new PointCloudType());
-  int plsize = msg->point_num;
-  cloud_full->resize(plsize);
-  point_cloud->reserve(plsize);
-  std::vector<bool> is_valid_pt(plsize, false);
-  std::vector<std::size_t> index(plsize - 1);
-  std::iota(std::begin(index), std::end(index), 1);
-
-  std::for_each(std::execution::par_unseq, index.begin(), index.end(), [&](const uint &i) {
-    if((msg->points[i].tag & 0x30) == 0x10 || (msg->points[i].tag & 0x30) == 0x00)
-    {
-      // if (i % g_filter_rate == 0) 
-      {
-        cloud_full->at(i).x = msg->points[i].x;
-        cloud_full->at(i).y = msg->points[i].y;
-        cloud_full->at(i).z = msg->points[i].z;
-        cloud_full->at(i).intensity = msg->points[i].reflectivity;
-
-        if ((abs(cloud_full->at(i).x - cloud_full->at(i - 1).x) > 1e-7) ||
-            (abs(cloud_full->at(i).y - cloud_full->at(i - 1).y) > 1e-7) ||
-            (abs(cloud_full->at(i).z - cloud_full->at(i - 1).z) > 1e-7))
-        {
-          double normal_dis = cloud_full->at(i).x * cloud_full->at(i).x + 
-                              cloud_full->at(i).y * cloud_full->at(i).y +
-                              cloud_full->at(i).z * cloud_full->at(i).z;
-          if(normal_dis > g_blind2 and normal_dis < g_maxrange2){
-            is_valid_pt[i] = true;
-          }
-        }
-      }
-    }
-  });
-
-  for (int i = 1; i < plsize; i++) {
-    if (is_valid_pt[i]) {
-      point_cloud->points.push_back(cloud_full->at(i));
-    }
+  point_cloud->reserve(msg->points.size());
+  const auto stats = livox_scan_filter::forEachPoint(
+      msg->points, msg->point_num, g_scan_filter_livox_dust, g_blind2, g_maxrange2,
+      [&](const auto& point) {
+        PointType converted;
+        converted.x = point.x;
+        converted.y = point.y;
+        converted.z = point.z;
+        converted.intensity = point.reflectivity;
+        point_cloud->push_back(converted);
+      });
+  // Accumulate outside the traversal. Wall time also works for paused /clock.
+  static livox_scan_filter::Statistics window;
+  static ros::WallTime last_report = ros::WallTime::now();
+  window.input_points += stats.input_points;
+  window.dust_rejected += stats.dust_rejected;
+  window.reserved_dust += stats.reserved_dust;
+  const auto now = ros::WallTime::now();
+  if ((now - last_report).toSec() >= 5.0) {
+    ROS_INFO_STREAM("Livox /scan tag filter enabled=" << g_scan_filter_livox_dust
+                    << " input_points=" << window.input_points
+                    << " dust_tag_rejected=" << window.dust_rejected
+                    << " reserved_dust_tag_points=" << window.reserved_dust);
+    window = {};
+    last_report = now;
   }
 }
 
