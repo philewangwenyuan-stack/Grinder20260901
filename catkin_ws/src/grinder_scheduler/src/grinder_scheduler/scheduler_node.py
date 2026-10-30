@@ -31,7 +31,7 @@ from actionlib_msgs.msg import GoalID
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
 from grinder_chassis_driver.srv import EnableChassis
-from nav_msgs.msg import OccupancyGrid, Odometry, Path
+from nav_msgs.msg import Odometry, Path
 from nav_msgs.srv import LoadMap
 from std_msgs.msg import Bool, Int16, UInt16, String
 from grinder_chassis_driver.indicator_emergency import EmergencyIndicatorSource
@@ -51,11 +51,11 @@ except Exception:
     tf2_ros = None
     euler_from_quaternion = None
 
-from grinder_scheduler.aurora_bridge import AuroraBridge
+from grinder_scheduler.ros_data_bridge import RosDataBridge
 from grinder_scheduler.path_geometry import sample_segment, segment_point_spacing
 from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
-from grinder_scheduler.map_grid_utils import LIVE_GRID_CACHE, MapGridSource, MapPayloadBuilder
+from grinder_scheduler.map_grid_utils import MapGridSource, MapPayloadBuilder, occupancy_grid_array
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
 from grinder_scheduler.map_catalog_response import fill_map_catalog_response
 from grinder_scheduler.map_asset_revision import get_or_compute_map_asset_revision
@@ -790,7 +790,6 @@ class SchedulerNode:
         self._radar_relocalization_aggregate_timestamp_ns = 0
         self._change_map_proxy = None
 
-        LIVE_GRID_CACHE.metrics = metrics
         self._map_payload_builder = MapPayloadBuilder(metrics=metrics)
         self._map_preview_grayscale = bool(rospy.get_param("~map_preview_grayscale", False))
         self.map_service = MapService()
@@ -803,7 +802,7 @@ class SchedulerNode:
             self._preview_rga_backend,
             self._preview_rga_available,
         )
-        self.aurora_bridge = AuroraBridge(
+        self.ros_data_bridge = RosDataBridge(
             map_topic=rospy.get_param("~map_topic", "/slamware_ros_sdk_server_node/map"),
             odom_topic=rospy.get_param("~odom_topic", "/slamware_ros_sdk_server_node/odom"),
             left_image_topic=rospy.get_param("~left_image_topic", "/slamware_ros_sdk_server_node/left_image_raw"),
@@ -1061,7 +1060,7 @@ class SchedulerNode:
                 )
 
     def _stream_tick(self, _event):
-        left, right, left_stamp, right_stamp = self.aurora_bridge.get_latest_frames()
+        left, right, left_stamp, right_stamp = self.ros_data_bridge.get_latest_frames()
         now = rospy.Time.now()
         max_age = rospy.Duration.from_sec(self._local_rtsp_max_frame_age)
         if left is not None and left_stamp and left_stamp != rospy.Time(0):
@@ -1538,7 +1537,7 @@ class SchedulerNode:
         return best
 
     def _project_robot_to_active_segment(self):
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         window = self._active_segment_window_s()
         if window is None:
             return self._project_pose_to_path_progress(float(pose.get("x", 0.0)), float(pose.get("y", 0.0)))
@@ -1557,7 +1556,7 @@ class SchedulerNode:
             return False
         segment_index = max(0, min(int(segment_index), len(self._active_segments) - 1))
         if projection is None:
-            pose = self.aurora_bridge.get_pose()
+            pose = self.ros_data_bridge.get_pose()
             projection = self._project_pose_to_path_progress(float(pose.get("x", 0.0)), float(pose.get("y", 0.0)))
         progress_s = float(projection.get("progress_s", 0.0))
         self._active_segment_index = segment_index
@@ -1579,7 +1578,7 @@ class SchedulerNode:
             return
         if not self._active_segments:
             self._rebuild_active_segments()
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         checkpoint = getattr(self, "_continuation_checkpoint", None)
         if checkpoint and checkpoint["path"] is self.current_path:
             segment_index = min(checkpoint["segment_index"], len(self._active_segments) - 1)
@@ -1682,7 +1681,7 @@ class SchedulerNode:
         # SL-LinkA previews and APP edit coordinates use the original map
         # frame. Report the robot position and heading in that same frame;
         # alignment/app rotation values are carried as separate metadata.
-        return self.aurora_bridge.get_pose() or {}
+        return self.ros_data_bridge.get_pose() or {}
 
     def _alignment_yaw_deg_for_sl_link_report(self, map_id=None):
         alignment_yaw = (
@@ -1787,7 +1786,7 @@ class SchedulerNode:
         endpoint_index = len(self.current_path.points) - 1
         target_index = endpoint_index
         try:
-            pose = self.aurora_bridge.get_pose() or {}
+            pose = self.ros_data_bridge.get_pose() or {}
             rx = float(pose.get("x", 0.0))
             ry = float(pose.get("y", 0.0))
             nearest_index = 0
@@ -1818,7 +1817,7 @@ class SchedulerNode:
         return int(self._goal_points[-1].get("path_index", 0))
 
     def _tick(self, _event):
-        raw_map = self.aurora_bridge.get_map()
+        raw_map = self.ros_data_bridge.get_map()
         current_map_id = self._current_map_id()
         if raw_map is not None:
             if self._is_live_map_id(current_map_id):
@@ -1861,7 +1860,7 @@ class SchedulerNode:
             return
         try:
             snapshot = self.map_service.create_preview(
-                self.aurora_bridge.get_pose(),
+                self.ros_data_bridge.get_pose(),
                 self._initial_map_preview_max_edge,
                 self._initial_map_preview_format,
                 True,
@@ -2346,7 +2345,7 @@ class SchedulerNode:
         self._live_preview_next_time = now + (1.0 / self._live_preview_hz)
         try:
             snapshot = self.map_service.create_preview(
-                self.aurora_bridge.get_pose(),
+                self.ros_data_bridge.get_pose(),
                 self._live_preview_max_edge,
                 self._live_preview_format,
                 True,
@@ -2631,7 +2630,7 @@ class SchedulerNode:
 
     def _map_grid_source(self, map_id):
         if self._is_live_map_id(map_id):
-            msg, seq = self.aurora_bridge.get_map_with_seq()
+            msg, seq = self.ros_data_bridge.get_map_with_seq()
             if msg is None:
                 return None
             info = msg.info
@@ -2640,7 +2639,7 @@ class SchedulerNode:
             return MapGridSource(
                 ("live", seq, id(msg)), int(info.width), int(info.height), float(info.resolution),
                 float(info.origin.position.x), float(info.origin.position.y), str(msg.header.frame_id),
-                stamp_ms, message=msg)
+                stamp_ms, grid_array=occupancy_grid_array(msg))
         raster = self._load_saved_raw_grid(map_id)
         stamp = rospy.Time.now()
         stamp_ms = int(stamp.secs) * 1000 + int(stamp.nsecs) // 1000000
@@ -2648,26 +2647,9 @@ class SchedulerNode:
             ("saved", str(map_id), raster.signature), raster.image.shape[1], raster.image.shape[0],
             raster.resolution, raster.origin_x, raster.origin_y, "map", stamp_ms, raster=raster)
 
-    def _load_saved_raw_grid_map(self, map_id):
-        raster = self._load_saved_raw_grid(map_id)
-        grid = self._get_map_payload_builder().saved.grid(raster)
-        msg = OccupancyGrid()
-        msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = "map"
-        msg.info.width = int(grid.shape[1])
-        msg.info.height = int(grid.shape[0])
-        msg.info.resolution = raster.resolution
-        msg.info.origin.position.x = raster.origin_x
-        msg.info.origin.position.y = raster.origin_y
-        msg.info.origin.position.z = 0.0
-        msg.info.origin.orientation.w = 1.0
-        with metrics.timer("map_saved_grid_to_list_ms"):
-            msg.data = grid.reshape(-1).tolist()
-        return msg
-
     def _build_offline_map_service_for_map(self, map_id):
         target_map_id = str(map_id or "").strip()
-        raw_map = self._load_saved_raw_grid_map(target_map_id)
+        source = self._map_grid_source(target_map_id)
         service = MapService()
         service._grinder_map_source = "offline_raw_grid"
         service._grinder_map_id = target_map_id
@@ -2678,7 +2660,8 @@ class SchedulerNode:
             self._preview_rga_backend,
             self._preview_rga_available,
         )
-        service.set_raw_map(raw_map)
+        if not service.set_raw_grid(source, self._get_map_payload_builder().grid(source)):
+            raise ValueError("invalid saved raw grid")
         service.load_local_state(self._map_state_dir(target_map_id))
         return service
 
@@ -2736,7 +2719,7 @@ class SchedulerNode:
                     return self._initial_pose_alignment_yaw
             except Exception as exc:
                 rospy.logwarn_throttle(2.0, "Failed to lookup live map alignment yaw: %s", exc)
-        return self._initial_pose_alignment_yaw_from_pose(self.aurora_bridge.get_initial_pose())
+        return self._initial_pose_alignment_yaw_from_pose(self.ros_data_bridge.get_initial_pose())
 
     def _initial_pose_alignment_yaw_from_pose(self, pose):
         if self._initial_pose_alignment_yaw is not None:
@@ -4658,7 +4641,7 @@ class SchedulerNode:
                 current_map_id = self._current_map_id()
                 raw_map_for_nav = None
                 if self._is_live_map_id(current_map_id):
-                    raw_map_for_nav = self.aurora_bridge.get_map()
+                    raw_map_for_nav = self.ros_data_bridge.get_map()
                     if raw_map_for_nav is not None:
                         # Keep live map_service raw cache in sync before export.
                         self.map_service.set_raw_map(raw_map_for_nav)
@@ -4761,7 +4744,7 @@ class SchedulerNode:
         with self._motion.commit():
             self.state = SchedulerState.PLANNING
         try:
-            current_pose = self.aurora_bridge.get_pose()
+            current_pose = self.ros_data_bridge.get_pose()
             t_plan_pose = time.perf_counter()
             rospy.loginfo(
                 "Plan request poses: current_pose=(%.3f, %.3f, %.1fdeg) request_start=(%s) request_end=(%s)",
@@ -5017,7 +5000,7 @@ class SchedulerNode:
         return tuple(fingerprint)
 
     def _current_pose_cache_fingerprint(self):
-        pose = self.aurora_bridge.get_pose() or {}
+        pose = self.ros_data_bridge.get_pose() or {}
         heading_deg = self._round_float(pose.get("heading_deg", 0.0), 1)
         return (
             self._round_float(pose.get("x", 0.0), 1),
@@ -5909,7 +5892,7 @@ class SchedulerNode:
         if not self.task_config.task_id or self.current_path.task_id != self.task_config.task_id:
             self._continuation_checkpoint = None
             return
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         projection = self._project_robot_to_active_segment()
         continuation = coverage_continuation(
             self.current_path.points, projection["progress_s"], self.task_config.work_regions,
@@ -5934,7 +5917,7 @@ class SchedulerNode:
         checkpoint = getattr(self, "_continuation_checkpoint", None)
         if not checkpoint:
             return
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         if not self._planning_continuation(pose):
             self._continuation_checkpoint = None
             self.current_path = None
@@ -6251,7 +6234,7 @@ class SchedulerNode:
     def _prepend_current_pose_as_start_point(self, map_info=None):
         if self.current_path is None or not self.current_path.points:
             return
-        pose = self.aurora_bridge.get_pose() or {}
+        pose = self.ros_data_bridge.get_pose() or {}
         start_x = float(pose.get("x", 0.0))
         start_y = float(pose.get("y", 0.0))
         heading_deg = float(pose.get("heading_deg", 0.0))
@@ -6531,7 +6514,7 @@ class SchedulerNode:
         # Before publishing, skip goals that are already reached.
         # This prevents publishing a near/initial point first.
         try:
-            pose = self.aurora_bridge.get_pose()
+            pose = self.ros_data_bridge.get_pose()
             while 0 <= self._exec_goal_index < (len(self._goal_points) - 1):
                 goal_probe = self._goal_points[self._exec_goal_index]
                 dist_probe = math.hypot(
@@ -6615,7 +6598,7 @@ class SchedulerNode:
     def _publish_current_position_goal_once(self):
         if self.current_path is None or not self.current_path.points:
             return
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         nearest_index = 0
         nearest_distance = float("inf")
         for index, point in enumerate(self.current_path.points):
@@ -6720,7 +6703,7 @@ class SchedulerNode:
 
         path_s = self._ensure_path_arc_lengths()
         final_point = self.current_path.points[-1]
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         final_dist = math.hypot(
             float(final_point.get("x", 0.0)) - float(pose.get("x", 0.0)),
             float(final_point.get("y", 0.0)) - float(pose.get("y", 0.0)),
@@ -6814,7 +6797,7 @@ class SchedulerNode:
         if self.state == SchedulerState.READY:
             self.current_path_index = 0
             return
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         if self.state == SchedulerState.RUNNING and self._active_segments:
             projection = self._project_robot_to_active_segment()
             self.current_path_index = max(self.current_path_index, int(projection.get("index", self.current_path_index)))
@@ -6842,7 +6825,7 @@ class SchedulerNode:
             self._finish_path_execution(stop_reason="completed_progress")
 
     def _publish_status(self):
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         message = SchedulerStatus()
         message.header.stamp = rospy.Time.now()
         message.task_id = self.task_config.task_id
@@ -6869,7 +6852,7 @@ class SchedulerNode:
         })))
 
     def _mqtt_status_snapshot(self):
-        pose = self.aurora_bridge.get_pose()
+        pose = self.ros_data_bridge.get_pose()
         map_info = self.map_service.get_map_info() or {}
         progress = max(0.0, min(1.0, float(self._task_progress())))
         total_area = float(self._total_work_area_m2())
@@ -7103,7 +7086,7 @@ class SchedulerNode:
         """Return (image_format, image_b64, width, height) for saved-map metadata."""
         try:
             snapshot = self.map_service.create_preview(
-                self.aurora_bridge.get_pose(),
+                self.ros_data_bridge.get_pose(),
                 int(self._saved_map_thumb_max_edge),
                 "jpg",
                 True,
@@ -9057,7 +9040,7 @@ class SchedulerNode:
         request = pb.CameraFrameRequest()
         request.ParseFromString(payload)
         chunk_size = max(256, min(4096, int(request.max_chunk_size or 1024)))
-        left, right, _, _ = self.aurora_bridge.get_latest_frames()
+        left, right, _, _ = self.ros_data_bridge.get_latest_frames()
         frames = [("left", left), ("right", right)]
         outputs = []
         now_utc = int(time.time())
@@ -9438,7 +9421,7 @@ class SchedulerNode:
                     migrate_bindings=False,
                     save_prev_overlay=True,
                 )
-            live_raw_map = self.aurora_bridge.get_map()
+            live_raw_map = self.ros_data_bridge.get_map()
             if live_raw_map is not None:
                 self.map_service._grinder_map_source = "live"
                 self.map_service._grinder_map_id = self._live_map_id
@@ -9502,7 +9485,7 @@ class SchedulerNode:
                     self._remove_map_overlay_state_for_map(prev_map_id)
                 # Save raw OccupancyGrid after overlay-state copy because copy may
                 # replace the map state directory when overwriting the same map_id.
-                raw_map_snapshot = self.aurora_bridge.get_map()
+                raw_map_snapshot = self.ros_data_bridge.get_map()
                 if raw_map_snapshot is not None:
                     self._save_raw_grid_snapshot_for_map(saved_map_id, raw_map_snapshot, saved_alignment_yaw)
                 else:
@@ -9638,7 +9621,7 @@ class SchedulerNode:
                 return False
             try:
                 snapshot = self.map_service.create_preview(
-                    self.aurora_bridge.get_pose(),
+                    self.ros_data_bridge.get_pose(),
                     int(self._saved_map_thumb_max_edge),
                     "jpg",
                     True,
@@ -11298,7 +11281,7 @@ class SchedulerNode:
             max_edge = self._sanitize_preview_edge(requested_edge, cap_edge=self._preview_max_edge_cap)
             preview_service, offline_preview = self._map_service_for_preview(requested_map_id)
             snapshot = preview_service.create_preview(
-                self.aurora_bridge.get_pose(),
+                self.ros_data_bridge.get_pose(),
                 max_edge,
                 request.image_format or "jpg",
                 request.include_overlay,

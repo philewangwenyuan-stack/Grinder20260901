@@ -60,7 +60,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | MST27短折返、等价膨胀提速及阶段计时 | `third_party/path_planner/mst27/cpp/mst27_cpp.cpp`、同包 `mst27.py` | 安全外侧共同掉头线；方形膨胀可分离滤波、最终复检分批向量化；`plan_core_profiled` / `planner.last_profile`；同包 `test/test_optimizations.py`，包README |
 | 全局关键点、segment 切片/投影与局部补点 | `path_geometry.py`、`scheduler_node.py` 中 `_build_path_direction_runs` / `_slice_path_points_by_arc` / `_publish_active_segment_plan` | `planner_adapter.py` 关闭全局补点；`scheduler.yaml: active_segment_point_spacing`；`test/test_sparse_segments.py`、`test/test_sparse_planner.py`、`test/benchmark_sparse_segments.py --baseline-ref <修改前提交>`；根 README 7.5 |
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
-| 原始取图LUT、实时栅格共享与有界缓存 | scheduler `map_grid_utils.py`、`scheduler_node.py: build_map_chunks / _build_raw_map_snapshot` | `aurora_bridge.py: get_map_with_seq`、`map_service.py` 只读栅格副本；`map_preview_grayscale`默认关闭；`test/test_map_request_payload.py` |
+| 原始取图LUT、NumPy地图接收与有界文件缓存 | scheduler `map_grid_utils.py`、`scheduler_node.py: build_map_chunks / _build_raw_map_snapshot` | `ros_data_bridge.py` 用 `numpy_msg(OccupancyGrid)`（同进程同话题须一致）；`map_service.py: set_raw_grid` 持有只读数组，修改前复制；`map_preview_grayscale`默认关闭；`test/test_map_request_payload.py`、`test/test_numpy_map_transport.py` |
 | TCP接收轮询与有界发送期限分离 | scheduler `socket_io.py`、`sl_linka_adapter.py` | 数据每帧默认2秒、控制默认0.5秒，接收轮询100ms；`test/test_socket_io.py`（背压Linux验证）；包README |
 | SL-LinkA 双端口、单平板连接组与亮屏恢复 | scheduler `channel_sessions.py`、`sl_linka_adapter.py` | 数据8002/控制8003；会话 `0x0403/0x0404`；`test/test_dual_channel.py`，根README 7.7；APP 在独立APP仓库 `core:tcp` |
 | 遥控指令跟手、忙时松手停车 | `sl_linka_adapter.py` 中手动最新指令队列、scheduler `capture_control_generation` | 排队绑定执行代号；底盘零速绕过斜坡；`test_manual_control_delivery.py`、`test_motion_safety.py`；部署与超时见根 README 7.3 |
@@ -75,7 +75,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 平板单按钮急停/解除状态 | `scheduler_node.py` 中 `build_device_status_report` / `_reset_emergency_stop` | `DeviceStatusReport.emergency_stop_latched=22` 上报调度运动锁存；协议生成 Python/Android/nanopb SDK 同步 |
 | 板端日志采样与指标导出 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/metrics_registry.py` | `metrics_exporter.py`、`grinder_metrics_node.py`、`launch/scheduler.launch` |
 | 协议定义与说明、地图请求结果/快照分片 | `third_party/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl-link.md`、`third_party/sl_linka/scripts/generate_proto.sh` |
-| Aurora 地图、位姿和双目图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/aurora_bridge.py` | `catkin_ws/src/2-dnavigation-package/slamware_ros_sdk/` |
+| ROS 地图、位姿和图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/ros_data_bridge.py` | `launch/scheduler.launch`、`config/super_lio.yaml` |
 | 地图目录响应 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_catalog_response.py` | `scheduler_node.py` 中 `handle_map_catalog_request` |
 | RTSP / FFmpeg 视频链路 | `local_rtsp_server.py`、`media_streamer.py`（均在调度模块目录） | `tools/mediamtx/`；`catkin_ws/start_grinder_stack.sh` 选择二进制；`LocalRtspStreamServer` 在日志目录生成 `mediamtx.generated.yml` |
 | 平台文件上传、鉴权和 MQTT 上报 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/platform_integration.py` | `mqtt_interface.md`、`scheduler.yaml` |

@@ -4,6 +4,7 @@ import math
 import os
 import threading
 import time
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
@@ -13,7 +14,7 @@ except Exception:
     rospy = None
 
 from grinder_scheduler.models import MapSnapshot, normalize_planning_direction, explicit_region_start
-from grinder_scheduler.map_grid_utils import cached_occupancy_grid_array
+from grinder_scheduler.map_grid_utils import occupancy_grid_array
 
 
 UNKNOWN_MASK_VALUE = 32767
@@ -23,6 +24,7 @@ class MapService:
     def __init__(self):
         self._lock = threading.Lock()
         self._raw_msg = None
+        self._raw_grid = None
         self._overlay = None
         self._pending_overlay = None
         self._map_version = 0
@@ -208,24 +210,33 @@ class MapService:
                     self._crop_region = None
         return removed_regions
 
-    def set_raw_map(self, map_msg):
+    def set_raw_grid(self, source, grid):
+        """Install saved metadata and a shared grid without creating a ROS list."""
+        metadata = SimpleNamespace(
+            header=SimpleNamespace(frame_id=source.frame_id, seq=0,
+                                   stamp=SimpleNamespace(secs=source.stamp_ms // 1000,
+                                                         nsecs=(source.stamp_ms % 1000) * 1000000)),
+            info=SimpleNamespace(width=source.width, height=source.height,
+                                 resolution=source.resolution,
+                                 origin=SimpleNamespace(position=SimpleNamespace(x=source.origin_x, y=source.origin_y, z=0.0),
+                                                        orientation=SimpleNamespace(x=0.0, y=0.0, z=0.0, w=1.0))))
+        return self.set_raw_map(metadata, raw_grid=grid)
+
+    def set_raw_map(self, map_msg, raw_grid=None):
         width = int(getattr(map_msg.info, "width", 0) or 0)
         height = int(getattr(map_msg.info, "height", 0) or 0)
-        expected_cells = width * height
-        actual_cells = len(getattr(map_msg, "data", []) or [])
-        if width <= 0 or height <= 0 or actual_cells != expected_cells:
+        try:
+            grid = occupancy_grid_array(map_msg, raw_grid)
+        except (ValueError, TypeError) as error:
             if rospy is not None:
                 rospy.logwarn_throttle(
                     1.0,
-                    "MapService rejected incomplete raw map: size=%dx%d expected_cells=%d actual_cells=%d",
-                    width,
-                    height,
-                    expected_cells,
-                    actual_cells,
+                    "MapService rejected raw map: size=%dx%d error=%s", width, height, error,
                 )
             return False
         with self._lock:
             self._raw_msg = map_msg
+            self._raw_grid = grid
             shape = (map_msg.info.height, map_msg.info.width)
             if self._overlay is None or self._overlay.shape != shape:
                 if self._pending_overlay is not None and self._pending_overlay.shape == shape:
@@ -274,7 +285,7 @@ class MapService:
 
     def _raw_grid_int16_locked(self):
         # Shared raw arrays are immutable; overlays must modify their own int16 copy.
-        return cached_occupancy_grid_array(self._raw_msg).astype(np.int16)
+        return self._raw_grid.astype(np.int16)
 
     def _compose_grid_locked(self):
         raw = self._raw_grid_int16_locked()

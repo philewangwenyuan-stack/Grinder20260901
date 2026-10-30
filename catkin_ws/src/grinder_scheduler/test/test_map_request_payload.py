@@ -1,5 +1,6 @@
 """Raw preview equivalence, snapshot ownership and cache invalidation, without ROS."""
 import ast
+import gc
 import math
 import os
 from pathlib import Path
@@ -44,6 +45,29 @@ def legacy_preview(grid, edge=640):
 
 
 class GridTest(unittest.TestCase):
+    def test_bridge_callback_accepts_ndarray_without_truth_test(self):
+        path = SOURCE/'grinder_scheduler/ros_data_bridge.py'
+        tree = ast.parse(path.read_text(encoding='utf-8'))
+        cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'RosDataBridge')
+        cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and
+                    n.name in ('_map_callback', 'get_map_with_seq')]
+        namespace = dict(occupancy_grid_array=utils.occupancy_grid_array,
+                         rospy=NS(logwarn_throttle=lambda *args: None))
+        exec(compile(ast.Module(body=[cls], type_ignores=[]), str(path), 'exec'), namespace)
+        bridge = namespace['RosDataBridge']()
+        bridge._lock, bridge._map_seq, bridge._map_msg = threading.Lock(), 0, None
+        msg = message(np.zeros((3, 4), np.int8))
+        msg.data = np.frombuffer(bytes(12), np.int8)
+        bridge._map_callback(msg)
+        self.assertEqual((msg, 1), bridge.get_map_with_seq())
+        self.assertIsInstance(msg.data, np.ndarray)
+        self.assertFalse(msg.data.flags.writeable)
+        bad = message(np.zeros((3, 4), np.int8))
+        for data in (None, np.zeros(11, np.int8), np.zeros(12, np.int16)):
+            bad.data = data
+            bridge._map_callback(bad)
+            self.assertEqual((msg, 1), bridge.get_map_with_seq())
+
     def test_thresholds_direction_and_all_signed_grid_values(self):
         image = np.array([[0, 10, 11], [249, 250, 255]], dtype=np.uint8)
         old = np.full(image.shape, -1, dtype=np.int16)
@@ -55,33 +79,49 @@ class GridTest(unittest.TestCase):
         self.assertFalse(grid.flags.writeable)
         signed = np.arange(-128, 128, dtype=np.int16).astype(np.int8).reshape(16, 16)
         np.testing.assert_array_equal(legacy_preview(signed)[:, :, 0], utils.grid_to_gray_preview(signed))
-        cache = utils.OccupancyGridCache()
-        np.testing.assert_array_equal(cache.array(message(signed)), signed)
+        np.testing.assert_array_equal(utils.occupancy_grid_array(message(signed)), signed)
         with self.assertRaises(ValueError):
             utils.grid_to_gray_preview(old)
 
-    def test_shared_frame_concurrent_conversion_and_byte_budget(self):
-        registry = MetricsRegistry()
-        cache = utils.OccupancyGridCache(metrics=registry)
-        msg = message(np.zeros((80, 120), dtype=np.int8))
-        barrier = threading.Barrier(8)
-        outputs = []
-        def worker():
-            barrier.wait()
-            outputs.append(cache.array(msg))
-        threads = [threading.Thread(target=worker) for _ in range(8)]
-        for t in threads: t.start()
-        for t in threads: t.join(3)
-        self.assertEqual(8, len(outputs))
-        self.assertTrue(all(v is outputs[0] for v in outputs))
-        self.assertEqual(1, registry.snapshot()['histograms']['map_grid_convert_ms']['count'])
-        with self.assertRaises(ValueError): outputs[0][0, 0] = 100
-        self.assertIsNot(cache.array(message(np.zeros((80, 120), np.int8))), outputs[0])
-        tiny = utils.OccupancyGridCache(max_bytes=32)
-        tiny.array(msg)
-        self.assertEqual(0, tiny.cache.retained_bytes)
-        msg.info.width += 1
-        with self.assertRaises(ValueError): cache.array(msg)
+    def test_numpy_view_owns_receive_buffer_and_never_builds_a_sequence(self):
+        original = np.arange(-128, 128, dtype=np.int16).astype(np.int8).reshape(16, 16)
+        msg = message(original)
+        buffer = original.tobytes()
+        msg.data = np.frombuffer(buffer, dtype=np.int8)
+        with patch.object(utils.np, 'fromiter', side_effect=AssertionError('must use received view')):
+            grid = utils.occupancy_grid_array(msg)
+        self.assertTrue(np.shares_memory(grid, msg.data))
+        with self.assertRaises(ValueError): grid[0, 0] = 0
+        del msg, buffer
+        gc.collect()
+        np.testing.assert_array_equal(grid, original)
+
+    def test_mutable_input_is_copied_and_invalid_array_rejected(self):
+        original = np.zeros((3, 4), dtype=np.int8)
+        msg = message(original)
+        msg.data = original.ravel()
+        grid = utils.occupancy_grid_array(msg)
+        original[:] = 100
+        self.assertTrue(np.all(grid == 0))
+        for data in (None, [], np.zeros(12, np.int16), np.zeros((4, 3), np.int8)):
+            msg.data = data
+            with self.assertRaises(ValueError): utils.occupancy_grid_array(msg)
+
+    def test_saved_service_keeps_grid_after_cache_clear_and_live_updates(self):
+        from grinder_scheduler.map_service import MapService
+        grid = utils.saved_image_to_grid(np.array([[0, 255], [205, 0]], np.uint8))
+        source = utils.MapGridSource(('saved', 1), 2, 2, .05, -2., 3., 'map', 123456)
+        service = MapService()
+        self.assertTrue(service.set_raw_grid(source, grid))
+        self.assertTrue(np.shares_memory(service._raw_grid, grid))
+        self.assertFalse(hasattr(service._raw_msg, 'data'))
+        before = service.compose_map()
+        for _ in range(4):
+            live = MapService()
+            live.set_raw_map(message(np.zeros((3, 4), np.int8)))
+        np.testing.assert_array_equal(service.compose_map(), before)
+        info = service.get_map_info()
+        self.assertEqual((-2., 3., 123456000000), (info['origin_x'], info['origin_y'], info['stamp_ns']))
 
     def test_compose_and_erase_never_modify_shared_array(self):
         from grinder_scheduler.map_service import MapService
@@ -94,7 +134,7 @@ class GridTest(unittest.TestCase):
         self.assertEqual(100, composed[1, 2])
         points = [{'x': -1., 'y': 2.}, {'x': -.5, 'y': 2.}, {'x': -.5, 'y': 2.5}]
         service._apply_erase_region_patch(points, .1)
-        np.testing.assert_array_equal(utils.cached_occupancy_grid_array(msg), grid)
+        np.testing.assert_array_equal(service._raw_grid, grid)
 
 
 class PayloadTest(unittest.TestCase):
@@ -217,20 +257,21 @@ class PayloadTest(unittest.TestCase):
         self.assertTrue(np.all(second.raster.image == 255))
 
 
-def scheduler_fixture():
+def scheduler_fixture(map_service_class=None):
     """Execute actual protocol/snapshot methods with minimal ROS dependency stand-ins."""
     path = SOURCE/'grinder_scheduler/scheduler_node.py'
     tree = ast.parse(path.read_text(encoding='utf-8'))
     node = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'SchedulerNode')
     selected = {'_get_map_payload_builder', '_map_grid_source', '_load_saved_raw_grid',
                 '_load_raw_grid_yaml', 'build_map_chunks', '_build_raw_map_snapshot', '_preview_meta',
-                '_load_saved_raw_grid_map'}
+                '_build_offline_map_service_for_map', '_export_runtime_map'}
     node.body = [n for n in node.body if isinstance(n, ast.FunctionDef) and n.name in selected]
     registry = MetricsRegistry()
     namespace = dict(metrics=registry, DEFAULT_LIVE_MAP_ID='LIVE_MAP', MapPayloadBuilder=utils.MapPayloadBuilder, MapGridSource=utils.MapGridSource,
+                     occupancy_grid_array=utils.occupancy_grid_array, np=np, cv2=cv2,
                      math=math, os=os, time=time, secrets=secrets, zlib=zlib,
                      rospy=NS(Time=NS(now=lambda: NS(secs=123, nsecs=0)), logwarn=lambda *a: None, loginfo=lambda *a: None),
-                     MapService=lambda: NS(load_local_state=lambda _: None, get_map_version=lambda: 7))
+                     MapService=map_service_class or (lambda: NS(load_local_state=lambda _: None, get_map_version=lambda: 7)))
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(path), 'exec'), namespace)
     instance = namespace['SchedulerNode']()
     instance.sl_link_server = NS(pb=pb)
@@ -249,11 +290,42 @@ def scheduler_fixture():
 
 
 class ProtocolTest(unittest.TestCase):
+    def test_offline_factory_uses_metadata_and_shared_grid_without_list(self):
+        from grinder_scheduler.map_service import MapService
+        node = scheduler_fixture(map_service_class=MapService)
+        node._draw_region_id_on_preview = node._draw_region_label_on_preview = True
+        node._preview_rga_enabled, node._preview_rga_backend, node._preview_rga_available = False, 'auto', False
+        with tempfile.TemporaryDirectory() as folder:
+            image = np.array([[0, 255, 205], [255, 0, 205]], np.uint8)
+            cv2.imwrite(str(Path(folder)/'map.pgm'), image)
+            (Path(folder)/'map.yaml').write_text('image: map.pgm\nresolution: 0.05\norigin: [-1,2,0]\n')
+            node._saved_raw_grid_paths_for_map = lambda _: (str(Path(folder)/'map.yaml'), str(Path(folder)/'map.pgm'))
+            service = node._build_offline_map_service_for_map('saved')
+            self.assertFalse(hasattr(service._raw_msg, 'data'))
+            self.assertFalse(service._raw_grid.flags.writeable)
+            node._get_map_payload_builder().clear()
+            np.testing.assert_array_equal(service.compose_map(), utils.saved_image_to_grid(image))
+
+    def test_export_numpy_map_preserves_saved_pgm_direction_and_thresholds(self):
+        node = scheduler_fixture()
+        grid = np.array([[-1, 0, 100], [1, 99, 100]], np.int8)
+        msg = message(grid)
+        msg.data = np.frombuffer(grid.tobytes(), np.int8)
+        with tempfile.TemporaryDirectory() as folder:
+            yaml, pgm = node._export_runtime_map(msg, folder, 'map.yaml', 'map.pgm',
+                                                align_to_initial_yaw=False, crop_to_free_space=False)
+            image = cv2.imread(pgm, cv2.IMREAD_GRAYSCALE)
+            expected = np.full(grid.shape, 205, np.uint8)
+            expected[grid == 0] = 254
+            expected[grid >= 100] = 0
+            np.testing.assert_array_equal(image, np.flipud(expected))
+            self.assertIn('origin: [-1.000000, 2.000000, 0.000000]', Path(yaml).read_text())
+
     def test_task_result_raw_snapshot_reuses_payload_and_keeps_geometry(self):
         node = scheduler_fixture()
         grid = np.array([[-1, 0, 100], [1, 99, 100]], np.int8)
         msg = message(grid)
-        node.aurora_bridge = NS(get_map_with_seq=lambda: (msg, 1))
+        node.ros_data_bridge = NS(get_map_with_seq=lambda: (msg, 1))
         node.map_service = NS(get_map_version=lambda: 4)
         for gray in (False, True):
             node._map_preview_grayscale = gray
@@ -267,7 +339,7 @@ class ProtocolTest(unittest.TestCase):
     def test_cached_bytes_still_get_fresh_request_and_snapshot_ids(self):
         node = scheduler_fixture()
         msg = message(np.array([[-1, 0, 100], [1, 99, 100]], np.int8))
-        node.aurora_bridge = NS(get_map_with_seq=lambda: (msg, 1))
+        node.ros_data_bridge = NS(get_map_with_seq=lambda: (msg, 1))
         node.map_service = NS(get_map_version=lambda: 4)
         snapshots = []
         for request_id in (11, 12):
@@ -282,7 +354,7 @@ class ProtocolTest(unittest.TestCase):
             self.assertEqual(result.payload_size, len(data))
             self.assertEqual((3, 2, .05), (decoded[0].width, decoded[0].height, round(decoded[0].resolution, 2)))
         self.assertNotEqual(*snapshots)
-        node.aurora_bridge = NS(get_map_with_seq=lambda: (None, 2))
+        node.ros_data_bridge = NS(get_map_with_seq=lambda: (None, 2))
         result, chunks = node.build_map_chunks(pb.MapRequest(request_id=13).SerializeToString())
         self.assertEqual(pb.MAP_REQUEST_STATUS_NOT_READY, pb.MapRequestResult.FromString(result).status)
         self.assertEqual([], chunks)

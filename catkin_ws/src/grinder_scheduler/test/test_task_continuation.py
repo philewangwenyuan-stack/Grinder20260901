@@ -90,7 +90,7 @@ class SchedulerContinuationTest(unittest.TestCase):
         n._rotation_alignment_delta_deg_for_map_id = lambda *a: 0.
         self.pose = dict(x=10., y=1., heading_deg=0.)
         self.info = dict(map_version=1, frame_id='map', resolution=.05, width=100, height=100, origin_x=0., origin_y=0.)
-        n.aurora_bridge = types.SimpleNamespace(get_pose=lambda: self.pose)
+        n.ros_data_bridge = types.SimpleNamespace(get_pose=lambda: self.pose)
         n.map_service = types.SimpleNamespace(get_map_info=lambda: self.info)
         n.current_path = types.SimpleNamespace(task_id='task', points=points([(0, 0), (10, 0), (10, 1), (0, 1)]))
         n._project_robot_to_active_segment = lambda: dict(progress_s=11.)

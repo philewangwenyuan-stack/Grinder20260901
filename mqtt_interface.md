@@ -227,9 +227,9 @@ Last Will 示例：
 | `mapHeight` | number | cell 或 px | 地图高度 | `map_service.get_map_info()` 或预览结果 |
 | `pathPreviewScaleX` | number | - | 路径规划预览图 X 方向缩放比例 | 地图响应/渲染结果 |
 | `pathPreviewScaleY` | number | - | 路径规划预览图 Y 方向缩放比例 | 地图响应/渲染结果 |
-| `poseX` | number | m | 机器人 X 坐标 | `aurora_bridge.get_pose()` |
-| `poseY` | number | m | 机器人 Y 坐标 | `aurora_bridge.get_pose()` |
-| `poseHeading` | number | deg | 机器人朝向 | `aurora_bridge.get_pose()` |
+| `poseX` | number | m | 机器人 X 坐标 | `ros_data_bridge.get_pose()` |
+| `poseY` | number | m | 机器人 Y 坐标 | `ros_data_bridge.get_pose()` |
+| `poseHeading` | number | deg | 机器人朝向 | `ros_data_bridge.get_pose()` |
 
 
 ### 6.3 速度类

@@ -1,3 +1,4 @@
+"""Shared ROS map, odometry and image inputs for the scheduler."""
 import os
 import math
 import threading
@@ -6,13 +7,15 @@ import time
 import cv2
 
 import rospy
+from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge, CvBridgeError
 from nav_msgs.msg import OccupancyGrid, Odometry
 from sensor_msgs.msg import Image
 from tf.transformations import euler_from_quaternion
+from grinder_scheduler.map_grid_utils import occupancy_grid_array
 
 
-class AuroraBridge:
+class RosDataBridge:
     def __init__(
         self,
         map_topic,
@@ -70,7 +73,8 @@ class AuroraBridge:
         self._saved_depth_frame = False
         self._use_depth_colorized_image = bool(use_depth_colorized_image)
 
-        rospy.Subscriber(map_topic, OccupancyGrid, self._map_callback, queue_size=1)
+        # One message class per topic in this process: numpy-backed OccupancyGrid.
+        rospy.Subscriber(map_topic, numpy_msg(OccupancyGrid), self._map_callback, queue_size=1)
         rospy.Subscriber(odom_topic, Odometry, self._odom_callback, queue_size=10)
         if self._use_depth_colorized_image:
             rospy.Subscriber(
@@ -103,7 +107,8 @@ class AuroraBridge:
         width = int(getattr(msg.info, "width", 0) or 0)
         height = int(getattr(msg.info, "height", 0) or 0)
         expected_cells = width * height
-        actual_cells = len(getattr(msg, "data", []) or [])
+        data = getattr(msg, "data", None)
+        actual_cells = 0 if data is None else len(data)
         if width <= 0 or height <= 0 or actual_cells != expected_cells:
             rospy.logwarn_throttle(
                 1.0,
@@ -113,6 +118,14 @@ class AuroraBridge:
                 expected_cells,
                 actual_cells,
             )
+            return
+        try:
+            # numpy_msg provides an immutable view of the receive buffer.
+            # Validate before publishing this frame to the scheduler.
+            grid = occupancy_grid_array(msg)
+            msg.data = grid.reshape(-1)
+        except ValueError as error:
+            rospy.logwarn_throttle(1.0, "Rejected invalid /map array: %s", error)
             return
         with self._lock:
             self._map_msg = msg
@@ -229,7 +242,7 @@ class AuroraBridge:
         try:
             os.makedirs(self._first_frame_save_dir, exist_ok=True)
             stamp_ns = stamp.to_nsec() if stamp and stamp != rospy.Time(0) else 0
-            filename = os.path.join(self._first_frame_save_dir, "aurora_first_{}_{}.jpg".format(side, stamp_ns))
+            filename = os.path.join(self._first_frame_save_dir, "ros_first_{}_{}.jpg".format(side, stamp_ns))
             if cv2.imwrite(filename, image):
                 rospy.loginfo("Saved first %s Aurora image to %s", side, filename)
             else:

@@ -49,7 +49,7 @@ class ManualSteeringGuardActivityTest(unittest.TestCase):
             sl_link_server=Message(pb=Message(MANUAL_MOTION_FORWARD=1, MANUAL_MOTION_BACKWARD=2,
                 MANUAL_MOTION_FORWARD_LEFT=3, MANUAL_MOTION_FORWARD_RIGHT=4,
                 MANUAL_MOTION_BACKWARD_LEFT=5, MANUAL_MOTION_BACKWARD_RIGHT=6)),
-            aurora_bridge=Message(get_pose=lambda: {"x": 0, "y": 0, "heading_deg": 0}),
+            ros_data_bridge=Message(get_pose=lambda: {"x": 0, "y": 0, "heading_deg": 0}),
             task_config=Message(task_id=""), _task_progress=lambda: 0,
             map_service=Message(get_map_info=lambda: None),
             media_streamer=Message(get_state=lambda: Message(online=False)),

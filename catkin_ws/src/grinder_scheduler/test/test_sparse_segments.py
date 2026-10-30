@@ -160,7 +160,7 @@ class SparseSegmentsTest(unittest.TestCase):
     def test_resume_checkpoint_projects_inside_sparse_edge(self):
         n=node(points([(0,0),(30,0),(30,10)]))
         n._rebuild_active_segments()
-        n.aurora_bridge=SimpleNamespace(get_pose=lambda:dict(x=25.,y=.1))
+        n.ros_data_bridge=SimpleNamespace(get_pose=lambda:dict(x=25.,y=.1))
         n._segment_overlap_behind_m=.3
         n._publish_active_segment_plan=mock.Mock()
         n._continuation_checkpoint=dict(path=n.current_path,segment_index=0,progress_s=25.)
@@ -216,7 +216,7 @@ class SparseSegmentsTest(unittest.TestCase):
         n._exec_goal_reach_dist=.5
         n._finish_path_execution=mock.Mock()
         pose=dict(x=20.,y=0.)
-        n.aurora_bridge=SimpleNamespace(get_pose=lambda:pose)
+        n.ros_data_bridge=SimpleNamespace(get_pose=lambda:pose)
         n._update_progress()
         n._finish_path_execution.assert_not_called()
         self.assertAlmostEqual(2./3,n._task_progress())
@@ -228,7 +228,7 @@ class SparseSegmentsTest(unittest.TestCase):
         n._active_segments=[]
         n._exec_goal_reach_dist=.5
         n._finish_path_execution=mock.Mock()
-        n.aurora_bridge=SimpleNamespace(get_pose=lambda:dict(x=0.,y=0.))
+        n.ros_data_bridge=SimpleNamespace(get_pose=lambda:dict(x=0.,y=0.))
         n._update_progress()
         n._finish_path_execution.assert_not_called()
 

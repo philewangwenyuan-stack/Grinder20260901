@@ -28,7 +28,7 @@ super_lio_fitness_max_m2: 0.05             # 配准残差（均方距离）上�
 super_lio_inlier_ratio_min: 0.4            # 内点比例下限（有效匹配点占比）
 super_lio_min_correspondences: 300         # 有效对应点数量下限，太少说明观测退化
 # 位姿协方差门限
-super_lio_max_xy_variance: 0.01            # xy 位置方差上限（m²），对应标准差 0.5 m
+super_lio_max_xy_variance: 0.01            # xy 位置方差上限（m²），对应标准差 0.1 m
 super_lio_max_yaw_variance: 0.00274        # 方差 rad²，对应标准差 3°（0.0524²）
 # 位姿跳变门限（两次定位输出之间）
 super_lio_max_pose_jump_m: 0.2            # 平移跳变上限，单位 m

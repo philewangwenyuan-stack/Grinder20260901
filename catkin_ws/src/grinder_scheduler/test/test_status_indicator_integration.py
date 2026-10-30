@@ -57,7 +57,7 @@ class StopHookTest(unittest.TestCase):
         method = production_method(ROOT / "catkin_ws/src/grinder_scheduler/src/grinder_scheduler/scheduler_node.py",
                                    "_publish_status", namespace)
         node = SimpleNamespace(
-            aurora_bridge=SimpleNamespace(get_pose=lambda: {"x": 0, "y": 0, "heading_deg": 0}),
+            ros_data_bridge=SimpleNamespace(get_pose=lambda: {"x": 0, "y": 0, "heading_deg": 0}),
             task_config=Message(task_id="task"), state=SchedulerState.RUNNING,
             _task_progress=lambda: 0, map_service=SimpleNamespace(get_map_info=lambda: None),
             media_streamer=SimpleNamespace(get_state=lambda: Message(online=False)),

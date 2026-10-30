@@ -77,7 +77,7 @@ _stub_module(
     StartSuperLioLocalization=_Dummy,
     SetSuperLioInitialPose=_Dummy,
 )
-_stub_module("grinder_scheduler.aurora_bridge", AuroraBridge=_Dummy)
+_stub_module("grinder_scheduler.ros_data_bridge", RosDataBridge=_Dummy)
 _stub_module("grinder_scheduler.local_rtsp_server", LocalRtspStreamServer=_Dummy)
 _stub_module("grinder_scheduler.map_service", MapService=_Dummy)
 _stub_module("grinder_scheduler.media_streamer", FFmpegMediaStreamer=_Dummy)

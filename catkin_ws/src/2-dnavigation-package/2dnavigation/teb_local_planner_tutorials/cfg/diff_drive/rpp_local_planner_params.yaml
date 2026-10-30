@@ -75,11 +75,11 @@ RegulatedPurePursuitController:
   collision_scan_timeout_s: 1         # 雷达超过该时间未更新则停车，单位：秒
   collision_confirm_scans: 10            # 连续多少帧命中才触发停车
   collision_clear_confirm_scans: 3      # 连续多少帧无命中才解除停车锁存
-  collision_min_valid_points: 15         # 阈值内至少多少个雷达点才算障碍
+  collision_min_valid_points: 10         # 阈值内至少多少个雷达点才算障碍
   prediction_collision_confirm_cycles: 1 # 预测碰撞连续多少个控制周期才触发
 
   # 差速底盘朝向控制
-  use_rotate_to_heading: false    # 路径方向偏差较大时先原地旋转
+  use_rotate_to_heading: true    # 路径方向偏差较大时先原地旋转
   rotate_to_heading_angular_vel: 0.2     # 原地对准路径时的角速度，重型研磨机不宜过快
   rotate_to_heading_min_angle: 0.45      # 进入原地旋转的角度阈值，单位：rad（约 20°）
   rotate_to_heading_exit_angle: 0.08    # 误差小于约2.9度后进入只刹停、不反向追赶的稳定阶段

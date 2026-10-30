@@ -2,7 +2,6 @@
 import math
 import os
 import re
-import sys
 import threading
 from collections import OrderedDict
 from concurrent.futures import Future
@@ -91,35 +90,30 @@ class ByteLRU:
                 self._pending.pop(key, None)
 
 
-class OccupancyGridCache:
-    def __init__(self, max_entries=2, max_bytes=64 * 1024 * 1024, metrics=None):
-        self.cache = ByteLRU(max_entries, max_bytes)
-        self.metrics = metrics
+def occupancy_grid_array(msg, raw_grid=None):
+    """Return an immutable 2D grid; numpy_msg byte-backed data requires no copy.
 
-    def array(self, msg):
-        width, height = int(msg.info.width), int(msg.info.height)
-        if width <= 0 or height <= 0 or len(msg.data) != width * height:
+    Ordinary flat ROS sequences remain accepted at the compatibility boundary.
+    Their conversion is owned by the caller, never retained in an identity cache.
+    """
+    width, height = int(msg.info.width), int(msg.info.height)
+    data = getattr(msg, "data", None) if raw_grid is None else raw_grid
+    if width <= 0 or height <= 0 or data is None:
+        raise ValueError("incomplete occupancy grid")
+    if isinstance(data, np.ndarray):
+        if data.dtype != np.int8 or data.ndim not in (1, 2):
+            raise ValueError("occupancy grid must be a flat or 2D int8 array")
+        if data.size != width * height or (data.ndim == 2 and data.shape != (height, width)):
             raise ValueError("incomplete occupancy grid")
-
-        def build():
-            with _timer(self.metrics, "map_grid_convert_ms"):
-                # ROS data is a flat integer sequence. fromiter avoids NumPy's
-                # general nested-sequence discovery (252ms vs82ms for2.43M
-                # cells on the board); it still owns a fresh independent buffer.
-                grid = np.fromiter(msg.data, dtype=np.int8, count=width * height).reshape(height, width)
-                grid.flags.writeable = False
-            # Retain msg to prevent id reuse; count the retained Python sequence too.
-            return (msg, grid), sys.getsizeof(msg.data) + grid.nbytes
-
-        return self.cache.get_or_build((id(msg), width, height), build,
-                                      self.metrics, "map_grid_cache")[1]
-
-
-LIVE_GRID_CACHE = OccupancyGridCache()
-
-
-def cached_occupancy_grid_array(msg):
-    return LIVE_GRID_CACHE.array(msg)
+        # Copy mutable external input once so later edits cannot alter a snapshot.
+        grid = data if data.flags.c_contiguous and not data.flags.writeable else data.copy(order="C")
+        grid = grid.reshape(height, width)
+    else:
+        if len(data) != width * height:
+            raise ValueError("incomplete occupancy grid")
+        grid = np.fromiter(data, dtype=np.int8, count=width * height).reshape(height, width)
+    grid.flags.writeable = False
+    return grid
 
 
 def saved_image_to_gray_preview(image):
@@ -215,6 +209,7 @@ class MapGridSource:
     stamp_ms: int
     raster: object = None
     message: object = None
+    grid_array: object = None
 
 
 class MapPayloadBuilder:
@@ -228,8 +223,10 @@ class MapPayloadBuilder:
         self.payloads.clear()
 
     def grid(self, source):
+        if source.grid_array is not None:
+            return source.grid_array
         return (self.saved.grid(source.raster) if source.raster is not None
-                else cached_occupancy_grid_array(source.message))
+                else occupancy_grid_array(source.message))
 
     def encode(self, source, max_edge, image_format="png", grayscale=False):
         key = (source.key, int(max_edge), image_format, bool(grayscale))
