@@ -98,11 +98,11 @@ cmd_vel_scale: 1.0
 # 线速度上限（m/s）
 cmd_vel_max_linear: 0.2
 # 角速度上限（rad/s）
-cmd_vel_max_angular: 0.15
+cmd_vel_max_angular: 0.25
 # 输入线速度限幅（m/s）
 cmd_vel_max_input_v: 0.2
 # 输入角速度限幅（rad/s）
-cmd_vel_max_input_w: 0.15
+cmd_vel_max_input_w: 0.25
 # 换算后的轮速绝对值上限（rpm）
 cmd_vel_max_abs_wheel_rpm: 3000.0
 # 线速度死区（小于该值按 0 处理）

@@ -72,10 +72,10 @@ RegulatedPurePursuitController:
   collision_stop_distance_m: 1.8       # 仅旧扇区模式生效：以雷达原点为参考的距离
   collision_scan_topic: /scan           # LaserScan 话题
   collision_scan_half_angle_rad: 0.35    # 仅旧扇区模式生效：前方扇区半角，约20度
-  collision_scan_timeout_s: 1.5         # 雷达超过该时间未更新则停车，单位：秒
-  collision_confirm_scans: 15            # 连续多少帧命中才触发停车
+  collision_scan_timeout_s: 1         # 雷达超过该时间未更新则停车，单位：秒
+  collision_confirm_scans: 10            # 连续多少帧命中才触发停车
   collision_clear_confirm_scans: 3      # 连续多少帧无命中才解除停车锁存
-  collision_min_valid_points: 10         # 阈值内至少多少个雷达点才算障碍
+  collision_min_valid_points: 15         # 阈值内至少多少个雷达点才算障碍
   prediction_collision_confirm_cycles: 1 # 预测碰撞连续多少个控制周期才触发
 
   # 差速底盘朝向控制
@@ -86,7 +86,7 @@ RegulatedPurePursuitController:
   rotate_to_heading_stable_cycles: 3   # 对正并停稳连续5个控制周期后才恢复前进
   use_corner_aware_rotate_to_heading: true  # true：尖角处先走到拐点附近，再对正下一条边
   rotate_to_heading_corner_distance: 0.03  # 后轮中心距尖角8cm内开始原地对准，容纳定位和点间距误差
-  allow_reversing: true                # false：禁止倒车跟踪，前视点在后方时先旋转
+  allow_reversing: false               # false：禁止倒车跟踪，前视点在后方时先旋转
 
   # 目标到达与静止判定
   goal_dist_tol: 0.12                   # 机器人与目标点的距离容差，单位：m

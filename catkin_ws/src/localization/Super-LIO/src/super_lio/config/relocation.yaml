@@ -98,7 +98,7 @@ lio:
 
 
   relocation:
-    update_map: true
+    update_map: false
     # Standard mode: base_link XYZ in map coordinates; angles here are degrees.
     # /initialpose uses the same base reference, quaternion orientation, and its supplied z.
     init_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # px, py, pz, roll, pitch, yaw

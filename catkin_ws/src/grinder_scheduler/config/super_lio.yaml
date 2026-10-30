@@ -24,15 +24,15 @@ super_lio_localization_stable_frames: 5    # 连续 5 帧质量合格，才判�
 super_lio_localization_bad_frames: 15      # 连续 15 帧质量不合格，才判定"定位丢失"
 
 # 单帧匹配质量门限（任何一项不满足，这一帧就算"坏帧"）
-super_lio_fitness_max_m2: 0.3              # 配准残差（均方距离）上限，单位 m²
-super_lio_inlier_ratio_min: 0.2            # 内点比例下限（有效匹配点占比）
-super_lio_min_correspondences: 100         # 有效对应点数量下限，太少说明观测退化
+super_lio_fitness_max_m2: 0.05             # 配准残差（均方距离）上限，单位 m²
+super_lio_inlier_ratio_min: 0.4            # 内点比例下限（有效匹配点占比）
+super_lio_min_correspondences: 300         # 有效对应点数量下限，太少说明观测退化
 # 位姿协方差门限
-super_lio_max_xy_variance: 0.25            # xy 位置方差上限（m²），对应标准差 0.5 m
-super_lio_max_yaw_variance: 0.06853892     # 航向方差上限（rad²），对应标准差 0.2618 rad ≈ 15°
+super_lio_max_xy_variance: 0.01            # xy 位置方差上限（m²），对应标准差 0.5 m
+super_lio_max_yaw_variance: 0.00274        # 方差 rad²，对应标准差 3°（0.0524²）
 # 位姿跳变门限（两次定位输出之间）
-super_lio_max_pose_jump_m: 0.75            # 平移跳变上限，单位 m
-super_lio_max_yaw_jump_rad: 0.52359878     # 航向跳变上限，0.5236 rad = 30°
+super_lio_max_pose_jump_m: 0.2            # 平移跳变上限，单位 m
+super_lio_max_yaw_jump_rad: 0.1745         # 航向跳变上限，10°
 
 super_lio_tf_base_frame: base_link         # 输出位姿/TF 用的机体坐标系
 
@@ -47,7 +47,7 @@ super_lio_autosave: false                  # 自动保存地图，默认关闭�
 super_lio_wheel_fusion_mapping_enabled: false        # 建图模式下是否融合轮速
 super_lio_wheel_fusion_localization_enabled: true    # 定位模式下是否融合轮速
 super_lio_wheel_fuse_linear_velocity: true           # 融合轮速线速度（打开总开关后才生效）
-super_lio_wheel_fuse_angular_velocity: true          # 不融合轮速角速度（IMU 陀螺仪更准，轮速角速度受打滑影响大）
+super_lio_wheel_fuse_angular_velocity: true          # 融合轮速角速度（IMU 陀螺仪更准，轮速角速度受打滑影响大）
 super_lio_wheel_twist_topic: /chassis/wheel_twist    # 轮速输入话题
 super_lio_wheel_max_age_sec: 0.25                    # 轮速消息超过这个时间就丢弃，不参与融合
 
