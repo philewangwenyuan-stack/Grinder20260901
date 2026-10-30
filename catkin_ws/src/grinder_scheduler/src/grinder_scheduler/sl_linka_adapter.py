@@ -147,6 +147,12 @@ class SlLinkAServer:
         self._session_busy = metrics_registry.counter("channel_busy_rejections") if metrics_registry else None
         self._session_expired = metrics_registry.counter("channel_lease_expirations") if metrics_registry else None
         self._disconnect_apply = metrics_registry.histogram("control_disconnect_apply_ms") if metrics_registry else None
+        self._metrics = metrics_registry
+        self._wire_wait = {role: metrics_registry.histogram("channel_{}_wire_wait_ms".format(role))
+                           if metrics_registry else None for role in ("data", "control")}
+        self._wire_send = {role: metrics_registry.histogram("channel_{}_socket_send_ms".format(role))
+                           if metrics_registry else None for role in ("data", "control")}
+        self._connection_seq = 0
 
     def _enum_name(self, enum_type_name, value):
         enum_type = getattr(self.pb, enum_type_name, None)
@@ -231,7 +237,21 @@ class SlLinkAServer:
                 self.admitted = False
                 self.legacy = False
                 self.created_at = time.monotonic()
+                with outer._peers_lock:
+                    outer._connection_seq += 1
+                    self.connection_id = outer._connection_seq
                 self.manual_received_at = None
+                self.last_manual_at = None
+                self.last_rx_at = None
+                self.last_rx_seq = None
+                self.last_rx_msg = None
+                self.last_manual_seq = None
+                self.write_started_at = None
+                self.last_write_ms = None
+                self.last_write_bytes = 0
+                self.last_tx_msg = None
+                self.last_tx_ack = None
+                self.close_reason = None
                 self.close_lock = threading.Lock()
                 self.closed_once = False
                 # A read poll must not become a 100ms sendall deadline for maps.
@@ -303,11 +323,11 @@ class SlLinkAServer:
                         # Keep the connection alive on idle timeout.
                         continue
                     except OSError as exc:
-                        if rospy is not None:
-                            rospy.logwarn("SL-LinkA socket recv failed: %s", exc)
+                        self._close("recv_error", exc)
                         break
 
                     if not data:
+                        self._close("peer_eof")
                         break
                     # The historical APP sent a single NUL as its transport heartbeat.
                     # Only an admitted readonly connection may renew via that format.
@@ -318,6 +338,9 @@ class SlLinkAServer:
                         if frame.dst_id not in (outer.pb.DEVICE_LOWER, outer.pb.DEVICE_BROADCAST):
                             continue
                         received_at = time.monotonic()
+                        self.last_rx_at = received_at
+                        self.last_rx_seq = int(frame.seq)
+                        self.last_rx_msg = int(frame.msg_id)
                         outer._log_rx_frame(frame)
                         try:
                             if int(frame.msg_id) == int(outer.pb.MSG_ID_CHANNEL_SESSION_REQUEST):
@@ -327,14 +350,14 @@ class SlLinkAServer:
                                 if self.role == "data" and self._readonly(frame.msg_id):
                                     if not self._admit(legacy=True):
                                         self._reject(frame, "Device is occupied", outer.pb.RESULT_BUSY)
-                                        self._close()
+                                        self._close("admission_busy")
                                         return
                                 else:
                                     self._reject(frame, "Channel handshake required", outer.pb.RESULT_UNSUPPORTED)
-                                    self._close()
+                                    self._close("handshake_required")
                                     return
                             if not outer.sessions.touch(self.role, self):
-                                self._close()
+                                self._close("session_invalid")
                                 return
                             if not self._allowed(frame):
                                 self._reject(frame, "Request is not allowed on this channel", outer.pb.RESULT_UNSUPPORTED)
@@ -342,6 +365,7 @@ class SlLinkAServer:
                             if int(frame.msg_id) == int(outer.pb.MSG_ID_TASK_COMMAND) and self.role == "control":
                                 # Revoke queued manual output on receipt, before any slow task cleanup.
                                 outer._handler.cancel_manual_session(self.session)
+                                self._record_event("control_task_cancel", seq=int(frame.seq))
                                 self.manual_control_executor.clear()
                                 capture = getattr(outer._handler, "capture_stop_generation", None)
                                 generation = capture(self.session) if capture else outer._handler.capture_control_generation()
@@ -360,6 +384,8 @@ class SlLinkAServer:
                                 ):
                                     ticket, stop = outer._handler.capture_manual_ticket(
                                         self.session, control_request, received_at)
+                                    self.last_manual_at = received_at
+                                    self.last_manual_seq = int(frame.seq)
                                     if stop:
                                         self.manual_control_executor.clear()
                                         self.manual_received_at = None
@@ -450,13 +476,33 @@ class SlLinkAServer:
             def _valid(self):
                 return self.running and outer.sessions.valid(self.role, self)
 
-            def _close(self):
+            def _record_event(self, name, **fields):
+                fields.update(connection_id=self.connection_id, role=self.role,
+                              local_port=self.server.server_address[1], peer=str(self.client_address))
+                if outer._metrics is not None:
+                    outer._metrics.event(name, **fields)
+                if rospy is not None:
+                    rospy.loginfo("SL-LinkA %s: %s", name, fields)
+
+            def _close(self, reason="handler_finish", error=None):
                 with self.close_lock:
                     if self.closed_once:
                         return
                     self.closed_once = True
+                    self.close_reason = reason
                     self.running = False
                     outer.sessions.detach(self)
+                    now = time.monotonic()
+                    fields = dict(reason=reason, admitted=self.admitted,
+                                  rx_age_ms=None if self.last_rx_at is None else (now - self.last_rx_at) * 1000,
+                                  manual_age_ms=None if self.last_manual_at is None else (now - self.last_manual_at) * 1000,
+                                  rx_seq=self.last_rx_seq, rx_msg=self.last_rx_msg,
+                                  manual_seq=self.last_manual_seq,
+                                  write_age_ms=None if self.write_started_at is None else (now - self.write_started_at) * 1000,
+                                  last_write_ms=self.last_write_ms, last_write_bytes=self.last_write_bytes,
+                                  tx_msg=self.last_tx_msg, tx_ack=self.last_tx_ack,
+                                  error_type=type(error).__name__ if error else None,
+                                  error_errno=getattr(error, "errno", None))
                 try:
                     self.request.shutdown(socket.SHUT_RDWR)
                 except OSError:
@@ -467,13 +513,17 @@ class SlLinkAServer:
                     if outer._disconnect_apply is not None:
                         outer._disconnect_apply.observe((time.monotonic() - started) * 1000.0)
                 self.manual_control_executor.clear()
+                # Attribute only after revoking motion; no diagnostic I/O delays the zero.
+                if outer._metrics is not None:
+                    outer._metrics.counter("channel_{}_close_{}".format(self.role, reason)).inc()
+                self._record_event("channel_close", **fields)
 
             def _admit(self, token="", legacy=False):
                 if outer._stopping.is_set():
                     return False
                 accepted, issued, retired = outer.sessions.attach(self.role, self, token, legacy)
                 for peer in retired:
-                    peer._close()
+                    peer._close("session_replaced")
                 if not accepted:
                     if outer._session_busy is not None:
                         outer._session_busy.inc()
@@ -483,9 +533,11 @@ class SlLinkAServer:
                 self.legacy = legacy
                 if self.role == "control" and first:
                     outer._handler.begin_manual_session(self.session)
+                if first:
+                    self._record_event("channel_admitted", legacy=legacy)
                 return issued
 
-            def _session_response(self, frame, result, message="", token=""):
+            def _session_response(self, frame, result, message="", token="", asynchronous=False):
                 response = outer.pb.ChannelSessionResponse(
                     result=result, message=message,
                     role=outer.pb.CHANNEL_ROLE_CONTROL if self.role == "control" else outer.pb.CHANNEL_ROLE_DATA,
@@ -493,8 +545,15 @@ class SlLinkAServer:
                     session_timeout_ms=int(outer.sessions.timeout * 1000),
                     control_ready=outer.sessions.control_ready(),
                     emergency_stop_latched=bool(getattr(getattr(outer._handler, "_motion", None), "latched", False)))
-                self._send_payload(response.SerializeToString(), outer.pb.MSG_ID_CHANNEL_SESSION_RESPONSE,
-                                   comp_id=outer.pb.COMP_CONTROL, ack_seq=frame.seq, control=True)
+                if asynchronous:
+                    # A control heartbeat must never wait for TX on the receive
+                    # thread: that would hide fresh speeds behind an ACK write.
+                    self._queue_control_response(response.SerializeToString(),
+                                                 outer.pb.MSG_ID_CHANNEL_SESSION_RESPONSE,
+                                                 outer.pb.COMP_CONTROL, int(frame.seq))
+                else:
+                    self._send_payload(response.SerializeToString(), outer.pb.MSG_ID_CHANNEL_SESSION_RESPONSE,
+                                       comp_id=outer.pb.COMP_CONTROL, ack_seq=frame.seq, control=True)
 
             def _session_request(self, frame):
                 pb = outer.pb
@@ -507,24 +566,25 @@ class SlLinkAServer:
                 if request.action in (pb.CHANNEL_SESSION_OPEN, pb.CHANNEL_SESSION_BIND, pb.CHANNEL_SESSION_RECOVER):
                     if (self.role == "control" and not request.token) or self.legacy:
                         self._session_response(frame, pb.RESULT_INVALID_PARAM, "A valid tablet token is required")
-                        self._close()
+                        self._close("invalid_bind")
                         return
                     token = self._admit(request.token)
                     self._session_response(frame, pb.RESULT_SUCCESS if token else pb.RESULT_BUSY,
                                            "Channel ready" if token else "Device is occupied or token expired", token or "")
                     if not token:
-                        self._close()
+                        self._close("admission_busy")
                 elif request.action == pb.CHANNEL_SESSION_HEARTBEAT:
                     valid = outer.sessions.touch(self.role, self)
                     self._session_response(frame, pb.RESULT_SUCCESS if valid else pb.RESULT_FAILED,
-                                           "Alive" if valid else "Session expired")
+                                           "Alive" if valid else "Session expired",
+                                           asynchronous=valid and self.role == "control")
                     if not valid:
-                        self._close()
+                        self._close("session_invalid")
                 elif request.action == pb.CHANNEL_SESSION_RELEASE:
                     retired = outer.sessions.release(self.role, self)
                     self._session_response(frame, pb.RESULT_SUCCESS if retired else pb.RESULT_FAILED, "Released")
                     for peer in retired:
-                        peer._close()
+                        peer._close("session_released")
                 else:
                     self._session_response(frame, pb.RESULT_INVALID_PARAM, "Unknown session action")
 
@@ -819,15 +879,22 @@ class SlLinkAServer:
             def _send_wire(self, payload):
                 if not self.running:
                     raise ConnectionError("SL-LinkA session closed")
+                started = time.monotonic()
+                self.write_started_at = started
+                self.last_write_bytes = len(payload)
                 try:
                     timeout = (outer.control_send_timeout_sec if self.role == "control"
                                else outer.data_send_timeout_sec)
                     send_with_deadline(self.request, payload, timeout,
                                        lambda: self.running and (not self.admitted or self._valid()))
-                except OSError:
-                    self.running = False
-                    self._close()
+                except OSError as exc:
+                    self._close("send_deadline" if isinstance(exc, socket.timeout) else "send_error", exc)
                     raise
+                finally:
+                    self.last_write_ms = (time.monotonic() - started) * 1000.0
+                    self.write_started_at = None
+                    if outer._wire_send[self.role] is not None:
+                        outer._wire_send[self.role].observe(self.last_write_ms)
 
             def _send_payload(self, payload, msg_id, comp_id=None, ack_seq=0, control=False):
                 if payload is None or msg_id is None:
@@ -836,6 +903,8 @@ class SlLinkAServer:
                     outer.bulk_budget.consume(len(payload) + 32, self._valid)
                 total_started = time.monotonic()
                 with self.send_lock.hold(control):
+                    if outer._wire_wait[self.role] is not None:
+                        outer._wire_wait[self.role].observe((time.monotonic() - total_started) * 1000.0)
                     if control and outer._control_ack_wait is not None:
                         outer._control_ack_wait.observe((time.monotonic() - total_started) * 1000.0)
                     pack_started = time.monotonic()
@@ -851,6 +920,8 @@ class SlLinkAServer:
                         payload=payload,
                     )
                     packed = frame.pack()
+                    self.last_tx_msg = int(msg_id)
+                    self.last_tx_ack = int(ack_seq)
                     pack_elapsed_ms = (time.monotonic() - pack_started) * 1000.0
                     send_started = time.monotonic()
                     self._send_wire(packed)
@@ -911,7 +982,7 @@ class SlLinkAServer:
         with self._peers_lock:
             peers = list(self._peers)
         for peer in peers:
-            peer._close()
+            peer._close("server_stop")
         for listener in self._listeners:
             listener.shutdown()
             listener.server_close()
@@ -923,15 +994,16 @@ class SlLinkAServer:
             for peer in self.sessions.expire():
                 if self._session_expired is not None:
                     self._session_expired.inc()
-                peer._close()
+                peer._close("session_lease_timeout")
             with self._peers_lock:
                 peers = list(self._peers)
             now = time.monotonic()
             for peer in peers:
-                if ((not peer.admitted and now - peer.created_at >= self.sessions.timeout)
-                        or (peer.manual_received_at is not None
-                            and now - peer.manual_received_at >= self.manual_timeout_sec)):
-                    peer._close()
+                if not peer.admitted and now - peer.created_at >= self.sessions.timeout:
+                    peer._close("handshake_timeout")
+                elif (peer.manual_received_at is not None
+                      and now - peer.manual_received_at >= self.manual_timeout_sec):
+                    peer._close("manual_receive_timeout")
 
     def _next_seq(self):
         with self._seq_lock:

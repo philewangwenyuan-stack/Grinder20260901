@@ -62,7 +62,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | SL-LinkA 消息接收与分发 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/sl_linka_adapter.py` | `sl_link_loader.py`、`scheduler_node.py` 中 `handle_*` / `build_*` |
 | 原始取图LUT、NumPy地图接收与有界文件缓存 | scheduler `map_grid_utils.py`、`scheduler_node.py: build_map_chunks / _build_raw_map_snapshot` | `ros_data_bridge.py` 用 `numpy_msg(OccupancyGrid)`（同进程同话题须一致）；`map_service.py: set_raw_grid` 持有只读数组，修改前复制；`map_preview_grayscale`默认关闭；`test/test_map_request_payload.py`、`test/test_numpy_map_transport.py` |
 | TCP接收轮询与有界发送期限分离 | scheduler `socket_io.py`、`sl_linka_adapter.py` | 数据每帧默认2秒、控制默认0.5秒，接收轮询100ms；`test/test_socket_io.py`（背压Linux验证）；包README |
-| SL-LinkA 双端口、单平板连接组与亮屏恢复 | scheduler `channel_sessions.py`、`sl_linka_adapter.py` | 数据8002/控制8003；会话 `0x0403/0x0404`；`test/test_dual_channel.py`，根README 7.7；APP 在独立APP仓库 `core:tcp` |
+| SL-LinkA 双端口、单平板连接组与亮屏恢复 | scheduler `channel_sessions.py`、`sl_linka_adapter.py` | 数据8002/控制8003；会话 `0x0403/0x0404`；控制心跳异步回复、`channel_close`关闭归因与分通道wire/socket指标；`test/test_dual_channel.py`，根README 7.7；APP 在独立APP仓库 `core:tcp` |
 | 遥控指令跟手、忙时松手停车 | `sl_linka_adapter.py` 中手动最新指令队列、scheduler `capture_control_generation` | 排队绑定执行代号；底盘零速绕过斜坡；`test_manual_control_delivery.py`、`test_motion_safety.py`；部署与超时见根 README 7.3 |
 | 遥控有效期/连接会话/控制确认优先 | scheduler `manual_delivery.py`、`priority_wire.py`、`sl_linka_adapter.py` | `scheduler_node.py`提交校验；底盘`motion_safety.py`交付检查；`test_field_safety.py`，根README 7.4 |
 | 规划跨请求基础缓存与定位失败分项 | scheduler `planning_cache.py`、`registration_health.py` | `planner_adapter.py`、`super_lio_mode_manager.py`；缓存默认2项/128MiB，门限保持不变 |

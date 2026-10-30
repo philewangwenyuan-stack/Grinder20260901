@@ -7,6 +7,14 @@
 协议 `0x0403/0x0404` 为握手/心跳/恢复/释放，需同步升级 APP；数据端拒绝运动控制。
 配置、亮屏恢复、日志与受控验收见根 README 7.7。无新增 ROS 消息/服务。
 
+控制会话心跳回复通过有界 TX 队列发送，避免接收线程等待发送锁或 socket。
+`sl_linka_adapter.py` 的 `channel_close` 事件区分接收遥控超时、发送截止、对端断开、
+会话替换/释放/租约失效及服务停止；先执行控制撤销，再记录关闭事件。
+`channel_{data,control}_wire_wait_ms` 与 `channel_{data,control}_socket_send_ms` 分别统计
+发送锁等待和 socket 写入。旧 `control_ack_wait_ms` 是两端口控制类响应的锁等待，不能当作遥控 RTT。
+接收500ms、控制每帧发送500ms、会话3秒门限不变。回归包括心跳写入受阻时遥控/停车继续接收，
+以及 EOF、发送超时、接收遥控超时的原因归属；不连接真实设备。
+
 本文档说明 `catkin_ws/src/grinder_scheduler` 目录下各文件/子目录的作用，便于开发、联调和排障。
 
 ## 原始地图取图与缓存

@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / 'catkin_ws/src/grinder_scheduler/src'))
 from grinder_scheduler.channel_sessions import ChannelSessions, BulkBudget
 from grinder_scheduler.manual_delivery import ManualDelivery, is_manual_stop
 from grinder_scheduler.sl_linka_adapter import SlLinkAServer
+from grinder_scheduler.metrics_registry import MetricsRegistry
 
 
 class SessionTest(unittest.TestCase):
@@ -93,8 +94,9 @@ class PairedTcpTest(unittest.TestCase):
                 pb = owner.server.pb
                 return b'', pb.MSG_ID_SETTINGS_READ_RESPONSE, pb.COMP_SYSTEM
             def build_device_status_report(self): raise RuntimeError('No periodic status in fixture')
+        self.metrics = MetricsRegistry()
         self.server = SlLinkAServer(str(ROOT/'third_party/sl_linka/sdk/python'), '127.0.0.1', 0,
-                                   Handler(), control_port=0)
+                                   Handler(), control_port=0, metrics_registry=self.metrics)
         self.server.start()
         self.addCleanup(self.server.stop)
         self.pb = self.server.pb
@@ -179,6 +181,81 @@ class PairedTcpTest(unittest.TestCase):
         self.assertEqual(0, self.outputs[-1])
         self.assertFalse(self.server.sessions.control_ready())
         self.assertEqual(self.pb.RESULT_BUSY, self.handshake(self.connect()).result)
+        event = self.wait_close('manual_receive_timeout')
+        self.assertEqual('control', event['role'])
+        self.assertGreaterEqual(event['manual_age_ms'], 500)
+        self.assertEqual(ack, event['manual_seq'])
+        self.assertEqual(1, self.metrics.snapshot()['counters']['channel_control_close_manual_receive_timeout'])
+
+    def wait_close(self, reason):
+        until = time.monotonic() + 1
+        while time.monotonic() < until:
+            for event in self.metrics.snapshot()['events']:
+                if event['name'] == 'channel_close' and event['fields']['reason'] == reason:
+                    return event['fields']
+            time.sleep(.01)
+        self.fail('Missing attributed close: ' + reason)
+
+    def test_eof_records_one_close_and_clears_motion(self):
+        _, control, _ = self.pair()
+        ack = self.send(control, self.pb.MSG_ID_CONTROL_COMMAND, self.moving())
+        self.receive(control, ack)
+        control.shutdown(socket.SHUT_RDWR)
+        event = self.wait_close('peer_eof')
+        self.assertEqual('control', event['role'])
+        self.assertEqual(0, self.outputs[-1])
+        self.assertEqual(ack, event['rx_seq'])
+        closes = [e for e in self.metrics.snapshot()['events']
+                  if e['name'] == 'channel_close' and e['fields']['connection_id'] == event['connection_id']]
+        self.assertEqual(1, len(closes))
+        self.assertNotIn('token', event)
+
+    def test_send_timeout_is_attributed_and_role_metrics_are_separate(self):
+        _, control, _ = self.pair()
+        with patch('grinder_scheduler.sl_linka_adapter.send_with_deadline', side_effect=socket.timeout('fixture')):
+            self.send(control, self.pb.MSG_ID_CONTROL_COMMAND, self.moving())
+            event = self.wait_close('send_deadline')
+        self.assertEqual('control', event['role'])
+        self.assertEqual(type(socket.timeout()).__name__, event['error_type'])
+        self.assertIsNotNone(event['write_age_ms'])
+        self.assertEqual(self.pb.MSG_ID_CONTROL_COMMAND_RESPONSE, event['tx_msg'])
+        self.assertEqual(0, self.outputs[-1])
+        hist = self.metrics.snapshot()['histograms']
+        for role in ('data', 'control'):
+            self.assertGreater(hist['channel_' + role + '_wire_wait_ms']['count'], 0)
+            self.assertGreater(hist['channel_' + role + '_socket_send_ms']['count'], 0)
+
+    def test_blocked_heartbeat_write_does_not_block_receiving_motion_or_stop(self):
+        _, control, _ = self.pair()
+        from grinder_scheduler.socket_io import send_with_deadline
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+
+        def slow_send(peer, payload, timeout, is_open):
+            entered.set()
+            release.wait(1)
+            return send_with_deadline(peer, payload, timeout, is_open)
+
+        with patch('grinder_scheduler.sl_linka_adapter.send_with_deadline', side_effect=slow_send):
+            heartbeat = self.pb.ChannelSessionRequest(action=self.pb.CHANNEL_SESSION_HEARTBEAT,
+                                                      role=self.pb.CHANNEL_ROLE_CONTROL)
+            self.send(control, self.pb.MSG_ID_CHANNEL_SESSION_REQUEST, heartbeat)
+            try:
+                self.assertTrue(entered.wait(1))
+                self.send(control, self.pb.MSG_ID_CONTROL_COMMAND, self.moving())
+                until = time.monotonic() + .3
+                while .5 not in self.outputs and time.monotonic() < until:
+                    time.sleep(.005)
+                self.assertIn(.5, self.outputs, 'Heartbeat TX blocked manual receive')
+                self.send(control, self.pb.MSG_ID_CONTROL_COMMAND, self.pb.ControlCommand(
+                    manual_drive=self.pb.ManualDriveControl(speed_ratio=0)))
+                until = time.monotonic() + .3
+                while self.outputs[-1] != 0 and time.monotonic() < until:
+                    time.sleep(.005)
+                self.assertEqual(0, self.outputs[-1], 'Heartbeat TX blocked stop receive')
+                self.assertTrue(self.server.sessions.control_ready())
+            finally:
+                release.set()
 
     def test_data_control_and_control_bulk_are_rejected(self):
         data, control, token = self.pair()

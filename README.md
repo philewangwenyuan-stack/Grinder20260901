@@ -1178,6 +1178,22 @@ APP 正式部署使用 8002/8003；改非默认控制端口须同步客户端配
 
 板端保留控制排队/应用/ACK 指标，增加 `control_disconnect_apply_ms`、`channel_busy_rejections`、
 `channel_lease_expirations`；APP `ControlChannel` 日志采样记录恢复耗时、遥控 RTT 和撤销原因，不记录令牌。
+控制通道已建立后的心跳回复进入有界发送队列，接收线程不等待回复写入；握手、拒绝和释放仍按原流程处理。
+接收端的 500ms 遥控超时仍关闭控制连接并撤销旧速度，发送每帧 500ms 截止时间和 APP 的安全门限均保留。
+
+排查建图遥控回弹时，先对齐两端以下记录，不能仅根据 `manual_session_end` 判断关闭发起方：
+
+- 板端 `channel_close`：每连接一次，包含连接编号、通道角色/端口、对端、关闭原因、最后接收与遥控年龄、序号、发送年龄和错误类型。
+  `manual_receive_timeout` 是协议层 500ms 无新遥控；`send_deadline` 是发送截止；`peer_eof` / `recv_error` 是接收发现对端关闭或连接错误；另有会话替换、释放、3秒租约及服务停止原因。
+  控制任务命令主动撤销遥控另记 `control_task_cancel`。这些事件保存在指标 JSON 的有界 `events` 环，不记录令牌或协议载荷。
+- `channel_data_wire_wait_ms` / `channel_control_wire_wait_ms` 按通道统计发送锁等待；
+  `channel_data_socket_send_ms` / `channel_control_socket_send_ms` 统计每帧 socket 写入，包括失败尝试。
+  旧 `control_ack_wait_ms` 保持兼容，含两端口的控制类响应锁等待，**不是 socket 写入耗时，也不是平板 ACK 往返**。
+- APP `ControlChannel` 的 `channel_close` / `manual_cancel`：包含本机连接编号、角色、主线程心跳年龄、最后接收序号、写入年龄、最老未确认遥控年龄及数量；写入、会话心跳和遥控 ACK 超时分别命名。
+  `slow_frame_callback` 对超过100ms的同步帧处理每连接最多每秒记录一次。APP与板端的连接编号各自独立，按端口、时刻和协议序号关联；单调时间年龄不能跨设备直接相减。
+
+现场可采集 `adb logcat -v threadtime -s ControlChannel`（日志输出还受 APP 日志配置控制），同时保留板端调度日志及配置的 `metrics_export_dir/grinder_scheduler.json`。
+离线通过只证明处理和归因逻辑，不证明 Wi-Fi、平板 GC/绘制或实机停车链路已经验收；取得关闭来源后再决定传图策略或连接生命周期调整。
 离线回归为 `test_dual_channel.py`、`test_continuous_manual.py` 和原有安全测试；APP
 `PairedTcpServiceTest` 使用本机 TCP 验证。整机挂死、弱网和实际停车时间/距离仍需受控实机验收。
 
