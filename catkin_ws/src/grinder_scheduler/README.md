@@ -240,6 +240,12 @@ APP 未指定规划起点时，路径从当前车位出发；区域未指定起�
 
 ## 6. 板端日志与轻量指标
 
+`grinder_scheduler` 初始化默认日志等级为 WARN，保留警告及错误，下面的 INFO 抽样和耗时日志默认不输出。
+排查时可调用 `/grinder_scheduler/set_logger_level`，将 `rosout` 调回 `info`；重启后恢复 WARN。
+`robot_diff_drive.launch` 单独为 move_base 加载 `cfg/rosconsole_navigation.config`，默认 ERROR，
+同时适用于 TEB/RPP；其余节点不继承该配置。定位、通信和碰撞保护仍按原逻辑运行。
+这两个等级不控制 Python `print`、Livox SDK 自身日志、原始485文件或指标JSON。
+
 `sl_linka_adapter.py` 默认每秒只记录一帧 RX 帧头样本，每 60 秒输出接收量统计。异常仍按原有 WARN/ERROR 日志记录。诊断时可在启动参数中设置 `sl_linka_rx_diagnostic_logging:=true`，结束后恢复为 `false`；该开关只记录帧头，不解析或记录 Protobuf 载荷。
 
 `metrics_registry.py` 在各进程内维护计数器、Gauge、固定毫秒桶直方图和最多 128 条事件。`metrics_exporter.py` 每 10 秒将当前快照原子替换为一个 JSON 文件。协议收发线程和地图构建函数不会直接写指标文件。计数器为进程启动以来的累计值；直方图的 `buckets_ms` 与 `histogram_bucket_limits_ms` 一一对应，`over_max_ms` 表示超过最大桶的样本数。

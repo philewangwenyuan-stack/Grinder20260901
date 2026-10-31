@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-修复版 v4.8.0：原生障碍预处理与 uint8 规划接口
+修复版 v4.8.1：原生障碍预处理、uint8 规划接口与有界全局均匀间距
 """
 
 import numpy as np
@@ -169,7 +169,7 @@ class StageConfig:
 class RobotConfig:
     width: float = 1.2  # 机器人作业宽度，单位：米
     length: float = 1.85  # 机器人车身长度，单位：米
-    path_spacing: float = 0.7  # 相邻基准扫掠线的中心间距，单位：米
+    path_spacing: float = 0.7  # 基准扫掠线最大中心间距，首末线之间均分，单位：米
     turning_radius: float = 0.1  # 最小转弯半径，单位：米
     overlap_ratio: float = 0.0  # 扫掠线重叠比例；0表示直接使用path_spacing
     inflation_radius: float = 0.6  # 原始障碍物安全膨胀距离，单位：米
@@ -687,8 +687,8 @@ class ObstacleAwareBoustrophedonPlanner:
             start_edge, end_edge = n_max, n_min
         s_dir = 1.0 if end_edge >= start_edge else -1.0
         normal_inset = min(0.5 * float(path_spacing), 0.5 * (n_max - n_min))
-        # 显式现场选点就是首/末作业线的法向坐标；首末间隔允许自适应，
-        # 中间线仍保持 path_spacing。没有显式点时才使用半间距内缩线。
+        # 显式现场选点就是首/末作业线的法向坐标，整个跨度均匀分配间距。
+        # 没有显式点时才使用半间距内缩线。
         s_start = (start_s_hint if start_point is not None
                    else start_edge + s_dir * normal_inset)
         s_end = (end_s_hint if end_point is not None
@@ -718,27 +718,20 @@ class ObstacleAwareBoustrophedonPlanner:
             wanted_last_ascending = first_ascending
             scan_s = [s_start]
         else:
-            # 中间线固定推进，余量仅放在末端边缘，不再全宽均分。
-            intervals = max(1, int(math.ceil(span / path_spacing - 1e-9)))
+            # 向上取整间隔数量，再全宽均分；不取整栅格步长、不挤压尾部。
+            ratio = span / path_spacing
+            # 只消除整数倍附近的机器舍入误差，不吞掉真实余量。
+            roundoff = 8.0 * sys.float_info.epsilon * max(1.0, ratio)
+            intervals = max(1, int(math.ceil(ratio - roundoff)))
             need_even = (first_ascending == wanted_last_ascending)
             parity_adjusted = ((intervals % 2 == 0) != need_even)
             if parity_adjusted:
                 intervals += 1
-            # 普通余量只调整末间隔。余量太小或需匹配终点方向时，
-            # 仅均分末端2~3个间隔，避免生成几乎重合的窄条带。
-            remainder = span - (intervals - 1) * path_spacing
-            edge_count = min(intervals, 3 if parity_adjusted else
-                             (2 if remainder < 0.5 * path_spacing else 1))
-            fixed_count = intervals - edge_count
-            edge_spacing = (span - fixed_count * path_spacing) / edge_count
-            offsets = [i * path_spacing for i in range(fixed_count + 1)]
-            offsets.extend(fixed_count * path_spacing + i * edge_spacing
-                           for i in range(1, edge_count + 1))
-            scan_s = [s_start + math.copysign(offset, s_end - s_start)
-                      for offset in offsets]
+            scan_s = [s_start + (s_end - s_start) * (i / intervals)
+                      for i in range(intervals + 1)]
             scan_s[-1] = s_end
 
-        # 仅末端边缘允许调整间距，中间扫描线不随终点朝向重新均分。
+        # 所有名义间隔相等且不超过 path_spacing（浮点误差除外）。
 
         n_lines = 0
         max_off = path_spacing * 2.5          # 单侧横移上限(格)
@@ -963,7 +956,7 @@ class ObstacleAwareBoustrophedonPlanner:
                 i = j
             _flush_raw_segment()
         print(f"   [任意角度扫描] angle={float(angle_deg):.4f}°, 扫描线 {n_lines} 条, "
-              f"段数 {len(all_segments)}, step={step}, 中间间距={path_spacing}")
+              f"段数 {len(all_segments)}, step={step}, 最大基准间距={path_spacing}")
 
         # 现场选点必须成为首/末作业线的真实端点，而不是由A*事后“经过”。
         # 只检查选点与已生成线端之间的开区间；选点本身可能恰在多边形边界。
@@ -2782,8 +2775,8 @@ def demo_fixed(direction_angle=37.58):
     """
     import math, time, os, random
     print("=" * 64)
-    print("  mst27 规划内核版本: v4.7.1  (柱子/墙体分类 + 60度柱边折角 + 旋转场地框)")
-    print("  当前测试场景: 稀疏角点，越界 0，碰撞 0，中间间距固定 1.5m")
+    print("  mst27 规划内核版本: v4.8.1  (原生障碍预处理 + 全局均匀间距 + 旋转场地框)")
+    print("  当前测试场景: 稀疏角点，最大基准间距 1.5m，首末线之间全局均分")
     print("=" * 64)
     import numpy as np
     from scipy import ndimage

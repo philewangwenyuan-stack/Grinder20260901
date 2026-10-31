@@ -18,6 +18,7 @@
 
         <!--  ************** Navigation ***************  -->
 	<node pkg="move_base" type="move_base" respawn="true" name="move_base" output="screen">
+		<env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_local_planner_tutorials)/cfg/rosconsole_navigation.config" />
   	  	<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/costmap_common_params.yaml" command="load" ns="global_costmap" />
   	 	<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/costmap_common_params.yaml" command="load" ns="local_costmap" />
   		<rosparam file="$(find teb_local_planner_tutorials)/cfg/diff_drive/local_costmap_params.yaml" command="load" />

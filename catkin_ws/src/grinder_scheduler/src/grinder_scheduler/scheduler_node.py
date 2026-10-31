@@ -12170,7 +12170,7 @@ class SchedulerNode:
 
 
 def main():
-    rospy.init_node("grinder_scheduler")
+    rospy.init_node("grinder_scheduler", log_level=rospy.WARN)
     node = SchedulerNode()
     rospy.on_shutdown(node.shutdown)
     rospy.spin()

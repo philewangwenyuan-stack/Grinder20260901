@@ -1,4 +1,4 @@
-// mst27 v4.8.0：原生障碍预处理 + uint8 栅格接口
+// mst27 v4.8.1：原生障碍预处理 + uint8 栅格接口 + 有界全局均匀间距
 // pybind11 仅在构建 Python 扩展时需要。若找不到其头文件（例如脱离
 // Python 单独编译内核算法做单元测试），则自动编译掉 pybind 部分。
 // 你们的 catkin/cmake 构建环境带 pybind11，行为与原来完全一致。
@@ -707,7 +707,7 @@ static std::vector<FPoint> plan_subregion_oriented(
     const double normal_inset = std::min(0.5 * static_cast<double>(path_spacing),
                                          0.5 * (n_max - n_min));
     // C++阶段始终带有明确起终点：首末作业线严格通过现场选点；
-    // 首末间隔允许自适应，中间线仍保持固定间距。
+    // 首末线之间全局均分，path_spacing 为名义间距上限。
     double start_s = start_s_hint;
     double end_s = end_s_hint;
     const double start_t = start_point.col * dx + start_point.row * dy;
@@ -723,25 +723,23 @@ static std::vector<FPoint> plan_subregion_oriented(
         wanted_last_ascending = first_ascending;
         scan_s.push_back(start_s);
     } else {
-        // Only the last 1-3 edge intervals absorb remainder/endpoint parity.
-        // Interior lanes retain the exact floating-point parameter spacing.
-        int intervals = std::max(1, static_cast<int>(std::ceil(span / path_spacing - 1e-9)));
+        // Round the interval COUNT up, then distribute the full span evenly.
+        // Do not quantize spacing to cells or squeeze remainder into tail lanes.
+        const double ratio = span / path_spacing;
+        // Absorb only machine roundoff near exact multiples, not a physical
+        // remainder. Otherwise e.g. 98/(0.7/0.05) can add two parity lanes.
+        const double roundoff = 8.0 * std::numeric_limits<double>::epsilon() *
+            std::max(1.0, ratio);
+        int intervals = std::max(1, static_cast<int>(std::ceil(ratio - roundoff)));
         const bool need_even = first_ascending == wanted_last_ascending;
         const bool parity_adjusted = ((intervals % 2 == 0) != need_even);
         if (parity_adjusted) ++intervals;
-        const double remainder = span - (intervals - 1) * path_spacing;
-        const int edge_count = std::min(intervals,
-            parity_adjusted ? 3 : (remainder < 0.5 * path_spacing ? 2 : 1));
-        const int fixed_count = intervals - edge_count;
-        const double edge_spacing = (span - fixed_count * path_spacing) / edge_count;
-        for (int i = 0; i <= fixed_count; ++i)
-            scan_s.push_back(start_s + std::copysign(i * path_spacing, end_s - start_s));
-        for (int i = 1; i <= edge_count; ++i)
-            scan_s.push_back(start_s + std::copysign(
-                fixed_count * path_spacing + i * edge_spacing, end_s - start_s));
+        for (int i = 0; i <= intervals; ++i)
+            scan_s.push_back(start_s + (end_s - start_s) *
+                (static_cast<double>(i) / intervals));
         scan_s.back() = end_s;
     }
-    // 中间线保持固定间距，终点方向仅影响末端最多三个边缘间隔。
+    // 首末线固定，所有名义间隔相等且不超过 path_spacing（浮点误差除外）。
 
     for (std::size_t k = 0; k < scan_s.size(); ++k) {
         const double s = scan_s[k];
@@ -1896,7 +1894,7 @@ static py::object plan_core(
 
 PYBIND11_MODULE(_mst27_cpp, module) {
     module.doc() = "C++ planning kernel for mst27";
-    module.attr("__version__") = "4.8.0";
+    module.attr("__version__") = "4.8.1";
     module.attr("PREPROCESSING_API") = 1;
     module.def("prepare_stage_grid", &prepare_stage_grid,
                py::arg("grid_map"), py::arg("angle_deg"), py::arg("aligned_radius"),
