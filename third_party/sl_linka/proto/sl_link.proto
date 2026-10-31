@@ -439,6 +439,25 @@ message DeviceStatusReport {
   optional bool localization_pause_latched = 24;
   // Stable reason code; clients own presentation language.
   string localization_status_reason = 25;
+  // Signed int16 register values; absent until fresh connected chassis feedback.
+  optional int32 left_motor_fault_code = 26;
+  optional int32 right_motor_fault_code = 27;
+  SystemHealth system_health = 28;
+}
+
+// Linux board telemetry. Optional fields distinguish unsupported/read failure from zero.
+message SystemHealth {
+  optional float cpu_temperature_c = 1;
+  optional float cpu_usage_percent = 2;
+  optional float memory_usage_percent = 3;
+  optional uint64 memory_total_bytes = 4;
+  optional uint64 memory_available_bytes = 5;
+  optional float disk_usage_percent = 6;
+  optional uint64 disk_free_bytes = 7;
+  optional uint64 uptime_seconds = 8;
+  optional uint32 cellular_signal_percent = 9;
+  string cellular_state = 10;
+  string cellular_access_technology = 11;
 }
 
 message CameraFrameRequest {

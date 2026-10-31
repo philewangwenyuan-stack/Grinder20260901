@@ -52,6 +52,7 @@ except Exception:
     euler_from_quaternion = None
 
 from grinder_scheduler.ros_data_bridge import RosDataBridge
+from grinder_scheduler.system_health import SystemHealthSampler, fill_system_status
 from grinder_scheduler.path_geometry import sample_segment, segment_point_spacing
 from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
@@ -1030,6 +1031,7 @@ class SchedulerNode:
 
         tick_hz = max(1.0, float(rospy.get_param("~scheduler_tick_hz", 5.0)))
         stream_push_hz = max(5.0, float(rospy.get_param("~stream_push_hz", 20.0)))
+        self._system_health = SystemHealthSampler(disk_path=_detect_runtime_base_dir())
         self.timer = rospy.Timer(rospy.Duration(1.0 / tick_hz), self._tick)
         self.stream_timer = rospy.Timer(rospy.Duration(1.0 / stream_push_hz), self._stream_tick)
         self.active_segment_timer = rospy.Timer(
@@ -3824,6 +3826,9 @@ class SchedulerNode:
         return nav_path
 
     def shutdown(self):
+        health = getattr(self, "_system_health", None)
+        if health is not None:
+            health.close()
         statistics = getattr(self, "_work_time_statistics", None)
         if statistics is not None:
             statistics.close()
@@ -7165,6 +7170,10 @@ class SchedulerNode:
         report.work_mode = pb.WORK_MODE_AUTO if self.state in (SchedulerState.RUNNING, SchedulerState.READY) else pb.WORK_MODE_MANUAL
         disc_speed_setting = max(0, int(self._configured_disc_speed_rpm()))
         chassis_connected = self._chassis_connection_for_report()
+        health = getattr(self, "_system_health", None)
+        if hasattr(report, "system_health"):
+            fill_system_status(report, self.last_chassis_status, chassis_connected,
+                               health.snapshot() if health is not None else {})
         if hasattr(report, "chassis_connected") and chassis_connected is not None:
             report.chassis_connected = chassis_connected
         if self.last_chassis_status is not None:

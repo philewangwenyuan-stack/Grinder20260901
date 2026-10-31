@@ -259,3 +259,13 @@ roslaunch grinder_scheduler scheduler.launch enable_metrics_node:=true metrics_e
 发送侧的 `map_frame_pack_ms`、`map_socket_send_ms` 是单分片样本；`map_send_total_ms`、`map_socket_send_total_ms`、`map_request_total_ms` 是单次地图请求样本。`map_send_total_ms` 包括帧打包、发送锁等待与 `sendall` 阻塞，`map_socket_send_total_ms` 是所有分片 `sendall` 耗时之和，`map_request_total_ms` 从开始构建算到最后一片发送调用返回。它们都不代表 APP 已收到或重组完成。
 
 `scheduler.launch` 的指标快照默认写到 `/tmp/grinder_metrics/grinder_scheduler.json`；Super-LIO 模式管理和可选系统采样节点分别写同目录中的 `super_lio_mode_manager.json`、`grinder_metrics.json`。`start_grinder_super_lio_base.sh` 的普通控制台日志写到 `catkin_ws/logs/super_lio_base_时间戳/scheduler.log`，ROS 自身日志仍在 `~/.ros/log/`。指标文件只保留最新快照；需要历史曲线时应由外部程序定期采集。
+
+### APP 系统状态遥测
+
+调度器通过既有 DeviceStatusReport 增加左右电机故障码（可选 int32 字段26/27，值保持底盘 int16 原值）及 SystemHealth 消息（字段28）。仅在底盘反馈3秒内且已连接时发送故障码；旧驱动缺字段则不发送，不能将缺失值当作0正常。
+
+`system_health.py`独立线程每秒采集CPU差分占用率、CPU/SoC温度、基于MemAvailable的内存占用、运行工程所在磁盘空间和开机时长。状态发送线程只读缓存；首个CPU差分样本及读取失败项不填字段，超过5秒无成功采样时不填资源消息。该只读链路不修改使能、速度或急停。APP须同步更新协议解析；旧APP忽略新增字段，新APP连接旧板端显示未提供。部署需要一起更新scheduler_node.py、system_health.py、Python生成协议文件并正常重载调度器；不需要修改ROS消息或底盘寄存器布局。
+
+纯Python回归：`python3 catkin_ws/src/grinder_scheduler/test/test_system_health.py`。设备运行期间只读验证资源可用性不能替代更新后的端到端验收。
+
+系统状态页面采用2秒刷新后，资源线程改为2秒采样/5秒缓存过期。SystemHealth字段9～11新增板端蜂窝信号百分比、连接状态、接入制式。ModemManager只读命令每条400ms超时，仅单个明确设备且SignalQuality标记recent时报告信号值；无工具、无设备、模糊多设备、缓存信号或外置路由器无接口时不填百分比。该诊断不会拨号、发AT命令或修改无线配置。数据含义见[官方SignalQuality说明](https://www.freedesktop.org/software/ModemManager/doc/latest/ModemManager/gdbus-org.freedesktop.ModemManager1.Modem.html)。APP链路RTT利用既有会话ACK测量，无新增设备控制请求。
