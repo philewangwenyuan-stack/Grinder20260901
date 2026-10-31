@@ -1047,7 +1047,7 @@ rostopic echo /chassis/motion_safety
 `WheelSpeedState.header.stamp` 使用实际测量时刻，避免缓存轮速重发被误当成新测量；需同步更新调度和底盘驱动。
 离线回归：`test_manual_wheel_transition.py`、`test_manual_steering_guard_activity.py`、`test_wheel_feedback.py`。实机连续性和电机响应仍须现场验收。
 
-MST27在完成Python输入解析后，仅对纯C++规划／加密阶段释放GIL，返回Python结果前重新取得锁，
+MST27在完成Python输入解析后，对纯C++障碍预处理、规划及补点阶段释放GIL，返回Python结果前重新取得锁，
 避免较长规划占用同进程的Python控制回调。
 
 部署需同步调度／底盘两个包的相关Python模块和YAML，并更新平板APK；本地覆盖配置也需核对两个超时参数。
@@ -1090,6 +1090,13 @@ base_link坐标中的扁平 `[x,y,...]` 列表，必须按真实可滤除车体�
 `planning_cache_max_bytes: 134217728`（128 MiB），设entries为0可禁用。
 键覆盖有效栅格摘要、地图几何/版本和机器人配置；基础数组只读，每请求派生缓存独立。
 地图身份改变清空，障碍/参数变化重新构建；不缓存当前位姿连接路径。
+
+MST27 4.8.0将8连通障碍分类、柱子角度外接矩形和方形/精确圆形膨胀放入原生扩展，
+规划基础图/阶段图直接传uint8，去掉中间int32副本；C++仍持有独立字节副本保证请求隔离。
+贴边墙体、尺寸分类、半径、角度容差及最终碰撞复检保持原规则，旧扩展继续使用Python参考实现。
+修改后须按2.1节在目标平台重编扩展。逐格差分回归为
+`third_party/path_planner/mst27/test/test_native_preprocessing.py`；离线分进程基准、接口及本机性能对照见
+[MST27包说明](third_party/path_planner/mst27/README.md#原生障碍预处理与字节栅格接口480)。
 
 只读采样（Linux/ROS已启动时）：
 

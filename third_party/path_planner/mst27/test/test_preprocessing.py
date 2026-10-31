@@ -87,7 +87,9 @@ class PreprocessingTest(unittest.TestCase):
             self.assertIs(grid,prepared.stage_grid(30))
             self.assertIs(cpp_grid,prepared.cpp_stage_grid(30,grid))
             self.assertIs(cpp_base,prepared.cpp_inflated_grid())
-            self.assertEqual(np.int32,cpp_grid.dtype)
+            self.assertEqual(np.uint8,cpp_grid.dtype)
+            self.assertIs(grid, cpp_grid)
+            self.assertIs(prepared.inflated_grid, cpp_base)
 
     def test_cache_capacity_evicts_without_changing_grid(self):
         source = grid_fixture()

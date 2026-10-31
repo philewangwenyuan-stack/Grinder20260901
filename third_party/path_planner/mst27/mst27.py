@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-修复版 v4.7.1
+修复版 v4.8.0：原生障碍预处理与 uint8 规划接口
 """
 
 import numpy as np
@@ -34,6 +34,20 @@ try:
 except ImportError as exc:
     _mst27_cpp = None
     _mst27_cpp_import_error = repr(exc)
+
+
+def _native_preprocessing():
+    if (os.environ.get("MST27_DISABLE_CPP") != "1" and _mst27_cpp is not None
+            and getattr(_mst27_cpp, 'PREPROCESSING_API', 0) == 1):
+        return _mst27_cpp
+    return None
+
+
+def _byte_grid(grid):
+    source = np.asarray(grid)
+    if source.dtype == np.uint8:
+        return np.ascontiguousarray(source)
+    return np.ascontiguousarray(source != 0, dtype=np.uint8)
 
 
 # ============================================================
@@ -187,6 +201,9 @@ class ObstacleProcessor:
     def inflate_obstacles(grid_map: np.ndarray, inflation_radius_pixels: int) -> np.ndarray:
         if inflation_radius_pixels <= 0:
             return grid_map.copy()
+        native = _native_preprocessing()
+        if native is not None and float(inflation_radius_pixels).is_integer():
+            return native.inflate_obstacles(_byte_grid(grid_map), int(inflation_radius_pixels))
         occupied = np.asarray(grid_map) != 0
         if not np.any(occupied):
             return np.zeros_like(grid_map, dtype=int)
@@ -293,6 +310,24 @@ class ObstacleProcessor:
         保留原始轮廓并只做机器人基础安全半径膨胀，避免其旋转外接矩形
         横跨工作区。
         """
+        native = _native_preprocessing()
+        if native is not None:
+            result = native.prepare_stage_grid(
+                _byte_grid(grid_map), float(angle_deg), max(0, int(inflation_pixels)),
+                max(0, int(base_inflation_pixels)),
+                0 if max_component_extent_pixels is None else max(1, int(max_component_extent_pixels)))
+            print(f"   [C++障碍预处理] angle={float(angle_deg):.4f}°, "
+                  f"stats={result['stats']} timings_ms={result['timings_ms']}")
+            return result['grid']
+        return ObstacleProcessor._build_angle_aligned_inflated_python(
+            grid_map, angle_deg, inflation_pixels, base_inflation_pixels,
+            max_component_extent_pixels)
+
+    @staticmethod
+    def _build_angle_aligned_inflated_python(
+            grid_map, angle_deg, inflation_pixels, base_inflation_pixels=0,
+            max_component_extent_pixels=None):
+        """Independent SciPy/Python reference and older-extension fallback."""
         occupied = np.asarray(grid_map, dtype=bool)
         if not np.any(occupied):
             return np.zeros_like(occupied, dtype=int)
@@ -1955,14 +1990,10 @@ class PreparedPlanningMap:
                     max_component_extent_pixels=max_extent), np.uint8))
 
     def cpp_inflated_grid(self):
-        return self._cached(
-            ('cpp_base',),
-            lambda: self._readonly(self.inflated_grid, np.int32))
+        return self.inflated_grid
 
     def cpp_stage_grid(self, angle_deg, stage_grid):
-        return self._cached(
-            ('cpp_angle', float(angle_deg)),
-            lambda: self._readonly(stage_grid, np.int32))
+        return stage_grid
 
     def stats(self):
         return {
@@ -2078,7 +2109,7 @@ class MultiStagePathPlanner:
 
         spacing_pixels = effective_spacing * real_to_grid_ratio
         grid_for_cpp = (prepared_map.cpp_inflated_grid() if prepared_map is not None
-                        else np.ascontiguousarray(inflated_grid, dtype=np.int32))
+                        else _byte_grid(inflated_grid))
         stage_specs = []
         mask_started = time.perf_counter()
 
@@ -2115,8 +2146,7 @@ class MultiStagePathPlanner:
                 spec["planning_grid"] = (
                     prepared_map.cpp_stage_grid(
                         self._stage_angle(stage), stage_planning_grids[stage_index])
-                    if prepared_map is not None else np.ascontiguousarray(
-                        stage_planning_grids[stage_index], dtype=np.int32))
+                    if prepared_map is not None else _byte_grid(stage_planning_grids[stage_index]))
             stage_specs.append(spec)
 
         self.last_profile['native_inputs_ms'] = (time.perf_counter() - mask_started) * 1000.0

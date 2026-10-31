@@ -98,11 +98,11 @@ Python `planner.last_profile` 另记录阶段预处理、原生输入准备与�
 
 `PlannerAdapter.plan` 在应用原图、擦除、障碍与裁剪后，为当前请求创建
 `PreparedPlanningMap`。各区域共享只读 `uint8` 原图和基础膨胀图；相同精确角度
-共用角度规划图，C++ 所需 `int32` 数组也复用。区域 mask 和寻路仍独立计算，
+共用角度规划图，C++ 直接接收这些 `uint8` 图，不再缓存扩大的 `int32` 副本。区域 mask 和寻路仍独立计算，
 保留全图坐标、贴边障碍分类、净距与最终碰撞复检，不裁切 ROI。
 
-缓存随请求结束释放，不按 `map_version` 跨请求复用，因此实时地图、编辑或参数
-变化后的下一请求总是重新准备。上下文固定分辨率对应的比例、基础膨胀半径、
+包内角度派生缓存随请求结束释放；调度适配器可通过 `PlanningCache` 跨请求复用内容键匹配的
+只读基础数组，新请求仍独立创建派生缓存。上下文固定分辨率对应的比例、基础膨胀半径、
 角度膨胀半径和柱子最大尺寸；角度不舍入。输入必须是二值占据图，阶段特定障碍
 须先应用到输入图；错误地图或净距上下文会被拒绝。旧规划器不提供 `prepare_map`
 时，适配器仍走独立副本的兼容路径。
@@ -124,6 +124,37 @@ python3 catkin_ws/src/grinder_scheduler/test/test_planner_preprocessing.py -v
 从仓库根目录执行。覆盖路径/碰撞结果等价、正负/旋转角度、不同净距、输入保护、
 地图更新隔离、容量淘汰、C++ 转换复用及故障回退。有可加载原生扩展时也验证
 实际 C++ 输出；没有扩展时明确跳过对应测试。
+
+## 原生障碍预处理与字节栅格接口（4.8.0）
+
+扩展提供 `PREPROCESSING_API=1`、`prepare_stage_grid` 和 `inflate_obstacles`。
+8连通域只遍历一次，同时计算边界、尺寸和角度投影；贴边或超尺寸墙体保留轮廓，
+独立小障碍生成保守角度外接矩形。矩形方形膨胀使用两次滑动窗口，墙体/基础圆形膨胀使用
+精确平方欧氏距离变换。仍使用完整栅格、相同半格投影扩张和比较容差，不改变安全半径、
+未知格语义、作业间距或最终路径复检，没有增加ROI裁剪或跨请求派生缓存。
+
+`prepare_stage_grid` 返回 `grid`（连续uint8）、`stats`（分类数量）及
+`timings_ms`（`classify_rectangles_ms` / `square_ms` / `disk_ms`）。
+生产 `plan_core` / `plan_core_profiled` 的基础图和阶段图直接接收uint8；直接使用旧int32接口
+的调用方仍兼容。进入C++后保留一份独立字节副本，再释放GIL计算，避免并发请求写共享数组；
+这是减少转换和复制，不是零拷贝。整数256等非字节输入不会因强制转uint8而变成空闲格。
+
+旧扩展缺少能力标记时仍使用Python/SciPy预处理；`MST27_DISABLE_CPP=1` 可强制完整参考路径。
+新源码和对应架构扩展应一起部署并重启调度，不能把x86扩展复制到ARM64。
+
+```bash
+python3 -m unittest discover -s third_party/path_planner/mst27/test -p 'test_*.py'
+python3 third_party/path_planner/mst27/test/benchmark_native_preprocessing.py
+# 在目标平台用现场PGM复测；只读离线计算，不连接ROS或启动任务：
+python3 third_party/path_planner/mst27/test/benchmark_native_preprocessing.py --map-image /path/to/map.pgm
+```
+
+基准PGM将灰度<250的格视为占据（含未知），不自动叠加APP区域编辑；它衡量预处理而非完整规划。
+每个后端独立进程，报告首次/中位耗时、输出SHA256和Linux进程峰值RSS；比较时两端输出摘要必须相同。
+2026-10-31本机WSL/x86 Release，1261×1647合成图、角度-7.834°、基础半径30格、
+矩形半径14格、柱子上限60格，3次中位值：基础膨胀151.90→37.93ms，
+区域准备270.06→36.90ms，独立进程峰值RSS171.39→79.34MiB。
+输入使用约1000个碎片回波及柱墙，结果逐格一致；不能当作RK3588实测或APP端到端延迟。
 
 ## 验证
 

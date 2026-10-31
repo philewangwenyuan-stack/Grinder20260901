@@ -1,4 +1,4 @@
-// mst27 v4.7.1：安全外侧掉头连接 + 可重入阶段计时
+// mst27 v4.8.0：原生障碍预处理 + uint8 栅格接口
 // pybind11 仅在构建 Python 扩展时需要。若找不到其头文件（例如脱离
 // Python 单独编译内核算法做单元测试），则自动编译掉 pybind 部分。
 // 你们的 catkin/cmake 构建环境带 pybind11，行为与原来完全一致。
@@ -1543,11 +1543,189 @@ static std::vector<PathItem> densify_path(
     return out;
 }
 
+// Exact binary morphology used by the angle-aligned obstacle preparation.
+// Each input is owned by this call, so releasing the GIL cannot expose mutable
+// Python arrays to the planner or to another request.
+static std::vector<std::uint8_t> disk_dilate(
+    const std::vector<std::uint8_t>& input, int rows, int cols, int radius) {
+    if (radius <= 0) return input;
+    std::vector<std::uint8_t> output(input.size(), 0);
+    if (std::none_of(input.begin(), input.end(), [](auto x) { return x != 0; })) return output;
+    using Distance = std::int64_t;
+    const Distance inf = static_cast<Distance>(rows) * rows + static_cast<Distance>(cols) * cols + 1;
+    const Distance limit = static_cast<Distance>(radius) * radius;
+    if (limit >= inf - 1) {
+        std::fill(output.begin(), output.end(), 1);
+        return output;
+    }
+    std::vector<Distance> horizontal(input.size(), inf);
+    for (int r = 0; r < rows; ++r) {
+        int nearest = -1;
+        const auto offset = static_cast<std::size_t>(r) * cols;
+        for (int c = 0; c < cols; ++c) {
+            if (input[offset + c]) nearest = c;
+            if (nearest >= 0) {
+                const Distance d = c - nearest;
+                horizontal[offset + c] = d * d;
+            }
+        }
+        nearest = -1;
+        for (int c = cols - 1; c >= 0; --c) {
+            if (input[offset + c]) nearest = c;
+            if (nearest >= 0) {
+                const Distance d = nearest - c;
+                horizontal[offset + c] = std::min(horizontal[offset + c], d * d);
+            }
+        }
+    }
+    // Lower envelope of squared-distance parabolas, O(rows) per column.
+    std::vector<int> sites(rows);
+    std::vector<double> cuts(static_cast<std::size_t>(rows) + 1);
+    for (int c = 0; c < cols; ++c) {
+        int k = -1;
+        for (int q = 0; q < rows; ++q) {
+            const Distance fq = horizontal[static_cast<std::size_t>(q) * cols + c];
+            if (fq == inf) continue;
+            double cut = -std::numeric_limits<double>::infinity();
+            while (k >= 0) {
+                const int v = sites[k];
+                const Distance fv = horizontal[static_cast<std::size_t>(v) * cols + c];
+                cut = static_cast<double>(fq + static_cast<Distance>(q) * q - fv - static_cast<Distance>(v) * v)
+                    / (2.0 * (q - v));
+                if (cut > cuts[k]) break;
+                --k;
+            }
+            ++k;
+            sites[k] = q;
+            cuts[k] = k == 0 ? -std::numeric_limits<double>::infinity() : cut;
+            cuts[k + 1] = std::numeric_limits<double>::infinity();
+        }
+        if (k < 0) continue;
+        int active = 0;
+        for (int r = 0; r < rows; ++r) {
+            while (active < k && cuts[active + 1] < r) ++active;
+            const Distance d = r - sites[active];
+            output[static_cast<std::size_t>(r) * cols + c] =
+                horizontal[static_cast<std::size_t>(sites[active]) * cols + c] + d * d <= limit;
+        }
+    }
+    return output;
+}
+
+static std::vector<std::uint8_t> square_dilate(
+    const std::vector<std::uint8_t>& input, int rows, int cols, int radius) {
+    if (radius <= 0) return input;
+    const int rad = std::min(radius, std::max(rows, cols));
+    std::vector<std::uint8_t> horizontal(input.size(), 0), output(input.size(), 0);
+    for (int r = 0; r < rows; ++r) {
+        const auto offset = static_cast<std::size_t>(r) * cols;
+        int count = 0;
+        for (int c = 0; c <= std::min(rad, cols - 1); ++c) count += input[offset + c] != 0;
+        for (int c = 0; c < cols; ++c) {
+            horizontal[offset + c] = count > 0;
+            if (c >= rad) count -= input[offset + c - rad] != 0;
+            const auto next = static_cast<std::int64_t>(c) + rad + 1;
+            if (next < cols) count += input[offset + static_cast<std::size_t>(next)] != 0;
+        }
+    }
+    for (int c = 0; c < cols; ++c) {
+        int count = 0;
+        for (int r = 0; r <= std::min(rad, rows - 1); ++r)
+            count += horizontal[static_cast<std::size_t>(r) * cols + c] != 0;
+        for (int r = 0; r < rows; ++r) {
+            output[static_cast<std::size_t>(r) * cols + c] = count > 0;
+            if (r >= rad) count -= horizontal[static_cast<std::size_t>(r - rad) * cols + c] != 0;
+            const auto next = static_cast<std::int64_t>(r) + rad + 1;
+            if (next < rows) count += horizontal[static_cast<std::size_t>(next) * cols + c] != 0;
+        }
+    }
+    return output;
+}
+
+struct PreparationTimings {
+    double classify_rectangles_ms = 0, square_ms = 0, disk_ms = 0;
+    std::size_t components = 0, columns = 0, preserved = 0;
+};
+
+static Grid prepare_angle_grid(const Grid& grid, double angle, int aligned_radius,
+                               int base_radius, int extent_limit, PreparationTimings& timings) {
+    Grid output;
+    output.rows = grid.rows; output.cols = grid.cols;
+    const auto size = grid.blocked.size();
+    std::vector<std::uint8_t> visited(size, 0), preserve(size, 0), rectangles(size, 0);
+    std::vector<std::size_t> component;
+    const double theta = angle * (std::acos(-1.0) / 180.0);
+    const double dx = std::cos(theta), dy = std::sin(theta), nx = -dy, ny = dx;
+    const double half = .5 * (std::abs(dx) + std::abs(dy));
+    {
+        PhaseTimer timer(&timings.classify_rectangles_ms);
+        for (std::size_t seed = 0; seed < size; ++seed) {
+            if (!grid.blocked[seed] || visited[seed]) continue;
+            ++timings.components;
+            component.clear(); component.push_back(seed); visited[seed] = 1;
+            int min_r = grid.rows, max_r = 0, min_c = grid.cols, max_c = 0;
+            double tmin = std::numeric_limits<double>::infinity(), tmax = -tmin;
+            double smin = tmin, smax = tmax;
+            bool border = false;
+            for (std::size_t head = 0; head < component.size(); ++head) {
+                const auto index = component[head];
+                const int r = static_cast<int>(index / grid.cols), c = static_cast<int>(index % grid.cols);
+                min_r = std::min(min_r, r); max_r = std::max(max_r, r);
+                min_c = std::min(min_c, c); max_c = std::max(max_c, c);
+                border = border || r == 0 || c == 0 || r == grid.rows - 1 || c == grid.cols - 1;
+                const double t = c * dx + r * dy, s = c * nx + r * ny;
+                tmin = std::min(tmin, t); tmax = std::max(tmax, t);
+                smin = std::min(smin, s); smax = std::max(smax, s);
+                for (int nr = std::max(0, r - 1); nr <= std::min(grid.rows - 1, r + 1); ++nr)
+                    for (int nc = std::max(0, c - 1); nc <= std::min(grid.cols - 1, c + 1); ++nc) {
+                        const auto next = static_cast<std::size_t>(nr) * grid.cols + nc;
+                        if (grid.blocked[next] && !visited[next]) {
+                            visited[next] = 1; component.push_back(next);
+                        }
+                    }
+            }
+            if (border || (extent_limit > 0 && std::max(max_r - min_r + 1, max_c - min_c + 1) > extent_limit)) {
+                ++timings.preserved;
+                for (auto index : component) preserve[index] = 1;
+                continue;
+            }
+            ++timings.columns;
+            tmin -= half; tmax += half; smin -= half; smax += half;
+            double clo = std::numeric_limits<double>::infinity(), chi = -clo, rlo = clo, rhi = chi;
+            for (double t : {tmin, tmax}) for (double s : {smin, smax}) {
+                const double c = t * dx + s * nx, r = t * dy + s * ny;
+                clo = std::min(clo, c); chi = std::max(chi, c);
+                rlo = std::min(rlo, r); rhi = std::max(rhi, r);
+            }
+            const int c0 = std::max(0, static_cast<int>(std::floor(clo)) - 1);
+            const int c1 = std::min(grid.cols - 1, static_cast<int>(std::ceil(chi)) + 1);
+            const int r0 = std::max(0, static_cast<int>(std::floor(rlo)) - 1);
+            const int r1 = std::min(grid.rows - 1, static_cast<int>(std::ceil(rhi)) + 1);
+            for (int r = r0; r <= r1; ++r) for (int c = c0; c <= c1; ++c) {
+                const double t = c * dx + r * dy, s = c * nx + r * ny;
+                if (t >= tmin - 1e-9 && t <= tmax + 1e-9 && s >= smin - 1e-9 && s <= smax + 1e-9)
+                    rectangles[static_cast<std::size_t>(r) * grid.cols + c] = 1;
+            }
+        }
+    }
+    {
+        PhaseTimer timer(&timings.square_ms);
+        output.blocked = square_dilate(rectangles, grid.rows, grid.cols, aligned_radius);
+    }
+    {
+        PhaseTimer timer(&timings.disk_ms);
+        const auto walls = disk_dilate(preserve, grid.rows, grid.cols, base_radius);
+        for (std::size_t i = 0; i < size; ++i) output.blocked[i] |= walls[i];
+    }
+    return output;
+}
+
 #if MST27_HAVE_PYBIND
-static Grid parse_grid(const py::array_t<int, py::array::c_style | py::array::forcecast>& grid_array) {
+static Grid parse_grid(const py::array& grid_array) {
     const auto info = grid_array.request();
-    if (info.ndim != 2) {
-        throw std::runtime_error("grid_map must be a 2D numpy array");
+    if (info.ndim != 2 || info.shape[0] <= 0 || info.shape[1] <= 0 ||
+        info.shape[0] > std::numeric_limits<int>::max() || info.shape[1] > std::numeric_limits<int>::max()) {
+        throw std::runtime_error("grid_map must be a nonempty 2D numpy array with int-sized dimensions");
     }
 
     Grid grid;
@@ -1555,11 +1733,50 @@ static Grid parse_grid(const py::array_t<int, py::array::c_style | py::array::fo
     grid.cols = static_cast<int>(info.shape[1]);
     grid.blocked.resize(static_cast<std::size_t>(grid.rows) * static_cast<std::size_t>(grid.cols));
 
-    const auto* ptr = static_cast<const int*>(info.ptr);
+    if (py::isinstance<py::array_t<std::uint8_t>>(grid_array) && (grid_array.flags() & py::array::c_style)) {
+        const auto* ptr = static_cast<const std::uint8_t*>(info.ptr);
+        std::copy(ptr, ptr + grid.blocked.size(), grid.blocked.begin());
+        return grid;
+    }
+    // Keep direct callers of the historical int32 API working. Production
+    // planning grids now enter through the byte-array branch above.
+    const auto integers = py::array_t<int, py::array::c_style | py::array::forcecast>::ensure(grid_array);
+    if (!integers) throw std::runtime_error("grid_map must contain numeric cells");
+    const auto* ptr = integers.data();
     for (std::size_t i = 0; i < grid.blocked.size(); ++i) {
         grid.blocked[i] = ptr[i] != 0 ? 1 : 0;
     }
     return grid;
+}
+
+static py::array_t<std::uint8_t> grid_array(const Grid& grid) {
+    py::array_t<std::uint8_t> result({grid.rows, grid.cols});
+    std::copy(grid.blocked.begin(), grid.blocked.end(), result.mutable_data());
+    return result;
+}
+
+static py::dict prepare_stage_grid(const py::array& input, double angle,
+                                   int aligned_radius, int base_radius, int extent_limit) {
+    if (!std::isfinite(angle) || extent_limit < 0)
+        throw std::runtime_error("angle must be finite and extent limit must be nonnegative");
+    const Grid owned = parse_grid(input);
+    Grid result;
+    PreparationTimings timings;
+    {
+        py::gil_scoped_release release;
+        result = prepare_angle_grid(owned, angle, std::max(0, aligned_radius),
+                                    std::max(0, base_radius), extent_limit, timings);
+    }
+    py::dict profile;
+    profile["classify_rectangles_ms"] = timings.classify_rectangles_ms;
+    profile["square_ms"] = timings.square_ms;
+    profile["disk_ms"] = timings.disk_ms;
+    py::dict stats;
+    stats["components"] = timings.components; stats["columns"] = timings.columns;
+    stats["preserved"] = timings.preserved;
+    py::dict output;
+    output["grid"] = grid_array(result); output["timings_ms"] = profile; output["stats"] = stats;
+    return output;
 }
 
 static std::vector<StageInput> parse_stages(const py::list& stage_specs, const Grid& grid) {
@@ -1602,9 +1819,7 @@ static std::vector<StageInput> parse_stages(const py::list& stage_specs, const G
             stage.start_point = tuple_to_point(start_obj);
         }
         if (spec.contains("planning_grid")) {
-            auto planning_array = py::cast<
-                py::array_t<int, py::array::c_style | py::array::forcecast>>(
-                    spec["planning_grid"]);
+            auto planning_array = py::cast<py::array>(spec["planning_grid"]);
             Grid parsed = parse_grid(planning_array);
             if (parsed.rows != grid.rows || parsed.cols != grid.cols) {
                 throw std::runtime_error(
@@ -1636,7 +1851,7 @@ static std::vector<StageInput> parse_stages(const py::list& stage_specs, const G
 }
 
 static py::object plan_core(
-    const py::array_t<int, py::array::c_style | py::array::forcecast>& grid_array,
+    const py::array& grid_array,
     const py::list& stage_specs,
     double spacing_pixels,
     double output_spacing_pixels, bool profiled) {
@@ -1681,13 +1896,25 @@ static py::object plan_core(
 
 PYBIND11_MODULE(_mst27_cpp, module) {
     module.doc() = "C++ planning kernel for mst27";
-    module.attr("__version__") = "4.7.1";
-    module.def("plan_core", [](const py::array_t<int, py::array::c_style | py::array::forcecast>& grid,
+    module.attr("__version__") = "4.8.0";
+    module.attr("PREPROCESSING_API") = 1;
+    module.def("prepare_stage_grid", &prepare_stage_grid,
+               py::arg("grid_map"), py::arg("angle_deg"), py::arg("aligned_radius"),
+               py::arg("base_radius") = 0, py::arg("max_extent") = 0);
+    module.def("inflate_obstacles", [](const py::array& input, int radius) {
+        Grid grid = parse_grid(input);
+        {
+            py::gil_scoped_release release;
+            grid.blocked = disk_dilate(grid.blocked, grid.rows, grid.cols, std::max(0, radius));
+        }
+        return grid_array(grid);
+    }, py::arg("grid_map"), py::arg("radius"));
+    module.def("plan_core", [](const py::array& grid,
                               const py::list& stages, double spacing, double output_spacing) {
         return plan_core(grid, stages, spacing, output_spacing, false);
     }, py::arg("grid_map"), py::arg("stage_specs"),
                py::arg("spacing_pixels"), py::arg("output_spacing_pixels") = 0.0);
-    module.def("plan_core_profiled", [](const py::array_t<int, py::array::c_style | py::array::forcecast>& grid,
+    module.def("plan_core_profiled", [](const py::array& grid,
                                        const py::list& stages, double spacing, double output_spacing) {
         return plan_core(grid, stages, spacing, output_spacing, true);
     }, py::arg("grid_map"), py::arg("stage_specs"),
