@@ -241,7 +241,7 @@ sl_linka_bulk_manual_bytes_per_sec: 262144
 sl_linka_bulk_burst_bytes: 8192
 # Nonblocking sockets: receive polling stays at 100ms; each frame write is bounded separately.
 sl_linka_data_send_timeout_sec: 2.0
-sl_linka_control_send_timeout_sec: 0.5
+sl_linka_control_send_timeout_sec: 1.0
 # 生产默认每秒采样一帧，并按周期汇总接收量；排查问题时才开启逐帧帧头日志。
 sl_linka_rx_diagnostic_logging: false
 sl_linka_rx_sample_interval_sec: 1.0
@@ -352,7 +352,7 @@ task_config_auto_plan_enabled: false
 # 手动换向保护（秒）：双轮反转完整停车等待；单轮过零的减速/加速时基及无有效零速反馈时的等待
 manual_reverse_guard_sec: 1.0
 # 手动摇杆指令看门狗（秒）：超过该时间没有新指令，调度立即发布左右轮零速
-manual_command_timeout_sec: 0.5
+manual_command_timeout_sec: 1.0
 
 # 视频流推送循环频率（Hz）
 stream_push_hz: 20

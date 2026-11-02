@@ -1036,7 +1036,7 @@ rostopic echo /chassis/motion_safety
 板端手动执行线程保留一个最新待处理指令，松手零速替换旧移动指令，不因线程忙直接丢弃。
 排队指令绑定接收时的执行代号，停止、暂停、急停或执行替换后不能恢复旧移动。
 轮速ROS发布／订阅队列均为1并开启TCP_NODELAY，避免慢串口前积压多个旧速度；
-双轮零速不经过轮速斜坡。调度 `manual_command_timeout_sec` 和底盘 `command_timeout` 默认均为0.5秒。
+双轮零速不经过轮速斜坡。调度 `manual_command_timeout_sec` 和底盘手控 `manual_command_timeout` 默认均为1秒；底盘自动导航 `command_timeout` 仍为0.5秒。
 正常松手走显式零速，超时只作失联兜底；实际停止时间还包含通信、串口事务和电机响应。
 `manual_reverse_guard_sec` 的换向停顿仍有效，本次保留现有1秒配置。
 
@@ -1066,7 +1066,7 @@ ESP32协议未变化，无需重烧。离线回归见 `test_manual_control_deliv
 ### 7.4 现场控制、诊断与规划缓存（2026-10-25）
 
 遥控请求在板端使用接收单调时钟及连接会话绑定，非零指令有效期沿用
-`manual_command_timeout_sec`（默认0.5秒）。执行与输出提交均检查有效性；
+`manual_command_timeout_sec`（默认1秒）。执行与输出提交均检查有效性；
 松手、看门狗停车和断连作废旧移动。控制确认优先于地图/路径发送，分片按完整协议帧让出发送机会。
 TCP发送失败关闭本连接并作废该连接旧遥控。停止帧仍走现有安全链路。
 
@@ -1163,6 +1163,12 @@ MST27 4.7.1 的相邻线掉头优先使用通过障碍和区域检查的外侧�
 
 ### 7.6 连续遥控与串口争用
 
+APP普通手控无需先发送任务停止：仅实际PLANNING/RUNNING/PAUSED任务需要显式确认接管，
+READY/空闲/建图后不因work_mode=AUTO而误停任务或磨盘。APP自身确认框失焦仍清零旧手控，
+但不关闭确认框；接管完成后等待新输入。实现及回归位于独立APP仓库的
+`ManualTaskGate`、`ManualTakeoverCoordinator`和两个手控页面，见其根README。
+板端真正TASK_STOP、急停与通信保护的安全输出逻辑保持不变。
+
 生产日志默认等级：`grinder_scheduler` 为 WARN；`robot_diff_drive.launch` 中的 move_base
 通过 `cfg/rosconsole_navigation.config` 设为 ERROR（TEB/RPP 共用）。运行时可以通过各节点
 `set_logger_level` 服务临时调整，重启后恢复上述默认值。该设置不关闭 SDK 控制台、Python print、
@@ -1178,7 +1184,7 @@ Modbus 待写事务优先于待处理状态轮询，已经发出的 RTU 事务�
 最多每批 64 条）；磁盘慢时保留最新日志并记录丢弃数量，`/diagnostics` 的
 `raw_log_dropped` / `raw_log_errors` 可用于区分日志丢失与链路故障。
 
-遥控与底盘 500ms 命令超时、断连停车、松手零速和急停保护均保留；真实通信中断仍应停车。
+遥控与底盘手控命令超时为1秒，自动导航轮速仍为500ms；断连停车、松手零速和急停保护保留。
 APP 当前由独立后台发送器每 100ms 续发最新目标，最多一条未确认速度；见 7.7。
 
 离线回归：调度 `test_continuous_manual.py`（本机 TCP/Protobuf、普通业务阻塞时持续遥控），
@@ -1198,8 +1204,8 @@ APP 当前由独立后台发送器每 100ms 续发最新目标，最多一条未
 停止先撤销执行代号，旧的排队 START/RESUME 不会在停止后复活。
 
 APP 后台发送器只保留最新速度；停止优先、急停最高优先。主线程每 100ms 更新健康标记，
-超过 300ms 撤销遥控；控制写入或遥控 ACK 超过 500ms 关闭控制端。调度与底盘驱动的
-500ms 超时继续保留；这些 Linux 软件保护不证明底盘 MCU 自带独立失联停车。
+超过 300ms 撤销遥控；控制写入或遥控 ACK 超过1秒关闭控制端。调度与底盘手控兜底同为1秒，
+自动导航轮速超时仍为500ms；这些 Linux 软件保护不证明底盘 MCU 自带独立失联停车。
 
 平板黑屏、后台、失焦或退出遥控页面时清零；亮屏不恢复旧速度。亮屏与 Wi-Fi 恢复立即检测，
 健康通道复用，无响应通道在 300ms 探测后重连；跳过固定 5 秒等待，失败退避 0.5/1/2/3 秒。
@@ -1213,12 +1219,13 @@ APP 正式部署使用 8002/8003；改非默认控制端口须同步客户端配
 板端保留控制排队/应用/ACK 指标，增加 `control_disconnect_apply_ms`、`channel_busy_rejections`、
 `channel_lease_expirations`；APP `ControlChannel` 日志采样记录恢复耗时、遥控 RTT 和撤销原因，不记录令牌。
 控制通道已建立后的心跳回复进入有界发送队列，接收线程不等待回复写入；握手、拒绝和释放仍按原流程处理。
-接收端的 500ms 遥控超时仍关闭控制连接并撤销旧速度，发送每帧 500ms 截止时间和 APP 的安全门限均保留。
+接收端的1秒遥控超时仍关闭控制连接并撤销旧速度；控制每帧发送截止为1秒，与APP控制写入/遥控ACK门限配套。
+APP后台/失焦/300ms界面健康保护、3秒会话租约和底盘串口事务期限不随之延长。前台健康时若链路静默，最后一条有效非零速度可能保持近1秒；实际停车还包含调度周期和制动时间。
 
 排查建图遥控回弹时，先对齐两端以下记录，不能仅根据 `manual_session_end` 判断关闭发起方：
 
 - 板端 `channel_close`：每连接一次，包含连接编号、通道角色/端口、对端、关闭原因、最后接收与遥控年龄、序号、发送年龄和错误类型。
-  `manual_receive_timeout` 是协议层 500ms 无新遥控；`send_deadline` 是发送截止；`peer_eof` / `recv_error` 是接收发现对端关闭或连接错误；另有会话替换、释放、3秒租约及服务停止原因。
+  `manual_receive_timeout` 是协议层1秒无新遥控；`send_deadline` 是发送截止；`peer_eof` / `recv_error` 是接收发现对端关闭或连接错误；另有会话替换、释放、3秒租约及服务停止原因。
   控制任务命令主动撤销遥控另记 `control_task_cancel`。这些事件保存在指标 JSON 的有界 `events` 环，不记录令牌或协议载荷。
 - `channel_data_wire_wait_ms` / `channel_control_wire_wait_ms` 按通道统计发送锁等待；
   `channel_data_socket_send_ms` / `channel_control_socket_send_ms` 统计每帧 socket 写入，包括失败尝试。

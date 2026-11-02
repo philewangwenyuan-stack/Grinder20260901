@@ -12,7 +12,7 @@
 会话替换/释放/租约失效及服务停止；先执行控制撤销，再记录关闭事件。
 `channel_{data,control}_wire_wait_ms` 与 `channel_{data,control}_socket_send_ms` 分别统计
 发送锁等待和 socket 写入。旧 `control_ack_wait_ms` 是两端口控制类响应的锁等待，不能当作遥控 RTT。
-接收500ms、控制每帧发送500ms、会话3秒门限不变。回归包括心跳写入受阻时遥控/停车继续接收，
+接收轮询100ms、控制每帧发送1秒、会话3秒门限。回归包括心跳写入受阻时遥控/停车继续接收，
 以及 EOF、发送超时、接收遥控超时的原因归属；不连接真实设备。
 
 本文档说明 `catkin_ws/src/grinder_scheduler` 目录下各文件/子目录的作用，便于开发、联调和排障。
@@ -51,10 +51,10 @@ MapService 持有原始数组；保存地图通过 `set_raw_grid(source, grid)` 
 `map_load_ms`、`map_build_ms`、`map_request_total_ms` 等外层指标继续保留。
 
 `socket_io.py` 将100ms接收轮询与发送总期限分离。数据通道每帧发送默认2秒
-（限制0.1～5秒），控制通道默认0.5秒（限制0.05～0.5秒），分别配置
+（限制0.1～5秒），控制通道默认1秒（限制0.05～1秒），分别配置
 `sl_linka_data_send_timeout_sec` 和 `sl_linka_control_send_timeout_sec`。
 非阻塞发送期间检查会话有效性，超过期限关闭连接，不能在部分帧后直接重发整帧。
-遥控指令500ms有效期、断线停车及急停保护保持原样。
+遥控指令有效期为1秒，断线停车及急停保护保持原样。
 
 离线验证：`test/test_map_request_payload.py`、`test/test_numpy_map_transport.py`（ROS生成消息）、`test/test_socket_io.py`、
 `test/test_dual_channel.py`、`test/test_continuous_manual.py`。实际背压用目标Linux环境验证；
@@ -233,7 +233,7 @@ APP 未指定规划起点时，路径从当前车位出发；区域未指定起�
 
 `sl_linka_adapter.py` 的普通控制业务使用独立有界 FIFO，满时返回失败，不能把已排队的
 开关操作静默覆盖。急停解除可等待服务，但不再阻塞 TCP 接收；急停触发仍立即处理。
-手动非零最新值队列、独立零速队列及 500ms 请求有效期保持不变。
+手动非零最新值队列、独立零速队列保持不变，请求有效期为1秒。
 所有异步控制绑定连接有效性，断连或会话替换后，在途业务不能恢复发布旧非零输出。
 `test_continuous_manual.py` 用真实本机 TCP/Protobuf 验证普通控制阻塞期间仍持续应用遥控、
 松手优先停车及业务队列有界拒绝。不修改超时门限，不以缓存旧速度代替新控制输入。

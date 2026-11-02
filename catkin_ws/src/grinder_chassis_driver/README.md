@@ -116,7 +116,7 @@
 3. 订阅 `/chassis/...` 控制话题，将命令写入对应寄存器
 4. 按 `poll_rate_hz` 读取 `0x4017 ~ 0x4018` 的有符号实际电机速度；按 `status_poll_rate_hz` 合并读取 `0x4012 ~ 0x401A`（状态、轮速与故障码）
 5. 轮速状态与 `/odom_wheel` 跟随轮速轮询发布，普通状态与诊断分别按配置频率发布
-6. 如果超过 `command_timeout`（默认0.5秒）未收到新的轮速命令，则自动停轮；双轮零速命令绕过轮速斜坡，轮速订阅仅保留最新一条待处理消息
+6. 自动导航超过 `command_timeout`（默认0.5秒）、手动轮速超过 `manual_command_timeout`（默认1秒）未收到新命令，则自动停轮；双轮零速命令绕过轮速斜坡，轮速订阅仅保留最新一条待处理消息
 7. 如果通信连续失败，节点标记为掉线并尝试进入安全状态
 
 软件急停由 `/chassis/emergency_stop=true` 触发，运动锁存独立保存到
@@ -147,7 +147,7 @@ outputs_ready、reset_error；ACK及磨盘既有读回值不能证明实机机�
 
 `test_serial_scheduling.py`、`test_raw_log.py`、`test_modbus_transport.py` 不连接硬件，
 分别验证整次事务时限、写优先、磁盘阻塞隔离及原协议编解码。
-命令 500ms 超时、急停锁存及安全输出提交顺序不变。超时判断与清零在运动/状态锁内原子完成，
+自动导航命令500ms超时，手动轮速命令1秒超时；急停锁存及安全输出提交顺序不变。超时判断与清零在运动/状态锁内原子完成，
 防止先读到旧时间、等待锁期间收到新命令后仍误清零。
 
 ## 5. 话题说明
@@ -376,7 +376,9 @@ outputs_ready、reset_error；ACK及磨盘既有读回值不能证明实机机�
 - `~status_combined_read`
   默认 `true`；合并读返回非法地址或非法数值时自动退回分段读取
 - `~command_timeout`
-  默认 `0.5`
+  默认 `0.5`，用于自动导航 `/cmd_vel`
+- `~manual_command_timeout`
+  默认 `1.0`，用于手动轮速；重新使能自动任务后恢复导航超时
 - `~write_verify`
   默认 `false`
 - `~max_retries`

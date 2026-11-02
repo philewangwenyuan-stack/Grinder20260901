@@ -211,6 +211,25 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual(b'\x00' * 4, frame[7:11])
         self.assertEqual(b'\x03\xe8\x00\x01', frame[11:15])
 
+    def test_manual_one_second_timeout_preserves_navigation_half_second_limit(self):
+        node=self.driver()
+        node.command_timeout=.5
+        node.manual_command_timeout=1.
+        node._handle_wheel_speed_cmd(Message(left_wheel_speed=100,right_wheel_speed=100))
+        self.assertTrue(node._last_wheel_command_manual)
+        node.last_command_time=Stamp(time.monotonic()-.75)
+        node._enforce_command_timeout()
+        self.assertEqual((100,100),(node.command.left_wheel_speed,node.command.right_wheel_speed))
+        node.last_command_time=Stamp(time.monotonic()-1.1)
+        node._enforce_command_timeout()
+        self.assertEqual((0,0),(node.command.left_wheel_speed,node.command.right_wheel_speed))
+        node.command.left_wheel_speed=node.command.right_wheel_speed=100
+        node._handle_task_enable_cmd(Message(True))
+        self.assertFalse(node._last_wheel_command_manual)
+        node.last_command_time=Stamp(time.monotonic()-.75)
+        node._enforce_command_timeout()
+        self.assertEqual((0,0),(node.command.left_wheel_speed,node.command.right_wheel_speed))
+
     def test_timeout_rechecks_renewal_before_zeroing(self):
         node=self.driver()
         node.command.left_wheel_speed=node.command.right_wheel_speed=100

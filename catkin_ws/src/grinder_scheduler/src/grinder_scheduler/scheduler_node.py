@@ -728,7 +728,7 @@ class SchedulerNode:
         self._manual_delivery = ManualDelivery()
         self._manual_command_timeout_sec = max(
             0.1,
-            float(rospy.get_param("~manual_command_timeout_sec", 0.5)),
+            float(rospy.get_param("~manual_command_timeout_sec", 1.0)),
         )
         self._manual_last_command_monotonic = 0.0
         self._manual_command_active = False
@@ -976,7 +976,7 @@ class SchedulerNode:
             bulk_manual_bytes_per_sec=rospy.get_param("~sl_linka_bulk_manual_bytes_per_sec", 262144),
             bulk_burst_bytes=rospy.get_param("~sl_linka_bulk_burst_bytes", 8192),
             data_send_timeout_sec=rospy.get_param("~sl_linka_data_send_timeout_sec", 2.0),
-            control_send_timeout_sec=rospy.get_param("~sl_linka_control_send_timeout_sec", 0.5),
+            control_send_timeout_sec=rospy.get_param("~sl_linka_control_send_timeout_sec", 1.0),
             callback_handler=self,
             rx_diagnostic_logging=rospy.get_param("~sl_linka_rx_diagnostic_logging", False),
             rx_sample_interval_sec=rospy.get_param("~sl_linka_rx_sample_interval_sec", 1.0),
@@ -8540,7 +8540,7 @@ class SchedulerNode:
         transition = getattr(self, "_manual_drive_transition", None)
         if transition is None:
             transition = ManualWheelTransition(self._manual_reverse_guard_sec,
-                getattr(self, "_manual_command_timeout_sec", 0.5))
+                getattr(self, "_manual_command_timeout_sec", 1.0))
             self._manual_drive_transition = transition
         with self._manual_drive_lock:
             self._motion.check()

@@ -88,12 +88,12 @@ class SlLinkAServer:
         metrics_registry=None,
         control_port=8003,
         session_timeout_sec=3.0,
-        manual_timeout_sec=0.5,
+        manual_timeout_sec=1.0,
         bulk_bytes_per_sec=1048576,
         bulk_manual_bytes_per_sec=262144,
         bulk_burst_bytes=8192,
         data_send_timeout_sec=2.0,
-        control_send_timeout_sec=0.5,
+        control_send_timeout_sec=1.0,
     ):
         ensure_sl_linka_sdk_on_path(sdk_dir)
         from sl_link.frame import SL_PROTOCOL_VERSION, SlFrame, SlFrameParser
@@ -109,7 +109,7 @@ class SlLinkAServer:
         self.sessions = ChannelSessions(timeout=session_timeout_sec)
         self.bulk_budget = BulkBudget(bulk_bytes_per_sec, bulk_manual_bytes_per_sec, bulk_burst_bytes)
         self.data_send_timeout_sec = max(0.1, min(5.0, float(data_send_timeout_sec)))
-        self.control_send_timeout_sec = max(0.05, min(0.5, float(control_send_timeout_sec)))
+        self.control_send_timeout_sec = max(0.05, min(1.0, float(control_send_timeout_sec)))
         self.manual_timeout_sec = max(0.1, float(manual_timeout_sec))
         self._listeners = []
         self._peers = set()

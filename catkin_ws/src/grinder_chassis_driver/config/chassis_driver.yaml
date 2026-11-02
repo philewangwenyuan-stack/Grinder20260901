@@ -19,6 +19,8 @@ diagnostics_rate_hz: 1
 status_combined_read: true
 # 指令超时保护时间（秒），超过后底盘直接触发零速保护
 command_timeout: 0.5
+# Direct manual wheel commands tolerate a one-second gap; navigation keeps command_timeout.
+manual_command_timeout: 1.0
 # 写入后是否进行回读校验
 write_verify: false
 # 通信失败最大重试次数

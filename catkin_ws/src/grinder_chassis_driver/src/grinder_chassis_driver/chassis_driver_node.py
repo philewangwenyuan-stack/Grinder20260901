@@ -103,6 +103,8 @@ class ChassisDriverNode:
         self._next_status_poll_monotonic = 0.0
         self._next_diagnostics_monotonic = 0.0
         self.command_timeout = rospy.get_param("~command_timeout", 0.5)
+        self.manual_command_timeout = float(rospy.get_param("~manual_command_timeout", 1.0))
+        self._last_wheel_command_manual = False
         self.write_verify = rospy.get_param("~write_verify", False)
         self.max_retries = rospy.get_param("~max_retries", 3)
         self.stop_on_timeout = rospy.get_param("~stop_on_timeout", True)
@@ -365,6 +367,7 @@ class ChassisDriverNode:
             self.command.left_wheel_speed = mapped_left
             self.command.right_wheel_speed = mapped_right
             self.last_command_time = rospy.Time.now()
+            self._last_wheel_command_manual = True
         if self.enabled:
             self._write_motion_registers()
     #=================================================================================================================
@@ -514,6 +517,7 @@ class ChassisDriverNode:
             self.command.left_wheel_speed = mapped_left
             self.command.right_wheel_speed = mapped_right
             self.last_command_time = rospy.Time.now()
+            self._last_wheel_command_manual = False
         if self.enabled:
             self._write_motion_registers()
 
@@ -522,6 +526,8 @@ class ChassisDriverNode:
         with self._command_guard():
             was_enabled = bool(self.task_enable)
             self.task_enable = bool(msg.data)
+            if self.task_enable:
+                self._last_wheel_command_manual = False
         if not self.task_enable:
             self._reset_cmd_vel_filter()
             self._last_cmd_vel_recv_monotonic = 0.0
@@ -935,7 +941,9 @@ class ChassisDriverNode:
         with self._motion.lock, self._lock:
             if not self.stop_on_timeout or not self.enabled:
                 return
-            if (rospy.Time.now() - self.last_command_time).to_sec() <= self.command_timeout:
+            timeout = (getattr(self, "manual_command_timeout", 1.0)
+                       if getattr(self, "_last_wheel_command_manual", False) else self.command_timeout)
+            if (rospy.Time.now() - self.last_command_time).to_sec() <= timeout:
                 return
             already_stopped = self.command.left_wheel_speed == 0 and self.command.right_wheel_speed == 0
             self.command.left_wheel_speed = 0

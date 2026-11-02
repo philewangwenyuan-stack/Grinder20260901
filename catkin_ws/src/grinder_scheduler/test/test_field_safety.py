@@ -20,6 +20,18 @@ from grinder_chassis_driver.motion_safety import MotionInterlock, MotionCancelle
 
 
 class DeliveryTest(unittest.TestCase):
+    def test_one_second_lease_accepts_short_gap_but_stop_still_revokes_immediately(self):
+        from unittest.mock import patch
+        delivery=ManualDelivery();session=object();delivery.begin(session)
+        ticket=delivery.capture(session,10.,1.)
+        with patch('grinder_scheduler.manual_delivery.time.monotonic',return_value=10.75):
+            self.assertTrue(delivery.valid(ticket))
+            delivery.capture(session,10.75,1.,stop=True)
+            self.assertFalse(delivery.valid(ticket))
+        fresh=delivery.capture(session,20.,1.)
+        with patch('grinder_scheduler.manual_delivery.time.monotonic',return_value=21.01):
+            self.assertFalse(delivery.valid(fresh))
+
     def test_expiry_release_watchdog_and_reconnection_cancel_old_output(self):
         delivery = ManualDelivery()
         session = object()
