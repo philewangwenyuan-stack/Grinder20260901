@@ -29,6 +29,7 @@ class RosDataBridge:
         localization_quality_position_reference_m=0.1,
         localization_quality_heading_reference_deg=10.0,
         localization_quality_unavailable_variance=1.0e6,
+        image_inputs_enabled=False,
     ):
         self._lock = threading.Lock()
         self._bridge = CvBridge()
@@ -76,6 +77,8 @@ class RosDataBridge:
         # One message class per topic in this process: numpy-backed OccupancyGrid.
         rospy.Subscriber(map_topic, numpy_msg(OccupancyGrid), self._map_callback, queue_size=1)
         rospy.Subscriber(odom_topic, Odometry, self._odom_callback, queue_size=10)
+        if not image_inputs_enabled:
+            return
         if self._use_depth_colorized_image:
             rospy.Subscriber(
                 depth_image_colorized_topic,

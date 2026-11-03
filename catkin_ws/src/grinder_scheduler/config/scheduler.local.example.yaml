@@ -23,6 +23,8 @@ stream_url: ""
 stream_play_url: ""
 
 # Examples of non-secret device overrides:
+# image_inputs_enabled: false  # No camera: disable image subscriptions only.
+# local_rtsp_enabled: false    # No camera: do not start MediaMTX/RTSP publishing.
 # local_rtsp_encoder: mpph264enc
 # manual_command_timeout_sec: 0.5
 # active_segment_point_spacing: 0.3  # >= 0.01 m; only active navigation segment

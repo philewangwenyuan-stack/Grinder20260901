@@ -98,15 +98,6 @@ def localization_arming(method):
                     self._localization_arming_cancelled = False
     return run
 
-try:
-    from slamware_ros_sdk.msg import (
-        RelocalizationStatus as RadarRelocalizationStatus,
-        SystemStatus as RadarSystemStatus,
-    )
-except Exception:
-    RadarRelocalizationStatus = None
-    RadarSystemStatus = None
-
 PREVIEW_MAX_EDGE_CAP = 640
 DEFAULT_LIVE_MAP_ID = "LIVE_MAP"
 DEFAULT_ROBOT_FOOTPRINT = [
@@ -253,7 +244,7 @@ class SchedulerNode:
             rospy.get_param("~footprint", DEFAULT_ROBOT_FOOTPRINT)
         )
         self._base_laser_tf = {
-            "base_laser_x": float(rospy.get_param("~base_laser_x", 0.0)),
+            "base_laser_x": float(rospy.get_param("~base_laser_x", 0.15)),
             "base_laser_y": float(rospy.get_param("~base_laser_y", 0.0)),
             "base_laser_z": float(rospy.get_param("~base_laser_z", 0.0)),
             "base_laser_roll_deg": float(rospy.get_param("~base_laser_roll_deg", 0.0)),
@@ -805,6 +796,7 @@ class SchedulerNode:
             self._preview_rga_available,
         )
         self.ros_data_bridge = RosDataBridge(
+            image_inputs_enabled=bool(rospy.get_param("~image_inputs_enabled", False)),
             map_topic=rospy.get_param("~map_topic", "/slamware_ros_sdk_server_node/map"),
             odom_topic=rospy.get_param("~odom_topic", "/slamware_ros_sdk_server_node/odom"),
             left_image_topic=rospy.get_param("~left_image_topic", "/slamware_ros_sdk_server_node/left_image_raw"),
@@ -859,7 +851,7 @@ class SchedulerNode:
             port=rospy.get_param("~local_rtsp_port", 8554),
             fps=rospy.get_param("~local_rtsp_fps", 12),
             width=rospy.get_param("~local_rtsp_width", 960),
-            enabled=rospy.get_param("~local_rtsp_enabled", True),
+            enabled=rospy.get_param("~local_rtsp_enabled", False),
             start_server=rospy.get_param("~local_rtsp_start_server", True),
             preferred_encoder=str(rospy.get_param("~local_rtsp_encoder", "auto")).strip().lower(),
             bitrate_kbps=rospy.get_param("~local_rtsp_bitrate_kbps", 800),
@@ -938,27 +930,6 @@ class SchedulerNode:
         self._localization_watchdog_timer = rospy.Timer(
             rospy.Duration(0.1), self._localization_watchdog_tick
         )
-        if RadarSystemStatus is not None:
-            rospy.Subscriber(
-                self._radar_system_status_topic,
-                RadarSystemStatus,
-                self._radar_system_status_callback,
-                queue_size=20,
-            )
-        else:
-            rospy.logwarn("slamware_ros_sdk/SystemStatus is unavailable; radar status query will report unavailable")
-        if RadarRelocalizationStatus is not None:
-            rospy.Subscriber(
-                self._radar_relocalization_status_topic,
-                RadarRelocalizationStatus,
-                self._radar_relocalization_status_callback,
-                queue_size=20,
-            )
-        else:
-            rospy.logwarn(
-                "slamware_ros_sdk/RelocalizationStatus is unavailable; "
-                "radar relocalization raw status will be unavailable"
-            )
         rospy.Service("~plan_now", Trigger, self._handle_plan_now)
 
         self.enable_service = rospy.ServiceProxy("/chassis/enable", EnableChassis)

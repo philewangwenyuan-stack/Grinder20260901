@@ -51,7 +51,7 @@ super_lio_scan_filter_livox_dust: true
 super_lio_wheel_fusion_mapping_enabled: false        # 建图模式下是否融合轮速
 super_lio_wheel_fusion_localization_enabled: true    # 定位模式下是否融合轮速
 super_lio_wheel_fuse_linear_velocity: true           # 融合轮速线速度（打开总开关后才生效）
-super_lio_wheel_fuse_angular_velocity: true          # 融合轮速角速度（IMU 陀螺仪更准，轮速角速度受打滑影响大）
+super_lio_wheel_fuse_angular_velocity: false          # 融合轮速角速度（IMU 陀螺仪更准，轮速角速度受打滑影响大）
 super_lio_wheel_twist_topic: /chassis/wheel_twist    # 轮速输入话题
 super_lio_wheel_max_age_sec: 0.25                    # 轮速消息超过这个时间就丢弃，不参与融合
 

@@ -6,6 +6,7 @@ localization_backend: super_lio
 map_topic: /map
 odom_topic: /lio/odom
 left_image_topic: /grinder/sim/left/image_raw
+image_inputs_enabled: true  # Simulation cameras override the no-camera board default.
 right_image_topic: /grinder/sim/right/image_raw
 live_map_align_to_initial_yaw: false
 depth_image_colorized_topic: /slamware_ros_sdk_server_node/depth_image_colorized

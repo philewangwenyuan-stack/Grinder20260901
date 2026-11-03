@@ -14,6 +14,7 @@ map_topic: /slamware_ros_sdk_server_node/map
 # 里程计话题名（Odometry）
 odom_topic: /slamware_ros_sdk_server_node/odom
 # 左相机图像话题名
+image_inputs_enabled: false  # Final no-camera board configuration; map/odom stay enabled.
 left_image_topic: /slamware_ros_sdk_server_node/left_image_raw
 # 右相机图像话题名
 right_image_topic: /slamware_ros_sdk_server_node/right_image_raw
@@ -191,7 +192,7 @@ vehicle_width: 0.8
 # 机器人长度（米），用于转弯半径计算
 vehicle_length: 1.4
 footprint: [[-0.40, 0.47], [1.20, 0.47], [1.20, -0.47], [-0.40, -0.47]]
-base_laser_x: 0.2
+base_laser_x: 0.15
 base_laser_y: 0.0
 base_laser_z: 0.0
 base_laser_roll_deg: 0.0
@@ -255,7 +256,7 @@ aurora_raw_image_on: true
 aurora_no_preview_image: false
 
 # 是否启用本地 RTSP 推流
-local_rtsp_enabled: true
+local_rtsp_enabled: false
 # 本地 RTSP 监听地址
 local_rtsp_host: 0.0.0.0
 # 外部访问 RTSP 时公布的主机地址（auto 表示自动推断）
@@ -323,7 +324,7 @@ path_corner_mid_turn_min_angle_deg: 45.0
 disc_motion_guard_enabled: true
 # 无升降机型跨区域或非任务手动行走时是否保持磨盘低速旋转。
 # 默认 false，保持原机型原有逻辑；无升降机型设为 true。
-disc_travel_spin_enabled: true
+disc_travel_spin_enabled: false
 # 非研磨行走时的磨盘转速（rpm），仅在 disc_travel_spin_enabled=true 时生效。
 disc_travel_speed_rpm: 300
 # 当前机型是否支持磨盘升降；无升降机型设为 false 后拒绝 SL-Link 升降控制。

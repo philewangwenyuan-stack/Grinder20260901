@@ -1,5 +1,24 @@
 # grinder_scheduler 包说明
 
+## 无相机设备的 ROS 输入
+
+纯 Super-LIO 调度不再订阅旧 Slamware `system_status` 和
+`relocalization_status`；定位就绪、质量和状态仍来自 Super-LIO 管理器。
+当前公开默认配置按无相机板端设置：
+
+```yaml
+image_inputs_enabled: false
+local_rtsp_enabled: false
+```
+
+前者同时关闭左右图像或深度彩图订阅，地图、里程计订阅保持启用；后者关闭本地
+RTSP 服务链路。两项均在节点初始化时读取，重启后生效。有相机设备须在自己的
+`scheduler.local.yaml` 显式开启这两项；Gazebo 在独立仿真覆盖配置中开启图像和 RTSP。
+设备账号、端点等覆盖配置保存在被 Git 忽略的 `scheduler.local.yaml`；复制板端部署时
+同时携带该设备文件，不要将它提交到仓库或用于仿真。
+输入订阅验证见 `test/test_optional_ros_inputs.py`，在 ROS Noetic 环境运行，使用 mock，
+不连接 ROS master 或硬件。
+
 ## 双通道通信
 
 调度同时监听数据 8002 与控制 8003。`channel_sessions.py` 管理单平板连接组及共享大数据预算，

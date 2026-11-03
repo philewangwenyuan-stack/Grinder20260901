@@ -81,7 +81,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 平板单按钮急停/解除状态 | `scheduler_node.py` 中 `build_device_status_report` / `_reset_emergency_stop` | `DeviceStatusReport.emergency_stop_latched=22` 上报调度运动锁存；协议生成 Python/Android/nanopb SDK 同步 |
 | 板端日志采样与指标导出 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/metrics_registry.py` | `metrics_exporter.py`、`grinder_metrics_node.py`、`launch/scheduler.launch`；scheduler `main()` 默认WARN，导航 `robot_diff_drive.launch` 加载 `cfg/rosconsole_navigation.config` 默认ERROR |
 | 协议定义与说明、地图请求结果/快照分片 | `third_party/sl_linka/proto/sl_link.proto` | `third_party/sl_linka/sl-link.md`、`third_party/sl_linka/scripts/generate_proto.sh` |
-| ROS 地图、位姿和图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/ros_data_bridge.py` | `launch/scheduler.launch`、`config/super_lio.yaml` |
+| ROS 地图、位姿和图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/ros_data_bridge.py` | `image_inputs_enabled` 控制图像订阅，地图/里程计保留；无相机设备配合 `local_rtsp_enabled=false`；`test/test_optional_ros_inputs.py`；`launch/scheduler.launch`、`config/super_lio.yaml` |
 | 地图目录响应 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_catalog_response.py` | `scheduler_node.py` 中 `handle_map_catalog_request` |
 | RTSP / FFmpeg 视频链路 | `local_rtsp_server.py`、`media_streamer.py`（均在调度模块目录） | `tools/mediamtx/`；`catkin_ws/start_grinder_stack.sh` 选择二进制；`LocalRtspStreamServer` 在日志目录生成 `mediamtx.generated.yml` |
 | 平台文件上传、鉴权和 MQTT 上报 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/platform_integration.py` | 地图云端仅4文件（不含plan_map.pcd），地图名作文件名前缀并同步云端引用，本地不改名；`test/test_platform_integration.py`、包README、`mqtt_interface.md`、`scheduler.yaml` |
