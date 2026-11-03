@@ -213,3 +213,5 @@ rostopic hz /cmd_vel
 1. 只报告实际改动的源码/配置/文档，不把运行时文件算入改动。
 2. 运行与改动范围相称的最小验证，并说明未运行的硬件/ROS 验证。
 3. 若新增了模块、协议、启动入口或重要数据流，同步更新本文件的定位表，保持它可用且简短。
+
+图纸地基独立层：scheduler `drawing_obstacles.py` / `drawing_scheduler.py`，规划接入 `planner_adapter.py`。协议0x053A/B；测试 `test_drawing_*.py`、包README。只合入全局规划内存副本，禁止写MapService/导航PGM/costmap；检查确认只校验几何。
