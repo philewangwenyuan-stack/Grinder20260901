@@ -1151,9 +1151,13 @@ class SlLinkAServer:
             hasattr(pb, "MSG_ID_MAP_REGION_POINT_REQUEST")
             and frame.msg_id == pb.MSG_ID_MAP_REGION_POINT_REQUEST
         ):
-            payload, msg_id, comp_id = self._handler.handle_map_region_point_request(
-                frame.payload
-            )
+            result = self._handler.handle_map_region_point_request(frame.payload)
+            responses = result if isinstance(result, list) else [result]
+            for payload, msg_id, comp_id in responses:
+                request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
+        if hasattr(pb, "MSG_ID_DRAWING_DRAFT_REQUEST") and frame.msg_id == pb.MSG_ID_DRAWING_DRAFT_REQUEST:
+            payload, msg_id, comp_id = self._handler.handle_drawing_draft_request(frame.payload)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
         if frame.msg_id == pb.MSG_ID_MAP_EDIT_COMMAND:
