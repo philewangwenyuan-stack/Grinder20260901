@@ -355,6 +355,30 @@ public object MapRegionPointResponseKt {
     public fun hasCropRegion(): kotlin.Boolean {
       return _builder.hasCropRegion()
     }
+
+    /**
+     * `.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;`
+     */
+    public var drawingLayer: sl_link.SlLink.DrawingObstacleLayerInfo
+      @JvmName("getDrawingLayer")
+      get() = _builder.getDrawingLayer()
+      @JvmName("setDrawingLayer")
+      set(value) {
+        _builder.setDrawingLayer(value)
+      }
+    /**
+     * `.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;`
+     */
+    public fun clearDrawingLayer() {
+      _builder.clearDrawingLayer()
+    }
+    /**
+     * `.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;`
+     * @return Whether the drawingLayer field is set.
+     */
+    public fun hasDrawingLayer(): kotlin.Boolean {
+      return _builder.hasDrawingLayer()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapRegionPointResponse.copy(block: `sl_link`.MapRegionPointResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapRegionPointResponse =
@@ -362,4 +386,7 @@ public inline fun sl_link.SlLink.MapRegionPointResponse.copy(block: `sl_link`.Ma
 
 public val sl_link.SlLink.MapRegionPointResponseOrBuilder.cropRegionOrNull: sl_link.SlLink.PolygonRegion?
   get() = if (hasCropRegion()) getCropRegion() else null
+
+public val sl_link.SlLink.MapRegionPointResponseOrBuilder.drawingLayerOrNull: sl_link.SlLink.DrawingObstacleLayerInfo?
+  get() = if (hasDrawingLayer()) getDrawingLayer() else null
 

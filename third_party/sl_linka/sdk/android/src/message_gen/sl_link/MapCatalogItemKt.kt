@@ -230,6 +230,47 @@ public object MapCatalogItemKt {
     public fun clearMapRevision() {
       _builder.clearMapRevision()
     }
+
+    /**
+     * `.sl_link.DrawingLayerStatus drawing_layer_status = 13;`
+     */
+    public var drawingLayerStatus: sl_link.SlLink.DrawingLayerStatus
+      @JvmName("getDrawingLayerStatus")
+      get() = _builder.getDrawingLayerStatus()
+      @JvmName("setDrawingLayerStatus")
+      set(value) {
+        _builder.setDrawingLayerStatus(value)
+      }
+    public var drawingLayerStatusValue: kotlin.Int
+      @JvmName("getDrawingLayerStatusValue")
+      get() = _builder.getDrawingLayerStatusValue()
+      @JvmName("setDrawingLayerStatusValue")
+      set(value) {
+        _builder.setDrawingLayerStatusValue(value)
+      }
+    /**
+     * `.sl_link.DrawingLayerStatus drawing_layer_status = 13;`
+     */
+    public fun clearDrawingLayerStatus() {
+      _builder.clearDrawingLayerStatus()
+    }
+
+    /**
+     * <code>uint32 drawing_layer_version = 14;</code>
+     */
+    public var drawingLayerVersion: kotlin.Int
+      @JvmName("getDrawingLayerVersion")
+      get() = _builder.getDrawingLayerVersion()
+      @JvmName("setDrawingLayerVersion")
+      set(value) {
+        _builder.setDrawingLayerVersion(value)
+      }
+    /**
+     * `uint32 drawing_layer_version = 14;`
+     */
+    public fun clearDrawingLayerVersion() {
+      _builder.clearDrawingLayerVersion()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapCatalogItem.copy(block: `sl_link`.MapCatalogItemKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapCatalogItem =

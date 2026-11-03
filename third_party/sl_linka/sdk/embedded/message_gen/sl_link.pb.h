@@ -85,7 +85,9 @@ typedef enum _sl_link_MessageId {
     sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_REQUEST = 1334,
     sl_link_MessageId_MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 1335,
     sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST = 1336,
-    sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337
+    sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337,
+    sl_link_MessageId_MSG_ID_DRAWING_DRAFT_REQUEST = 1338,
+    sl_link_MessageId_MSG_ID_DRAWING_DRAFT_RESPONSE = 1339
 } sl_link_MessageId;
 
 typedef enum _sl_link_DeviceId {
@@ -242,6 +244,25 @@ typedef enum _sl_link_ChannelSessionAction {
     sl_link_ChannelSessionAction_CHANNEL_SESSION_RECOVER = 4
 } sl_link_ChannelSessionAction;
 
+/* Drawing polygons are persistent vector data, never map raster patches. */
+typedef enum _sl_link_DrawingObstacleAction {
+    sl_link_DrawingObstacleAction_DRAWING_AVOID = 0,
+    sl_link_DrawingObstacleAction_DRAWING_IGNORE = 1
+} sl_link_DrawingObstacleAction;
+
+typedef enum _sl_link_DrawingLayerStatus {
+    sl_link_DrawingLayerStatus_DRAWING_NONE = 0,
+    sl_link_DrawingLayerStatus_DRAWING_PUBLISHED = 1,
+    sl_link_DrawingLayerStatus_DRAWING_STALE = 2
+} sl_link_DrawingLayerStatus;
+
+typedef enum _sl_link_DrawingDraftOperation {
+    sl_link_DrawingDraftOperation_DRAWING_CAPABILITIES = 0,
+    sl_link_DrawingDraftOperation_DRAWING_UPLOAD = 1,
+    sl_link_DrawingDraftOperation_DRAWING_VALIDATE = 2,
+    sl_link_DrawingDraftOperation_DRAWING_DISCARD = 3
+} sl_link_DrawingDraftOperation;
+
 /* Struct definitions */
 typedef struct _sl_link_WifiConfig {
     pb_callback_t ssid;
@@ -295,6 +316,13 @@ typedef struct _sl_link_PolygonRegion {
     /* Recipe belongs to this work region, not to the whole map. */
     bool has_process;
     sl_link_MapProcessSettings process;
+    pb_callback_t subtype;
+    pb_callback_t source;
+    float inflation_m;
+    pb_callback_t drawing_ref;
+    uint32_t layer_version;
+    sl_link_DrawingObstacleAction drawing_action;
+    float geometry_error_m;
 } sl_link_PolygonRegion;
 
 typedef struct _sl_link_MapSettings {
@@ -623,6 +651,8 @@ typedef struct _sl_link_TaskConfig {
     pb_callback_t map_id;
     pb_callback_t selected_work_region_ids;
     pb_callback_t region_repeats;
+    bool skip_stale_drawing_layer;
+    uint32_t expected_drawing_layer_version;
 } sl_link_TaskConfig;
 
 typedef struct _sl_link_TaskConfigResponse {
@@ -703,6 +733,8 @@ typedef struct _sl_link_PathPointPlanRequest {
     pb_callback_t global_direction;
     /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
+    pb_callback_t drawing_draft_id;
+    uint32_t drawing_draft_version;
 } sl_link_PathPointPlanRequest;
 
 typedef struct _sl_link_PathPointPlanResponse {
@@ -722,6 +754,8 @@ typedef struct _sl_link_PathPointPlanResponse {
     float total_work_area_m2;
     float estimated_time_s;
     pb_callback_t frame_id;
+    uint32_t drawing_layer_version;
+    uint32_t drawing_draft_version;
 } sl_link_PathPointPlanResponse;
 
 typedef struct _sl_link_MapPreviewRequest {
@@ -772,19 +806,6 @@ typedef struct _sl_link_WorkRegionPointInfo {
     bool has_end_pose;
     sl_link_Pose2D end_pose;
 } sl_link_WorkRegionPointInfo;
-
-typedef struct _sl_link_MapRegionPointResponse {
-    sl_link_ResultCode result;
-    pb_callback_t message;
-    pb_callback_t map_id;
-    uint32_t map_version;
-    pb_callback_t work_regions;
-    pb_callback_t obstacle_regions;
-    pb_callback_t erase_regions;
-    bool crop_region_available;
-    bool has_crop_region;
-    sl_link_PolygonRegion crop_region;
-} sl_link_MapRegionPointResponse;
 
 typedef struct _sl_link_MapEditCommand {
     pb_callback_t edit_id;
@@ -847,6 +868,8 @@ typedef struct _sl_link_PathPlanRequest {
     pb_callback_t global_direction;
     /* Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id. */
     pb_callback_t map_id;
+    pb_callback_t drawing_draft_id;
+    uint32_t drawing_draft_version;
 } sl_link_PathPlanRequest;
 
 typedef struct _sl_link_PathPlanResponse {
@@ -878,6 +901,8 @@ typedef struct _sl_link_PathPlanResponse {
     float alignment_yaw_deg;
     float app_rotation_deg;
     float rotation_alignment_delta_deg;
+    uint32_t drawing_layer_version;
+    uint32_t drawing_draft_version;
 } sl_link_PathPlanResponse;
 
 typedef struct _sl_link_MapSyncRequest {
@@ -970,6 +995,8 @@ typedef struct _sl_link_MapCatalogItem {
     pb_callback_t thumbnail_image_b64;
     pb_callback_t created_at;
     pb_callback_t map_revision;
+    sl_link_DrawingLayerStatus drawing_layer_status;
+    uint32_t drawing_layer_version;
 } sl_link_MapCatalogItem;
 
 typedef struct _sl_link_MapCatalogResponse {
@@ -1002,6 +1029,9 @@ typedef struct _sl_link_MapSaveRequest {
  Set has_rotation_deg=true when rotation_deg should override the saved value. */
     bool has_rotation_deg;
     float rotation_deg;
+    pb_callback_t drawing_draft_id;
+    uint32_t drawing_draft_version;
+    pb_callback_t request_id;
 } sl_link_MapSaveRequest;
 
 typedef struct _sl_link_MapSaveResponse {
@@ -1021,6 +1051,8 @@ typedef struct _sl_link_MapSaveResponse {
     bool localization_started;
     pb_size_t residual_nodes_count;
     char residual_nodes[8][64];
+    pb_callback_t request_id;
+    uint32_t drawing_layer_version;
 } sl_link_MapSaveResponse;
 
 typedef struct _sl_link_MapMetricsRequest {
@@ -1380,6 +1412,111 @@ typedef struct _sl_link_ControlCommandResponse {
     sl_link_ControlCommand applied_command;
 } sl_link_ControlCommandResponse;
 
+typedef struct _sl_link_DrawingControlPoint {
+    double drawing_x_mm;
+    double drawing_y_mm;
+    double map_x_m;
+    double map_y_m;
+    double residual_m;
+    pb_callback_t label;
+} sl_link_DrawingControlPoint;
+
+typedef struct _sl_link_DrawingTransform {
+    double theta_deg;
+    double tx_m;
+    double ty_m;
+    double scale;
+    double rms_m;
+    pb_callback_t control_points;
+    bool scale_locked;
+    double measured_scale;
+} sl_link_DrawingTransform;
+
+typedef struct _sl_link_DrawingMapBinding {
+    uint32_t width;
+    uint32_t height;
+    double resolution;
+    double origin_x;
+    double origin_y;
+    double heading_deg;
+    pb_callback_t frame_id;
+    pb_callback_t map_revision;
+} sl_link_DrawingMapBinding;
+
+typedef struct _sl_link_DrawingObstacleLayerInfo {
+    pb_callback_t layer_id;
+    uint32_t version;
+    sl_link_DrawingLayerStatus status;
+    pb_callback_t stale_reason;
+    pb_callback_t source_file;
+    pb_callback_t source_sha256;
+    bool has_transform;
+    sl_link_DrawingTransform transform;
+    uint64_t published_at_ms;
+    bool has_binding;
+    sl_link_DrawingMapBinding binding;
+} sl_link_DrawingObstacleLayerInfo;
+
+typedef struct _sl_link_MapRegionPointResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    pb_callback_t map_id;
+    uint32_t map_version;
+    pb_callback_t work_regions;
+    pb_callback_t obstacle_regions;
+    pb_callback_t erase_regions;
+    bool crop_region_available;
+    bool has_crop_region;
+    sl_link_PolygonRegion crop_region;
+    bool has_drawing_layer;
+    sl_link_DrawingObstacleLayerInfo drawing_layer;
+} sl_link_MapRegionPointResponse;
+
+typedef struct _sl_link_DrawingLayerPayload {
+    bool has_info;
+    sl_link_DrawingObstacleLayerInfo info;
+    pb_callback_t foundations;
+    /* Empty selection alone must never remove a previously published layer. */
+    bool remove_layer;
+} sl_link_DrawingLayerPayload;
+
+typedef struct _sl_link_DrawingDraftRequest {
+    pb_callback_t request_id;
+    pb_callback_t map_id;
+    sl_link_DrawingDraftOperation operation;
+    pb_callback_t draft_id;
+    uint32_t draft_version;
+    /* Upload serializes DrawingLayerPayload then splits it into <=48KiB chunks. */
+    pb_callback_t data;
+    uint32_t chunk_index;
+    uint32_t total_chunks;
+    pb_callback_t payload_sha256;
+    uint32_t expected_layer_version;
+} sl_link_DrawingDraftRequest;
+
+typedef struct _sl_link_DrawingCheckItem {
+    pb_callback_t level;
+    pb_callback_t code;
+    pb_callback_t region_id;
+    pb_callback_t message;
+    bool has_position;
+    sl_link_PolygonPoint position;
+} sl_link_DrawingCheckItem;
+
+typedef struct _sl_link_DrawingDraftResponse {
+    sl_link_ResultCode result;
+    pb_callback_t message;
+    pb_callback_t request_id;
+    pb_callback_t draft_id;
+    uint32_t draft_version;
+    bool complete;
+    pb_callback_t checks;
+    uint32_t feature_version;
+    uint32_t max_chunk_bytes;
+    bool has_layer;
+    sl_link_DrawingObstacleLayerInfo layer;
+} sl_link_DrawingDraftResponse;
+
 
 /* Extensions */
 /* Extension field sl_link_unit was skipped because only "optional"
@@ -1393,8 +1530,8 @@ extern "C" {
 
 /* Helper constants for enums */
 #define _sl_link_MessageId_MIN sl_link_MessageId_MSG_ID_UNKNOWN
-#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE
-#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE+1))
+#define _sl_link_MessageId_MAX sl_link_MessageId_MSG_ID_DRAWING_DRAFT_RESPONSE
+#define _sl_link_MessageId_ARRAYSIZE ((sl_link_MessageId)(sl_link_MessageId_MSG_ID_DRAWING_DRAFT_RESPONSE+1))
 
 #define _sl_link_DeviceId_MIN sl_link_DeviceId_DEVICE_RESERVED
 #define _sl_link_DeviceId_MAX sl_link_DeviceId_DEVICE_BROADCAST
@@ -1476,11 +1613,24 @@ extern "C" {
 #define _sl_link_ChannelSessionAction_MAX sl_link_ChannelSessionAction_CHANNEL_SESSION_RECOVER
 #define _sl_link_ChannelSessionAction_ARRAYSIZE ((sl_link_ChannelSessionAction)(sl_link_ChannelSessionAction_CHANNEL_SESSION_RECOVER+1))
 
+#define _sl_link_DrawingObstacleAction_MIN sl_link_DrawingObstacleAction_DRAWING_AVOID
+#define _sl_link_DrawingObstacleAction_MAX sl_link_DrawingObstacleAction_DRAWING_IGNORE
+#define _sl_link_DrawingObstacleAction_ARRAYSIZE ((sl_link_DrawingObstacleAction)(sl_link_DrawingObstacleAction_DRAWING_IGNORE+1))
+
+#define _sl_link_DrawingLayerStatus_MIN sl_link_DrawingLayerStatus_DRAWING_NONE
+#define _sl_link_DrawingLayerStatus_MAX sl_link_DrawingLayerStatus_DRAWING_STALE
+#define _sl_link_DrawingLayerStatus_ARRAYSIZE ((sl_link_DrawingLayerStatus)(sl_link_DrawingLayerStatus_DRAWING_STALE+1))
+
+#define _sl_link_DrawingDraftOperation_MIN sl_link_DrawingDraftOperation_DRAWING_CAPABILITIES
+#define _sl_link_DrawingDraftOperation_MAX sl_link_DrawingDraftOperation_DRAWING_DISCARD
+#define _sl_link_DrawingDraftOperation_ARRAYSIZE ((sl_link_DrawingDraftOperation)(sl_link_DrawingDraftOperation_DRAWING_DISCARD+1))
+
 
 #define sl_link_WifiStatusReport_result_ENUMTYPE sl_link_WifiResult
 
 
 #define sl_link_PolygonRegion_region_type_ENUMTYPE sl_link_RegionType
+#define sl_link_PolygonRegion_drawing_action_ENUMTYPE sl_link_DrawingObstacleAction
 
 #define sl_link_ChassisSettings_work_mode_ENUMTYPE sl_link_WorkMode
 
@@ -1562,6 +1712,7 @@ extern "C" {
 #define sl_link_MapAlignmentResponse_result_ENUMTYPE sl_link_ResultCode
 
 
+#define sl_link_MapCatalogItem_drawing_layer_status_ENUMTYPE sl_link_DrawingLayerStatus
 
 #define sl_link_MapCatalogResponse_result_ENUMTYPE sl_link_ResultCode
 
@@ -1631,11 +1782,22 @@ extern "C" {
 #define sl_link_ControlCommandResponse_result_ENUMTYPE sl_link_ResultCode
 
 
+
+
+#define sl_link_DrawingObstacleLayerInfo_status_ENUMTYPE sl_link_DrawingLayerStatus
+
+
+#define sl_link_DrawingDraftRequest_operation_ENUMTYPE sl_link_DrawingDraftOperation
+
+
+#define sl_link_DrawingDraftResponse_result_ENUMTYPE sl_link_ResultCode
+
+
 /* Initializer values for message structs */
 #define sl_link_WifiConfig_init_default          {{{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_WifiStatusReport_init_default    {_sl_link_WifiResult_MIN, {{NULL}, NULL}}
 #define sl_link_PolygonPoint_init_default        {0, 0}
-#define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}, false, sl_link_MapProcessSettings_init_default}
+#define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}, false, sl_link_MapProcessSettings_init_default, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0, _sl_link_DrawingObstacleAction_MIN, 0}
 #define sl_link_ChassisSettings_init_default     {0, 0, 0, _sl_link_WorkMode_MIN, 0}
 #define sl_link_MapProcessSettings_init_default  {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
 #define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
@@ -1655,27 +1817,27 @@ extern "C" {
 #define sl_link_MapChunk_init_default            {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, 0, 0}
 #define sl_link_PathPoint2D_init_default         {0, 0, {{NULL}, NULL}}
 #define sl_link_RegionRepeatItem_init_default    {{{NULL}, NULL}, 0}
-#define sl_link_TaskConfig_init_default          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_TaskConfig_init_default          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
 #define sl_link_TaskConfigResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_default         {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, false, 0, false, 0}
 #define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_default    {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default}
-#define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0}
 #define sl_link_MapPreviewRequest_init_default   {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapRegionPointRequest_init_default {{{NULL}, NULL}}
 #define sl_link_WorkRegionPointInfo_init_default {false, sl_link_PolygonRegion_init_default, 0, false, sl_link_Pose2D_init_default, 0, false, sl_link_Pose2D_init_default}
-#define sl_link_MapRegionPointResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_default}
+#define sl_link_MapRegionPointResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_default, false, sl_link_DrawingObstacleLayerInfo_init_default}
 #define sl_link_MapEditCommand_init_default      {{{NULL}, NULL}, _sl_link_MapEditOperation_MIN, {{NULL}, NULL}, false, sl_link_PolygonRegion_init_default, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, _sl_link_RegionType_MIN, 0, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}}
 #define sl_link_MapEditResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapEditStatusReport_init_default {0, 0, {{NULL}, NULL}}
 #define sl_link_VideoStreamInfoRequest_init_default {0}
 #define sl_link_VideoStreamInfoResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
-#define sl_link_PathPlanRequest_init_default     {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_PathPlanResponse_init_default    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0}
+#define sl_link_PathPlanRequest_init_default     {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_PathPlanResponse_init_default    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, 0}
 #define sl_link_MapSyncRequest_init_default      {_sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapSyncResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapImportToRadarRequest_init_default {{{NULL}, NULL}}
@@ -1685,12 +1847,12 @@ extern "C" {
 #define sl_link_MapAlignmentRequest_init_default {{{NULL}, NULL}, 0}
 #define sl_link_MapAlignmentResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapCatalogRequest_init_default   {0}
-#define sl_link_MapCatalogItem_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_MapCatalogItem_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_DrawingLayerStatus_MIN, 0}
 #define sl_link_MapCatalogResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapDeleteRequest_init_default    {{{NULL}, NULL}}
 #define sl_link_MapDeleteResponse_init_default   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
-#define sl_link_MapSaveRequest_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
-#define sl_link_MapSaveResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {"", "", "", "", "", "", "", ""}}
+#define sl_link_MapSaveRequest_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
+#define sl_link_MapSaveResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {"", "", "", "", "", "", "", ""}, {{NULL}, NULL}, 0}
 #define sl_link_MapMetricsRequest_init_default   {{{NULL}, NULL}}
 #define sl_link_RegionMetricsItem_init_default   {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_MapMetricsResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1729,10 +1891,18 @@ extern "C" {
 #define sl_link_ManualDriveControl_init_default  {_sl_link_ManualMotionCommand_MIN, 0, 0, 0, 0, 0}
 #define sl_link_ControlCommand_init_default      {0, {sl_link_DiscLiftControl_init_default}}
 #define sl_link_ControlCommandResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ControlCommand_init_default}
+#define sl_link_DrawingControlPoint_init_default {0, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_DrawingTransform_init_default    {0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0}
+#define sl_link_DrawingMapBinding_init_default   {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_DrawingObstacleLayerInfo_init_default {{{NULL}, NULL}, 0, _sl_link_DrawingLayerStatus_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_DrawingTransform_init_default, 0, false, sl_link_DrawingMapBinding_init_default}
+#define sl_link_DrawingLayerPayload_init_default {false, sl_link_DrawingObstacleLayerInfo_init_default, {{NULL}, NULL}, 0}
+#define sl_link_DrawingDraftRequest_init_default {{{NULL}, NULL}, {{NULL}, NULL}, _sl_link_DrawingDraftOperation_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, 0}
+#define sl_link_DrawingCheckItem_init_default    {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_PolygonPoint_init_default}
+#define sl_link_DrawingDraftResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, 0, 0, false, sl_link_DrawingObstacleLayerInfo_init_default}
 #define sl_link_WifiConfig_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_WifiStatusReport_init_zero       {_sl_link_WifiResult_MIN, {{NULL}, NULL}}
 #define sl_link_PolygonPoint_init_zero           {0, 0}
-#define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}, false, sl_link_MapProcessSettings_init_zero}
+#define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}, false, sl_link_MapProcessSettings_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0, _sl_link_DrawingObstacleAction_MIN, 0}
 #define sl_link_ChassisSettings_init_zero        {0, 0, 0, _sl_link_WorkMode_MIN, 0}
 #define sl_link_MapProcessSettings_init_zero     {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
 #define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
@@ -1752,27 +1922,27 @@ extern "C" {
 #define sl_link_MapChunk_init_zero               {0, 0, _sl_link_MapEncoding_MIN, 0, 0, 0, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, 0, 0}
 #define sl_link_PathPoint2D_init_zero            {0, 0, {{NULL}, NULL}}
 #define sl_link_RegionRepeatItem_init_zero       {{{NULL}, NULL}, 0}
-#define sl_link_TaskConfig_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_TaskConfig_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
 #define sl_link_TaskConfigResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskCommand_init_zero            {{{NULL}, NULL}, _sl_link_TaskCommandType_MIN}
 #define sl_link_TaskCommandResponse_init_zero    {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, false, 0, false, 0}
 #define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_zero       {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero}
-#define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0}
 #define sl_link_MapPreviewRequest_init_zero      {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapRegionPointRequest_init_zero  {{{NULL}, NULL}}
 #define sl_link_WorkRegionPointInfo_init_zero    {false, sl_link_PolygonRegion_init_zero, 0, false, sl_link_Pose2D_init_zero, 0, false, sl_link_Pose2D_init_zero}
-#define sl_link_MapRegionPointResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_zero}
+#define sl_link_MapRegionPointResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_zero, false, sl_link_DrawingObstacleLayerInfo_init_zero}
 #define sl_link_MapEditCommand_init_zero         {{{NULL}, NULL}, _sl_link_MapEditOperation_MIN, {{NULL}, NULL}, false, sl_link_PolygonRegion_init_zero, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, _sl_link_RegionType_MIN, 0, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}}
 #define sl_link_MapEditResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapEditStatusReport_init_zero    {0, 0, {{NULL}, NULL}}
 #define sl_link_VideoStreamInfoRequest_init_zero {0}
 #define sl_link_VideoStreamInfoResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
-#define sl_link_PathPlanRequest_init_zero        {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
-#define sl_link_PathPlanResponse_init_zero       {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0}
+#define sl_link_PathPlanRequest_init_zero        {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define sl_link_PathPlanResponse_init_zero       {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, 0}
 #define sl_link_MapSyncRequest_init_zero         {_sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapSyncResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, _sl_link_MapSyncOperation_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapImportToRadarRequest_init_zero {{{NULL}, NULL}}
@@ -1782,12 +1952,12 @@ extern "C" {
 #define sl_link_MapAlignmentRequest_init_zero    {{{NULL}, NULL}, 0}
 #define sl_link_MapAlignmentResponse_init_zero   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
 #define sl_link_MapCatalogRequest_init_zero      {0}
-#define sl_link_MapCatalogItem_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_MapCatalogItem_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_DrawingLayerStatus_MIN, 0}
 #define sl_link_MapCatalogResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapDeleteRequest_init_zero       {{{NULL}, NULL}}
 #define sl_link_MapDeleteResponse_init_zero      {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
-#define sl_link_MapSaveRequest_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0}
-#define sl_link_MapSaveResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {"", "", "", "", "", "", "", ""}}
+#define sl_link_MapSaveRequest_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
+#define sl_link_MapSaveResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, {"", "", "", "", "", "", "", ""}, {{NULL}, NULL}, 0}
 #define sl_link_MapMetricsRequest_init_zero      {{{NULL}, NULL}}
 #define sl_link_RegionMetricsItem_init_zero      {{{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0}
 #define sl_link_MapMetricsResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -1826,6 +1996,14 @@ extern "C" {
 #define sl_link_ManualDriveControl_init_zero     {_sl_link_ManualMotionCommand_MIN, 0, 0, 0, 0, 0}
 #define sl_link_ControlCommand_init_zero         {0, {sl_link_DiscLiftControl_init_zero}}
 #define sl_link_ControlCommandResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ControlCommand_init_zero}
+#define sl_link_DrawingControlPoint_init_zero    {0, 0, 0, 0, 0, {{NULL}, NULL}}
+#define sl_link_DrawingTransform_init_zero       {0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0}
+#define sl_link_DrawingMapBinding_init_zero      {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_DrawingObstacleLayerInfo_init_zero {{{NULL}, NULL}, 0, _sl_link_DrawingLayerStatus_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_DrawingTransform_init_zero, 0, false, sl_link_DrawingMapBinding_init_zero}
+#define sl_link_DrawingLayerPayload_init_zero    {false, sl_link_DrawingObstacleLayerInfo_init_zero, {{NULL}, NULL}, 0}
+#define sl_link_DrawingDraftRequest_init_zero    {{{NULL}, NULL}, {{NULL}, NULL}, _sl_link_DrawingDraftOperation_MIN, {{NULL}, NULL}, 0, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, 0}
+#define sl_link_DrawingCheckItem_init_zero       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, false, sl_link_PolygonPoint_init_zero}
+#define sl_link_DrawingDraftResponse_init_zero   {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, 0, 0, false, sl_link_DrawingObstacleLayerInfo_init_zero}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define sl_link_WifiConfig_ssid_tag              1
@@ -1855,6 +2033,13 @@ extern "C" {
 #define sl_link_PolygonRegion_region_type_tag    8
 #define sl_link_PolygonRegion_global_direction_tag 9
 #define sl_link_PolygonRegion_process_tag        10
+#define sl_link_PolygonRegion_subtype_tag        11
+#define sl_link_PolygonRegion_source_tag         12
+#define sl_link_PolygonRegion_inflation_m_tag    13
+#define sl_link_PolygonRegion_drawing_ref_tag    14
+#define sl_link_PolygonRegion_layer_version_tag  15
+#define sl_link_PolygonRegion_drawing_action_tag 16
+#define sl_link_PolygonRegion_geometry_error_m_tag 17
 #define sl_link_MapSettings_vehicle_width_tag    1
 #define sl_link_MapSettings_vehicle_length_tag   2
 #define sl_link_MapSettings_default_path_spacing_tag 3
@@ -2063,6 +2248,8 @@ extern "C" {
 #define sl_link_TaskConfig_map_id_tag            8
 #define sl_link_TaskConfig_selected_work_region_ids_tag 9
 #define sl_link_TaskConfig_region_repeats_tag    10
+#define sl_link_TaskConfig_skip_stale_drawing_layer_tag 11
+#define sl_link_TaskConfig_expected_drawing_layer_version_tag 12
 #define sl_link_TaskConfigResponse_result_tag    1
 #define sl_link_TaskConfigResponse_message_tag   2
 #define sl_link_TaskConfigResponse_task_id_tag   3
@@ -2107,6 +2294,8 @@ extern "C" {
 #define sl_link_PathPointPlanRequest_end_pose_tag 6
 #define sl_link_PathPointPlanRequest_global_direction_tag 7
 #define sl_link_PathPointPlanRequest_map_id_tag  8
+#define sl_link_PathPointPlanRequest_drawing_draft_id_tag 9
+#define sl_link_PathPointPlanRequest_drawing_draft_version_tag 10
 #define sl_link_PathPointPlanResponse_task_id_tag 1
 #define sl_link_PathPointPlanResponse_chunk_index_tag 2
 #define sl_link_PathPointPlanResponse_total_chunks_tag 3
@@ -2123,6 +2312,8 @@ extern "C" {
 #define sl_link_PathPointPlanResponse_total_work_area_m2_tag 14
 #define sl_link_PathPointPlanResponse_estimated_time_s_tag 15
 #define sl_link_PathPointPlanResponse_frame_id_tag 16
+#define sl_link_PathPointPlanResponse_drawing_layer_version_tag 17
+#define sl_link_PathPointPlanResponse_drawing_draft_version_tag 18
 #define sl_link_MapPreviewRequest_max_edge_tag   1
 #define sl_link_MapPreviewRequest_image_format_tag 2
 #define sl_link_MapPreviewRequest_include_overlay_tag 3
@@ -2151,15 +2342,6 @@ extern "C" {
 #define sl_link_WorkRegionPointInfo_start_pose_tag 3
 #define sl_link_WorkRegionPointInfo_end_pose_available_tag 4
 #define sl_link_WorkRegionPointInfo_end_pose_tag 5
-#define sl_link_MapRegionPointResponse_result_tag 1
-#define sl_link_MapRegionPointResponse_message_tag 2
-#define sl_link_MapRegionPointResponse_map_id_tag 3
-#define sl_link_MapRegionPointResponse_map_version_tag 4
-#define sl_link_MapRegionPointResponse_work_regions_tag 5
-#define sl_link_MapRegionPointResponse_obstacle_regions_tag 6
-#define sl_link_MapRegionPointResponse_erase_regions_tag 7
-#define sl_link_MapRegionPointResponse_crop_region_available_tag 8
-#define sl_link_MapRegionPointResponse_crop_region_tag 9
 #define sl_link_MapEditCommand_edit_id_tag       1
 #define sl_link_MapEditCommand_operation_tag     2
 #define sl_link_MapEditCommand_region_name_tag   3
@@ -2198,6 +2380,8 @@ extern "C" {
 #define sl_link_PathPlanRequest_end_pose_tag     7
 #define sl_link_PathPlanRequest_global_direction_tag 8
 #define sl_link_PathPlanRequest_map_id_tag       9
+#define sl_link_PathPlanRequest_drawing_draft_id_tag 10
+#define sl_link_PathPlanRequest_drawing_draft_version_tag 11
 #define sl_link_PathPlanResponse_result_tag      1
 #define sl_link_PathPlanResponse_message_tag     2
 #define sl_link_PathPlanResponse_request_id_tag  3
@@ -2223,6 +2407,8 @@ extern "C" {
 #define sl_link_PathPlanResponse_alignment_yaw_deg_tag 23
 #define sl_link_PathPlanResponse_app_rotation_deg_tag 24
 #define sl_link_PathPlanResponse_rotation_alignment_delta_deg_tag 25
+#define sl_link_PathPlanResponse_drawing_layer_version_tag 26
+#define sl_link_PathPlanResponse_drawing_draft_version_tag 27
 #define sl_link_MapSyncRequest_operation_tag     1
 #define sl_link_MapSyncRequest_map_id_tag        2
 #define sl_link_MapSyncRequest_update_navigation_map_tag 3
@@ -2277,6 +2463,8 @@ extern "C" {
 #define sl_link_MapCatalogItem_thumbnail_image_b64_tag 10
 #define sl_link_MapCatalogItem_created_at_tag    11
 #define sl_link_MapCatalogItem_map_revision_tag  12
+#define sl_link_MapCatalogItem_drawing_layer_status_tag 13
+#define sl_link_MapCatalogItem_drawing_layer_version_tag 14
 #define sl_link_MapCatalogResponse_result_tag    1
 #define sl_link_MapCatalogResponse_message_tag   2
 #define sl_link_MapCatalogResponse_total_count_tag 3
@@ -2294,6 +2482,9 @@ extern "C" {
 #define sl_link_MapSaveRequest_map_id_tag        2
 #define sl_link_MapSaveRequest_has_rotation_deg_tag 3
 #define sl_link_MapSaveRequest_rotation_deg_tag  4
+#define sl_link_MapSaveRequest_drawing_draft_id_tag 5
+#define sl_link_MapSaveRequest_drawing_draft_version_tag 6
+#define sl_link_MapSaveRequest_request_id_tag    7
 #define sl_link_MapSaveResponse_result_tag       1
 #define sl_link_MapSaveResponse_message_tag      2
 #define sl_link_MapSaveResponse_map_id_tag       3
@@ -2309,6 +2500,8 @@ extern "C" {
 #define sl_link_MapSaveResponse_mapping_stopped_tag 13
 #define sl_link_MapSaveResponse_localization_started_tag 14
 #define sl_link_MapSaveResponse_residual_nodes_tag 15
+#define sl_link_MapSaveResponse_request_id_tag   16
+#define sl_link_MapSaveResponse_drawing_layer_version_tag 17
 #define sl_link_MapMetricsRequest_map_id_tag     1
 #define sl_link_RegionMetricsItem_region_id_tag  1
 #define sl_link_RegionMetricsItem_region_name_tag 2
@@ -2521,6 +2714,75 @@ extern "C" {
 #define sl_link_ControlCommandResponse_result_tag 1
 #define sl_link_ControlCommandResponse_message_tag 2
 #define sl_link_ControlCommandResponse_applied_command_tag 3
+#define sl_link_DrawingControlPoint_drawing_x_mm_tag 1
+#define sl_link_DrawingControlPoint_drawing_y_mm_tag 2
+#define sl_link_DrawingControlPoint_map_x_m_tag  3
+#define sl_link_DrawingControlPoint_map_y_m_tag  4
+#define sl_link_DrawingControlPoint_residual_m_tag 5
+#define sl_link_DrawingControlPoint_label_tag    6
+#define sl_link_DrawingTransform_theta_deg_tag   1
+#define sl_link_DrawingTransform_tx_m_tag        2
+#define sl_link_DrawingTransform_ty_m_tag        3
+#define sl_link_DrawingTransform_scale_tag       4
+#define sl_link_DrawingTransform_rms_m_tag       5
+#define sl_link_DrawingTransform_control_points_tag 6
+#define sl_link_DrawingTransform_scale_locked_tag 7
+#define sl_link_DrawingTransform_measured_scale_tag 8
+#define sl_link_DrawingMapBinding_width_tag      1
+#define sl_link_DrawingMapBinding_height_tag     2
+#define sl_link_DrawingMapBinding_resolution_tag 3
+#define sl_link_DrawingMapBinding_origin_x_tag   4
+#define sl_link_DrawingMapBinding_origin_y_tag   5
+#define sl_link_DrawingMapBinding_heading_deg_tag 6
+#define sl_link_DrawingMapBinding_frame_id_tag   7
+#define sl_link_DrawingMapBinding_map_revision_tag 8
+#define sl_link_DrawingObstacleLayerInfo_layer_id_tag 1
+#define sl_link_DrawingObstacleLayerInfo_version_tag 2
+#define sl_link_DrawingObstacleLayerInfo_status_tag 3
+#define sl_link_DrawingObstacleLayerInfo_stale_reason_tag 4
+#define sl_link_DrawingObstacleLayerInfo_source_file_tag 5
+#define sl_link_DrawingObstacleLayerInfo_source_sha256_tag 6
+#define sl_link_DrawingObstacleLayerInfo_transform_tag 7
+#define sl_link_DrawingObstacleLayerInfo_published_at_ms_tag 8
+#define sl_link_DrawingObstacleLayerInfo_binding_tag 9
+#define sl_link_MapRegionPointResponse_result_tag 1
+#define sl_link_MapRegionPointResponse_message_tag 2
+#define sl_link_MapRegionPointResponse_map_id_tag 3
+#define sl_link_MapRegionPointResponse_map_version_tag 4
+#define sl_link_MapRegionPointResponse_work_regions_tag 5
+#define sl_link_MapRegionPointResponse_obstacle_regions_tag 6
+#define sl_link_MapRegionPointResponse_erase_regions_tag 7
+#define sl_link_MapRegionPointResponse_crop_region_available_tag 8
+#define sl_link_MapRegionPointResponse_crop_region_tag 9
+#define sl_link_MapRegionPointResponse_drawing_layer_tag 10
+#define sl_link_DrawingLayerPayload_info_tag     1
+#define sl_link_DrawingLayerPayload_foundations_tag 2
+#define sl_link_DrawingLayerPayload_remove_layer_tag 3
+#define sl_link_DrawingDraftRequest_request_id_tag 1
+#define sl_link_DrawingDraftRequest_map_id_tag   2
+#define sl_link_DrawingDraftRequest_operation_tag 3
+#define sl_link_DrawingDraftRequest_draft_id_tag 4
+#define sl_link_DrawingDraftRequest_draft_version_tag 5
+#define sl_link_DrawingDraftRequest_data_tag     6
+#define sl_link_DrawingDraftRequest_chunk_index_tag 7
+#define sl_link_DrawingDraftRequest_total_chunks_tag 8
+#define sl_link_DrawingDraftRequest_payload_sha256_tag 9
+#define sl_link_DrawingDraftRequest_expected_layer_version_tag 10
+#define sl_link_DrawingCheckItem_level_tag       1
+#define sl_link_DrawingCheckItem_code_tag        2
+#define sl_link_DrawingCheckItem_region_id_tag   3
+#define sl_link_DrawingCheckItem_message_tag     4
+#define sl_link_DrawingCheckItem_position_tag    5
+#define sl_link_DrawingDraftResponse_result_tag  1
+#define sl_link_DrawingDraftResponse_message_tag 2
+#define sl_link_DrawingDraftResponse_request_id_tag 3
+#define sl_link_DrawingDraftResponse_draft_id_tag 4
+#define sl_link_DrawingDraftResponse_draft_version_tag 5
+#define sl_link_DrawingDraftResponse_complete_tag 6
+#define sl_link_DrawingDraftResponse_checks_tag  7
+#define sl_link_DrawingDraftResponse_feature_version_tag 8
+#define sl_link_DrawingDraftResponse_max_chunk_bytes_tag 9
+#define sl_link_DrawingDraftResponse_layer_tag   10
 #define sl_link_unit_tag                         50001
 #define sl_link_scale_tag                        50002
 
@@ -2553,7 +2815,14 @@ X(a, STATIC,   SINGULAR, UINT32,   color_argb,        6) \
 X(a, STATIC,   SINGULAR, BOOL,     closed,            7) \
 X(a, STATIC,   SINGULAR, UENUM,    region_type,       8) \
 X(a, CALLBACK, SINGULAR, STRING,   global_direction,   9) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  process,          10)
+X(a, STATIC,   OPTIONAL, MESSAGE,  process,          10) \
+X(a, CALLBACK, SINGULAR, STRING,   subtype,          11) \
+X(a, CALLBACK, SINGULAR, STRING,   source,           12) \
+X(a, STATIC,   SINGULAR, FLOAT,    inflation_m,      13) \
+X(a, CALLBACK, SINGULAR, STRING,   drawing_ref,      14) \
+X(a, STATIC,   SINGULAR, UINT32,   layer_version,    15) \
+X(a, STATIC,   SINGULAR, UENUM,    drawing_action,   16) \
+X(a, STATIC,   SINGULAR, FLOAT,    geometry_error_m,  17)
 #define sl_link_PolygonRegion_CALLBACK pb_default_field_callback
 #define sl_link_PolygonRegion_DEFAULT NULL
 #define sl_link_PolygonRegion_points_MSGTYPE sl_link_PolygonPoint
@@ -2873,7 +3142,9 @@ X(a, STATIC,   SINGULAR, FLOAT,    overlap_ratio,     6) \
 X(a, STATIC,   SINGULAR, FLOAT,    inflation_radius,   7) \
 X(a, CALLBACK, SINGULAR, STRING,   map_id,            8) \
 X(a, CALLBACK, REPEATED, STRING,   selected_work_region_ids,   9) \
-X(a, CALLBACK, REPEATED, MESSAGE,  region_repeats,   10)
+X(a, CALLBACK, REPEATED, MESSAGE,  region_repeats,   10) \
+X(a, STATIC,   SINGULAR, BOOL,     skip_stale_drawing_layer,  11) \
+X(a, STATIC,   SINGULAR, UINT32,   expected_drawing_layer_version,  12)
 #define sl_link_TaskConfig_CALLBACK pb_default_field_callback
 #define sl_link_TaskConfig_DEFAULT NULL
 #define sl_link_TaskConfig_work_regions_MSGTYPE sl_link_PolygonRegion
@@ -2950,7 +3221,9 @@ X(a, STATIC,   SINGULAR, BOOL,     force_replan,      4) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  start_pose,        5) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  end_pose,          6) \
 X(a, CALLBACK, SINGULAR, STRING,   global_direction,   7) \
-X(a, CALLBACK, SINGULAR, STRING,   map_id,            8)
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            8) \
+X(a, CALLBACK, SINGULAR, STRING,   drawing_draft_id,   9) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_draft_version,  10)
 #define sl_link_PathPointPlanRequest_CALLBACK pb_default_field_callback
 #define sl_link_PathPointPlanRequest_DEFAULT NULL
 #define sl_link_PathPointPlanRequest_start_pose_MSGTYPE sl_link_Pose2D
@@ -2972,7 +3245,9 @@ X(a, STATIC,   SINGULAR, UINT32,   path_point_count,  12) \
 X(a, STATIC,   SINGULAR, FLOAT,    path_length_m,    13) \
 X(a, STATIC,   SINGULAR, FLOAT,    total_work_area_m2,  14) \
 X(a, STATIC,   SINGULAR, FLOAT,    estimated_time_s,  15) \
-X(a, CALLBACK, SINGULAR, STRING,   frame_id,         16)
+X(a, CALLBACK, SINGULAR, STRING,   frame_id,         16) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_layer_version,  17) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_draft_version,  18)
 #define sl_link_PathPointPlanResponse_CALLBACK pb_default_field_callback
 #define sl_link_PathPointPlanResponse_DEFAULT NULL
 
@@ -3034,13 +3309,15 @@ X(a, CALLBACK, REPEATED, MESSAGE,  work_regions,      5) \
 X(a, CALLBACK, REPEATED, MESSAGE,  obstacle_regions,   6) \
 X(a, CALLBACK, REPEATED, MESSAGE,  erase_regions,     7) \
 X(a, STATIC,   SINGULAR, BOOL,     crop_region_available,   8) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  crop_region,       9)
+X(a, STATIC,   OPTIONAL, MESSAGE,  crop_region,       9) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  drawing_layer,    10)
 #define sl_link_MapRegionPointResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapRegionPointResponse_DEFAULT NULL
 #define sl_link_MapRegionPointResponse_work_regions_MSGTYPE sl_link_WorkRegionPointInfo
 #define sl_link_MapRegionPointResponse_obstacle_regions_MSGTYPE sl_link_PolygonRegion
 #define sl_link_MapRegionPointResponse_erase_regions_MSGTYPE sl_link_PolygonRegion
 #define sl_link_MapRegionPointResponse_crop_region_MSGTYPE sl_link_PolygonRegion
+#define sl_link_MapRegionPointResponse_drawing_layer_MSGTYPE sl_link_DrawingObstacleLayerInfo
 
 #define sl_link_MapEditCommand_FIELDLIST(X, a) \
 X(a, CALLBACK, SINGULAR, STRING,   edit_id,           1) \
@@ -3104,7 +3381,9 @@ X(a, STATIC,   SINGULAR, UINT32,   max_chunk_size,    5) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  start_pose,        6) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  end_pose,          7) \
 X(a, CALLBACK, SINGULAR, STRING,   global_direction,   8) \
-X(a, CALLBACK, SINGULAR, STRING,   map_id,            9)
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            9) \
+X(a, CALLBACK, SINGULAR, STRING,   drawing_draft_id,  10) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_draft_version,  11)
 #define sl_link_PathPlanRequest_CALLBACK pb_default_field_callback
 #define sl_link_PathPlanRequest_DEFAULT NULL
 #define sl_link_PathPlanRequest_start_pose_MSGTYPE sl_link_Pose2D
@@ -3135,7 +3414,9 @@ X(a, STATIC,   SINGULAR, FLOAT,    estimated_time_s,  21) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  localization_covariance,  22) \
 X(a, STATIC,   SINGULAR, FLOAT,    alignment_yaw_deg,  23) \
 X(a, STATIC,   SINGULAR, FLOAT,    app_rotation_deg,  24) \
-X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  25)
+X(a, STATIC,   SINGULAR, FLOAT,    rotation_alignment_delta_deg,  25) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_layer_version,  26) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_draft_version,  27)
 #define sl_link_PathPlanResponse_CALLBACK pb_default_field_callback
 #define sl_link_PathPlanResponse_DEFAULT NULL
 #define sl_link_PathPlanResponse_origin_MSGTYPE sl_link_Pose2D
@@ -3232,7 +3513,9 @@ X(a, STATIC,   SINGULAR, UINT32,   thumbnail_width,   8) \
 X(a, STATIC,   SINGULAR, UINT32,   thumbnail_height,   9) \
 X(a, CALLBACK, SINGULAR, STRING,   thumbnail_image_b64,  10) \
 X(a, CALLBACK, SINGULAR, STRING,   created_at,       11) \
-X(a, CALLBACK, SINGULAR, STRING,   map_revision,     12)
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,     12) \
+X(a, STATIC,   SINGULAR, UENUM,    drawing_layer_status,  13) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_layer_version,  14)
 #define sl_link_MapCatalogItem_CALLBACK pb_default_field_callback
 #define sl_link_MapCatalogItem_DEFAULT NULL
 
@@ -3266,7 +3549,10 @@ X(a, STATIC,   SINGULAR, BOOL,     remote_delete_pending,   8)
 X(a, CALLBACK, SINGULAR, STRING,   map_name,          1) \
 X(a, CALLBACK, SINGULAR, STRING,   map_id,            2) \
 X(a, STATIC,   SINGULAR, BOOL,     has_rotation_deg,   3) \
-X(a, STATIC,   SINGULAR, FLOAT,    rotation_deg,      4)
+X(a, STATIC,   SINGULAR, FLOAT,    rotation_deg,      4) \
+X(a, CALLBACK, SINGULAR, STRING,   drawing_draft_id,   5) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_draft_version,   6) \
+X(a, CALLBACK, SINGULAR, STRING,   request_id,        7)
 #define sl_link_MapSaveRequest_CALLBACK pb_default_field_callback
 #define sl_link_MapSaveRequest_DEFAULT NULL
 
@@ -3285,7 +3571,9 @@ X(a, CALLBACK, SINGULAR, STRING,   map_revision,     11) \
 X(a, CALLBACK, SINGULAR, STRING,   lifecycle_state,  12) \
 X(a, STATIC,   SINGULAR, BOOL,     mapping_stopped,  13) \
 X(a, STATIC,   SINGULAR, BOOL,     localization_started,  14) \
-X(a, STATIC,   REPEATED, STRING,   residual_nodes,   15)
+X(a, STATIC,   REPEATED, STRING,   residual_nodes,   15) \
+X(a, CALLBACK, SINGULAR, STRING,   request_id,       16) \
+X(a, STATIC,   SINGULAR, UINT32,   drawing_layer_version,  17)
 #define sl_link_MapSaveResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapSaveResponse_DEFAULT NULL
 
@@ -3673,6 +3961,105 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  applied_command,   3)
 #define sl_link_ControlCommandResponse_DEFAULT NULL
 #define sl_link_ControlCommandResponse_applied_command_MSGTYPE sl_link_ControlCommand
 
+#define sl_link_DrawingControlPoint_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, DOUBLE,   drawing_x_mm,      1) \
+X(a, STATIC,   SINGULAR, DOUBLE,   drawing_y_mm,      2) \
+X(a, STATIC,   SINGULAR, DOUBLE,   map_x_m,           3) \
+X(a, STATIC,   SINGULAR, DOUBLE,   map_y_m,           4) \
+X(a, STATIC,   SINGULAR, DOUBLE,   residual_m,        5) \
+X(a, CALLBACK, SINGULAR, STRING,   label,             6)
+#define sl_link_DrawingControlPoint_CALLBACK pb_default_field_callback
+#define sl_link_DrawingControlPoint_DEFAULT NULL
+
+#define sl_link_DrawingTransform_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, DOUBLE,   theta_deg,         1) \
+X(a, STATIC,   SINGULAR, DOUBLE,   tx_m,              2) \
+X(a, STATIC,   SINGULAR, DOUBLE,   ty_m,              3) \
+X(a, STATIC,   SINGULAR, DOUBLE,   scale,             4) \
+X(a, STATIC,   SINGULAR, DOUBLE,   rms_m,             5) \
+X(a, CALLBACK, REPEATED, MESSAGE,  control_points,    6) \
+X(a, STATIC,   SINGULAR, BOOL,     scale_locked,      7) \
+X(a, STATIC,   SINGULAR, DOUBLE,   measured_scale,    8)
+#define sl_link_DrawingTransform_CALLBACK pb_default_field_callback
+#define sl_link_DrawingTransform_DEFAULT NULL
+#define sl_link_DrawingTransform_control_points_MSGTYPE sl_link_DrawingControlPoint
+
+#define sl_link_DrawingMapBinding_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   width,             1) \
+X(a, STATIC,   SINGULAR, UINT32,   height,            2) \
+X(a, STATIC,   SINGULAR, DOUBLE,   resolution,        3) \
+X(a, STATIC,   SINGULAR, DOUBLE,   origin_x,          4) \
+X(a, STATIC,   SINGULAR, DOUBLE,   origin_y,          5) \
+X(a, STATIC,   SINGULAR, DOUBLE,   heading_deg,       6) \
+X(a, CALLBACK, SINGULAR, STRING,   frame_id,          7) \
+X(a, CALLBACK, SINGULAR, STRING,   map_revision,      8)
+#define sl_link_DrawingMapBinding_CALLBACK pb_default_field_callback
+#define sl_link_DrawingMapBinding_DEFAULT NULL
+
+#define sl_link_DrawingObstacleLayerInfo_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   layer_id,          1) \
+X(a, STATIC,   SINGULAR, UINT32,   version,           2) \
+X(a, STATIC,   SINGULAR, UENUM,    status,            3) \
+X(a, CALLBACK, SINGULAR, STRING,   stale_reason,      4) \
+X(a, CALLBACK, SINGULAR, STRING,   source_file,       5) \
+X(a, CALLBACK, SINGULAR, STRING,   source_sha256,     6) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  transform,         7) \
+X(a, STATIC,   SINGULAR, UINT64,   published_at_ms,   8) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  binding,           9)
+#define sl_link_DrawingObstacleLayerInfo_CALLBACK pb_default_field_callback
+#define sl_link_DrawingObstacleLayerInfo_DEFAULT NULL
+#define sl_link_DrawingObstacleLayerInfo_transform_MSGTYPE sl_link_DrawingTransform
+#define sl_link_DrawingObstacleLayerInfo_binding_MSGTYPE sl_link_DrawingMapBinding
+
+#define sl_link_DrawingLayerPayload_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  info,              1) \
+X(a, CALLBACK, REPEATED, MESSAGE,  foundations,       2) \
+X(a, STATIC,   SINGULAR, BOOL,     remove_layer,      3)
+#define sl_link_DrawingLayerPayload_CALLBACK pb_default_field_callback
+#define sl_link_DrawingLayerPayload_DEFAULT NULL
+#define sl_link_DrawingLayerPayload_info_MSGTYPE sl_link_DrawingObstacleLayerInfo
+#define sl_link_DrawingLayerPayload_foundations_MSGTYPE sl_link_PolygonRegion
+
+#define sl_link_DrawingDraftRequest_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   request_id,        1) \
+X(a, CALLBACK, SINGULAR, STRING,   map_id,            2) \
+X(a, STATIC,   SINGULAR, UENUM,    operation,         3) \
+X(a, CALLBACK, SINGULAR, STRING,   draft_id,          4) \
+X(a, STATIC,   SINGULAR, UINT32,   draft_version,     5) \
+X(a, CALLBACK, SINGULAR, BYTES,    data,              6) \
+X(a, STATIC,   SINGULAR, UINT32,   chunk_index,       7) \
+X(a, STATIC,   SINGULAR, UINT32,   total_chunks,      8) \
+X(a, CALLBACK, SINGULAR, STRING,   payload_sha256,    9) \
+X(a, STATIC,   SINGULAR, UINT32,   expected_layer_version,  10)
+#define sl_link_DrawingDraftRequest_CALLBACK pb_default_field_callback
+#define sl_link_DrawingDraftRequest_DEFAULT NULL
+
+#define sl_link_DrawingCheckItem_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   level,             1) \
+X(a, CALLBACK, SINGULAR, STRING,   code,              2) \
+X(a, CALLBACK, SINGULAR, STRING,   region_id,         3) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  position,          5)
+#define sl_link_DrawingCheckItem_CALLBACK pb_default_field_callback
+#define sl_link_DrawingCheckItem_DEFAULT NULL
+#define sl_link_DrawingCheckItem_position_MSGTYPE sl_link_PolygonPoint
+
+#define sl_link_DrawingDraftResponse_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
+X(a, CALLBACK, SINGULAR, STRING,   message,           2) \
+X(a, CALLBACK, SINGULAR, STRING,   request_id,        3) \
+X(a, CALLBACK, SINGULAR, STRING,   draft_id,          4) \
+X(a, STATIC,   SINGULAR, UINT32,   draft_version,     5) \
+X(a, STATIC,   SINGULAR, BOOL,     complete,          6) \
+X(a, CALLBACK, REPEATED, MESSAGE,  checks,            7) \
+X(a, STATIC,   SINGULAR, UINT32,   feature_version,   8) \
+X(a, STATIC,   SINGULAR, UINT32,   max_chunk_bytes,   9) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  layer,            10)
+#define sl_link_DrawingDraftResponse_CALLBACK pb_default_field_callback
+#define sl_link_DrawingDraftResponse_DEFAULT NULL
+#define sl_link_DrawingDraftResponse_checks_MSGTYPE sl_link_DrawingCheckItem
+#define sl_link_DrawingDraftResponse_layer_MSGTYPE sl_link_DrawingObstacleLayerInfo
+
 extern const pb_msgdesc_t sl_link_WifiConfig_msg;
 extern const pb_msgdesc_t sl_link_WifiStatusReport_msg;
 extern const pb_msgdesc_t sl_link_PolygonPoint_msg;
@@ -3770,6 +4157,14 @@ extern const pb_msgdesc_t sl_link_EmergencyStopControl_msg;
 extern const pb_msgdesc_t sl_link_ManualDriveControl_msg;
 extern const pb_msgdesc_t sl_link_ControlCommand_msg;
 extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
+extern const pb_msgdesc_t sl_link_DrawingControlPoint_msg;
+extern const pb_msgdesc_t sl_link_DrawingTransform_msg;
+extern const pb_msgdesc_t sl_link_DrawingMapBinding_msg;
+extern const pb_msgdesc_t sl_link_DrawingObstacleLayerInfo_msg;
+extern const pb_msgdesc_t sl_link_DrawingLayerPayload_msg;
+extern const pb_msgdesc_t sl_link_DrawingDraftRequest_msg;
+extern const pb_msgdesc_t sl_link_DrawingCheckItem_msg;
+extern const pb_msgdesc_t sl_link_DrawingDraftResponse_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define sl_link_WifiConfig_fields &sl_link_WifiConfig_msg
@@ -3869,6 +4264,14 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_ManualDriveControl_fields &sl_link_ManualDriveControl_msg
 #define sl_link_ControlCommand_fields &sl_link_ControlCommand_msg
 #define sl_link_ControlCommandResponse_fields &sl_link_ControlCommandResponse_msg
+#define sl_link_DrawingControlPoint_fields &sl_link_DrawingControlPoint_msg
+#define sl_link_DrawingTransform_fields &sl_link_DrawingTransform_msg
+#define sl_link_DrawingMapBinding_fields &sl_link_DrawingMapBinding_msg
+#define sl_link_DrawingObstacleLayerInfo_fields &sl_link_DrawingObstacleLayerInfo_msg
+#define sl_link_DrawingLayerPayload_fields &sl_link_DrawingLayerPayload_msg
+#define sl_link_DrawingDraftRequest_fields &sl_link_DrawingDraftRequest_msg
+#define sl_link_DrawingCheckItem_fields &sl_link_DrawingCheckItem_msg
+#define sl_link_DrawingDraftResponse_fields &sl_link_DrawingDraftResponse_msg
 
 /* Maximum encoded size of messages (where known) */
 /* sl_link_WifiConfig_size depends on runtime parameters */
@@ -3944,6 +4347,14 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_ChannelSessionRequest_size depends on runtime parameters */
 /* sl_link_ChannelSessionResponse_size depends on runtime parameters */
 /* sl_link_ControlCommandResponse_size depends on runtime parameters */
+/* sl_link_DrawingControlPoint_size depends on runtime parameters */
+/* sl_link_DrawingTransform_size depends on runtime parameters */
+/* sl_link_DrawingMapBinding_size depends on runtime parameters */
+/* sl_link_DrawingObstacleLayerInfo_size depends on runtime parameters */
+/* sl_link_DrawingLayerPayload_size depends on runtime parameters */
+/* sl_link_DrawingDraftRequest_size depends on runtime parameters */
+/* sl_link_DrawingCheckItem_size depends on runtime parameters */
+/* sl_link_DrawingDraftResponse_size depends on runtime parameters */
 #define SL_LINK_SL_LINK_PB_H_MAX_SIZE            sl_link_RppSettings_size
 #define sl_link_CameraFrameRequest_size          8
 #define sl_link_ChassisPowerControl_size         2

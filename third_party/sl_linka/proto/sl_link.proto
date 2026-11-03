@@ -89,6 +89,8 @@ enum MessageId {
   MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE = 0x0537;
   MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST = 0x0538;
   MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 0x0539;
+  MSG_ID_DRAWING_DRAFT_REQUEST = 0x053A;
+  MSG_ID_DRAWING_DRAFT_RESPONSE = 0x053B;
 }
 
 enum DeviceId {
@@ -251,6 +253,13 @@ message PolygonRegion {
   string global_direction = 9;
   // Recipe belongs to this work region, not to the whole map.
   MapProcessSettings process = 10;
+  string subtype = 11;
+  string source = 12;
+  float inflation_m = 13;
+  string drawing_ref = 14;
+  uint32 layer_version = 15;
+  DrawingObstacleAction drawing_action = 16;
+  float geometry_error_m = 17;
 }
 
 message ChassisSettings {
@@ -572,6 +581,8 @@ message TaskConfig {
   string map_id = 8;
   repeated string selected_work_region_ids = 9;
   repeated RegionRepeatItem region_repeats = 10;
+  bool skip_stale_drawing_layer = 11;
+  uint32 expected_drawing_layer_version = 12;
 }
 
 message TaskConfigResponse {
@@ -644,6 +655,8 @@ message PathPointPlanRequest {
   string global_direction = 7;
   // Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
   string map_id = 8;
+  string drawing_draft_id = 9;
+  uint32 drawing_draft_version = 10;
 }
 
 message PathPointPlanResponse {
@@ -663,6 +676,8 @@ message PathPointPlanResponse {
   float total_work_area_m2 = 14 [(unit) = "m2", (scale) = 1];
   float estimated_time_s = 15 [(unit) = "s", (scale) = 1];
   string frame_id = 16;
+  uint32 drawing_layer_version = 17;
+  uint32 drawing_draft_version = 18;
 }
 
 message MapPreviewRequest {
@@ -719,6 +734,7 @@ message MapRegionPointResponse {
   repeated PolygonRegion erase_regions = 7;
   bool crop_region_available = 8;
   PolygonRegion crop_region = 9;
+  DrawingObstacleLayerInfo drawing_layer = 10;
 }
 
 message MapEditCommand {
@@ -777,6 +793,8 @@ message PathPlanRequest {
   string global_direction = 8;
   // Empty means realtime LIVE_MAP; non-empty means plan on saved map by map_id.
   string map_id = 9;
+  string drawing_draft_id = 10;
+  uint32 drawing_draft_version = 11;
 }
 
 message PathPlanResponse {
@@ -806,6 +824,8 @@ message PathPlanResponse {
   float alignment_yaw_deg = 23;
   float app_rotation_deg = 24;
   float rotation_alignment_delta_deg = 25;
+  uint32 drawing_layer_version = 26;
+  uint32 drawing_draft_version = 27;
 }
 
 message MapSyncRequest {
@@ -896,6 +916,8 @@ message MapCatalogItem {
   string thumbnail_image_b64 = 10;
   string created_at = 11;
   string map_revision = 12;
+  DrawingLayerStatus drawing_layer_status = 13;
+  uint32 drawing_layer_version = 14;
 }
 
 message MapCatalogResponse {
@@ -928,6 +950,9 @@ message MapSaveRequest {
   // Set has_rotation_deg=true when rotation_deg should override the saved value.
   bool has_rotation_deg = 3;
   float rotation_deg = 4;
+  string drawing_draft_id = 5;
+  uint32 drawing_draft_version = 6;
+  string request_id = 7;
 }
 
 message MapSaveResponse {
@@ -946,6 +971,8 @@ message MapSaveResponse {
   bool mapping_stopped = 13;
   bool localization_started = 14;
   repeated string residual_nodes = 15;
+  string request_id = 16;
+  uint32 drawing_layer_version = 17;
 }
 
 message MapMetricsRequest {
@@ -1312,4 +1339,98 @@ message ControlCommandResponse {
   ResultCode result = 1;
   string message = 2;
   ControlCommand applied_command = 3;
+}
+
+// Drawing polygons are persistent vector data, never map raster patches.
+enum DrawingObstacleAction {
+  DRAWING_AVOID = 0;
+  DRAWING_IGNORE = 1;
+}
+enum DrawingLayerStatus {
+  DRAWING_NONE = 0;
+  DRAWING_PUBLISHED = 1;
+  DRAWING_STALE = 2;
+}
+message DrawingControlPoint {
+  double drawing_x_mm = 1;
+  double drawing_y_mm = 2;
+  double map_x_m = 3;
+  double map_y_m = 4;
+  double residual_m = 5;
+  string label = 6;
+}
+message DrawingTransform {
+  double theta_deg = 1;
+  double tx_m = 2;
+  double ty_m = 3;
+  double scale = 4;
+  double rms_m = 5;
+  repeated DrawingControlPoint control_points = 6;
+  bool scale_locked = 7;
+  double measured_scale = 8;
+}
+message DrawingMapBinding {
+  uint32 width = 1;
+  uint32 height = 2;
+  double resolution = 3;
+  double origin_x = 4;
+  double origin_y = 5;
+  double heading_deg = 6;
+  string frame_id = 7;
+  string map_revision = 8;
+}
+message DrawingObstacleLayerInfo {
+  string layer_id = 1;
+  uint32 version = 2;
+  DrawingLayerStatus status = 3;
+  string stale_reason = 4;
+  string source_file = 5;
+  string source_sha256 = 6;
+  DrawingTransform transform = 7;
+  uint64 published_at_ms = 8;
+  DrawingMapBinding binding = 9;
+}
+message DrawingLayerPayload {
+  DrawingObstacleLayerInfo info = 1;
+  repeated PolygonRegion foundations = 2;
+  // Empty selection alone must never remove a previously published layer.
+  bool remove_layer = 3;
+}
+enum DrawingDraftOperation {
+  DRAWING_CAPABILITIES = 0;
+  DRAWING_UPLOAD = 1;
+  DRAWING_VALIDATE = 2;
+  DRAWING_DISCARD = 3;
+}
+message DrawingDraftRequest {
+  string request_id = 1;
+  string map_id = 2;
+  DrawingDraftOperation operation = 3;
+  string draft_id = 4;
+  uint32 draft_version = 5;
+  // Upload serializes DrawingLayerPayload then splits it into <=48KiB chunks.
+  bytes data = 6;
+  uint32 chunk_index = 7;
+  uint32 total_chunks = 8;
+  string payload_sha256 = 9;
+  uint32 expected_layer_version = 10;
+}
+message DrawingCheckItem {
+  string level = 1;
+  string code = 2;
+  string region_id = 3;
+  string message = 4;
+  PolygonPoint position = 5;
+}
+message DrawingDraftResponse {
+  ResultCode result = 1;
+  string message = 2;
+  string request_id = 3;
+  string draft_id = 4;
+  uint32 draft_version = 5;
+  bool complete = 6;
+  repeated DrawingCheckItem checks = 7;
+  uint32 feature_version = 8;
+  uint32 max_chunk_bytes = 9;
+  DrawingObstacleLayerInfo layer = 10;
 }

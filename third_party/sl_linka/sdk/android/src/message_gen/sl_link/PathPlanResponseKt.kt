@@ -480,6 +480,40 @@ public object PathPlanResponseKt {
     public fun clearRotationAlignmentDeltaDeg() {
       _builder.clearRotationAlignmentDeltaDeg()
     }
+
+    /**
+     * <code>uint32 drawing_layer_version = 26;</code>
+     */
+    public var drawingLayerVersion: kotlin.Int
+      @JvmName("getDrawingLayerVersion")
+      get() = _builder.getDrawingLayerVersion()
+      @JvmName("setDrawingLayerVersion")
+      set(value) {
+        _builder.setDrawingLayerVersion(value)
+      }
+    /**
+     * `uint32 drawing_layer_version = 26;`
+     */
+    public fun clearDrawingLayerVersion() {
+      _builder.clearDrawingLayerVersion()
+    }
+
+    /**
+     * <code>uint32 drawing_draft_version = 27;</code>
+     */
+    public var drawingDraftVersion: kotlin.Int
+      @JvmName("getDrawingDraftVersion")
+      get() = _builder.getDrawingDraftVersion()
+      @JvmName("setDrawingDraftVersion")
+      set(value) {
+        _builder.setDrawingDraftVersion(value)
+      }
+    /**
+     * `uint32 drawing_draft_version = 27;`
+     */
+    public fun clearDrawingDraftVersion() {
+      _builder.clearDrawingDraftVersion()
+    }
   }
 }
 public inline fun sl_link.SlLink.PathPlanResponse.copy(block: `sl_link`.PathPlanResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PathPlanResponse =

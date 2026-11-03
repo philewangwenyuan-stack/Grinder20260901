@@ -111,7 +111,7 @@ PB_BIND(sl_link_MapPreviewResponse, sl_link_MapPreviewResponse, AUTO)
 PB_BIND(sl_link_MapRegionPointRequest, sl_link_MapRegionPointRequest, AUTO)
 
 
-PB_BIND(sl_link_WorkRegionPointInfo, sl_link_WorkRegionPointInfo, AUTO)
+PB_BIND(sl_link_WorkRegionPointInfo, sl_link_WorkRegionPointInfo, 2)
 
 
 PB_BIND(sl_link_MapRegionPointResponse, sl_link_MapRegionPointResponse, 2)
@@ -295,3 +295,87 @@ PB_BIND(sl_link_ControlCommand, sl_link_ControlCommand, AUTO)
 
 
 PB_BIND(sl_link_ControlCommandResponse, sl_link_ControlCommandResponse, AUTO)
+
+
+PB_BIND(sl_link_DrawingControlPoint, sl_link_DrawingControlPoint, AUTO)
+
+
+PB_BIND(sl_link_DrawingTransform, sl_link_DrawingTransform, AUTO)
+
+
+PB_BIND(sl_link_DrawingMapBinding, sl_link_DrawingMapBinding, AUTO)
+
+
+PB_BIND(sl_link_DrawingObstacleLayerInfo, sl_link_DrawingObstacleLayerInfo, AUTO)
+
+
+PB_BIND(sl_link_DrawingLayerPayload, sl_link_DrawingLayerPayload, 2)
+
+
+PB_BIND(sl_link_DrawingDraftRequest, sl_link_DrawingDraftRequest, AUTO)
+
+
+PB_BIND(sl_link_DrawingCheckItem, sl_link_DrawingCheckItem, AUTO)
+
+
+PB_BIND(sl_link_DrawingDraftResponse, sl_link_DrawingDraftResponse, 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifndef PB_CONVERT_DOUBLE_FLOAT
+/* On some platforms (such as AVR), double is really float.
+ * To be able to encode/decode double on these platforms, you need.
+ * to define PB_CONVERT_DOUBLE_FLOAT in pb.h or compiler command line.
+ */
+PB_STATIC_ASSERT(sizeof(double) == 8, DOUBLE_MUST_BE_8_BYTES)
+#endif

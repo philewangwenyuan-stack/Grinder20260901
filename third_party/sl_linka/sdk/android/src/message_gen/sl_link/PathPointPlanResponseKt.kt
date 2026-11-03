@@ -305,6 +305,40 @@ public object PathPointPlanResponseKt {
     public fun clearFrameId() {
       _builder.clearFrameId()
     }
+
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     */
+    public var drawingLayerVersion: kotlin.Int
+      @JvmName("getDrawingLayerVersion")
+      get() = _builder.getDrawingLayerVersion()
+      @JvmName("setDrawingLayerVersion")
+      set(value) {
+        _builder.setDrawingLayerVersion(value)
+      }
+    /**
+     * `uint32 drawing_layer_version = 17;`
+     */
+    public fun clearDrawingLayerVersion() {
+      _builder.clearDrawingLayerVersion()
+    }
+
+    /**
+     * <code>uint32 drawing_draft_version = 18;</code>
+     */
+    public var drawingDraftVersion: kotlin.Int
+      @JvmName("getDrawingDraftVersion")
+      get() = _builder.getDrawingDraftVersion()
+      @JvmName("setDrawingDraftVersion")
+      set(value) {
+        _builder.setDrawingDraftVersion(value)
+      }
+    /**
+     * `uint32 drawing_draft_version = 18;`
+     */
+    public fun clearDrawingDraftVersion() {
+      _builder.clearDrawingDraftVersion()
+    }
   }
 }
 public inline fun sl_link.SlLink.PathPointPlanResponse.copy(block: `sl_link`.PathPointPlanResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PathPointPlanResponse =

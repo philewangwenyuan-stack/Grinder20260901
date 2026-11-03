@@ -411,6 +411,40 @@ public object TaskConfigKt {
     public fun com.google.protobuf.kotlin.DslList<sl_link.SlLink.RegionRepeatItem, RegionRepeatsProxy>.clear() {
       _builder.clearRegionRepeats()
     }
+
+    /**
+     * <code>bool skip_stale_drawing_layer = 11;</code>
+     */
+    public var skipStaleDrawingLayer: kotlin.Boolean
+      @JvmName("getSkipStaleDrawingLayer")
+      get() = _builder.getSkipStaleDrawingLayer()
+      @JvmName("setSkipStaleDrawingLayer")
+      set(value) {
+        _builder.setSkipStaleDrawingLayer(value)
+      }
+    /**
+     * `bool skip_stale_drawing_layer = 11;`
+     */
+    public fun clearSkipStaleDrawingLayer() {
+      _builder.clearSkipStaleDrawingLayer()
+    }
+
+    /**
+     * <code>uint32 expected_drawing_layer_version = 12;</code>
+     */
+    public var expectedDrawingLayerVersion: kotlin.Int
+      @JvmName("getExpectedDrawingLayerVersion")
+      get() = _builder.getExpectedDrawingLayerVersion()
+      @JvmName("setExpectedDrawingLayerVersion")
+      set(value) {
+        _builder.setExpectedDrawingLayerVersion(value)
+      }
+    /**
+     * `uint32 expected_drawing_layer_version = 12;`
+     */
+    public fun clearExpectedDrawingLayerVersion() {
+      _builder.clearExpectedDrawingLayerVersion()
+    }
   }
 }
 public inline fun sl_link.SlLink.TaskConfig.copy(block: `sl_link`.TaskConfigKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.TaskConfig =
