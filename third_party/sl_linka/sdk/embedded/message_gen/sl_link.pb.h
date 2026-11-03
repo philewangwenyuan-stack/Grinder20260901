@@ -1470,6 +1470,13 @@ typedef struct _sl_link_MapRegionPointResponse {
     sl_link_PolygonRegion crop_region;
     bool has_drawing_layer;
     sl_link_DrawingObstacleLayerInfo drawing_layer;
+    /* Large annotation snapshots are serialized once, then carried in bounded
+ envelopes on the same message ID. Publish only after SHA-256 verification. */
+    pb_callback_t transfer_id;
+    uint32_t chunk_index;
+    uint32_t total_chunks;
+    pb_callback_t chunk_data;
+    pb_callback_t payload_sha256;
 } sl_link_MapRegionPointResponse;
 
 typedef struct _sl_link_DrawingLayerPayload {
@@ -1830,7 +1837,7 @@ extern "C" {
 #define sl_link_MapPreviewResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapRegionPointRequest_init_default {{{NULL}, NULL}}
 #define sl_link_WorkRegionPointInfo_init_default {false, sl_link_PolygonRegion_init_default, 0, false, sl_link_Pose2D_init_default, 0, false, sl_link_Pose2D_init_default}
-#define sl_link_MapRegionPointResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_default, false, sl_link_DrawingObstacleLayerInfo_init_default}
+#define sl_link_MapRegionPointResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_default, false, sl_link_DrawingObstacleLayerInfo_init_default, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapEditCommand_init_default      {{{NULL}, NULL}, _sl_link_MapEditOperation_MIN, {{NULL}, NULL}, false, sl_link_PolygonRegion_init_default, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, _sl_link_RegionType_MIN, 0, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}}
 #define sl_link_MapEditResponse_init_default     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapEditStatusReport_init_default {0, 0, {{NULL}, NULL}}
@@ -1935,7 +1942,7 @@ extern "C" {
 #define sl_link_MapPreviewResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapRegionPointRequest_init_zero  {{{NULL}, NULL}}
 #define sl_link_WorkRegionPointInfo_init_zero    {false, sl_link_PolygonRegion_init_zero, 0, false, sl_link_Pose2D_init_zero, 0, false, sl_link_Pose2D_init_zero}
-#define sl_link_MapRegionPointResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_zero, false, sl_link_DrawingObstacleLayerInfo_init_zero}
+#define sl_link_MapRegionPointResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_PolygonRegion_init_zero, false, sl_link_DrawingObstacleLayerInfo_init_zero, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_MapEditCommand_init_zero         {{{NULL}, NULL}, _sl_link_MapEditOperation_MIN, {{NULL}, NULL}, false, sl_link_PolygonRegion_init_zero, {{NULL}, NULL}, 0, 0, {{NULL}, NULL}, _sl_link_RegionType_MIN, 0, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}}
 #define sl_link_MapEditResponse_init_zero        {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0}
 #define sl_link_MapEditStatusReport_init_zero    {0, 0, {{NULL}, NULL}}
@@ -2755,6 +2762,11 @@ extern "C" {
 #define sl_link_MapRegionPointResponse_crop_region_available_tag 8
 #define sl_link_MapRegionPointResponse_crop_region_tag 9
 #define sl_link_MapRegionPointResponse_drawing_layer_tag 10
+#define sl_link_MapRegionPointResponse_transfer_id_tag 11
+#define sl_link_MapRegionPointResponse_chunk_index_tag 12
+#define sl_link_MapRegionPointResponse_total_chunks_tag 13
+#define sl_link_MapRegionPointResponse_chunk_data_tag 14
+#define sl_link_MapRegionPointResponse_payload_sha256_tag 15
 #define sl_link_DrawingLayerPayload_info_tag     1
 #define sl_link_DrawingLayerPayload_foundations_tag 2
 #define sl_link_DrawingLayerPayload_remove_layer_tag 3
@@ -3310,7 +3322,12 @@ X(a, CALLBACK, REPEATED, MESSAGE,  obstacle_regions,   6) \
 X(a, CALLBACK, REPEATED, MESSAGE,  erase_regions,     7) \
 X(a, STATIC,   SINGULAR, BOOL,     crop_region_available,   8) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  crop_region,       9) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  drawing_layer,    10)
+X(a, STATIC,   OPTIONAL, MESSAGE,  drawing_layer,    10) \
+X(a, CALLBACK, SINGULAR, STRING,   transfer_id,      11) \
+X(a, STATIC,   SINGULAR, UINT32,   chunk_index,      12) \
+X(a, STATIC,   SINGULAR, UINT32,   total_chunks,     13) \
+X(a, CALLBACK, SINGULAR, BYTES,    chunk_data,       14) \
+X(a, CALLBACK, SINGULAR, STRING,   payload_sha256,   15)
 #define sl_link_MapRegionPointResponse_CALLBACK pb_default_field_callback
 #define sl_link_MapRegionPointResponse_DEFAULT NULL
 #define sl_link_MapRegionPointResponse_work_regions_MSGTYPE sl_link_WorkRegionPointInfo

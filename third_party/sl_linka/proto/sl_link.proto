@@ -735,6 +735,13 @@ message MapRegionPointResponse {
   bool crop_region_available = 8;
   PolygonRegion crop_region = 9;
   DrawingObstacleLayerInfo drawing_layer = 10;
+  // Large annotation snapshots are serialized once, then carried in bounded
+  // envelopes on the same message ID. Publish only after SHA-256 verification.
+  string transfer_id = 11;
+  uint32 chunk_index = 12;
+  uint32 total_chunks = 13;
+  bytes chunk_data = 14;
+  string payload_sha256 = 15;
 }
 
 message MapEditCommand {

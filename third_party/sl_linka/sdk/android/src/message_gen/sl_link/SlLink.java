@@ -38654,6 +38654,58 @@ public final class SlLink {
      * @return The drawingLayer.
      */
     sl_link.SlLink.DrawingObstacleLayerInfo getDrawingLayer();
+
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The transferId.
+     */
+    java.lang.String getTransferId();
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The bytes for transferId.
+     */
+    com.google.protobuf.ByteString
+        getTransferIdBytes();
+
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     * @return The chunkIndex.
+     */
+    int getChunkIndex();
+
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     * @return The totalChunks.
+     */
+    int getTotalChunks();
+
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     * @return The chunkData.
+     */
+    com.google.protobuf.ByteString getChunkData();
+
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The payloadSha256.
+     */
+    java.lang.String getPayloadSha256();
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The bytes for payloadSha256.
+     */
+    com.google.protobuf.ByteString
+        getPayloadSha256Bytes();
   }
   /**
    * Protobuf type {@code sl_link.MapRegionPointResponse}
@@ -38669,6 +38721,9 @@ public final class SlLink {
       workRegions_ = emptyProtobufList();
       obstacleRegions_ = emptyProtobufList();
       eraseRegions_ = emptyProtobufList();
+      transferId_ = "";
+      chunkData_ = com.google.protobuf.ByteString.EMPTY;
+      payloadSha256_ = "";
     }
     private int bitField0_;
     public static final int RESULT_FIELD_NUMBER = 1;
@@ -39231,6 +39286,204 @@ public final class SlLink {
      */
     private void clearDrawingLayer() {  drawingLayer_ = null;
       bitField0_ = (bitField0_ & ~0x00000002);
+    }
+
+    public static final int TRANSFER_ID_FIELD_NUMBER = 11;
+    private java.lang.String transferId_;
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The transferId.
+     */
+    @java.lang.Override
+    public java.lang.String getTransferId() {
+      return transferId_;
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The bytes for transferId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTransferIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(transferId_);
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @param value The transferId to set.
+     */
+    private void setTransferId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      transferId_ = value;
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     */
+    private void clearTransferId() {
+
+      transferId_ = getDefaultInstance().getTransferId();
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @param value The bytes for transferId to set.
+     */
+    private void setTransferIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      transferId_ = value.toStringUtf8();
+
+    }
+
+    public static final int CHUNK_INDEX_FIELD_NUMBER = 12;
+    private int chunkIndex_;
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     * @return The chunkIndex.
+     */
+    @java.lang.Override
+    public int getChunkIndex() {
+      return chunkIndex_;
+    }
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     * @param value The chunkIndex to set.
+     */
+    private void setChunkIndex(int value) {
+
+      chunkIndex_ = value;
+    }
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     */
+    private void clearChunkIndex() {
+
+      chunkIndex_ = 0;
+    }
+
+    public static final int TOTAL_CHUNKS_FIELD_NUMBER = 13;
+    private int totalChunks_;
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     * @return The totalChunks.
+     */
+    @java.lang.Override
+    public int getTotalChunks() {
+      return totalChunks_;
+    }
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     * @param value The totalChunks to set.
+     */
+    private void setTotalChunks(int value) {
+
+      totalChunks_ = value;
+    }
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     */
+    private void clearTotalChunks() {
+
+      totalChunks_ = 0;
+    }
+
+    public static final int CHUNK_DATA_FIELD_NUMBER = 14;
+    private com.google.protobuf.ByteString chunkData_;
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     * @return The chunkData.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getChunkData() {
+      return chunkData_;
+    }
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     * @param value The chunkData to set.
+     */
+    private void setChunkData(com.google.protobuf.ByteString value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      chunkData_ = value;
+    }
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     */
+    private void clearChunkData() {
+
+      chunkData_ = getDefaultInstance().getChunkData();
+    }
+
+    public static final int PAYLOAD_SHA256_FIELD_NUMBER = 15;
+    private java.lang.String payloadSha256_;
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The payloadSha256.
+     */
+    @java.lang.Override
+    public java.lang.String getPayloadSha256() {
+      return payloadSha256_;
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The bytes for payloadSha256.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPayloadSha256Bytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(payloadSha256_);
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @param value The payloadSha256 to set.
+     */
+    private void setPayloadSha256(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      payloadSha256_ = value;
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     */
+    private void clearPayloadSha256() {
+
+      payloadSha256_ = getDefaultInstance().getPayloadSha256();
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @param value The bytes for payloadSha256 to set.
+     */
+    private void setPayloadSha256Bytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      payloadSha256_ = value.toStringUtf8();
+
     }
 
     public static sl_link.SlLink.MapRegionPointResponse parseFrom(
@@ -39930,6 +40183,213 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @return The transferId.
+       */
+      @java.lang.Override
+      public java.lang.String getTransferId() {
+        return instance.getTransferId();
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @return The bytes for transferId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getTransferIdBytes() {
+        return instance.getTransferIdBytes();
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @param value The transferId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTransferId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setTransferId(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTransferId() {
+        copyOnWrite();
+        instance.clearTransferId();
+        return this;
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @param value The bytes for transferId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTransferIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setTransferIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 chunk_index = 12;</code>
+       * @return The chunkIndex.
+       */
+      @java.lang.Override
+      public int getChunkIndex() {
+        return instance.getChunkIndex();
+      }
+      /**
+       * <code>uint32 chunk_index = 12;</code>
+       * @param value The chunkIndex to set.
+       * @return This builder for chaining.
+       */
+      public Builder setChunkIndex(int value) {
+        copyOnWrite();
+        instance.setChunkIndex(value);
+        return this;
+      }
+      /**
+       * <code>uint32 chunk_index = 12;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearChunkIndex() {
+        copyOnWrite();
+        instance.clearChunkIndex();
+        return this;
+      }
+
+      /**
+       * <code>uint32 total_chunks = 13;</code>
+       * @return The totalChunks.
+       */
+      @java.lang.Override
+      public int getTotalChunks() {
+        return instance.getTotalChunks();
+      }
+      /**
+       * <code>uint32 total_chunks = 13;</code>
+       * @param value The totalChunks to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTotalChunks(int value) {
+        copyOnWrite();
+        instance.setTotalChunks(value);
+        return this;
+      }
+      /**
+       * <code>uint32 total_chunks = 13;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTotalChunks() {
+        copyOnWrite();
+        instance.clearTotalChunks();
+        return this;
+      }
+
+      /**
+       * <code>bytes chunk_data = 14;</code>
+       * @return The chunkData.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getChunkData() {
+        return instance.getChunkData();
+      }
+      /**
+       * <code>bytes chunk_data = 14;</code>
+       * @param value The chunkData to set.
+       * @return This builder for chaining.
+       */
+      public Builder setChunkData(com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setChunkData(value);
+        return this;
+      }
+      /**
+       * <code>bytes chunk_data = 14;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearChunkData() {
+        copyOnWrite();
+        instance.clearChunkData();
+        return this;
+      }
+
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @return The payloadSha256.
+       */
+      @java.lang.Override
+      public java.lang.String getPayloadSha256() {
+        return instance.getPayloadSha256();
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @return The bytes for payloadSha256.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getPayloadSha256Bytes() {
+        return instance.getPayloadSha256Bytes();
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @param value The payloadSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadSha256(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setPayloadSha256(value);
+        return this;
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPayloadSha256() {
+        copyOnWrite();
+        instance.clearPayloadSha256();
+        return this;
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @param value The bytes for payloadSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadSha256Bytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setPayloadSha256Bytes(value);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapRegionPointResponse)
     }
     @java.lang.Override
@@ -39960,11 +40420,16 @@ public final class SlLink {
               "cropRegionAvailable_",
               "cropRegion_",
               "drawingLayer_",
+              "transferId_",
+              "chunkIndex_",
+              "totalChunks_",
+              "chunkData_",
+              "payloadSha256_",
             };
             java.lang.String info =
-                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0003\u0000\u0001\f\u0002\u0208\u0003\u0208" +
-                "\u0004\u000b\u0005\u001b\u0006\u001b\u0007\u001b\b\u0007\t\u1009\u0000\n\u1009\u0001" +
-                "";
+                "\u0000\u000f\u0000\u0001\u0001\u000f\u000f\u0000\u0003\u0000\u0001\f\u0002\u0208" +
+                "\u0003\u0208\u0004\u000b\u0005\u001b\u0006\u001b\u0007\u001b\b\u0007\t\u1009\u0000" +
+                "\n\u1009\u0001\u000b\u0208\f\u000b\r\u000b\u000e\n\u000f\u0208";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
