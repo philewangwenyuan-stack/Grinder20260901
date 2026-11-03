@@ -58,6 +58,9 @@ class ExecutionTest(unittest.TestCase):
         node.current_path = M(points=[{}])
         node._exec_mode = 'nav'
         node._exec_active = False
+        node.current_path_index = 0
+        node._prepare_region_process_execution = lambda: None
+        node._apply_region_process_for_path_point = lambda *_args, **_kw: True
         node._manual_drive_lock = threading.Lock()
         node._indicator_emergency = SimpleNamespace(observe=lambda: None)
         node._super_lio_status_proxy = lambda: M(

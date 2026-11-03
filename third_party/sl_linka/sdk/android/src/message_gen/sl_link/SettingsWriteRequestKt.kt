@@ -169,6 +169,76 @@ public object SettingsWriteRequestKt {
     public fun clearRppFieldMask() {
       _builder.clearRppFieldMask()
     }
+
+    /**
+     * ```
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * ```
+     *
+     * `.sl_link.MapProcessSettings process = 7;`
+     */
+    public var process: sl_link.SlLink.MapProcessSettings
+      @JvmName("getProcess")
+      get() = _builder.getProcess()
+      @JvmName("setProcess")
+      set(value) {
+        _builder.setProcess(value)
+      }
+    /**
+     * ```
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * ```
+     *
+     * `.sl_link.MapProcessSettings process = 7;`
+     */
+    public fun clearProcess() {
+      _builder.clearProcess()
+    }
+    /**
+     * ```
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * ```
+     *
+     * `.sl_link.MapProcessSettings process = 7;`
+     * @return Whether the process field is set.
+     */
+    public fun hasProcess(): kotlin.Boolean {
+      return _builder.hasProcess()
+    }
+
+    /**
+     * `string process_map_id = 8;`
+     */
+    public var processMapId: kotlin.String
+      @JvmName("getProcessMapId")
+      get() = _builder.getProcessMapId()
+      @JvmName("setProcessMapId")
+      set(value) {
+        _builder.setProcessMapId(value)
+      }
+    /**
+     * `string process_map_id = 8;`
+     */
+    public fun clearProcessMapId() {
+      _builder.clearProcessMapId()
+    }
+
+    /**
+     * `string process_region_id = 9;`
+     */
+    public var processRegionId: kotlin.String
+      @JvmName("getProcessRegionId")
+      get() = _builder.getProcessRegionId()
+      @JvmName("setProcessRegionId")
+      set(value) {
+        _builder.setProcessRegionId(value)
+      }
+    /**
+     * `string process_region_id = 9;`
+     */
+    public fun clearProcessRegionId() {
+      _builder.clearProcessRegionId()
+    }
   }
 }
 public inline fun sl_link.SlLink.SettingsWriteRequest.copy(block: `sl_link`.SettingsWriteRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.SettingsWriteRequest =
@@ -182,4 +252,7 @@ public val sl_link.SlLink.SettingsWriteRequestOrBuilder.mapOrNull: sl_link.SlLin
 
 public val sl_link.SlLink.SettingsWriteRequestOrBuilder.rppOrNull: sl_link.SlLink.RppSettings?
   get() = if (hasRpp()) getRpp() else null
+
+public val sl_link.SlLink.SettingsWriteRequestOrBuilder.processOrNull: sl_link.SlLink.MapProcessSettings?
+  get() = if (hasProcess()) getProcess() else null
 

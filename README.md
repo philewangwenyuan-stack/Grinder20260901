@@ -2073,3 +2073,20 @@ rostopic hz /cmd_vel
 - 地图、任务、区域均建议基于 `map_id` 进行绑定与操作。
 - 清缓存指令 `0x051E` 为无参请求，具体清理范围由调度配置决定。
 - 本项目是在线联调工程，修改后请重启对应节点验证参数是否已生效。
+
+### 历史浏览与区域工艺参数（2026-11-02）
+
+历史轨迹页只查询记录、实际轨迹、底图和尺寸，不再通过 PathPointPlan 重新规划。没有归档规划路径时明确显示仅有实际轨迹；板端执行活动、RUNNING或PAUSED期间拒绝外部规划，避免改 task_id、切图或把状态改成READY。
+
+每个作业区域独立拥有一套工艺，身份为 `(map_id, region_id)`。工艺类型、磨料、混凝土强度、压力、行走速度和磨盘RPM，保存在地图overlay的 `regions.work_regions[].process_settings`；不再保存/采用地图共用工艺。
+工艺编辑页只修改当前工作区草稿；保存工作区时，以确定的region_id提交 SettingsWriteRequest.process/process_map_id/process_region_id，并等待精确ACK及区域回显。保存失败不会标记工作区完成。新地图保存时复制所有区域及各自工艺；复制失败不能报告全部保存成功。区域改名/修改几何保留自己的工艺，删除区域同时删除其工艺。
+MapRegionPointResponse.work_regions[].region.process 返回各区域工艺，APP按map_id与region_id恢复各自草稿，不从邻区或地图共用值补齐。
+
+任务启动先校验参与区域工艺并复制为执行快照，从当前实际路径进度对应的区域恢复速度与RPM；缺失工艺的区域明确阻止启动，需在APP重新确认并保存。旧地图/旧区域不会自动继承先前错误的地图共用工艺或手动遥控速度。
+运行中按当前路径投影点的region/lap选择工艺，不按前视目标点提前切区。同一区域重复轮次沿用该区域工艺；连接段不切换工艺，继续原有转场磨盘策略。
+切区先关闭轮速转发并清零，再应用区域速度与磨盘RPM，成功后恢复；失败暂停，STOP/急停可撤销在途切换。恢复任务前也先核对当前位置区域工艺。切区不重新读地图文件。
+TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更新其恢复基准，结束临时设置后回到当前区域工艺。普通遥控设置不修改区域工艺；运行/暂停期间全局底盘设置及工艺编辑仍拒绝。
+压力等元数据仅保存/显示，现有底盘执行链实际下发行走速度和磨盘RPM；速度仍受导航安全上限约束。
+
+需配套更新APP与板端。旧区域须逐个确认保存工艺。本次仅源码和离线验证，未部署、未安装、未进行实机作业验收。
+回归：scheduler `test_history_process.py`、`test_execution_settings.py`、`test_task_runtime_parameters.py`、急停/续跑回归；APP `core:tcp/MapProcessSettingsTest`、`feature:map/MapProcessSettingsTest`。

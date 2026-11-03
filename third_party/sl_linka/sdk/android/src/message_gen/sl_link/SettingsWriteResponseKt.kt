@@ -190,6 +190,64 @@ public object SettingsWriteResponseKt {
     public fun clearGeometryRequiresRestart() {
       _builder.clearGeometryRequiresRestart()
     }
+
+    /**
+     * `.sl_link.MapProcessSettings process = 9;`
+     */
+    public var process: sl_link.SlLink.MapProcessSettings
+      @JvmName("getProcess")
+      get() = _builder.getProcess()
+      @JvmName("setProcess")
+      set(value) {
+        _builder.setProcess(value)
+      }
+    /**
+     * `.sl_link.MapProcessSettings process = 9;`
+     */
+    public fun clearProcess() {
+      _builder.clearProcess()
+    }
+    /**
+     * `.sl_link.MapProcessSettings process = 9;`
+     * @return Whether the process field is set.
+     */
+    public fun hasProcess(): kotlin.Boolean {
+      return _builder.hasProcess()
+    }
+
+    /**
+     * `string process_map_id = 10;`
+     */
+    public var processMapId: kotlin.String
+      @JvmName("getProcessMapId")
+      get() = _builder.getProcessMapId()
+      @JvmName("setProcessMapId")
+      set(value) {
+        _builder.setProcessMapId(value)
+      }
+    /**
+     * `string process_map_id = 10;`
+     */
+    public fun clearProcessMapId() {
+      _builder.clearProcessMapId()
+    }
+
+    /**
+     * `string process_region_id = 11;`
+     */
+    public var processRegionId: kotlin.String
+      @JvmName("getProcessRegionId")
+      get() = _builder.getProcessRegionId()
+      @JvmName("setProcessRegionId")
+      set(value) {
+        _builder.setProcessRegionId(value)
+      }
+    /**
+     * `string process_region_id = 11;`
+     */
+    public fun clearProcessRegionId() {
+      _builder.clearProcessRegionId()
+    }
   }
 }
 public inline fun sl_link.SlLink.SettingsWriteResponse.copy(block: `sl_link`.SettingsWriteResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.SettingsWriteResponse =
@@ -203,4 +261,7 @@ public val sl_link.SlLink.SettingsWriteResponseOrBuilder.mapOrNull: sl_link.SlLi
 
 public val sl_link.SlLink.SettingsWriteResponseOrBuilder.rppOrNull: sl_link.SlLink.RppSettings?
   get() = if (hasRpp()) getRpp() else null
+
+public val sl_link.SlLink.SettingsWriteResponseOrBuilder.processOrNull: sl_link.SlLink.MapProcessSettings?
+  get() = if (hasProcess()) getProcess() else null
 

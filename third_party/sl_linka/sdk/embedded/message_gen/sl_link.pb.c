@@ -21,6 +21,9 @@ PB_BIND(sl_link_PolygonRegion, sl_link_PolygonRegion, AUTO)
 PB_BIND(sl_link_ChassisSettings, sl_link_ChassisSettings, AUTO)
 
 
+PB_BIND(sl_link_MapProcessSettings, sl_link_MapProcessSettings, AUTO)
+
+
 PB_BIND(sl_link_MapSettings, sl_link_MapSettings, AUTO)
 
 
@@ -45,7 +48,10 @@ PB_BIND(sl_link_Pose2D, sl_link_Pose2D, AUTO)
 PB_BIND(sl_link_LocalizationCovariance, sl_link_LocalizationCovariance, AUTO)
 
 
-PB_BIND(sl_link_DeviceStatusReport, sl_link_DeviceStatusReport, AUTO)
+PB_BIND(sl_link_DeviceStatusReport, sl_link_DeviceStatusReport, 2)
+
+
+PB_BIND(sl_link_SystemHealth, sl_link_SystemHealth, AUTO)
 
 
 PB_BIND(sl_link_CameraFrameRequest, sl_link_CameraFrameRequest, AUTO)
@@ -108,10 +114,10 @@ PB_BIND(sl_link_MapRegionPointRequest, sl_link_MapRegionPointRequest, AUTO)
 PB_BIND(sl_link_WorkRegionPointInfo, sl_link_WorkRegionPointInfo, AUTO)
 
 
-PB_BIND(sl_link_MapRegionPointResponse, sl_link_MapRegionPointResponse, AUTO)
+PB_BIND(sl_link_MapRegionPointResponse, sl_link_MapRegionPointResponse, 2)
 
 
-PB_BIND(sl_link_MapEditCommand, sl_link_MapEditCommand, AUTO)
+PB_BIND(sl_link_MapEditCommand, sl_link_MapEditCommand, 2)
 
 
 PB_BIND(sl_link_MapEditResponse, sl_link_MapEditResponse, AUTO)

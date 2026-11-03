@@ -1415,3 +1415,10 @@ Super-LIO 状态含义：
 
 - 默认 TCP 端口使用 `8002`
 - 模拟器与测试客户端如未显式指定端口，均按 `8002` 处理
+
+### 作业区域工艺独立保存
+
+SettingsWriteRequest.process（7）/process_map_id（8）/process_region_id（9）保存指定地图中已存在的作业区工艺；region_id必填，不切图、不驱动硬件，与chassis/map/rpp混合写入会拒绝。活动任务期间返回BUSY。
+成功响应回显SettingsWriteResponse.process（9）/process_map_id（10）/process_region_id（11），APP以精确ACK和区域身份关联。旧端忽略新字段的通用success不能确认保存。
+MapRegionPointResponse.work_regions[].region.process（PolygonRegion字段10）返回每区工艺，包含run_speed、disc_speed_rpm、process_type、grinding_parameter、concrete_strength、pressure。
+保存地图保留各区域工艺；启动/进入区域时应用对应执行快照，重复轮次复用本区工艺，连接段保持转场策略。缺失区域工艺需明确补存，禁止从其他区域或遥控参数推断。

@@ -164,6 +164,8 @@ class MapService:
             "y": float(end_pose.get("y", default_end["y"])),
             "heading_deg": float(end_pose.get("heading_deg", 0.0)),
         }
+        if "process_settings" in existing:
+            normalized["process_settings"] = dict(existing["process_settings"])
         previous_points = existing.get("points", [])
         region_map[region_id] = normalized
         return normalized, previous_points
@@ -948,6 +950,8 @@ class MapService:
         with self._lock:
             meta_path = os.path.join(state_dir, "map_overlay_state.json")
             if not os.path.exists(meta_path):
+                for region in self._work_regions.values():
+                    region.pop("process_settings", None)
                 return False
             with open(meta_path, "r", encoding="utf-8") as handle:
                 data = json.load(handle)
@@ -971,6 +975,7 @@ class MapService:
                     "start_pose": explicit_region_start(item),
                     "start_pose_explicit": bool(explicit_region_start(item)),
                     "end_pose": dict(item.get("end_pose", {}) or {}),
+                    "process_settings": dict(item.get("process_settings", {}) or {}),
                 }
             for index, item in enumerate(regions.get("obstacle_regions", [])):
                 if int(item.get("region_type", 2)) != 2:
@@ -1036,6 +1041,16 @@ class MapService:
             self._erase_regions = {}
             self._crop_region = None
             self._last_edit_message = ""
+
+    def get_process_settings(self, region_id):
+        with self._lock:
+            return dict(self._work_regions.get(str(region_id), {}).get("process_settings", {}))
+
+    def set_process_settings(self, region_id, settings):
+        with self._lock:
+            if str(region_id) not in self._work_regions:
+                raise ValueError("Work region not found: {}".format(region_id))
+            self._work_regions[str(region_id)]["process_settings"] = dict(settings)
 
     def reset_overlay_regions(self):
         """仅清空区域覆盖层（工作区/障碍区/擦除区/裁剪区），不影响原始底图缓存。"""

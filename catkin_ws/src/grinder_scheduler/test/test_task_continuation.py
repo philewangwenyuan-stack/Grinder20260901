@@ -135,6 +135,7 @@ class SchedulerContinuationTest(unittest.TestCase):
         n._project_pose_to_path_progress = mock.Mock(return_value=dict(progress_s=11., index=2))
         n._activate_segment = mock.Mock()
         n._plan_current_task = mock.Mock(side_effect=AssertionError('unchanged map should reuse path'))
+        n._prepare_region_process_execution = lambda: None
         success, _ = n._start_execution()
         self.assertTrue(success)
         self.assertIs(original, n.current_path)

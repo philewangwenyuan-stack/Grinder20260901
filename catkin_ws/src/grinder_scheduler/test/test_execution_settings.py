@@ -14,15 +14,16 @@ from unittest import mock
 SOURCE = Path(__file__).resolve().parents[1] / "src/grinder_scheduler/scheduler_node.py"
 sys.path.insert(0, str(SOURCE.parent.parent))
 from grinder_scheduler.models import SchedulerState, TaskConfigModel
+from grinder_scheduler.region_process import base_region_id, point_region_id, capture_region_recipes
 sys.path.insert(0, str(SOURCE.parents[3] / 'grinder_chassis_driver/src'))
-from grinder_chassis_driver.motion_safety import MotionInterlock, motion_action
+from grinder_chassis_driver.motion_safety import MotionInterlock, MotionCancelled, motion_action
 
 
 def production_scheduler(params, writes):
     tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
     names = {
         "_execution_run_speed", "_apply_execution_speed_limit", "_update_navigation_speed_limit",
-        "_read_rpp_settings", "_start_execution",
+        "_read_rpp_settings", "_start_execution", "_prepare_region_process_execution", "_apply_region_process_for_path_point",
     }
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "SchedulerNode")
     cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in names]
@@ -39,13 +40,14 @@ def production_scheduler(params, writes):
             return dict(values)
 
     namespace = dict(
-        math=math, time=time, SchedulerState=SchedulerState, DynamicReconfigureClient=Client, motion_action=motion_action,
+        base_region_id=base_region_id, point_region_id=point_region_id, capture_region_recipes=capture_region_recipes,
+        MotionCancelled=MotionCancelled, math=math, time=time, SchedulerState=SchedulerState, DynamicReconfigureClient=Client, motion_action=motion_action,
         Bool=lambda **kw: SimpleNamespace(**kw), UInt16=lambda **kw: SimpleNamespace(**kw),
         Int16=lambda **kw: SimpleNamespace(**kw),
         rospy=SimpleNamespace(
             get_param=lambda name, default=None: params.get(name, default),
             set_param=lambda name, value: params.__setitem__(name, value),
-            logwarn=mock.Mock(), loginfo=mock.Mock(), logwarn_throttle=mock.Mock()),
+            logwarn=mock.Mock(), logerr=mock.Mock(), loginfo=mock.Mock(), logwarn_throttle=mock.Mock()),
     )
     decorator = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "localization_arming")
     namespace["wraps"] = wraps
@@ -127,6 +129,89 @@ class TaskStartSpeedTest(unittest.TestCase):
         n._safe_stop_motion.assert_called_once()
         n._set_chassis_enabled.assert_not_called()
         self.assertEqual([], self.writes)
+
+    def test_each_start_reapplies_map_recipe_after_manual_settings_change(self):
+        n = self.node
+        n.map_service = SimpleNamespace(get_process_settings=lambda region_id: dict(run_speed=.03, disc_speed_rpm=925))
+        n.current_path.points[0]["path_type"] = "region-a"
+        n._configured_disc_speed_rpm = lambda: n._chassis_settings["disc_speed_rpm"]
+        for manual_speed, manual_rpm in ((.15, 500), (.1, 1200)):
+            n.state = SchedulerState.READY
+            n._chassis_settings.update(run_speed=manual_speed, disc_speed_rpm=manual_rpm)
+            self.assertTrue(n._start_execution()[0])
+            self.assertEqual({"desired_linear_vel": .03}, self.writes[-1])
+            self.assertEqual(925, n._chassis_settings["disc_speed_rpm"])
+            self.assertEqual(925, n.disc_speed_pub.publish.call_args[0][0].data)
+
+    def region_node(self):
+        n = self.node
+        recipes = {"region-a": dict(run_speed=.03, disc_speed_rpm=925),
+                   "region-b": dict(run_speed=.07, disc_speed_rpm=1200)}
+        n.map_service = SimpleNamespace(get_process_settings=lambda rid: dict(recipes.get(rid, {})))
+        n.current_path.points = [dict(x=0., y=0., path_type="region-a__lap_1"),
+                                 dict(x=1., y=0., path_type="connection"),
+                                 dict(x=2., y=0., path_type="region-b__lap_1")]
+        n._configured_disc_speed_rpm = lambda: n._chassis_settings["disc_speed_rpm"]
+        n._pause_execution = mock.Mock()
+        return n
+
+    def test_regions_have_independent_speed_and_rpm_and_connection_does_not_switch(self):
+        n = self.region_node()
+        self.assertTrue(n._start_execution()[0])
+        self.assertEqual(.03, n._chassis_settings["run_speed"])
+        n._set_cmd_vel_forward_runtime_active.reset_mock()
+        before = len(self.writes)
+        self.assertTrue(n._apply_region_process_for_path_point(dict(path_type="connection")))
+        self.assertTrue(n._apply_region_process_for_path_point(dict(path_type="region-a__lap_2")))
+        self.assertEqual(before, len(self.writes))
+        self.assertEqual("region-a", n._applied_process_region_id)
+        self.assertTrue(n._apply_region_process_for_path_point(dict(path_type="region-b__lap_1")))
+        self.assertEqual({"desired_linear_vel": .07}, self.writes[-1])
+        self.assertEqual(1200, n.disc_speed_pub.publish.call_args[0][0].data)
+        self.assertEqual(False, n._set_cmd_vel_forward_runtime_active.call_args_list[0].args[0])
+        self.assertEqual(True, n._set_cmd_vel_forward_runtime_active.call_args_list[-1].args[0])
+        self.assertTrue(n._apply_region_process_for_path_point(dict(path_type="region-a__lap_3")))
+        self.assertEqual({"desired_linear_vel": .03}, self.writes[-1])
+        self.assertEqual(925, n.disc_speed_pub.publish.call_args[0][0].data)
+
+    def test_missing_region_recipe_blocks_start_instead_of_inheriting_a_neighbor(self):
+        n = self.region_node()
+        n.map_service.get_process_settings = lambda rid: dict(run_speed=.03, disc_speed_rpm=925) if rid == "region-a" else {}
+        success, message = n._start_execution()
+        self.assertFalse(success)
+        self.assertIn("region-b", message)
+        n.disc_enable_pub.publish.assert_not_called()
+        self.assertEqual([], self.writes)
+
+    def test_start_from_second_region_uses_its_recipe_before_tool_enable(self):
+        n = self.region_node()
+        n.current_path_index = 2
+        self.assertTrue(n._start_execution()[0])
+        self.assertEqual("region-b", n._applied_process_region_id)
+        self.assertEqual({"desired_linear_vel": .07}, self.writes[-1])
+        self.assertEqual(1200, n.disc_speed_pub.publish.call_args[0][0].data)
+
+    def test_region_speed_apply_failure_stops_and_never_reenables_motion(self):
+        n = self.region_node()
+        self.assertTrue(n._start_execution()[0])
+        n._set_cmd_vel_forward_runtime_active.reset_mock()
+        n._apply_execution_speed_limit = mock.Mock(return_value=False)
+        self.assertFalse(n._apply_region_process_for_path_point(dict(path_type="region-b")))
+        n._pause_execution.assert_called_once_with(reason="region_process_apply_failed")
+        n._safe_stop_motion.assert_called_once()
+        self.assertEqual("region-a", n._applied_process_region_id)
+        self.assertTrue(all(not c.args[0] for c in n._set_cmd_vel_forward_runtime_active.call_args_list))
+
+    def test_stop_during_region_apply_cannot_reenable_wheels(self):
+        n = self.region_node()
+        self.assertTrue(n._start_execution()[0])
+        n._set_cmd_vel_forward_runtime_active.reset_mock()
+        def stopped():
+            n._motion.invalidate()
+            raise MotionCancelled("stopped")
+        n._apply_execution_speed_limit = stopped
+        self.assertFalse(n._apply_region_process_for_path_point(dict(path_type="region-b")))
+        self.assertTrue(all(not c.args[0] for c in n._set_cmd_vel_forward_runtime_active.call_args_list))
 
     def test_process_speed_does_not_raise_navigation_safety_cap(self):
         self.node._chassis_settings["run_speed"] = .2

@@ -19,6 +19,15 @@
 
 ## 原始地图取图与缓存
 
+保存地图后的云平台上传仅包含 `loc_map.pcd`、`map.pgm`、`map.yaml`、`map_info.json`，
+不上传 `plan_map.pcd` 或目录中的其他文件。本地完整资产包仍保留原文件名供 Super-LIO 使用。
+云端目录仍为 `GrinderProject/maps/<mapId>/`，文件名加地图名称前缀，例如
+`一楼大厅_loc_map.pcd`、`一楼大厅_map.pgm`、`一楼大厅_map.yaml`、`一楼大厅_map_info.json`。
+名称中的路径分隔符、控制字符和 Windows 文件名非法字符替换为下划线，名称前缀最多 80 个字符；
+名称为空时使用地图 ID。上传版 YAML 的 `image` 和元数据的 `files`、对应资产路径同步指向新文件名，
+这些转换只发生在上传内容中。已有云端旧文件不自动删除，地图改名后的旧文件也不自动清理。
+离线回归：`test/test_platform_integration.py`。
+
 `map_grid_utils.py` 不依赖 ROS。保存地图的 MapRequest PNG 直接从 PGM 以 LUT
 映射为底图，不再经过 OccupancyGrid 整数列表往返；任务结果的原始地图快照复用同一条路径。
 规划/导航仍使用原来的栅格坐标方向。RosDataBridge 用 `numpy_msg(OccupancyGrid)` 接收地图，
@@ -275,3 +284,20 @@ roslaunch grinder_scheduler scheduler.launch enable_metrics_node:=true metrics_e
 纯Python回归：`python3 catkin_ws/src/grinder_scheduler/test/test_system_health.py`。设备运行期间只读验证资源可用性不能替代更新后的端到端验收。
 
 系统状态页面采用2秒刷新后，资源线程改为2秒采样/5秒缓存过期。SystemHealth字段9～11新增板端蜂窝信号百分比、连接状态、接入制式。ModemManager只读命令每条400ms超时，仅单个明确设备且SignalQuality标记recent时报告信号值；无工具、无设备、模糊多设备、缓存信号或外置路由器无接口时不填百分比。该诊断不会拨号、发AT命令或修改无线配置。数据含义见[官方SignalQuality说明](https://www.freedesktop.org/software/ModemManager/doc/latest/ModemManager/gdbus-org.freedesktop.ModemManager1.Modem.html)。APP链路RTT利用既有会话ACK测量，无新增设备控制请求。
+
+### 历史浏览与区域工艺参数（2026-11-02）
+
+历史轨迹页只查询记录、实际轨迹、底图和尺寸，不再通过 PathPointPlan 重新规划。没有归档规划路径时明确显示仅有实际轨迹；板端执行活动、RUNNING或PAUSED期间拒绝外部规划，避免改 task_id、切图或把状态改成READY。
+
+每个作业区域独立拥有一套工艺，身份为 `(map_id, region_id)`。工艺类型、磨料、混凝土强度、压力、行走速度和磨盘RPM，保存在地图overlay的 `regions.work_regions[].process_settings`；不再保存/采用地图共用工艺。
+工艺编辑页只修改当前工作区草稿；保存工作区时，以确定的region_id提交 SettingsWriteRequest.process/process_map_id/process_region_id，并等待精确ACK及区域回显。保存失败不会标记工作区完成。新地图保存时复制所有区域及各自工艺；复制失败不能报告全部保存成功。区域改名/修改几何保留自己的工艺，删除区域同时删除其工艺。
+MapRegionPointResponse.work_regions[].region.process 返回各区域工艺，APP按map_id与region_id恢复各自草稿，不从邻区或地图共用值补齐。
+
+任务启动先校验参与区域工艺并复制为执行快照，从当前实际路径进度对应的区域恢复速度与RPM；缺失工艺的区域明确阻止启动，需在APP重新确认并保存。旧地图/旧区域不会自动继承先前错误的地图共用工艺或手动遥控速度。
+运行中按当前路径投影点的region/lap选择工艺，不按前视目标点提前切区。同一区域重复轮次沿用该区域工艺；连接段不切换工艺，继续原有转场磨盘策略。
+切区先关闭轮速转发并清零，再应用区域速度与磨盘RPM，成功后恢复；失败暂停，STOP/急停可撤销在途切换。恢复任务前也先核对当前位置区域工艺。切区不重新读地图文件。
+TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更新其恢复基准，结束临时设置后回到当前区域工艺。普通遥控设置不修改区域工艺；运行/暂停期间全局底盘设置及工艺编辑仍拒绝。
+压力等元数据仅保存/显示，现有底盘执行链实际下发行走速度和磨盘RPM；速度仍受导航安全上限约束。
+
+需配套更新APP与板端。旧区域须逐个确认保存工艺。本次仅源码和离线验证，未部署、未安装、未进行实机作业验收。
+回归：scheduler `test_history_process.py`、`test_execution_settings.py`、`test_task_runtime_parameters.py`、急停/续跑回归；APP `core:tcp/MapProcessSettingsTest`、`feature:map/MapProcessSettingsTest`。

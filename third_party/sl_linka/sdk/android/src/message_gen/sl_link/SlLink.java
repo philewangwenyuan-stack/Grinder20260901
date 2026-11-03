@@ -4213,6 +4213,25 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getGlobalDirectionBytes();
+
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     * @return Whether the process field is set.
+     */
+    boolean hasProcess();
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     * @return The process.
+     */
+    sl_link.SlLink.MapProcessSettings getProcess();
   }
   /**
    * Protobuf type {@code sl_link.PolygonRegion}
@@ -4228,6 +4247,7 @@ public final class SlLink {
       regionId_ = "";
       globalDirection_ = "";
     }
+    private int bitField0_;
     public static final int NAME_FIELD_NUMBER = 1;
     private java.lang.String name_;
     /**
@@ -4632,6 +4652,72 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       globalDirection_ = value.toStringUtf8();
 
+    }
+
+    public static final int PROCESS_FIELD_NUMBER = 10;
+    private sl_link.SlLink.MapProcessSettings process_;
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     */
+    @java.lang.Override
+    public boolean hasProcess() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapProcessSettings getProcess() {
+      return process_ == null ? sl_link.SlLink.MapProcessSettings.getDefaultInstance() : process_;
+    }
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     */
+    private void setProcess(sl_link.SlLink.MapProcessSettings value) {
+      value.getClass();
+  process_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeProcess(sl_link.SlLink.MapProcessSettings value) {
+      value.getClass();
+  if (process_ != null &&
+          process_ != sl_link.SlLink.MapProcessSettings.getDefaultInstance()) {
+        process_ =
+          sl_link.SlLink.MapProcessSettings.newBuilder(process_).mergeFrom(value).buildPartial();
+      } else {
+        process_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <pre>
+     * Recipe belongs to this work region, not to the whole map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 10;</code>
+     */
+    private void clearProcess() {  process_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
     }
 
     public static sl_link.SlLink.PolygonRegion parseFrom(
@@ -5163,6 +5249,77 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Recipe belongs to this work region, not to the whole map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 10;</code>
+       */
+      @java.lang.Override
+      public boolean hasProcess() {
+        return instance.hasProcess();
+      }
+      /**
+       * <pre>
+       * Recipe belongs to this work region, not to the whole map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 10;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapProcessSettings getProcess() {
+        return instance.getProcess();
+      }
+      /**
+       * <pre>
+       * Recipe belongs to this work region, not to the whole map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 10;</code>
+       */
+      public Builder setProcess(sl_link.SlLink.MapProcessSettings value) {
+        copyOnWrite();
+        instance.setProcess(value);
+        return this;
+        }
+      /**
+       * <pre>
+       * Recipe belongs to this work region, not to the whole map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 10;</code>
+       */
+      public Builder setProcess(
+          sl_link.SlLink.MapProcessSettings.Builder builderForValue) {
+        copyOnWrite();
+        instance.setProcess(builderForValue.build());
+        return this;
+      }
+      /**
+       * <pre>
+       * Recipe belongs to this work region, not to the whole map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 10;</code>
+       */
+      public Builder mergeProcess(sl_link.SlLink.MapProcessSettings value) {
+        copyOnWrite();
+        instance.mergeProcess(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Recipe belongs to this work region, not to the whole map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 10;</code>
+       */
+      public Builder clearProcess() {  copyOnWrite();
+        instance.clearProcess();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PolygonRegion)
     }
     @java.lang.Override
@@ -5179,6 +5336,7 @@ public final class SlLink {
         }
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
               "name_",
               "points_",
               sl_link.SlLink.PolygonPoint.class,
@@ -5189,10 +5347,11 @@ public final class SlLink {
               "closed_",
               "regionType_",
               "globalDirection_",
+              "process_",
             };
             java.lang.String info =
-                "\u0000\t\u0000\u0000\u0001\t\t\u0000\u0001\u0000\u0001\u0208\u0002\u001b\u0003\u0208" +
-                "\u0004\u000b\u0005\u0007\u0006\u000b\u0007\u0007\b\f\t\u0208";
+                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0001\u0000\u0001\u0208\u0002\u001b\u0003\u0208" +
+                "\u0004\u000b\u0005\u0007\u0006\u000b\u0007\u0007\b\f\t\u0208\n\u1009\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -5842,6 +6001,712 @@ public final class SlLink {
     private static volatile com.google.protobuf.Parser<ChassisSettings> PARSER;
 
     public static com.google.protobuf.Parser<ChassisSettings> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface MapProcessSettingsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.MapProcessSettings)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>float run_speed = 1;</code>
+     * @return The runSpeed.
+     */
+    float getRunSpeed();
+
+    /**
+     * <code>uint32 disc_speed_rpm = 2;</code>
+     * @return The discSpeedRpm.
+     */
+    int getDiscSpeedRpm();
+
+    /**
+     * <code>string process_type = 3;</code>
+     * @return The processType.
+     */
+    java.lang.String getProcessType();
+    /**
+     * <code>string process_type = 3;</code>
+     * @return The bytes for processType.
+     */
+    com.google.protobuf.ByteString
+        getProcessTypeBytes();
+
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     * @return The grindingParameter.
+     */
+    java.lang.String getGrindingParameter();
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     * @return The bytes for grindingParameter.
+     */
+    com.google.protobuf.ByteString
+        getGrindingParameterBytes();
+
+    /**
+     * <code>string concrete_strength = 5;</code>
+     * @return The concreteStrength.
+     */
+    java.lang.String getConcreteStrength();
+    /**
+     * <code>string concrete_strength = 5;</code>
+     * @return The bytes for concreteStrength.
+     */
+    com.google.protobuf.ByteString
+        getConcreteStrengthBytes();
+
+    /**
+     * <code>float pressure = 6;</code>
+     * @return The pressure.
+     */
+    float getPressure();
+  }
+  /**
+   * <pre>
+   * Work-region recipe identified by (map_id, region_id). Manual writes never update it.
+   * </pre>
+   *
+   * Protobuf type {@code sl_link.MapProcessSettings}
+   */
+  public  static final class MapProcessSettings extends
+      com.google.protobuf.GeneratedMessageLite<
+          MapProcessSettings, MapProcessSettings.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.MapProcessSettings)
+      MapProcessSettingsOrBuilder {
+    private MapProcessSettings() {
+      processType_ = "";
+      grindingParameter_ = "";
+      concreteStrength_ = "";
+    }
+    public static final int RUN_SPEED_FIELD_NUMBER = 1;
+    private float runSpeed_;
+    /**
+     * <code>float run_speed = 1;</code>
+     * @return The runSpeed.
+     */
+    @java.lang.Override
+    public float getRunSpeed() {
+      return runSpeed_;
+    }
+    /**
+     * <code>float run_speed = 1;</code>
+     * @param value The runSpeed to set.
+     */
+    private void setRunSpeed(float value) {
+
+      runSpeed_ = value;
+    }
+    /**
+     * <code>float run_speed = 1;</code>
+     */
+    private void clearRunSpeed() {
+
+      runSpeed_ = 0F;
+    }
+
+    public static final int DISC_SPEED_RPM_FIELD_NUMBER = 2;
+    private int discSpeedRpm_;
+    /**
+     * <code>uint32 disc_speed_rpm = 2;</code>
+     * @return The discSpeedRpm.
+     */
+    @java.lang.Override
+    public int getDiscSpeedRpm() {
+      return discSpeedRpm_;
+    }
+    /**
+     * <code>uint32 disc_speed_rpm = 2;</code>
+     * @param value The discSpeedRpm to set.
+     */
+    private void setDiscSpeedRpm(int value) {
+
+      discSpeedRpm_ = value;
+    }
+    /**
+     * <code>uint32 disc_speed_rpm = 2;</code>
+     */
+    private void clearDiscSpeedRpm() {
+
+      discSpeedRpm_ = 0;
+    }
+
+    public static final int PROCESS_TYPE_FIELD_NUMBER = 3;
+    private java.lang.String processType_;
+    /**
+     * <code>string process_type = 3;</code>
+     * @return The processType.
+     */
+    @java.lang.Override
+    public java.lang.String getProcessType() {
+      return processType_;
+    }
+    /**
+     * <code>string process_type = 3;</code>
+     * @return The bytes for processType.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getProcessTypeBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(processType_);
+    }
+    /**
+     * <code>string process_type = 3;</code>
+     * @param value The processType to set.
+     */
+    private void setProcessType(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      processType_ = value;
+    }
+    /**
+     * <code>string process_type = 3;</code>
+     */
+    private void clearProcessType() {
+
+      processType_ = getDefaultInstance().getProcessType();
+    }
+    /**
+     * <code>string process_type = 3;</code>
+     * @param value The bytes for processType to set.
+     */
+    private void setProcessTypeBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      processType_ = value.toStringUtf8();
+
+    }
+
+    public static final int GRINDING_PARAMETER_FIELD_NUMBER = 4;
+    private java.lang.String grindingParameter_;
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     * @return The grindingParameter.
+     */
+    @java.lang.Override
+    public java.lang.String getGrindingParameter() {
+      return grindingParameter_;
+    }
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     * @return The bytes for grindingParameter.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getGrindingParameterBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(grindingParameter_);
+    }
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     * @param value The grindingParameter to set.
+     */
+    private void setGrindingParameter(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      grindingParameter_ = value;
+    }
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     */
+    private void clearGrindingParameter() {
+
+      grindingParameter_ = getDefaultInstance().getGrindingParameter();
+    }
+    /**
+     * <code>string grinding_parameter = 4;</code>
+     * @param value The bytes for grindingParameter to set.
+     */
+    private void setGrindingParameterBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      grindingParameter_ = value.toStringUtf8();
+
+    }
+
+    public static final int CONCRETE_STRENGTH_FIELD_NUMBER = 5;
+    private java.lang.String concreteStrength_;
+    /**
+     * <code>string concrete_strength = 5;</code>
+     * @return The concreteStrength.
+     */
+    @java.lang.Override
+    public java.lang.String getConcreteStrength() {
+      return concreteStrength_;
+    }
+    /**
+     * <code>string concrete_strength = 5;</code>
+     * @return The bytes for concreteStrength.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getConcreteStrengthBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(concreteStrength_);
+    }
+    /**
+     * <code>string concrete_strength = 5;</code>
+     * @param value The concreteStrength to set.
+     */
+    private void setConcreteStrength(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      concreteStrength_ = value;
+    }
+    /**
+     * <code>string concrete_strength = 5;</code>
+     */
+    private void clearConcreteStrength() {
+
+      concreteStrength_ = getDefaultInstance().getConcreteStrength();
+    }
+    /**
+     * <code>string concrete_strength = 5;</code>
+     * @param value The bytes for concreteStrength to set.
+     */
+    private void setConcreteStrengthBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      concreteStrength_ = value.toStringUtf8();
+
+    }
+
+    public static final int PRESSURE_FIELD_NUMBER = 6;
+    private float pressure_;
+    /**
+     * <code>float pressure = 6;</code>
+     * @return The pressure.
+     */
+    @java.lang.Override
+    public float getPressure() {
+      return pressure_;
+    }
+    /**
+     * <code>float pressure = 6;</code>
+     * @param value The pressure to set.
+     */
+    private void setPressure(float value) {
+
+      pressure_ = value;
+    }
+    /**
+     * <code>float pressure = 6;</code>
+     */
+    private void clearPressure() {
+
+      pressure_ = 0F;
+    }
+
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.MapProcessSettings parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.MapProcessSettings parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapProcessSettings parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.MapProcessSettings prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * <pre>
+     * Work-region recipe identified by (map_id, region_id). Manual writes never update it.
+     * </pre>
+     *
+     * Protobuf type {@code sl_link.MapProcessSettings}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.MapProcessSettings, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.MapProcessSettings)
+        sl_link.SlLink.MapProcessSettingsOrBuilder {
+      // Construct using sl_link.SlLink.MapProcessSettings.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>float run_speed = 1;</code>
+       * @return The runSpeed.
+       */
+      @java.lang.Override
+      public float getRunSpeed() {
+        return instance.getRunSpeed();
+      }
+      /**
+       * <code>float run_speed = 1;</code>
+       * @param value The runSpeed to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRunSpeed(float value) {
+        copyOnWrite();
+        instance.setRunSpeed(value);
+        return this;
+      }
+      /**
+       * <code>float run_speed = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRunSpeed() {
+        copyOnWrite();
+        instance.clearRunSpeed();
+        return this;
+      }
+
+      /**
+       * <code>uint32 disc_speed_rpm = 2;</code>
+       * @return The discSpeedRpm.
+       */
+      @java.lang.Override
+      public int getDiscSpeedRpm() {
+        return instance.getDiscSpeedRpm();
+      }
+      /**
+       * <code>uint32 disc_speed_rpm = 2;</code>
+       * @param value The discSpeedRpm to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDiscSpeedRpm(int value) {
+        copyOnWrite();
+        instance.setDiscSpeedRpm(value);
+        return this;
+      }
+      /**
+       * <code>uint32 disc_speed_rpm = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDiscSpeedRpm() {
+        copyOnWrite();
+        instance.clearDiscSpeedRpm();
+        return this;
+      }
+
+      /**
+       * <code>string process_type = 3;</code>
+       * @return The processType.
+       */
+      @java.lang.Override
+      public java.lang.String getProcessType() {
+        return instance.getProcessType();
+      }
+      /**
+       * <code>string process_type = 3;</code>
+       * @return The bytes for processType.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getProcessTypeBytes() {
+        return instance.getProcessTypeBytes();
+      }
+      /**
+       * <code>string process_type = 3;</code>
+       * @param value The processType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessType(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setProcessType(value);
+        return this;
+      }
+      /**
+       * <code>string process_type = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProcessType() {
+        copyOnWrite();
+        instance.clearProcessType();
+        return this;
+      }
+      /**
+       * <code>string process_type = 3;</code>
+       * @param value The bytes for processType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessTypeBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setProcessTypeBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string grinding_parameter = 4;</code>
+       * @return The grindingParameter.
+       */
+      @java.lang.Override
+      public java.lang.String getGrindingParameter() {
+        return instance.getGrindingParameter();
+      }
+      /**
+       * <code>string grinding_parameter = 4;</code>
+       * @return The bytes for grindingParameter.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getGrindingParameterBytes() {
+        return instance.getGrindingParameterBytes();
+      }
+      /**
+       * <code>string grinding_parameter = 4;</code>
+       * @param value The grindingParameter to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGrindingParameter(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setGrindingParameter(value);
+        return this;
+      }
+      /**
+       * <code>string grinding_parameter = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGrindingParameter() {
+        copyOnWrite();
+        instance.clearGrindingParameter();
+        return this;
+      }
+      /**
+       * <code>string grinding_parameter = 4;</code>
+       * @param value The bytes for grindingParameter to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGrindingParameterBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setGrindingParameterBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string concrete_strength = 5;</code>
+       * @return The concreteStrength.
+       */
+      @java.lang.Override
+      public java.lang.String getConcreteStrength() {
+        return instance.getConcreteStrength();
+      }
+      /**
+       * <code>string concrete_strength = 5;</code>
+       * @return The bytes for concreteStrength.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getConcreteStrengthBytes() {
+        return instance.getConcreteStrengthBytes();
+      }
+      /**
+       * <code>string concrete_strength = 5;</code>
+       * @param value The concreteStrength to set.
+       * @return This builder for chaining.
+       */
+      public Builder setConcreteStrength(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setConcreteStrength(value);
+        return this;
+      }
+      /**
+       * <code>string concrete_strength = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearConcreteStrength() {
+        copyOnWrite();
+        instance.clearConcreteStrength();
+        return this;
+      }
+      /**
+       * <code>string concrete_strength = 5;</code>
+       * @param value The bytes for concreteStrength to set.
+       * @return This builder for chaining.
+       */
+      public Builder setConcreteStrengthBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setConcreteStrengthBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>float pressure = 6;</code>
+       * @return The pressure.
+       */
+      @java.lang.Override
+      public float getPressure() {
+        return instance.getPressure();
+      }
+      /**
+       * <code>float pressure = 6;</code>
+       * @param value The pressure to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPressure(float value) {
+        copyOnWrite();
+        instance.setPressure(value);
+        return this;
+      }
+      /**
+       * <code>float pressure = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPressure() {
+        copyOnWrite();
+        instance.clearPressure();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.MapProcessSettings)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.MapProcessSettings();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "runSpeed_",
+              "discSpeedRpm_",
+              "processType_",
+              "grindingParameter_",
+              "concreteStrength_",
+              "pressure_",
+            };
+            java.lang.String info =
+                "\u0000\u0006\u0000\u0000\u0001\u0006\u0006\u0000\u0000\u0000\u0001\u0001\u0002\u000b" +
+                "\u0003\u0208\u0004\u0208\u0005\u0208\u0006\u0001";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.MapProcessSettings> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.MapProcessSettings.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.MapProcessSettings>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.MapProcessSettings)
+    private static final sl_link.SlLink.MapProcessSettings DEFAULT_INSTANCE;
+    static {
+      MapProcessSettings defaultInstance = new MapProcessSettings();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        MapProcessSettings.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.MapProcessSettings getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<MapProcessSettings> PARSER;
+
+    public static com.google.protobuf.Parser<MapProcessSettings> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }
@@ -12647,6 +13512,49 @@ public final class SlLink {
      * @return The rppFieldMask.
      */
     long getRppFieldMask();
+
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     * @return Whether the process field is set.
+     */
+    boolean hasProcess();
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     * @return The process.
+     */
+    sl_link.SlLink.MapProcessSettings getProcess();
+
+    /**
+     * <code>string process_map_id = 8;</code>
+     * @return The processMapId.
+     */
+    java.lang.String getProcessMapId();
+    /**
+     * <code>string process_map_id = 8;</code>
+     * @return The bytes for processMapId.
+     */
+    com.google.protobuf.ByteString
+        getProcessMapIdBytes();
+
+    /**
+     * <code>string process_region_id = 9;</code>
+     * @return The processRegionId.
+     */
+    java.lang.String getProcessRegionId();
+    /**
+     * <code>string process_region_id = 9;</code>
+     * @return The bytes for processRegionId.
+     */
+    com.google.protobuf.ByteString
+        getProcessRegionIdBytes();
   }
   /**
    * Protobuf type {@code sl_link.SettingsWriteRequest}
@@ -12657,6 +13565,8 @@ public final class SlLink {
       // @@protoc_insertion_point(message_implements:sl_link.SettingsWriteRequest)
       SettingsWriteRequestOrBuilder {
     private SettingsWriteRequest() {
+      processMapId_ = "";
+      processRegionId_ = "";
     }
     private int bitField0_;
     public static final int CHASSIS_FIELD_NUMBER = 1;
@@ -12903,6 +13813,166 @@ public final class SlLink {
     private void clearRppFieldMask() {
 
       rppFieldMask_ = 0L;
+    }
+
+    public static final int PROCESS_FIELD_NUMBER = 7;
+    private sl_link.SlLink.MapProcessSettings process_;
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     */
+    @java.lang.Override
+    public boolean hasProcess() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapProcessSettings getProcess() {
+      return process_ == null ? sl_link.SlLink.MapProcessSettings.getDefaultInstance() : process_;
+    }
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     */
+    private void setProcess(sl_link.SlLink.MapProcessSettings value) {
+      value.getClass();
+  process_ = value;
+      bitField0_ |= 0x00000008;
+      }
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeProcess(sl_link.SlLink.MapProcessSettings value) {
+      value.getClass();
+  if (process_ != null &&
+          process_ != sl_link.SlLink.MapProcessSettings.getDefaultInstance()) {
+        process_ =
+          sl_link.SlLink.MapProcessSettings.newBuilder(process_).mergeFrom(value).buildPartial();
+      } else {
+        process_ = value;
+      }
+      bitField0_ |= 0x00000008;
+    }
+    /**
+     * <pre>
+     * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+     * </pre>
+     *
+     * <code>.sl_link.MapProcessSettings process = 7;</code>
+     */
+    private void clearProcess() {  process_ = null;
+      bitField0_ = (bitField0_ & ~0x00000008);
+    }
+
+    public static final int PROCESS_MAP_ID_FIELD_NUMBER = 8;
+    private java.lang.String processMapId_;
+    /**
+     * <code>string process_map_id = 8;</code>
+     * @return The processMapId.
+     */
+    @java.lang.Override
+    public java.lang.String getProcessMapId() {
+      return processMapId_;
+    }
+    /**
+     * <code>string process_map_id = 8;</code>
+     * @return The bytes for processMapId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getProcessMapIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(processMapId_);
+    }
+    /**
+     * <code>string process_map_id = 8;</code>
+     * @param value The processMapId to set.
+     */
+    private void setProcessMapId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      processMapId_ = value;
+    }
+    /**
+     * <code>string process_map_id = 8;</code>
+     */
+    private void clearProcessMapId() {
+
+      processMapId_ = getDefaultInstance().getProcessMapId();
+    }
+    /**
+     * <code>string process_map_id = 8;</code>
+     * @param value The bytes for processMapId to set.
+     */
+    private void setProcessMapIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      processMapId_ = value.toStringUtf8();
+
+    }
+
+    public static final int PROCESS_REGION_ID_FIELD_NUMBER = 9;
+    private java.lang.String processRegionId_;
+    /**
+     * <code>string process_region_id = 9;</code>
+     * @return The processRegionId.
+     */
+    @java.lang.Override
+    public java.lang.String getProcessRegionId() {
+      return processRegionId_;
+    }
+    /**
+     * <code>string process_region_id = 9;</code>
+     * @return The bytes for processRegionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getProcessRegionIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(processRegionId_);
+    }
+    /**
+     * <code>string process_region_id = 9;</code>
+     * @param value The processRegionId to set.
+     */
+    private void setProcessRegionId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      processRegionId_ = value;
+    }
+    /**
+     * <code>string process_region_id = 9;</code>
+     */
+    private void clearProcessRegionId() {
+
+      processRegionId_ = getDefaultInstance().getProcessRegionId();
+    }
+    /**
+     * <code>string process_region_id = 9;</code>
+     * @param value The bytes for processRegionId to set.
+     */
+    private void setProcessRegionIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      processRegionId_ = value.toStringUtf8();
+
     }
 
     public static sl_link.SlLink.SettingsWriteRequest parseFrom(
@@ -13257,6 +14327,175 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 7;</code>
+       */
+      @java.lang.Override
+      public boolean hasProcess() {
+        return instance.hasProcess();
+      }
+      /**
+       * <pre>
+       * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 7;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapProcessSettings getProcess() {
+        return instance.getProcess();
+      }
+      /**
+       * <pre>
+       * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 7;</code>
+       */
+      public Builder setProcess(sl_link.SlLink.MapProcessSettings value) {
+        copyOnWrite();
+        instance.setProcess(value);
+        return this;
+        }
+      /**
+       * <pre>
+       * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 7;</code>
+       */
+      public Builder setProcess(
+          sl_link.SlLink.MapProcessSettings.Builder builderForValue) {
+        copyOnWrite();
+        instance.setProcess(builderForValue.build());
+        return this;
+      }
+      /**
+       * <pre>
+       * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 7;</code>
+       */
+      public Builder mergeProcess(sl_link.SlLink.MapProcessSettings value) {
+        copyOnWrite();
+        instance.mergeProcess(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+       * </pre>
+       *
+       * <code>.sl_link.MapProcessSettings process = 7;</code>
+       */
+      public Builder clearProcess() {  copyOnWrite();
+        instance.clearProcess();
+        return this;
+      }
+
+      /**
+       * <code>string process_map_id = 8;</code>
+       * @return The processMapId.
+       */
+      @java.lang.Override
+      public java.lang.String getProcessMapId() {
+        return instance.getProcessMapId();
+      }
+      /**
+       * <code>string process_map_id = 8;</code>
+       * @return The bytes for processMapId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getProcessMapIdBytes() {
+        return instance.getProcessMapIdBytes();
+      }
+      /**
+       * <code>string process_map_id = 8;</code>
+       * @param value The processMapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessMapId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setProcessMapId(value);
+        return this;
+      }
+      /**
+       * <code>string process_map_id = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProcessMapId() {
+        copyOnWrite();
+        instance.clearProcessMapId();
+        return this;
+      }
+      /**
+       * <code>string process_map_id = 8;</code>
+       * @param value The bytes for processMapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setProcessMapIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string process_region_id = 9;</code>
+       * @return The processRegionId.
+       */
+      @java.lang.Override
+      public java.lang.String getProcessRegionId() {
+        return instance.getProcessRegionId();
+      }
+      /**
+       * <code>string process_region_id = 9;</code>
+       * @return The bytes for processRegionId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getProcessRegionIdBytes() {
+        return instance.getProcessRegionIdBytes();
+      }
+      /**
+       * <code>string process_region_id = 9;</code>
+       * @param value The processRegionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessRegionId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setProcessRegionId(value);
+        return this;
+      }
+      /**
+       * <code>string process_region_id = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProcessRegionId() {
+        copyOnWrite();
+        instance.clearProcessRegionId();
+        return this;
+      }
+      /**
+       * <code>string process_region_id = 9;</code>
+       * @param value The bytes for processRegionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessRegionIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setProcessRegionIdBytes(value);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.SettingsWriteRequest)
     }
     @java.lang.Override
@@ -13280,10 +14519,14 @@ public final class SlLink {
               "applyRppTemporarily_",
               "saveRppDefault_",
               "rppFieldMask_",
+              "process_",
+              "processMapId_",
+              "processRegionId_",
             };
             java.lang.String info =
-                "\u0000\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0000\u0000\u0001\u1009\u0000\u0002" +
-                "\u1009\u0001\u0003\u1009\u0002\u0004\u0007\u0005\u0007\u0006\u0003";
+                "\u0000\t\u0000\u0001\u0001\t\t\u0000\u0000\u0000\u0001\u1009\u0000\u0002\u1009\u0001" +
+                "\u0003\u1009\u0002\u0004\u0007\u0005\u0007\u0006\u0003\u0007\u1009\u0003\b\u0208" +
+                "\t\u0208";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -13415,6 +14658,41 @@ public final class SlLink {
      * @return The geometryRequiresRestart.
      */
     boolean getGeometryRequiresRestart();
+
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     * @return Whether the process field is set.
+     */
+    boolean hasProcess();
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     * @return The process.
+     */
+    sl_link.SlLink.MapProcessSettings getProcess();
+
+    /**
+     * <code>string process_map_id = 10;</code>
+     * @return The processMapId.
+     */
+    java.lang.String getProcessMapId();
+    /**
+     * <code>string process_map_id = 10;</code>
+     * @return The bytes for processMapId.
+     */
+    com.google.protobuf.ByteString
+        getProcessMapIdBytes();
+
+    /**
+     * <code>string process_region_id = 11;</code>
+     * @return The processRegionId.
+     */
+    java.lang.String getProcessRegionId();
+    /**
+     * <code>string process_region_id = 11;</code>
+     * @return The bytes for processRegionId.
+     */
+    com.google.protobuf.ByteString
+        getProcessRegionIdBytes();
   }
   /**
    * Protobuf type {@code sl_link.SettingsWriteResponse}
@@ -13426,6 +14704,8 @@ public final class SlLink {
       SettingsWriteResponseOrBuilder {
     private SettingsWriteResponse() {
       message_ = "";
+      processMapId_ = "";
+      processRegionId_ = "";
     }
     private int bitField0_;
     public static final int RESULT_FIELD_NUMBER = 1;
@@ -13731,6 +15011,146 @@ public final class SlLink {
     private void clearGeometryRequiresRestart() {
 
       geometryRequiresRestart_ = false;
+    }
+
+    public static final int PROCESS_FIELD_NUMBER = 9;
+    private sl_link.SlLink.MapProcessSettings process_;
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     */
+    @java.lang.Override
+    public boolean hasProcess() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapProcessSettings getProcess() {
+      return process_ == null ? sl_link.SlLink.MapProcessSettings.getDefaultInstance() : process_;
+    }
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     */
+    private void setProcess(sl_link.SlLink.MapProcessSettings value) {
+      value.getClass();
+  process_ = value;
+      bitField0_ |= 0x00000008;
+      }
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeProcess(sl_link.SlLink.MapProcessSettings value) {
+      value.getClass();
+  if (process_ != null &&
+          process_ != sl_link.SlLink.MapProcessSettings.getDefaultInstance()) {
+        process_ =
+          sl_link.SlLink.MapProcessSettings.newBuilder(process_).mergeFrom(value).buildPartial();
+      } else {
+        process_ = value;
+      }
+      bitField0_ |= 0x00000008;
+    }
+    /**
+     * <code>.sl_link.MapProcessSettings process = 9;</code>
+     */
+    private void clearProcess() {  process_ = null;
+      bitField0_ = (bitField0_ & ~0x00000008);
+    }
+
+    public static final int PROCESS_MAP_ID_FIELD_NUMBER = 10;
+    private java.lang.String processMapId_;
+    /**
+     * <code>string process_map_id = 10;</code>
+     * @return The processMapId.
+     */
+    @java.lang.Override
+    public java.lang.String getProcessMapId() {
+      return processMapId_;
+    }
+    /**
+     * <code>string process_map_id = 10;</code>
+     * @return The bytes for processMapId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getProcessMapIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(processMapId_);
+    }
+    /**
+     * <code>string process_map_id = 10;</code>
+     * @param value The processMapId to set.
+     */
+    private void setProcessMapId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      processMapId_ = value;
+    }
+    /**
+     * <code>string process_map_id = 10;</code>
+     */
+    private void clearProcessMapId() {
+
+      processMapId_ = getDefaultInstance().getProcessMapId();
+    }
+    /**
+     * <code>string process_map_id = 10;</code>
+     * @param value The bytes for processMapId to set.
+     */
+    private void setProcessMapIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      processMapId_ = value.toStringUtf8();
+
+    }
+
+    public static final int PROCESS_REGION_ID_FIELD_NUMBER = 11;
+    private java.lang.String processRegionId_;
+    /**
+     * <code>string process_region_id = 11;</code>
+     * @return The processRegionId.
+     */
+    @java.lang.Override
+    public java.lang.String getProcessRegionId() {
+      return processRegionId_;
+    }
+    /**
+     * <code>string process_region_id = 11;</code>
+     * @return The bytes for processRegionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getProcessRegionIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(processRegionId_);
+    }
+    /**
+     * <code>string process_region_id = 11;</code>
+     * @param value The processRegionId to set.
+     */
+    private void setProcessRegionId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      processRegionId_ = value;
+    }
+    /**
+     * <code>string process_region_id = 11;</code>
+     */
+    private void clearProcessRegionId() {
+
+      processRegionId_ = getDefaultInstance().getProcessRegionId();
+    }
+    /**
+     * <code>string process_region_id = 11;</code>
+     * @param value The bytes for processRegionId to set.
+     */
+    private void setProcessRegionIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      processRegionId_ = value.toStringUtf8();
+
     }
 
     public static sl_link.SlLink.SettingsWriteResponse parseFrom(
@@ -14150,6 +15570,151 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapProcessSettings process = 9;</code>
+       */
+      @java.lang.Override
+      public boolean hasProcess() {
+        return instance.hasProcess();
+      }
+      /**
+       * <code>.sl_link.MapProcessSettings process = 9;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapProcessSettings getProcess() {
+        return instance.getProcess();
+      }
+      /**
+       * <code>.sl_link.MapProcessSettings process = 9;</code>
+       */
+      public Builder setProcess(sl_link.SlLink.MapProcessSettings value) {
+        copyOnWrite();
+        instance.setProcess(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapProcessSettings process = 9;</code>
+       */
+      public Builder setProcess(
+          sl_link.SlLink.MapProcessSettings.Builder builderForValue) {
+        copyOnWrite();
+        instance.setProcess(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapProcessSettings process = 9;</code>
+       */
+      public Builder mergeProcess(sl_link.SlLink.MapProcessSettings value) {
+        copyOnWrite();
+        instance.mergeProcess(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapProcessSettings process = 9;</code>
+       */
+      public Builder clearProcess() {  copyOnWrite();
+        instance.clearProcess();
+        return this;
+      }
+
+      /**
+       * <code>string process_map_id = 10;</code>
+       * @return The processMapId.
+       */
+      @java.lang.Override
+      public java.lang.String getProcessMapId() {
+        return instance.getProcessMapId();
+      }
+      /**
+       * <code>string process_map_id = 10;</code>
+       * @return The bytes for processMapId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getProcessMapIdBytes() {
+        return instance.getProcessMapIdBytes();
+      }
+      /**
+       * <code>string process_map_id = 10;</code>
+       * @param value The processMapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessMapId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setProcessMapId(value);
+        return this;
+      }
+      /**
+       * <code>string process_map_id = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProcessMapId() {
+        copyOnWrite();
+        instance.clearProcessMapId();
+        return this;
+      }
+      /**
+       * <code>string process_map_id = 10;</code>
+       * @param value The bytes for processMapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setProcessMapIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string process_region_id = 11;</code>
+       * @return The processRegionId.
+       */
+      @java.lang.Override
+      public java.lang.String getProcessRegionId() {
+        return instance.getProcessRegionId();
+      }
+      /**
+       * <code>string process_region_id = 11;</code>
+       * @return The bytes for processRegionId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getProcessRegionIdBytes() {
+        return instance.getProcessRegionIdBytes();
+      }
+      /**
+       * <code>string process_region_id = 11;</code>
+       * @param value The processRegionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessRegionId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setProcessRegionId(value);
+        return this;
+      }
+      /**
+       * <code>string process_region_id = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProcessRegionId() {
+        copyOnWrite();
+        instance.clearProcessRegionId();
+        return this;
+      }
+      /**
+       * <code>string process_region_id = 11;</code>
+       * @param value The bytes for processRegionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProcessRegionIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setProcessRegionIdBytes(value);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.SettingsWriteResponse)
     }
     @java.lang.Override
@@ -14175,10 +15740,14 @@ public final class SlLink {
               "rppApplied_",
               "rppSaved_",
               "geometryRequiresRestart_",
+              "process_",
+              "processMapId_",
+              "processRegionId_",
             };
             java.lang.String info =
-                "\u0000\b\u0000\u0001\u0001\b\b\u0000\u0000\u0000\u0001\f\u0002\u0208\u0003\u1009" +
-                "\u0000\u0004\u1009\u0001\u0005\u1009\u0002\u0006\u0007\u0007\u0007\b\u0007";
+                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\f\u0002\u0208" +
+                "\u0003\u1009\u0000\u0004\u1009\u0001\u0005\u1009\u0002\u0006\u0007\u0007\u0007\b" +
+                "\u0007\t\u1009\u0003\n\u0208\u000b\u0208";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -15536,6 +17105,47 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getLocalizationStatusReasonBytes();
+
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     * @return Whether the leftMotorFaultCode field is set.
+     */
+    boolean hasLeftMotorFaultCode();
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     * @return The leftMotorFaultCode.
+     */
+    int getLeftMotorFaultCode();
+
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     * @return Whether the rightMotorFaultCode field is set.
+     */
+    boolean hasRightMotorFaultCode();
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     * @return The rightMotorFaultCode.
+     */
+    int getRightMotorFaultCode();
+
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     * @return Whether the systemHealth field is set.
+     */
+    boolean hasSystemHealth();
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     * @return The systemHealth.
+     */
+    sl_link.SlLink.SystemHealth getSystemHealth();
   }
   /**
    * Protobuf type {@code sl_link.DeviceStatusReport}
@@ -16496,6 +18106,136 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       localizationStatusReason_ = value.toStringUtf8();
 
+    }
+
+    public static final int LEFT_MOTOR_FAULT_CODE_FIELD_NUMBER = 26;
+    private int leftMotorFaultCode_;
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     * @return Whether the leftMotorFaultCode field is set.
+     */
+    @java.lang.Override
+    public boolean hasLeftMotorFaultCode() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     * @return The leftMotorFaultCode.
+     */
+    @java.lang.Override
+    public int getLeftMotorFaultCode() {
+      return leftMotorFaultCode_;
+    }
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     * @param value The leftMotorFaultCode to set.
+     */
+    private void setLeftMotorFaultCode(int value) {
+      bitField0_ |= 0x00000040;
+      leftMotorFaultCode_ = value;
+    }
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     */
+    private void clearLeftMotorFaultCode() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      leftMotorFaultCode_ = 0;
+    }
+
+    public static final int RIGHT_MOTOR_FAULT_CODE_FIELD_NUMBER = 27;
+    private int rightMotorFaultCode_;
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     * @return Whether the rightMotorFaultCode field is set.
+     */
+    @java.lang.Override
+    public boolean hasRightMotorFaultCode() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     * @return The rightMotorFaultCode.
+     */
+    @java.lang.Override
+    public int getRightMotorFaultCode() {
+      return rightMotorFaultCode_;
+    }
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     * @param value The rightMotorFaultCode to set.
+     */
+    private void setRightMotorFaultCode(int value) {
+      bitField0_ |= 0x00000080;
+      rightMotorFaultCode_ = value;
+    }
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     */
+    private void clearRightMotorFaultCode() {
+      bitField0_ = (bitField0_ & ~0x00000080);
+      rightMotorFaultCode_ = 0;
+    }
+
+    public static final int SYSTEM_HEALTH_FIELD_NUMBER = 28;
+    private sl_link.SlLink.SystemHealth systemHealth_;
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     */
+    @java.lang.Override
+    public boolean hasSystemHealth() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.SystemHealth getSystemHealth() {
+      return systemHealth_ == null ? sl_link.SlLink.SystemHealth.getDefaultInstance() : systemHealth_;
+    }
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     */
+    private void setSystemHealth(sl_link.SlLink.SystemHealth value) {
+      value.getClass();
+  systemHealth_ = value;
+      bitField0_ |= 0x00000100;
+      }
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeSystemHealth(sl_link.SlLink.SystemHealth value) {
+      value.getClass();
+  if (systemHealth_ != null &&
+          systemHealth_ != sl_link.SlLink.SystemHealth.getDefaultInstance()) {
+        systemHealth_ =
+          sl_link.SlLink.SystemHealth.newBuilder(systemHealth_).mergeFrom(value).buildPartial();
+      } else {
+        systemHealth_ = value;
+      }
+      bitField0_ |= 0x00000100;
+    }
+    /**
+     * <code>.sl_link.SystemHealth system_health = 28;</code>
+     */
+    private void clearSystemHealth() {  systemHealth_ = null;
+      bitField0_ = (bitField0_ & ~0x00000100);
     }
 
     public static sl_link.SlLink.DeviceStatusReport parseFrom(
@@ -17599,6 +19339,141 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Signed int16 register values; absent until fresh connected chassis feedback.
+       * </pre>
+       *
+       * <code>optional int32 left_motor_fault_code = 26;</code>
+       * @return Whether the leftMotorFaultCode field is set.
+       */
+      @java.lang.Override
+      public boolean hasLeftMotorFaultCode() {
+        return instance.hasLeftMotorFaultCode();
+      }
+      /**
+       * <pre>
+       * Signed int16 register values; absent until fresh connected chassis feedback.
+       * </pre>
+       *
+       * <code>optional int32 left_motor_fault_code = 26;</code>
+       * @return The leftMotorFaultCode.
+       */
+      @java.lang.Override
+      public int getLeftMotorFaultCode() {
+        return instance.getLeftMotorFaultCode();
+      }
+      /**
+       * <pre>
+       * Signed int16 register values; absent until fresh connected chassis feedback.
+       * </pre>
+       *
+       * <code>optional int32 left_motor_fault_code = 26;</code>
+       * @param value The leftMotorFaultCode to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLeftMotorFaultCode(int value) {
+        copyOnWrite();
+        instance.setLeftMotorFaultCode(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Signed int16 register values; absent until fresh connected chassis feedback.
+       * </pre>
+       *
+       * <code>optional int32 left_motor_fault_code = 26;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLeftMotorFaultCode() {
+        copyOnWrite();
+        instance.clearLeftMotorFaultCode();
+        return this;
+      }
+
+      /**
+       * <code>optional int32 right_motor_fault_code = 27;</code>
+       * @return Whether the rightMotorFaultCode field is set.
+       */
+      @java.lang.Override
+      public boolean hasRightMotorFaultCode() {
+        return instance.hasRightMotorFaultCode();
+      }
+      /**
+       * <code>optional int32 right_motor_fault_code = 27;</code>
+       * @return The rightMotorFaultCode.
+       */
+      @java.lang.Override
+      public int getRightMotorFaultCode() {
+        return instance.getRightMotorFaultCode();
+      }
+      /**
+       * <code>optional int32 right_motor_fault_code = 27;</code>
+       * @param value The rightMotorFaultCode to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRightMotorFaultCode(int value) {
+        copyOnWrite();
+        instance.setRightMotorFaultCode(value);
+        return this;
+      }
+      /**
+       * <code>optional int32 right_motor_fault_code = 27;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRightMotorFaultCode() {
+        copyOnWrite();
+        instance.clearRightMotorFaultCode();
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.SystemHealth system_health = 28;</code>
+       */
+      @java.lang.Override
+      public boolean hasSystemHealth() {
+        return instance.hasSystemHealth();
+      }
+      /**
+       * <code>.sl_link.SystemHealth system_health = 28;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.SystemHealth getSystemHealth() {
+        return instance.getSystemHealth();
+      }
+      /**
+       * <code>.sl_link.SystemHealth system_health = 28;</code>
+       */
+      public Builder setSystemHealth(sl_link.SlLink.SystemHealth value) {
+        copyOnWrite();
+        instance.setSystemHealth(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.SystemHealth system_health = 28;</code>
+       */
+      public Builder setSystemHealth(
+          sl_link.SlLink.SystemHealth.Builder builderForValue) {
+        copyOnWrite();
+        instance.setSystemHealth(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.SystemHealth system_health = 28;</code>
+       */
+      public Builder mergeSystemHealth(sl_link.SlLink.SystemHealth value) {
+        copyOnWrite();
+        instance.mergeSystemHealth(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.SystemHealth system_health = 28;</code>
+       */
+      public Builder clearSystemHealth() {  copyOnWrite();
+        instance.clearSystemHealth();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.DeviceStatusReport)
     }
     @java.lang.Override
@@ -17641,13 +19516,17 @@ public final class SlLink {
               "localizationReady_",
               "localizationPauseLatched_",
               "localizationStatusReason_",
+              "leftMotorFaultCode_",
+              "rightMotorFaultCode_",
+              "systemHealth_",
             };
             java.lang.String info =
-                "\u0000\u0019\u0000\u0001\u0001\u0019\u0019\u0000\u0000\u0000\u0001\u000b\u0002\f" +
+                "\u0000\u001c\u0000\u0001\u0001\u001c\u001c\u0000\u0000\u0000\u0001\u000b\u0002\f" +
                 "\u0003\f\u0004\f\u0005\u0001\u0006\u0001\u0007\u000b\b\u0007\t\f\n\u0007\u000b\u1009" +
                 "\u0000\f\u0007\r\u0001\u000e\u1009\u0001\u000f\u0007\u0010\u000b\u0011\u0007\u0012" +
                 "\u0007\u0013\u0208\u0014\u0001\u0015\u1007\u0002\u0016\u1007\u0003\u0017\u1007\u0004" +
-                "\u0018\u1007\u0005\u0019\u0208";
+                "\u0018\u1007\u0005\u0019\u0208\u001a\u1004\u0006\u001b\u1004\u0007\u001c\u1009\b" +
+                "";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -17698,6 +19577,1160 @@ public final class SlLink {
     private static volatile com.google.protobuf.Parser<DeviceStatusReport> PARSER;
 
     public static com.google.protobuf.Parser<DeviceStatusReport> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface SystemHealthOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.SystemHealth)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>optional float cpu_temperature_c = 1;</code>
+     * @return Whether the cpuTemperatureC field is set.
+     */
+    boolean hasCpuTemperatureC();
+    /**
+     * <code>optional float cpu_temperature_c = 1;</code>
+     * @return The cpuTemperatureC.
+     */
+    float getCpuTemperatureC();
+
+    /**
+     * <code>optional float cpu_usage_percent = 2;</code>
+     * @return Whether the cpuUsagePercent field is set.
+     */
+    boolean hasCpuUsagePercent();
+    /**
+     * <code>optional float cpu_usage_percent = 2;</code>
+     * @return The cpuUsagePercent.
+     */
+    float getCpuUsagePercent();
+
+    /**
+     * <code>optional float memory_usage_percent = 3;</code>
+     * @return Whether the memoryUsagePercent field is set.
+     */
+    boolean hasMemoryUsagePercent();
+    /**
+     * <code>optional float memory_usage_percent = 3;</code>
+     * @return The memoryUsagePercent.
+     */
+    float getMemoryUsagePercent();
+
+    /**
+     * <code>optional uint64 memory_total_bytes = 4;</code>
+     * @return Whether the memoryTotalBytes field is set.
+     */
+    boolean hasMemoryTotalBytes();
+    /**
+     * <code>optional uint64 memory_total_bytes = 4;</code>
+     * @return The memoryTotalBytes.
+     */
+    long getMemoryTotalBytes();
+
+    /**
+     * <code>optional uint64 memory_available_bytes = 5;</code>
+     * @return Whether the memoryAvailableBytes field is set.
+     */
+    boolean hasMemoryAvailableBytes();
+    /**
+     * <code>optional uint64 memory_available_bytes = 5;</code>
+     * @return The memoryAvailableBytes.
+     */
+    long getMemoryAvailableBytes();
+
+    /**
+     * <code>optional float disk_usage_percent = 6;</code>
+     * @return Whether the diskUsagePercent field is set.
+     */
+    boolean hasDiskUsagePercent();
+    /**
+     * <code>optional float disk_usage_percent = 6;</code>
+     * @return The diskUsagePercent.
+     */
+    float getDiskUsagePercent();
+
+    /**
+     * <code>optional uint64 disk_free_bytes = 7;</code>
+     * @return Whether the diskFreeBytes field is set.
+     */
+    boolean hasDiskFreeBytes();
+    /**
+     * <code>optional uint64 disk_free_bytes = 7;</code>
+     * @return The diskFreeBytes.
+     */
+    long getDiskFreeBytes();
+
+    /**
+     * <code>optional uint64 uptime_seconds = 8;</code>
+     * @return Whether the uptimeSeconds field is set.
+     */
+    boolean hasUptimeSeconds();
+    /**
+     * <code>optional uint64 uptime_seconds = 8;</code>
+     * @return The uptimeSeconds.
+     */
+    long getUptimeSeconds();
+
+    /**
+     * <code>optional uint32 cellular_signal_percent = 9;</code>
+     * @return Whether the cellularSignalPercent field is set.
+     */
+    boolean hasCellularSignalPercent();
+    /**
+     * <code>optional uint32 cellular_signal_percent = 9;</code>
+     * @return The cellularSignalPercent.
+     */
+    int getCellularSignalPercent();
+
+    /**
+     * <code>string cellular_state = 10;</code>
+     * @return The cellularState.
+     */
+    java.lang.String getCellularState();
+    /**
+     * <code>string cellular_state = 10;</code>
+     * @return The bytes for cellularState.
+     */
+    com.google.protobuf.ByteString
+        getCellularStateBytes();
+
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     * @return The cellularAccessTechnology.
+     */
+    java.lang.String getCellularAccessTechnology();
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     * @return The bytes for cellularAccessTechnology.
+     */
+    com.google.protobuf.ByteString
+        getCellularAccessTechnologyBytes();
+  }
+  /**
+   * <pre>
+   * Linux board telemetry. Optional fields distinguish unsupported/read failure from zero.
+   * </pre>
+   *
+   * Protobuf type {@code sl_link.SystemHealth}
+   */
+  public  static final class SystemHealth extends
+      com.google.protobuf.GeneratedMessageLite<
+          SystemHealth, SystemHealth.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.SystemHealth)
+      SystemHealthOrBuilder {
+    private SystemHealth() {
+      cellularState_ = "";
+      cellularAccessTechnology_ = "";
+    }
+    private int bitField0_;
+    public static final int CPU_TEMPERATURE_C_FIELD_NUMBER = 1;
+    private float cpuTemperatureC_;
+    /**
+     * <code>optional float cpu_temperature_c = 1;</code>
+     * @return Whether the cpuTemperatureC field is set.
+     */
+    @java.lang.Override
+    public boolean hasCpuTemperatureC() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional float cpu_temperature_c = 1;</code>
+     * @return The cpuTemperatureC.
+     */
+    @java.lang.Override
+    public float getCpuTemperatureC() {
+      return cpuTemperatureC_;
+    }
+    /**
+     * <code>optional float cpu_temperature_c = 1;</code>
+     * @param value The cpuTemperatureC to set.
+     */
+    private void setCpuTemperatureC(float value) {
+      bitField0_ |= 0x00000001;
+      cpuTemperatureC_ = value;
+    }
+    /**
+     * <code>optional float cpu_temperature_c = 1;</code>
+     */
+    private void clearCpuTemperatureC() {
+      bitField0_ = (bitField0_ & ~0x00000001);
+      cpuTemperatureC_ = 0F;
+    }
+
+    public static final int CPU_USAGE_PERCENT_FIELD_NUMBER = 2;
+    private float cpuUsagePercent_;
+    /**
+     * <code>optional float cpu_usage_percent = 2;</code>
+     * @return Whether the cpuUsagePercent field is set.
+     */
+    @java.lang.Override
+    public boolean hasCpuUsagePercent() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional float cpu_usage_percent = 2;</code>
+     * @return The cpuUsagePercent.
+     */
+    @java.lang.Override
+    public float getCpuUsagePercent() {
+      return cpuUsagePercent_;
+    }
+    /**
+     * <code>optional float cpu_usage_percent = 2;</code>
+     * @param value The cpuUsagePercent to set.
+     */
+    private void setCpuUsagePercent(float value) {
+      bitField0_ |= 0x00000002;
+      cpuUsagePercent_ = value;
+    }
+    /**
+     * <code>optional float cpu_usage_percent = 2;</code>
+     */
+    private void clearCpuUsagePercent() {
+      bitField0_ = (bitField0_ & ~0x00000002);
+      cpuUsagePercent_ = 0F;
+    }
+
+    public static final int MEMORY_USAGE_PERCENT_FIELD_NUMBER = 3;
+    private float memoryUsagePercent_;
+    /**
+     * <code>optional float memory_usage_percent = 3;</code>
+     * @return Whether the memoryUsagePercent field is set.
+     */
+    @java.lang.Override
+    public boolean hasMemoryUsagePercent() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional float memory_usage_percent = 3;</code>
+     * @return The memoryUsagePercent.
+     */
+    @java.lang.Override
+    public float getMemoryUsagePercent() {
+      return memoryUsagePercent_;
+    }
+    /**
+     * <code>optional float memory_usage_percent = 3;</code>
+     * @param value The memoryUsagePercent to set.
+     */
+    private void setMemoryUsagePercent(float value) {
+      bitField0_ |= 0x00000004;
+      memoryUsagePercent_ = value;
+    }
+    /**
+     * <code>optional float memory_usage_percent = 3;</code>
+     */
+    private void clearMemoryUsagePercent() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      memoryUsagePercent_ = 0F;
+    }
+
+    public static final int MEMORY_TOTAL_BYTES_FIELD_NUMBER = 4;
+    private long memoryTotalBytes_;
+    /**
+     * <code>optional uint64 memory_total_bytes = 4;</code>
+     * @return Whether the memoryTotalBytes field is set.
+     */
+    @java.lang.Override
+    public boolean hasMemoryTotalBytes() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>optional uint64 memory_total_bytes = 4;</code>
+     * @return The memoryTotalBytes.
+     */
+    @java.lang.Override
+    public long getMemoryTotalBytes() {
+      return memoryTotalBytes_;
+    }
+    /**
+     * <code>optional uint64 memory_total_bytes = 4;</code>
+     * @param value The memoryTotalBytes to set.
+     */
+    private void setMemoryTotalBytes(long value) {
+      bitField0_ |= 0x00000008;
+      memoryTotalBytes_ = value;
+    }
+    /**
+     * <code>optional uint64 memory_total_bytes = 4;</code>
+     */
+    private void clearMemoryTotalBytes() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      memoryTotalBytes_ = 0L;
+    }
+
+    public static final int MEMORY_AVAILABLE_BYTES_FIELD_NUMBER = 5;
+    private long memoryAvailableBytes_;
+    /**
+     * <code>optional uint64 memory_available_bytes = 5;</code>
+     * @return Whether the memoryAvailableBytes field is set.
+     */
+    @java.lang.Override
+    public boolean hasMemoryAvailableBytes() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <code>optional uint64 memory_available_bytes = 5;</code>
+     * @return The memoryAvailableBytes.
+     */
+    @java.lang.Override
+    public long getMemoryAvailableBytes() {
+      return memoryAvailableBytes_;
+    }
+    /**
+     * <code>optional uint64 memory_available_bytes = 5;</code>
+     * @param value The memoryAvailableBytes to set.
+     */
+    private void setMemoryAvailableBytes(long value) {
+      bitField0_ |= 0x00000010;
+      memoryAvailableBytes_ = value;
+    }
+    /**
+     * <code>optional uint64 memory_available_bytes = 5;</code>
+     */
+    private void clearMemoryAvailableBytes() {
+      bitField0_ = (bitField0_ & ~0x00000010);
+      memoryAvailableBytes_ = 0L;
+    }
+
+    public static final int DISK_USAGE_PERCENT_FIELD_NUMBER = 6;
+    private float diskUsagePercent_;
+    /**
+     * <code>optional float disk_usage_percent = 6;</code>
+     * @return Whether the diskUsagePercent field is set.
+     */
+    @java.lang.Override
+    public boolean hasDiskUsagePercent() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <code>optional float disk_usage_percent = 6;</code>
+     * @return The diskUsagePercent.
+     */
+    @java.lang.Override
+    public float getDiskUsagePercent() {
+      return diskUsagePercent_;
+    }
+    /**
+     * <code>optional float disk_usage_percent = 6;</code>
+     * @param value The diskUsagePercent to set.
+     */
+    private void setDiskUsagePercent(float value) {
+      bitField0_ |= 0x00000020;
+      diskUsagePercent_ = value;
+    }
+    /**
+     * <code>optional float disk_usage_percent = 6;</code>
+     */
+    private void clearDiskUsagePercent() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      diskUsagePercent_ = 0F;
+    }
+
+    public static final int DISK_FREE_BYTES_FIELD_NUMBER = 7;
+    private long diskFreeBytes_;
+    /**
+     * <code>optional uint64 disk_free_bytes = 7;</code>
+     * @return Whether the diskFreeBytes field is set.
+     */
+    @java.lang.Override
+    public boolean hasDiskFreeBytes() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <code>optional uint64 disk_free_bytes = 7;</code>
+     * @return The diskFreeBytes.
+     */
+    @java.lang.Override
+    public long getDiskFreeBytes() {
+      return diskFreeBytes_;
+    }
+    /**
+     * <code>optional uint64 disk_free_bytes = 7;</code>
+     * @param value The diskFreeBytes to set.
+     */
+    private void setDiskFreeBytes(long value) {
+      bitField0_ |= 0x00000040;
+      diskFreeBytes_ = value;
+    }
+    /**
+     * <code>optional uint64 disk_free_bytes = 7;</code>
+     */
+    private void clearDiskFreeBytes() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      diskFreeBytes_ = 0L;
+    }
+
+    public static final int UPTIME_SECONDS_FIELD_NUMBER = 8;
+    private long uptimeSeconds_;
+    /**
+     * <code>optional uint64 uptime_seconds = 8;</code>
+     * @return Whether the uptimeSeconds field is set.
+     */
+    @java.lang.Override
+    public boolean hasUptimeSeconds() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <code>optional uint64 uptime_seconds = 8;</code>
+     * @return The uptimeSeconds.
+     */
+    @java.lang.Override
+    public long getUptimeSeconds() {
+      return uptimeSeconds_;
+    }
+    /**
+     * <code>optional uint64 uptime_seconds = 8;</code>
+     * @param value The uptimeSeconds to set.
+     */
+    private void setUptimeSeconds(long value) {
+      bitField0_ |= 0x00000080;
+      uptimeSeconds_ = value;
+    }
+    /**
+     * <code>optional uint64 uptime_seconds = 8;</code>
+     */
+    private void clearUptimeSeconds() {
+      bitField0_ = (bitField0_ & ~0x00000080);
+      uptimeSeconds_ = 0L;
+    }
+
+    public static final int CELLULAR_SIGNAL_PERCENT_FIELD_NUMBER = 9;
+    private int cellularSignalPercent_;
+    /**
+     * <code>optional uint32 cellular_signal_percent = 9;</code>
+     * @return Whether the cellularSignalPercent field is set.
+     */
+    @java.lang.Override
+    public boolean hasCellularSignalPercent() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <code>optional uint32 cellular_signal_percent = 9;</code>
+     * @return The cellularSignalPercent.
+     */
+    @java.lang.Override
+    public int getCellularSignalPercent() {
+      return cellularSignalPercent_;
+    }
+    /**
+     * <code>optional uint32 cellular_signal_percent = 9;</code>
+     * @param value The cellularSignalPercent to set.
+     */
+    private void setCellularSignalPercent(int value) {
+      bitField0_ |= 0x00000100;
+      cellularSignalPercent_ = value;
+    }
+    /**
+     * <code>optional uint32 cellular_signal_percent = 9;</code>
+     */
+    private void clearCellularSignalPercent() {
+      bitField0_ = (bitField0_ & ~0x00000100);
+      cellularSignalPercent_ = 0;
+    }
+
+    public static final int CELLULAR_STATE_FIELD_NUMBER = 10;
+    private java.lang.String cellularState_;
+    /**
+     * <code>string cellular_state = 10;</code>
+     * @return The cellularState.
+     */
+    @java.lang.Override
+    public java.lang.String getCellularState() {
+      return cellularState_;
+    }
+    /**
+     * <code>string cellular_state = 10;</code>
+     * @return The bytes for cellularState.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getCellularStateBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(cellularState_);
+    }
+    /**
+     * <code>string cellular_state = 10;</code>
+     * @param value The cellularState to set.
+     */
+    private void setCellularState(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      cellularState_ = value;
+    }
+    /**
+     * <code>string cellular_state = 10;</code>
+     */
+    private void clearCellularState() {
+
+      cellularState_ = getDefaultInstance().getCellularState();
+    }
+    /**
+     * <code>string cellular_state = 10;</code>
+     * @param value The bytes for cellularState to set.
+     */
+    private void setCellularStateBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      cellularState_ = value.toStringUtf8();
+
+    }
+
+    public static final int CELLULAR_ACCESS_TECHNOLOGY_FIELD_NUMBER = 11;
+    private java.lang.String cellularAccessTechnology_;
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     * @return The cellularAccessTechnology.
+     */
+    @java.lang.Override
+    public java.lang.String getCellularAccessTechnology() {
+      return cellularAccessTechnology_;
+    }
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     * @return The bytes for cellularAccessTechnology.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getCellularAccessTechnologyBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(cellularAccessTechnology_);
+    }
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     * @param value The cellularAccessTechnology to set.
+     */
+    private void setCellularAccessTechnology(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      cellularAccessTechnology_ = value;
+    }
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     */
+    private void clearCellularAccessTechnology() {
+
+      cellularAccessTechnology_ = getDefaultInstance().getCellularAccessTechnology();
+    }
+    /**
+     * <code>string cellular_access_technology = 11;</code>
+     * @param value The bytes for cellularAccessTechnology to set.
+     */
+    private void setCellularAccessTechnologyBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      cellularAccessTechnology_ = value.toStringUtf8();
+
+    }
+
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.SystemHealth parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.SystemHealth parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.SystemHealth parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.SystemHealth prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * <pre>
+     * Linux board telemetry. Optional fields distinguish unsupported/read failure from zero.
+     * </pre>
+     *
+     * Protobuf type {@code sl_link.SystemHealth}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.SystemHealth, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.SystemHealth)
+        sl_link.SlLink.SystemHealthOrBuilder {
+      // Construct using sl_link.SlLink.SystemHealth.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>optional float cpu_temperature_c = 1;</code>
+       * @return Whether the cpuTemperatureC field is set.
+       */
+      @java.lang.Override
+      public boolean hasCpuTemperatureC() {
+        return instance.hasCpuTemperatureC();
+      }
+      /**
+       * <code>optional float cpu_temperature_c = 1;</code>
+       * @return The cpuTemperatureC.
+       */
+      @java.lang.Override
+      public float getCpuTemperatureC() {
+        return instance.getCpuTemperatureC();
+      }
+      /**
+       * <code>optional float cpu_temperature_c = 1;</code>
+       * @param value The cpuTemperatureC to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCpuTemperatureC(float value) {
+        copyOnWrite();
+        instance.setCpuTemperatureC(value);
+        return this;
+      }
+      /**
+       * <code>optional float cpu_temperature_c = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCpuTemperatureC() {
+        copyOnWrite();
+        instance.clearCpuTemperatureC();
+        return this;
+      }
+
+      /**
+       * <code>optional float cpu_usage_percent = 2;</code>
+       * @return Whether the cpuUsagePercent field is set.
+       */
+      @java.lang.Override
+      public boolean hasCpuUsagePercent() {
+        return instance.hasCpuUsagePercent();
+      }
+      /**
+       * <code>optional float cpu_usage_percent = 2;</code>
+       * @return The cpuUsagePercent.
+       */
+      @java.lang.Override
+      public float getCpuUsagePercent() {
+        return instance.getCpuUsagePercent();
+      }
+      /**
+       * <code>optional float cpu_usage_percent = 2;</code>
+       * @param value The cpuUsagePercent to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCpuUsagePercent(float value) {
+        copyOnWrite();
+        instance.setCpuUsagePercent(value);
+        return this;
+      }
+      /**
+       * <code>optional float cpu_usage_percent = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCpuUsagePercent() {
+        copyOnWrite();
+        instance.clearCpuUsagePercent();
+        return this;
+      }
+
+      /**
+       * <code>optional float memory_usage_percent = 3;</code>
+       * @return Whether the memoryUsagePercent field is set.
+       */
+      @java.lang.Override
+      public boolean hasMemoryUsagePercent() {
+        return instance.hasMemoryUsagePercent();
+      }
+      /**
+       * <code>optional float memory_usage_percent = 3;</code>
+       * @return The memoryUsagePercent.
+       */
+      @java.lang.Override
+      public float getMemoryUsagePercent() {
+        return instance.getMemoryUsagePercent();
+      }
+      /**
+       * <code>optional float memory_usage_percent = 3;</code>
+       * @param value The memoryUsagePercent to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMemoryUsagePercent(float value) {
+        copyOnWrite();
+        instance.setMemoryUsagePercent(value);
+        return this;
+      }
+      /**
+       * <code>optional float memory_usage_percent = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMemoryUsagePercent() {
+        copyOnWrite();
+        instance.clearMemoryUsagePercent();
+        return this;
+      }
+
+      /**
+       * <code>optional uint64 memory_total_bytes = 4;</code>
+       * @return Whether the memoryTotalBytes field is set.
+       */
+      @java.lang.Override
+      public boolean hasMemoryTotalBytes() {
+        return instance.hasMemoryTotalBytes();
+      }
+      /**
+       * <code>optional uint64 memory_total_bytes = 4;</code>
+       * @return The memoryTotalBytes.
+       */
+      @java.lang.Override
+      public long getMemoryTotalBytes() {
+        return instance.getMemoryTotalBytes();
+      }
+      /**
+       * <code>optional uint64 memory_total_bytes = 4;</code>
+       * @param value The memoryTotalBytes to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMemoryTotalBytes(long value) {
+        copyOnWrite();
+        instance.setMemoryTotalBytes(value);
+        return this;
+      }
+      /**
+       * <code>optional uint64 memory_total_bytes = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMemoryTotalBytes() {
+        copyOnWrite();
+        instance.clearMemoryTotalBytes();
+        return this;
+      }
+
+      /**
+       * <code>optional uint64 memory_available_bytes = 5;</code>
+       * @return Whether the memoryAvailableBytes field is set.
+       */
+      @java.lang.Override
+      public boolean hasMemoryAvailableBytes() {
+        return instance.hasMemoryAvailableBytes();
+      }
+      /**
+       * <code>optional uint64 memory_available_bytes = 5;</code>
+       * @return The memoryAvailableBytes.
+       */
+      @java.lang.Override
+      public long getMemoryAvailableBytes() {
+        return instance.getMemoryAvailableBytes();
+      }
+      /**
+       * <code>optional uint64 memory_available_bytes = 5;</code>
+       * @param value The memoryAvailableBytes to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMemoryAvailableBytes(long value) {
+        copyOnWrite();
+        instance.setMemoryAvailableBytes(value);
+        return this;
+      }
+      /**
+       * <code>optional uint64 memory_available_bytes = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMemoryAvailableBytes() {
+        copyOnWrite();
+        instance.clearMemoryAvailableBytes();
+        return this;
+      }
+
+      /**
+       * <code>optional float disk_usage_percent = 6;</code>
+       * @return Whether the diskUsagePercent field is set.
+       */
+      @java.lang.Override
+      public boolean hasDiskUsagePercent() {
+        return instance.hasDiskUsagePercent();
+      }
+      /**
+       * <code>optional float disk_usage_percent = 6;</code>
+       * @return The diskUsagePercent.
+       */
+      @java.lang.Override
+      public float getDiskUsagePercent() {
+        return instance.getDiskUsagePercent();
+      }
+      /**
+       * <code>optional float disk_usage_percent = 6;</code>
+       * @param value The diskUsagePercent to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDiskUsagePercent(float value) {
+        copyOnWrite();
+        instance.setDiskUsagePercent(value);
+        return this;
+      }
+      /**
+       * <code>optional float disk_usage_percent = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDiskUsagePercent() {
+        copyOnWrite();
+        instance.clearDiskUsagePercent();
+        return this;
+      }
+
+      /**
+       * <code>optional uint64 disk_free_bytes = 7;</code>
+       * @return Whether the diskFreeBytes field is set.
+       */
+      @java.lang.Override
+      public boolean hasDiskFreeBytes() {
+        return instance.hasDiskFreeBytes();
+      }
+      /**
+       * <code>optional uint64 disk_free_bytes = 7;</code>
+       * @return The diskFreeBytes.
+       */
+      @java.lang.Override
+      public long getDiskFreeBytes() {
+        return instance.getDiskFreeBytes();
+      }
+      /**
+       * <code>optional uint64 disk_free_bytes = 7;</code>
+       * @param value The diskFreeBytes to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDiskFreeBytes(long value) {
+        copyOnWrite();
+        instance.setDiskFreeBytes(value);
+        return this;
+      }
+      /**
+       * <code>optional uint64 disk_free_bytes = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDiskFreeBytes() {
+        copyOnWrite();
+        instance.clearDiskFreeBytes();
+        return this;
+      }
+
+      /**
+       * <code>optional uint64 uptime_seconds = 8;</code>
+       * @return Whether the uptimeSeconds field is set.
+       */
+      @java.lang.Override
+      public boolean hasUptimeSeconds() {
+        return instance.hasUptimeSeconds();
+      }
+      /**
+       * <code>optional uint64 uptime_seconds = 8;</code>
+       * @return The uptimeSeconds.
+       */
+      @java.lang.Override
+      public long getUptimeSeconds() {
+        return instance.getUptimeSeconds();
+      }
+      /**
+       * <code>optional uint64 uptime_seconds = 8;</code>
+       * @param value The uptimeSeconds to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUptimeSeconds(long value) {
+        copyOnWrite();
+        instance.setUptimeSeconds(value);
+        return this;
+      }
+      /**
+       * <code>optional uint64 uptime_seconds = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUptimeSeconds() {
+        copyOnWrite();
+        instance.clearUptimeSeconds();
+        return this;
+      }
+
+      /**
+       * <code>optional uint32 cellular_signal_percent = 9;</code>
+       * @return Whether the cellularSignalPercent field is set.
+       */
+      @java.lang.Override
+      public boolean hasCellularSignalPercent() {
+        return instance.hasCellularSignalPercent();
+      }
+      /**
+       * <code>optional uint32 cellular_signal_percent = 9;</code>
+       * @return The cellularSignalPercent.
+       */
+      @java.lang.Override
+      public int getCellularSignalPercent() {
+        return instance.getCellularSignalPercent();
+      }
+      /**
+       * <code>optional uint32 cellular_signal_percent = 9;</code>
+       * @param value The cellularSignalPercent to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCellularSignalPercent(int value) {
+        copyOnWrite();
+        instance.setCellularSignalPercent(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 cellular_signal_percent = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCellularSignalPercent() {
+        copyOnWrite();
+        instance.clearCellularSignalPercent();
+        return this;
+      }
+
+      /**
+       * <code>string cellular_state = 10;</code>
+       * @return The cellularState.
+       */
+      @java.lang.Override
+      public java.lang.String getCellularState() {
+        return instance.getCellularState();
+      }
+      /**
+       * <code>string cellular_state = 10;</code>
+       * @return The bytes for cellularState.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getCellularStateBytes() {
+        return instance.getCellularStateBytes();
+      }
+      /**
+       * <code>string cellular_state = 10;</code>
+       * @param value The cellularState to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCellularState(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setCellularState(value);
+        return this;
+      }
+      /**
+       * <code>string cellular_state = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCellularState() {
+        copyOnWrite();
+        instance.clearCellularState();
+        return this;
+      }
+      /**
+       * <code>string cellular_state = 10;</code>
+       * @param value The bytes for cellularState to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCellularStateBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setCellularStateBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string cellular_access_technology = 11;</code>
+       * @return The cellularAccessTechnology.
+       */
+      @java.lang.Override
+      public java.lang.String getCellularAccessTechnology() {
+        return instance.getCellularAccessTechnology();
+      }
+      /**
+       * <code>string cellular_access_technology = 11;</code>
+       * @return The bytes for cellularAccessTechnology.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getCellularAccessTechnologyBytes() {
+        return instance.getCellularAccessTechnologyBytes();
+      }
+      /**
+       * <code>string cellular_access_technology = 11;</code>
+       * @param value The cellularAccessTechnology to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCellularAccessTechnology(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setCellularAccessTechnology(value);
+        return this;
+      }
+      /**
+       * <code>string cellular_access_technology = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCellularAccessTechnology() {
+        copyOnWrite();
+        instance.clearCellularAccessTechnology();
+        return this;
+      }
+      /**
+       * <code>string cellular_access_technology = 11;</code>
+       * @param value The bytes for cellularAccessTechnology to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCellularAccessTechnologyBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setCellularAccessTechnologyBytes(value);
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.SystemHealth)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.SystemHealth();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "cpuTemperatureC_",
+              "cpuUsagePercent_",
+              "memoryUsagePercent_",
+              "memoryTotalBytes_",
+              "memoryAvailableBytes_",
+              "diskUsagePercent_",
+              "diskFreeBytes_",
+              "uptimeSeconds_",
+              "cellularSignalPercent_",
+              "cellularState_",
+              "cellularAccessTechnology_",
+            };
+            java.lang.String info =
+                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\u1001\u0000\u0002" +
+                "\u1001\u0001\u0003\u1001\u0002\u0004\u1003\u0003\u0005\u1003\u0004\u0006\u1001\u0005" +
+                "\u0007\u1003\u0006\b\u1003\u0007\t\u100b\b\n\u0208\u000b\u0208";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.SystemHealth> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.SystemHealth.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.SystemHealth>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.SystemHealth)
+    private static final sl_link.SlLink.SystemHealth DEFAULT_INSTANCE;
+    static {
+      SystemHealth defaultInstance = new SystemHealth();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        SystemHealth.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.SystemHealth getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<SystemHealth> PARSER;
+
+    public static com.google.protobuf.Parser<SystemHealth> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

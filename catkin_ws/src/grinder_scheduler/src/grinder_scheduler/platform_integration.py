@@ -657,12 +657,13 @@ class PlatformFileSync:
             deleted_folders += 1
         return deleted_files, deleted_folders
 
-    def _multipart_upload(self, file_path, folder_id):
+    def _multipart_upload(self, file_path, folder_id, filename=None, file_data=None):
         boundary = "----GrinderBoundary{}".format(uuid.uuid4().hex)
-        filename = os.path.basename(file_path)
+        filename = filename or os.path.basename(file_path)
         content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-        with open(file_path, "rb") as handle:
-            file_data = handle.read()
+        if file_data is None:
+            with open(file_path, "rb") as handle:
+                file_data = handle.read()
         chunks = [
             ("--{}\r\nContent-Disposition: form-data; name=\"RegionId\"\r\n\r\n{}\r\n".format(boundary, folder_id)).encode("utf-8"),
             ("--{}\r\nContent-Disposition: form-data; name=\"File\"; filename=\"{}\"\r\nContent-Type: {}\r\n\r\n".format(boundary, filename.replace('"', "_"), content_type)).encode("utf-8"),
@@ -682,30 +683,65 @@ class PlatformFileSync:
         if not _response_ok(result):
             raise RuntimeError("upload {} failed: {}".format(filename, _response_message(result)))
 
-    def _upload_directory(self, local_dir, remote_parts):
-        if not os.path.isdir(local_dir):
-            return 0
-        uploaded = 0
-        for root, directories, files in os.walk(local_dir):
-            directories.sort()
-            files.sort()
-            relative = os.path.relpath(root, local_dir)
-            parts = list(remote_parts)
-            if relative != ".":
-                parts.extend(relative.split(os.sep))
-            folder_id = self._ensure_folder_path(parts)
-            for filename in files:
-                if filename.endswith(".tmp"):
-                    continue
-                self._multipart_upload(os.path.join(root, filename), folder_id)
-                uploaded += 1
-        return uploaded
+    @staticmethod
+    def _map_filename_prefix(map_name, map_id):
+        # Keep Chinese names, but exclude path separators, header controls and
+        # characters that prevent downloading these files on Windows.
+        prefix = re.sub(r'[<>:"/\\|?*\x00-\x1f\x7f]', "_", str(map_name or "").strip())
+        prefix = prefix[:80].strip(" .")
+        if not prefix:
+            prefix = re.sub(r"[^0-9A-Za-z._-]", "_", str(map_id or ""))[:80].strip(" .")
+        return prefix or "map"
 
     def _upload_map(self, job):
+        local_dir = job["local_map_dir"]
+        prefix = self._map_filename_prefix(job.get("map_name"), job["map_id"])
+        # This is the cloud export contract, independent of the full local
+        # bundle required by Super-LIO. Never upload plan_map.pcd or extras.
+        names = {
+            name: "{}_{}".format(prefix, name)
+            for name in ("loc_map.pcd", "map.pgm", "map.yaml", "map_info.json")
+        }
+        for name in names:
+            if not os.path.isfile(os.path.join(local_dir, name)):
+                raise RuntimeError("cloud map file missing: {}".format(name))
+
+        with open(os.path.join(local_dir, "map.yaml"), encoding="utf-8") as handle:
+            yaml_text = handle.read()
+        yaml_text, replacements = re.subn(
+            r"(?m)^image\s*:[^\r\n]*",
+            lambda _match: "image: " + json.dumps(names["map.pgm"], ensure_ascii=False),
+            yaml_text,
+        )
+        if replacements != 1:
+            raise RuntimeError("cloud map YAML must contain exactly one image field")
+        with open(os.path.join(local_dir, "map_info.json"), encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        manifest["files"] = {
+            "localization": names["loc_map.pcd"],
+            "yaml": names["map.yaml"],
+            "image": names["map.pgm"],
+        }
+        # The registry paths describe the local bundle; export relative cloud
+        # filenames for the corresponding assets instead.
+        if isinstance(manifest.get("map"), dict):
+            manifest["map"].pop("plan_pcd_path", None)
+            for field, name in (("loc_pcd_path", "loc_map.pcd"),
+                                ("yaml_path", "map.yaml"), ("image_path", "map.pgm")):
+                if field in manifest["map"]:
+                    manifest["map"][field] = names[name]
+        cloud_data = {
+            "map.yaml": yaml_text.encode("utf-8"),
+            "map_info.json": json.dumps(manifest, ensure_ascii=False, indent=2).encode("utf-8"),
+        }
         map_parts = [self.remote_root_name, "maps", job["map_id"]]
-        uploaded = self._upload_directory(job["local_map_dir"], map_parts)
-        if uploaded <= 0:
-            raise RuntimeError("no local map files found")
+        folder_id = self._ensure_folder_path(map_parts)
+        for name, remote_name in names.items():
+            self._multipart_upload(
+                os.path.join(local_dir, name), folder_id,
+                filename=remote_name, file_data=cloud_data.get(name),
+            )
+        uploaded = len(names)
         rospy.loginfo(
             "Super-LIO map bundle uploaded: project_id=%s remote=%s/maps/%s files=%d",
             self.project_id,

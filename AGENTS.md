@@ -72,6 +72,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 规划跨请求基础缓存与定位失败分项 | scheduler `planning_cache.py`、`registration_health.py` | `planner_adapter.py`、`super_lio_mode_manager.py`；缓存默认2项/128MiB，门限保持不变 |
 | RPP扫描诊断、自滤波与离线采样回放 | RPP `include/regulated_pure_pursuit_controller/scan_classifier.hpp` | `/rpp/collision_detail`；`catkin_ws/scripts/capture_field_diagnostics.py`、`replay_collision_scan.py`；自滤波默认关闭，根README 7.4 |
 | 手动差速单轮过零 | scheduler `manual_wheel_transition.py`、`scheduler_node.py` | 单轮制动/实测零速/反向加速，另一轮协调；完整前后换向等待；`test_manual_wheel_transition.py`、`test_manual_steering_guard_activity.py`；根 README 7.3 |
+| 历史浏览只读保护与区域工艺快照 | scheduler `handle_path_plan_request` / `handle_settings_write_request` / `_start_execution`，`map_service.py` | `region_process.py`：按map_id+region_id保存/快照/进入区域时切换工艺，连接段不切换，临时任务参数优先；协议PolygonRegion.process及SettingsWrite.process_region_id；`test/test_history_process.py`、`test/test_execution_settings.py`；APP回放不发送规划请求 |
 | 当前任务临时直行速度与磨盘转速 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/task_runtime_parameters.py` | `scheduler_node.py` 中 `handle_task_runtime_settings`；协议 `0x0538/0x0539`；`test/test_task_runtime_parameters.py` |
 | 独立累计/今日作业时间、历史删除后的保留 | `work_time_statistics.py`、scheduler `_begin_task_execution_record` / `_finalize_task_result` | `work_time_statistics.json` 独立文件；现有历史JSON根对象 `work_time_statistics`；`test/test_work_time_statistics.py`，包README；不随历史删除重建或清零 |
 | APP系统状态与板端资源遥测 | `system_health.py`、scheduler `build_device_status_report` | 独立2秒采样CPU/内存/温度/存储/开机时长及只读ModemManager蜂窝状态，5秒过期；新鲜底盘反馈转发左右int16故障码；DeviceStatusReport26～28，`test/test_system_health.py` |
@@ -83,7 +84,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | ROS 地图、位姿和图像接入 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/ros_data_bridge.py` | `launch/scheduler.launch`、`config/super_lio.yaml` |
 | 地图目录响应 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/map_catalog_response.py` | `scheduler_node.py` 中 `handle_map_catalog_request` |
 | RTSP / FFmpeg 视频链路 | `local_rtsp_server.py`、`media_streamer.py`（均在调度模块目录） | `tools/mediamtx/`；`catkin_ws/start_grinder_stack.sh` 选择二进制；`LocalRtspStreamServer` 在日志目录生成 `mediamtx.generated.yml` |
-| 平台文件上传、鉴权和 MQTT 上报 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/platform_integration.py` | `mqtt_interface.md`、`scheduler.yaml` |
+| 平台文件上传、鉴权和 MQTT 上报 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/platform_integration.py` | 地图云端仅4文件（不含plan_map.pcd），地图名作文件名前缀并同步云端引用，本地不改名；`test/test_platform_integration.py`、包README、`mqtt_interface.md`、`scheduler.yaml` |
 | 底盘 ROS 节点、`/cmd_vel`、任务使能 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/chassis_driver_node.py` | `config/chassis_driver.yaml`、`launch/chassis_driver.launch` |
 | RK3588 控制盒状态灯带、USB 协议与急停提示 | `catkin_ws/src/grinder_scheduler/src/grinder_scheduler/status_indicator.py`、`status_indicator_node.py` | `launch/status_indicator.launch`、`config/status_indicator.yaml`（`brightness_percent` 1～100，默认65）；scheduler `_pause_execution(reason)` 区分人为/碰撞暂停；底盘 `indicator_emergency.py`；固件、接线、亮度升级见 `firmware/status_strip/README.md` |
 | Modbus 帧、串口、CRC | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py` | `test/test_modbus_transport.py` |

@@ -250,8 +250,47 @@ public object PolygonRegionKt {
     public fun clearGlobalDirection() {
       _builder.clearGlobalDirection()
     }
+
+    /**
+     * ```
+     * Recipe belongs to this work region, not to the whole map.
+     * ```
+     *
+     * `.sl_link.MapProcessSettings process = 10;`
+     */
+    public var process: sl_link.SlLink.MapProcessSettings
+      @JvmName("getProcess")
+      get() = _builder.getProcess()
+      @JvmName("setProcess")
+      set(value) {
+        _builder.setProcess(value)
+      }
+    /**
+     * ```
+     * Recipe belongs to this work region, not to the whole map.
+     * ```
+     *
+     * `.sl_link.MapProcessSettings process = 10;`
+     */
+    public fun clearProcess() {
+      _builder.clearProcess()
+    }
+    /**
+     * ```
+     * Recipe belongs to this work region, not to the whole map.
+     * ```
+     *
+     * `.sl_link.MapProcessSettings process = 10;`
+     * @return Whether the process field is set.
+     */
+    public fun hasProcess(): kotlin.Boolean {
+      return _builder.hasProcess()
+    }
   }
 }
 public inline fun sl_link.SlLink.PolygonRegion.copy(block: `sl_link`.PolygonRegionKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PolygonRegion =
   `sl_link`.PolygonRegionKt.Dsl._create(this.toBuilder()).apply { block() }._build()
+
+public val sl_link.SlLink.PolygonRegionOrBuilder.processOrNull: sl_link.SlLink.MapProcessSettings?
+  get() = if (hasProcess()) getProcess() else null
 

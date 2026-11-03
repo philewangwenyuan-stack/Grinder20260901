@@ -258,6 +258,28 @@ typedef struct _sl_link_PolygonPoint {
     float y;
 } sl_link_PolygonPoint;
 
+typedef struct _sl_link_ChassisSettings {
+    /* Requested speed in m/s for task/navigation and manual command generation.
+ Manual output is additionally capped by the chassis manual speed limit. */
+    float run_speed;
+    uint32_t disc_speed_rpm;
+    bool disc_enabled;
+    sl_link_WorkMode work_mode;
+    /* Default steering/differential speed ratio for manual drive, in (0, 1].
+ Zero means keep the current LOWER-side default. */
+    float max_turn_speed_ratio;
+} sl_link_ChassisSettings;
+
+/* Work-region recipe identified by (map_id, region_id). Manual writes never update it. */
+typedef struct _sl_link_MapProcessSettings {
+    float run_speed;
+    uint32_t disc_speed_rpm;
+    pb_callback_t process_type;
+    pb_callback_t grinding_parameter;
+    pb_callback_t concrete_strength;
+    float pressure;
+} sl_link_MapProcessSettings;
+
 typedef struct _sl_link_PolygonRegion {
     pb_callback_t name;
     pb_callback_t points;
@@ -270,19 +292,10 @@ typedef struct _sl_link_PolygonRegion {
     /* Region-specific planning direction: "x", "-x", "y", or "-y".
  Empty means LOWER-side default policy. */
     pb_callback_t global_direction;
+    /* Recipe belongs to this work region, not to the whole map. */
+    bool has_process;
+    sl_link_MapProcessSettings process;
 } sl_link_PolygonRegion;
-
-typedef struct _sl_link_ChassisSettings {
-    /* Requested speed in m/s for task/navigation and manual command generation.
- Manual output is additionally capped by the chassis manual speed limit. */
-    float run_speed;
-    uint32_t disc_speed_rpm;
-    bool disc_enabled;
-    sl_link_WorkMode work_mode;
-    /* Default steering/differential speed ratio for manual drive, in (0, 1].
- Zero means keep the current LOWER-side default. */
-    float max_turn_speed_ratio;
-} sl_link_ChassisSettings;
 
 typedef struct _sl_link_MapSettings {
     float vehicle_width;
@@ -407,6 +420,11 @@ typedef struct _sl_link_SettingsWriteRequest {
     /* Optional partial-update mask for RppSettings. Bit N selects the field
  number N+1; zero means the message is a complete settings snapshot. */
     uint64_t rpp_field_mask;
+    /* Explicit process edit; does not actuate the chassis. Empty map ID means current map. */
+    bool has_process;
+    sl_link_MapProcessSettings process;
+    pb_callback_t process_map_id;
+    pb_callback_t process_region_id;
 } sl_link_SettingsWriteRequest;
 
 typedef struct _sl_link_SettingsWriteResponse {
@@ -421,6 +439,10 @@ typedef struct _sl_link_SettingsWriteResponse {
     bool rpp_applied;
     bool rpp_saved;
     bool geometry_requires_restart;
+    bool has_process;
+    sl_link_MapProcessSettings process;
+    pb_callback_t process_map_id;
+    pb_callback_t process_region_id;
 } sl_link_SettingsWriteResponse;
 
 typedef struct _sl_link_Pose2D {
@@ -440,6 +462,30 @@ typedef struct _sl_link_LocalizationCovariance {
     float x_yaw_covariance;
     float y_yaw_covariance;
 } sl_link_LocalizationCovariance;
+
+/* Linux board telemetry. Optional fields distinguish unsupported/read failure from zero. */
+typedef struct _sl_link_SystemHealth {
+    bool has_cpu_temperature_c;
+    float cpu_temperature_c;
+    bool has_cpu_usage_percent;
+    float cpu_usage_percent;
+    bool has_memory_usage_percent;
+    float memory_usage_percent;
+    bool has_memory_total_bytes;
+    uint64_t memory_total_bytes;
+    bool has_memory_available_bytes;
+    uint64_t memory_available_bytes;
+    bool has_disk_usage_percent;
+    float disk_usage_percent;
+    bool has_disk_free_bytes;
+    uint64_t disk_free_bytes;
+    bool has_uptime_seconds;
+    uint64_t uptime_seconds;
+    bool has_cellular_signal_percent;
+    uint32_t cellular_signal_percent;
+    pb_callback_t cellular_state;
+    pb_callback_t cellular_access_technology;
+} sl_link_SystemHealth;
 
 typedef struct _sl_link_DeviceStatusReport {
     uint32_t utc_time;
@@ -481,6 +527,13 @@ typedef struct _sl_link_DeviceStatusReport {
     bool localization_pause_latched;
     /* Stable reason code; clients own presentation language. */
     pb_callback_t localization_status_reason;
+    /* Signed int16 register values; absent until fresh connected chassis feedback. */
+    bool has_left_motor_fault_code;
+    int32_t left_motor_fault_code;
+    bool has_right_motor_fault_code;
+    int32_t right_motor_fault_code;
+    bool has_system_health;
+    sl_link_SystemHealth system_health;
 } sl_link_DeviceStatusReport;
 
 typedef struct _sl_link_CameraFrameRequest {
@@ -1434,6 +1487,7 @@ extern "C" {
 
 
 
+
 #define sl_link_SettingsReadResponse_result_ENUMTYPE sl_link_ResultCode
 
 
@@ -1445,6 +1499,7 @@ extern "C" {
 #define sl_link_DeviceStatusReport_wifi_status_ENUMTYPE sl_link_WifiResult
 #define sl_link_DeviceStatusReport_work_mode_ENUMTYPE sl_link_WorkMode
 #define sl_link_DeviceStatusReport_disc_lift_state_ENUMTYPE sl_link_DiscLiftState
+
 
 
 #define sl_link_CameraFrameChunk_codec_ENUMTYPE sl_link_CameraCodec
@@ -1580,17 +1635,19 @@ extern "C" {
 #define sl_link_WifiConfig_init_default          {{{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_WifiStatusReport_init_default    {_sl_link_WifiResult_MIN, {{NULL}, NULL}}
 #define sl_link_PolygonPoint_init_default        {0, 0}
-#define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
+#define sl_link_PolygonRegion_init_default       {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}, false, sl_link_MapProcessSettings_init_default}
 #define sl_link_ChassisSettings_init_default     {0, 0, 0, _sl_link_WorkMode_MIN, 0}
+#define sl_link_MapProcessSettings_init_default  {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
 #define sl_link_MapSettings_init_default         {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define sl_link_RppSettings_init_default         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define sl_link_SettingsReadRequest_init_default {0, 0, 0}
 #define sl_link_SettingsReadResponse_init_default {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, {{NULL}, NULL}, false, sl_link_RppSettings_init_default}
-#define sl_link_SettingsWriteRequest_init_default {false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
-#define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0}
+#define sl_link_SettingsWriteRequest_init_default {false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0, false, sl_link_MapProcessSettings_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_SettingsWriteResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_default, false, sl_link_MapSettings_init_default, false, sl_link_RppSettings_init_default, 0, 0, 0, false, sl_link_MapProcessSettings_init_default, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_Pose2D_init_default              {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_default {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
+#define sl_link_DeviceStatusReport_init_default  {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_default, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}, false, 0, false, 0, false, sl_link_SystemHealth_init_default}
+#define sl_link_SystemHealth_init_default        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_CameraFrameRequest_init_default  {0, 0}
 #define sl_link_CameraFrameChunk_init_default    {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_default          {0, 0, {{NULL}, NULL}, 0}
@@ -1675,17 +1732,19 @@ extern "C" {
 #define sl_link_WifiConfig_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_WifiStatusReport_init_zero       {_sl_link_WifiResult_MIN, {{NULL}, NULL}}
 #define sl_link_PolygonPoint_init_zero           {0, 0}
-#define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}}
+#define sl_link_PolygonRegion_init_zero          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, _sl_link_RegionType_MIN, {{NULL}, NULL}, false, sl_link_MapProcessSettings_init_zero}
 #define sl_link_ChassisSettings_init_zero        {0, 0, 0, _sl_link_WorkMode_MIN, 0}
+#define sl_link_MapProcessSettings_init_zero     {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0}
 #define sl_link_MapSettings_init_zero            {0, 0, 0, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define sl_link_RppSettings_init_zero            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define sl_link_SettingsReadRequest_init_zero    {0, 0, 0}
 #define sl_link_SettingsReadResponse_init_zero   {_sl_link_ResultCode_MIN, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, {{NULL}, NULL}, false, sl_link_RppSettings_init_zero}
-#define sl_link_SettingsWriteRequest_init_zero   {false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
-#define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0}
+#define sl_link_SettingsWriteRequest_init_zero   {false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0, false, sl_link_MapProcessSettings_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
+#define sl_link_SettingsWriteResponse_init_zero  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, false, sl_link_ChassisSettings_init_zero, false, sl_link_MapSettings_init_zero, false, sl_link_RppSettings_init_zero, 0, 0, 0, false, sl_link_MapProcessSettings_init_zero, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_Pose2D_init_zero                 {0, 0, 0}
 #define sl_link_LocalizationCovariance_init_zero {0, 0, 0, 0, 0, 0, 0}
-#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
+#define sl_link_DeviceStatusReport_init_zero     {0, _sl_link_SystemStatus_MIN, _sl_link_WifiResult_MIN, _sl_link_WorkMode_MIN, 0, 0, 0, 0, _sl_link_DiscLiftState_MIN, 0, false, sl_link_Pose2D_init_zero, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, 0, {{NULL}, NULL}, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}, false, 0, false, 0, false, sl_link_SystemHealth_init_zero}
+#define sl_link_SystemHealth_init_zero           {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define sl_link_CameraFrameRequest_init_zero     {0, 0}
 #define sl_link_CameraFrameChunk_init_zero       {0, 0, 0, 0, _sl_link_CameraCodec_MIN, 0, 0, {{NULL}, NULL}}
 #define sl_link_MapRequest_init_zero             {0, 0, {{NULL}, NULL}, 0}
@@ -1775,6 +1834,17 @@ extern "C" {
 #define sl_link_WifiStatusReport_message_tag     2
 #define sl_link_PolygonPoint_x_tag               1
 #define sl_link_PolygonPoint_y_tag               2
+#define sl_link_ChassisSettings_run_speed_tag    1
+#define sl_link_ChassisSettings_disc_speed_rpm_tag 2
+#define sl_link_ChassisSettings_disc_enabled_tag 3
+#define sl_link_ChassisSettings_work_mode_tag    4
+#define sl_link_ChassisSettings_max_turn_speed_ratio_tag 5
+#define sl_link_MapProcessSettings_run_speed_tag 1
+#define sl_link_MapProcessSettings_disc_speed_rpm_tag 2
+#define sl_link_MapProcessSettings_process_type_tag 3
+#define sl_link_MapProcessSettings_grinding_parameter_tag 4
+#define sl_link_MapProcessSettings_concrete_strength_tag 5
+#define sl_link_MapProcessSettings_pressure_tag  6
 #define sl_link_PolygonRegion_name_tag           1
 #define sl_link_PolygonRegion_points_tag         2
 #define sl_link_PolygonRegion_region_id_tag      3
@@ -1784,11 +1854,7 @@ extern "C" {
 #define sl_link_PolygonRegion_closed_tag         7
 #define sl_link_PolygonRegion_region_type_tag    8
 #define sl_link_PolygonRegion_global_direction_tag 9
-#define sl_link_ChassisSettings_run_speed_tag    1
-#define sl_link_ChassisSettings_disc_speed_rpm_tag 2
-#define sl_link_ChassisSettings_disc_enabled_tag 3
-#define sl_link_ChassisSettings_work_mode_tag    4
-#define sl_link_ChassisSettings_max_turn_speed_ratio_tag 5
+#define sl_link_PolygonRegion_process_tag        10
 #define sl_link_MapSettings_vehicle_width_tag    1
 #define sl_link_MapSettings_vehicle_length_tag   2
 #define sl_link_MapSettings_default_path_spacing_tag 3
@@ -1876,6 +1942,9 @@ extern "C" {
 #define sl_link_SettingsWriteRequest_apply_rpp_temporarily_tag 4
 #define sl_link_SettingsWriteRequest_save_rpp_default_tag 5
 #define sl_link_SettingsWriteRequest_rpp_field_mask_tag 6
+#define sl_link_SettingsWriteRequest_process_tag 7
+#define sl_link_SettingsWriteRequest_process_map_id_tag 8
+#define sl_link_SettingsWriteRequest_process_region_id_tag 9
 #define sl_link_SettingsWriteResponse_result_tag 1
 #define sl_link_SettingsWriteResponse_message_tag 2
 #define sl_link_SettingsWriteResponse_chassis_tag 3
@@ -1884,6 +1953,9 @@ extern "C" {
 #define sl_link_SettingsWriteResponse_rpp_applied_tag 6
 #define sl_link_SettingsWriteResponse_rpp_saved_tag 7
 #define sl_link_SettingsWriteResponse_geometry_requires_restart_tag 8
+#define sl_link_SettingsWriteResponse_process_tag 9
+#define sl_link_SettingsWriteResponse_process_map_id_tag 10
+#define sl_link_SettingsWriteResponse_process_region_id_tag 11
 #define sl_link_Pose2D_x_tag                     1
 #define sl_link_Pose2D_y_tag                     2
 #define sl_link_Pose2D_heading_deg_tag           3
@@ -1894,6 +1966,17 @@ extern "C" {
 #define sl_link_LocalizationCovariance_xy_covariance_tag 5
 #define sl_link_LocalizationCovariance_x_yaw_covariance_tag 6
 #define sl_link_LocalizationCovariance_y_yaw_covariance_tag 7
+#define sl_link_SystemHealth_cpu_temperature_c_tag 1
+#define sl_link_SystemHealth_cpu_usage_percent_tag 2
+#define sl_link_SystemHealth_memory_usage_percent_tag 3
+#define sl_link_SystemHealth_memory_total_bytes_tag 4
+#define sl_link_SystemHealth_memory_available_bytes_tag 5
+#define sl_link_SystemHealth_disk_usage_percent_tag 6
+#define sl_link_SystemHealth_disk_free_bytes_tag 7
+#define sl_link_SystemHealth_uptime_seconds_tag  8
+#define sl_link_SystemHealth_cellular_signal_percent_tag 9
+#define sl_link_SystemHealth_cellular_state_tag  10
+#define sl_link_SystemHealth_cellular_access_technology_tag 11
 #define sl_link_DeviceStatusReport_utc_time_tag  1
 #define sl_link_DeviceStatusReport_system_status_tag 2
 #define sl_link_DeviceStatusReport_wifi_status_tag 3
@@ -1919,6 +2002,9 @@ extern "C" {
 #define sl_link_DeviceStatusReport_localization_ready_tag 23
 #define sl_link_DeviceStatusReport_localization_pause_latched_tag 24
 #define sl_link_DeviceStatusReport_localization_status_reason_tag 25
+#define sl_link_DeviceStatusReport_left_motor_fault_code_tag 26
+#define sl_link_DeviceStatusReport_right_motor_fault_code_tag 27
+#define sl_link_DeviceStatusReport_system_health_tag 28
 #define sl_link_CameraFrameRequest_snapshot_tag  1
 #define sl_link_CameraFrameRequest_max_chunk_size_tag 2
 #define sl_link_CameraFrameChunk_frame_id_tag    1
@@ -2466,10 +2552,12 @@ X(a, STATIC,   SINGULAR, BOOL,     enabled,           5) \
 X(a, STATIC,   SINGULAR, UINT32,   color_argb,        6) \
 X(a, STATIC,   SINGULAR, BOOL,     closed,            7) \
 X(a, STATIC,   SINGULAR, UENUM,    region_type,       8) \
-X(a, CALLBACK, SINGULAR, STRING,   global_direction,   9)
+X(a, CALLBACK, SINGULAR, STRING,   global_direction,   9) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  process,          10)
 #define sl_link_PolygonRegion_CALLBACK pb_default_field_callback
 #define sl_link_PolygonRegion_DEFAULT NULL
 #define sl_link_PolygonRegion_points_MSGTYPE sl_link_PolygonPoint
+#define sl_link_PolygonRegion_process_MSGTYPE sl_link_MapProcessSettings
 
 #define sl_link_ChassisSettings_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, FLOAT,    run_speed,         1) \
@@ -2479,6 +2567,16 @@ X(a, STATIC,   SINGULAR, UENUM,    work_mode,         4) \
 X(a, STATIC,   SINGULAR, FLOAT,    max_turn_speed_ratio,   5)
 #define sl_link_ChassisSettings_CALLBACK NULL
 #define sl_link_ChassisSettings_DEFAULT NULL
+
+#define sl_link_MapProcessSettings_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, FLOAT,    run_speed,         1) \
+X(a, STATIC,   SINGULAR, UINT32,   disc_speed_rpm,    2) \
+X(a, CALLBACK, SINGULAR, STRING,   process_type,      3) \
+X(a, CALLBACK, SINGULAR, STRING,   grinding_parameter,   4) \
+X(a, CALLBACK, SINGULAR, STRING,   concrete_strength,   5) \
+X(a, STATIC,   SINGULAR, FLOAT,    pressure,          6)
+#define sl_link_MapProcessSettings_CALLBACK pb_default_field_callback
+#define sl_link_MapProcessSettings_DEFAULT NULL
 
 #define sl_link_MapSettings_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, FLOAT,    vehicle_width,     1) \
@@ -2589,12 +2687,16 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  map,               2) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  rpp,               3) \
 X(a, STATIC,   SINGULAR, BOOL,     apply_rpp_temporarily,   4) \
 X(a, STATIC,   SINGULAR, BOOL,     save_rpp_default,   5) \
-X(a, STATIC,   SINGULAR, UINT64,   rpp_field_mask,    6)
-#define sl_link_SettingsWriteRequest_CALLBACK NULL
+X(a, STATIC,   SINGULAR, UINT64,   rpp_field_mask,    6) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  process,           7) \
+X(a, CALLBACK, SINGULAR, STRING,   process_map_id,    8) \
+X(a, CALLBACK, SINGULAR, STRING,   process_region_id,   9)
+#define sl_link_SettingsWriteRequest_CALLBACK pb_default_field_callback
 #define sl_link_SettingsWriteRequest_DEFAULT NULL
 #define sl_link_SettingsWriteRequest_chassis_MSGTYPE sl_link_ChassisSettings
 #define sl_link_SettingsWriteRequest_map_MSGTYPE sl_link_MapSettings
 #define sl_link_SettingsWriteRequest_rpp_MSGTYPE sl_link_RppSettings
+#define sl_link_SettingsWriteRequest_process_MSGTYPE sl_link_MapProcessSettings
 
 #define sl_link_SettingsWriteResponse_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    result,            1) \
@@ -2604,12 +2706,16 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  map,               4) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  rpp,               5) \
 X(a, STATIC,   SINGULAR, BOOL,     rpp_applied,       6) \
 X(a, STATIC,   SINGULAR, BOOL,     rpp_saved,         7) \
-X(a, STATIC,   SINGULAR, BOOL,     geometry_requires_restart,   8)
+X(a, STATIC,   SINGULAR, BOOL,     geometry_requires_restart,   8) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  process,           9) \
+X(a, CALLBACK, SINGULAR, STRING,   process_map_id,   10) \
+X(a, CALLBACK, SINGULAR, STRING,   process_region_id,  11)
 #define sl_link_SettingsWriteResponse_CALLBACK pb_default_field_callback
 #define sl_link_SettingsWriteResponse_DEFAULT NULL
 #define sl_link_SettingsWriteResponse_chassis_MSGTYPE sl_link_ChassisSettings
 #define sl_link_SettingsWriteResponse_map_MSGTYPE sl_link_MapSettings
 #define sl_link_SettingsWriteResponse_rpp_MSGTYPE sl_link_RppSettings
+#define sl_link_SettingsWriteResponse_process_MSGTYPE sl_link_MapProcessSettings
 
 #define sl_link_Pose2D_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, FLOAT,    x,                 1) \
@@ -2654,11 +2760,30 @@ X(a, STATIC,   OPTIONAL, BOOL,     chassis_connected,  21) \
 X(a, STATIC,   OPTIONAL, BOOL,     emergency_stop_latched,  22) \
 X(a, STATIC,   OPTIONAL, BOOL,     localization_ready,  23) \
 X(a, STATIC,   OPTIONAL, BOOL,     localization_pause_latched,  24) \
-X(a, CALLBACK, SINGULAR, STRING,   localization_status_reason,  25)
+X(a, CALLBACK, SINGULAR, STRING,   localization_status_reason,  25) \
+X(a, STATIC,   OPTIONAL, INT32,    left_motor_fault_code,  26) \
+X(a, STATIC,   OPTIONAL, INT32,    right_motor_fault_code,  27) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  system_health,    28)
 #define sl_link_DeviceStatusReport_CALLBACK pb_default_field_callback
 #define sl_link_DeviceStatusReport_DEFAULT NULL
 #define sl_link_DeviceStatusReport_position_MSGTYPE sl_link_Pose2D
 #define sl_link_DeviceStatusReport_localization_covariance_MSGTYPE sl_link_LocalizationCovariance
+#define sl_link_DeviceStatusReport_system_health_MSGTYPE sl_link_SystemHealth
+
+#define sl_link_SystemHealth_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, FLOAT,    cpu_temperature_c,   1) \
+X(a, STATIC,   OPTIONAL, FLOAT,    cpu_usage_percent,   2) \
+X(a, STATIC,   OPTIONAL, FLOAT,    memory_usage_percent,   3) \
+X(a, STATIC,   OPTIONAL, UINT64,   memory_total_bytes,   4) \
+X(a, STATIC,   OPTIONAL, UINT64,   memory_available_bytes,   5) \
+X(a, STATIC,   OPTIONAL, FLOAT,    disk_usage_percent,   6) \
+X(a, STATIC,   OPTIONAL, UINT64,   disk_free_bytes,   7) \
+X(a, STATIC,   OPTIONAL, UINT64,   uptime_seconds,    8) \
+X(a, STATIC,   OPTIONAL, UINT32,   cellular_signal_percent,   9) \
+X(a, CALLBACK, SINGULAR, STRING,   cellular_state,   10) \
+X(a, CALLBACK, SINGULAR, STRING,   cellular_access_technology,  11)
+#define sl_link_SystemHealth_CALLBACK pb_default_field_callback
+#define sl_link_SystemHealth_DEFAULT NULL
 
 #define sl_link_CameraFrameRequest_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     snapshot,          1) \
@@ -3553,6 +3678,7 @@ extern const pb_msgdesc_t sl_link_WifiStatusReport_msg;
 extern const pb_msgdesc_t sl_link_PolygonPoint_msg;
 extern const pb_msgdesc_t sl_link_PolygonRegion_msg;
 extern const pb_msgdesc_t sl_link_ChassisSettings_msg;
+extern const pb_msgdesc_t sl_link_MapProcessSettings_msg;
 extern const pb_msgdesc_t sl_link_MapSettings_msg;
 extern const pb_msgdesc_t sl_link_RppSettings_msg;
 extern const pb_msgdesc_t sl_link_SettingsReadRequest_msg;
@@ -3562,6 +3688,7 @@ extern const pb_msgdesc_t sl_link_SettingsWriteResponse_msg;
 extern const pb_msgdesc_t sl_link_Pose2D_msg;
 extern const pb_msgdesc_t sl_link_LocalizationCovariance_msg;
 extern const pb_msgdesc_t sl_link_DeviceStatusReport_msg;
+extern const pb_msgdesc_t sl_link_SystemHealth_msg;
 extern const pb_msgdesc_t sl_link_CameraFrameRequest_msg;
 extern const pb_msgdesc_t sl_link_CameraFrameChunk_msg;
 extern const pb_msgdesc_t sl_link_MapRequest_msg;
@@ -3650,6 +3777,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_PolygonPoint_fields &sl_link_PolygonPoint_msg
 #define sl_link_PolygonRegion_fields &sl_link_PolygonRegion_msg
 #define sl_link_ChassisSettings_fields &sl_link_ChassisSettings_msg
+#define sl_link_MapProcessSettings_fields &sl_link_MapProcessSettings_msg
 #define sl_link_MapSettings_fields &sl_link_MapSettings_msg
 #define sl_link_RppSettings_fields &sl_link_RppSettings_msg
 #define sl_link_SettingsReadRequest_fields &sl_link_SettingsReadRequest_msg
@@ -3659,6 +3787,7 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 #define sl_link_Pose2D_fields &sl_link_Pose2D_msg
 #define sl_link_LocalizationCovariance_fields &sl_link_LocalizationCovariance_msg
 #define sl_link_DeviceStatusReport_fields &sl_link_DeviceStatusReport_msg
+#define sl_link_SystemHealth_fields &sl_link_SystemHealth_msg
 #define sl_link_CameraFrameRequest_fields &sl_link_CameraFrameRequest_msg
 #define sl_link_CameraFrameChunk_fields &sl_link_CameraFrameChunk_msg
 #define sl_link_MapRequest_fields &sl_link_MapRequest_msg
@@ -3745,11 +3874,13 @@ extern const pb_msgdesc_t sl_link_ControlCommandResponse_msg;
 /* sl_link_WifiConfig_size depends on runtime parameters */
 /* sl_link_WifiStatusReport_size depends on runtime parameters */
 /* sl_link_PolygonRegion_size depends on runtime parameters */
+/* sl_link_MapProcessSettings_size depends on runtime parameters */
 /* sl_link_MapSettings_size depends on runtime parameters */
 /* sl_link_SettingsReadResponse_size depends on runtime parameters */
 /* sl_link_SettingsWriteRequest_size depends on runtime parameters */
 /* sl_link_SettingsWriteResponse_size depends on runtime parameters */
 /* sl_link_DeviceStatusReport_size depends on runtime parameters */
+/* sl_link_SystemHealth_size depends on runtime parameters */
 /* sl_link_CameraFrameChunk_size depends on runtime parameters */
 /* sl_link_MapRequest_size depends on runtime parameters */
 /* sl_link_MapRequestResult_size depends on runtime parameters */

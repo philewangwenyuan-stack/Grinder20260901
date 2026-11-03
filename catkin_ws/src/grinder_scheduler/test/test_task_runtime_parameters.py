@@ -35,6 +35,15 @@ class TaskRuntimeParametersTest(unittest.TestCase):
         self.assertEqual([], self.writes)
         self.assertEqual([], self.rpm)
 
+    def test_task_override_keeps_priority_and_restores_new_region_base(self):
+        self.runtime.execute(self.node, "task-a", run_speed=.1, disc_speed=1300)
+        self.node._execution_run_speed = lambda: .03
+        self.assertTrue(self.runtime.apply_region_base_speed(self.node))
+        self.assertEqual(.1, self.rpp["desired_linear_vel"])
+        self.assertEqual(1300, self.runtime.disc_speed("task-a", 925))
+        self.runtime.clear(self.node)
+        self.assertEqual(.03, self.rpp["desired_linear_vel"])
+
     def test_temporary_update_and_restore_preserves_defaults_and_limits(self):
         self.runtime.execute(self.node, "task-a", 0.1, 1300)
         self.assertEqual({"desired_linear_vel": 0.1}, self.writes[-1])

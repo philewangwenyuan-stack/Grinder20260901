@@ -249,6 +249,8 @@ message PolygonRegion {
   // Region-specific planning direction: "x", "-x", "y", or "-y".
   // Empty means LOWER-side default policy.
   string global_direction = 9;
+  // Recipe belongs to this work region, not to the whole map.
+  MapProcessSettings process = 10;
 }
 
 message ChassisSettings {
@@ -261,6 +263,16 @@ message ChassisSettings {
   // Default steering/differential speed ratio for manual drive, in (0, 1].
   // Zero means keep the current LOWER-side default.
   float max_turn_speed_ratio = 5;
+}
+
+// Work-region recipe identified by (map_id, region_id). Manual writes never update it.
+message MapProcessSettings {
+  float run_speed = 1;
+  uint32 disc_speed_rpm = 2;
+  string process_type = 3;
+  string grinding_parameter = 4;
+  string concrete_strength = 5;
+  float pressure = 6;
 }
 
 message MapSettings {
@@ -374,6 +386,10 @@ message SettingsWriteRequest {
   // Optional partial-update mask for RppSettings. Bit N selects the field
   // number N+1; zero means the message is a complete settings snapshot.
   uint64 rpp_field_mask = 6;
+  // Explicit process edit; does not actuate the chassis. Empty map ID means current map.
+  MapProcessSettings process = 7;
+  string process_map_id = 8;
+  string process_region_id = 9;
 }
 
 message SettingsWriteResponse {
@@ -385,6 +401,9 @@ message SettingsWriteResponse {
   bool rpp_applied = 6;
   bool rpp_saved = 7;
   bool geometry_requires_restart = 8;
+  MapProcessSettings process = 9;
+  string process_map_id = 10;
+  string process_region_id = 11;
 }
 
 message Pose2D {

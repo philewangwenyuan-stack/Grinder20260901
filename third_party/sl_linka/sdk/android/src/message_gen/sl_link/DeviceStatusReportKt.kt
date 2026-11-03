@@ -601,6 +601,90 @@ public object DeviceStatusReportKt {
     public fun clearLocalizationStatusReason() {
       _builder.clearLocalizationStatusReason()
     }
+
+    /**
+     * <pre>
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * </pre>
+     *
+     * <code>optional int32 left_motor_fault_code = 26;</code>
+     */
+    public var leftMotorFaultCode: kotlin.Int
+      @JvmName("getLeftMotorFaultCode")
+      get() = _builder.getLeftMotorFaultCode()
+      @JvmName("setLeftMotorFaultCode")
+      set(value) {
+        _builder.setLeftMotorFaultCode(value)
+      }
+    /**
+     * ```
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * ```
+     *
+     * `optional int32 left_motor_fault_code = 26;`
+     */
+    public fun clearLeftMotorFaultCode() {
+      _builder.clearLeftMotorFaultCode()
+    }
+    /**
+     * ```
+     * Signed int16 register values; absent until fresh connected chassis feedback.
+     * ```
+     *
+     * `optional int32 left_motor_fault_code = 26;`
+     * @return Whether the leftMotorFaultCode field is set.
+     */
+    public fun hasLeftMotorFaultCode(): kotlin.Boolean {
+      return _builder.hasLeftMotorFaultCode()
+    }
+
+    /**
+     * <code>optional int32 right_motor_fault_code = 27;</code>
+     */
+    public var rightMotorFaultCode: kotlin.Int
+      @JvmName("getRightMotorFaultCode")
+      get() = _builder.getRightMotorFaultCode()
+      @JvmName("setRightMotorFaultCode")
+      set(value) {
+        _builder.setRightMotorFaultCode(value)
+      }
+    /**
+     * `optional int32 right_motor_fault_code = 27;`
+     */
+    public fun clearRightMotorFaultCode() {
+      _builder.clearRightMotorFaultCode()
+    }
+    /**
+     * `optional int32 right_motor_fault_code = 27;`
+     * @return Whether the rightMotorFaultCode field is set.
+     */
+    public fun hasRightMotorFaultCode(): kotlin.Boolean {
+      return _builder.hasRightMotorFaultCode()
+    }
+
+    /**
+     * `.sl_link.SystemHealth system_health = 28;`
+     */
+    public var systemHealth: sl_link.SlLink.SystemHealth
+      @JvmName("getSystemHealth")
+      get() = _builder.getSystemHealth()
+      @JvmName("setSystemHealth")
+      set(value) {
+        _builder.setSystemHealth(value)
+      }
+    /**
+     * `.sl_link.SystemHealth system_health = 28;`
+     */
+    public fun clearSystemHealth() {
+      _builder.clearSystemHealth()
+    }
+    /**
+     * `.sl_link.SystemHealth system_health = 28;`
+     * @return Whether the systemHealth field is set.
+     */
+    public fun hasSystemHealth(): kotlin.Boolean {
+      return _builder.hasSystemHealth()
+    }
   }
 }
 public inline fun sl_link.SlLink.DeviceStatusReport.copy(block: `sl_link`.DeviceStatusReportKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.DeviceStatusReport =
@@ -611,4 +695,7 @@ public val sl_link.SlLink.DeviceStatusReportOrBuilder.positionOrNull: sl_link.Sl
 
 public val sl_link.SlLink.DeviceStatusReportOrBuilder.localizationCovarianceOrNull: sl_link.SlLink.LocalizationCovariance?
   get() = if (hasLocalizationCovariance()) getLocalizationCovariance() else null
+
+public val sl_link.SlLink.DeviceStatusReportOrBuilder.systemHealthOrNull: sl_link.SlLink.SystemHealth?
+  get() = if (hasSystemHealth()) getSystemHealth() else null
 

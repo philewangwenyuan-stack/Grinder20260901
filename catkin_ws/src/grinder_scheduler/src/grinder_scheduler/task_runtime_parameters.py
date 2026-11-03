@@ -80,3 +80,11 @@ class TaskRuntimeParameters:
             if self._restore_speed is not None:
                 node._apply_rpp_settings({"desired_linear_vel": self._restore_speed})
                 self._restore_speed = None
+
+    def apply_region_base_speed(self, node):
+        """An explicit task override keeps priority; restore to the new region later."""
+        with self._lock:
+            if self._task_id == node.task_config.task_id and self._restore_speed is not None:
+                self._restore_speed = node._execution_run_speed()
+                return True
+            return node._apply_execution_speed_limit()

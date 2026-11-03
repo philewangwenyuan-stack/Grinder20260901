@@ -35,6 +35,7 @@ from nav_msgs.msg import Odometry, Path
 from nav_msgs.srv import LoadMap
 from std_msgs.msg import Bool, Int16, UInt16, String
 from grinder_chassis_driver.indicator_emergency import EmergencyIndicatorSource
+from grinder_scheduler.region_process import base_region_id, point_region_id, capture_region_recipes
 from grinder_chassis_driver.motion_safety import MotionInterlock, MotionCancelled, GuardedPublisher, motion_action
 from std_srvs.srv import Empty, Trigger, TriggerResponse
 from grinder_scheduler.srv import (
@@ -5947,9 +5948,6 @@ class SchedulerNode:
                 runtime_parameters.clear(self)
             except Exception as exc:
                 return False, "Cannot restore previous task runtime settings: {}".format(exc)
-        if float(self._chassis_settings.get("run_speed", 0.0)) <= 0.0:
-            self._safe_stop_motion()
-            return False, "Cannot start task while run_speed is zero"
         with self._collision_imminent_lock:
             collision_imminent = self._collision_imminent_active
         if collision_imminent:
@@ -6017,6 +6015,15 @@ class SchedulerNode:
         else:
             self._exec_region_index = -1
         mark("prepare_region_order")
+        self._init_segment_execution_cursor()
+        try:
+            self._prepare_region_process_execution()
+        except Exception as exc:
+            self._safe_stop_motion()
+            return False, "Cannot load work region process: {}".format(exc)
+        if float(self._chassis_settings.get("run_speed", 0.0)) <= 0.0:
+            self._safe_stop_motion()
+            return False, "Cannot start task while run_speed is zero"
         if not self._apply_execution_speed_limit():
             self._safe_stop_motion()
             return False, "Cannot apply task process speed to navigation"
@@ -6033,7 +6040,6 @@ class SchedulerNode:
         self._reset_disc_motion_guard()
         self.light_pub.publish(Bool(data=True))
         mark("publish_chassis_disc_commands")
-        self._init_segment_execution_cursor()
         mark("init_segment_cursor")
         with self._motion.commit():
             self._exec_active = True
@@ -6169,6 +6175,10 @@ class SchedulerNode:
         heartbeat_ready, heartbeat_reason, _ = self._localization_motion_status()
         if not heartbeat_ready:
             return False, "Super-LIO localization is not ready: {}".format(heartbeat_reason)
+        self._init_segment_execution_cursor()
+        if 0 <= self.current_path_index < len(self.current_path.points):
+            if not self._apply_region_process_for_path_point(self.current_path.points[self.current_path_index]):
+                return False, "Cannot apply current work region process"
         self._set_chassis_enabled(True)
         self._disc_last_mode = ""
         self._manual_travel_disc_active = False
@@ -6179,7 +6189,6 @@ class SchedulerNode:
         self._reset_disc_motion_guard()
         if not self._active_segments:
             self._rebuild_active_segments()
-        self._init_segment_execution_cursor()
         with self._motion.commit():
             self._exec_active = True
         self._exec_publish_start_pose_once = False
@@ -6656,6 +6665,9 @@ class SchedulerNode:
             self._set_error("Empty path for next work region: {}".format(next_region_id))
             return False
 
+        # Apply the next region's recipe before enabling its work tool.
+        if not self._apply_region_process_for_path_point({"path_type": next_region_id}, restore_motion=False):
+            return False
         # Enter next region: enable working tool again.
         self._set_chassis_enabled(True)
         self.disc_speed_pub.publish(Int16(data=self._configured_disc_speed_rpm()))
@@ -6673,6 +6685,7 @@ class SchedulerNode:
         self._exec_goal_start_time = time.time()
         self._publish_active_segment_plan(reason="next_region")
         self._send_active_segment_goal(force=True, reason="next_region")
+        self._set_cmd_vel_forward_runtime_active(True)
         with self._motion.commit():
             self.state = SchedulerState.RUNNING
         return True
@@ -6704,7 +6717,10 @@ class SchedulerNode:
         self._active_segment_last_progress_s = progress_s
         self.current_path_index = max(self.current_path_index, int(projection.get("index", self.current_path_index)))
         if 0 <= self.current_path_index < len(self.current_path.points):
-            self._apply_disc_state_for_path_point(self.current_path.points[self.current_path_index])
+            point = self.current_path.points[self.current_path_index]
+            if not self._apply_region_process_for_path_point(point):
+                return
+            self._apply_disc_state_for_path_point(point)
 
         path_s = self._ensure_path_arc_lengths()
         final_point = self.current_path.points[-1]
@@ -6763,6 +6779,56 @@ class SchedulerNode:
             "Skip chassis enable control by scheduler (requested enabled=%s).",
             str(bool(enabled)),
         )
+
+    def _prepare_region_process_execution(self):
+        region_ids = list(self._exec_region_order or [])
+        region_ids.extend(point_region_id(p) for p in self.current_path.points)
+        service = getattr(self, "map_service", None)
+        self._execution_region_processes = capture_region_recipes(
+            service, region_ids, self._max_chassis_run_speed,
+            getattr(self, "_task_runtime_max_disc_speed_rpm", 1500)) if service is not None else {}
+        self._applied_process_region_id = ""
+        index = max(0, int(getattr(self, "current_path_index", 0)))
+        # For the initial connector use the first upcoming work region's speed;
+        # connector disc rotation remains governed by the travel policy.
+        first_region = next((point_region_id(p) for p in self.current_path.points[index:]
+                             if point_region_id(p)), base_region_id(self.task_config.active_work_region_id))
+        recipe = self._execution_region_processes.get(first_region)
+        if recipe is not None:
+            self._chassis_settings.update(run_speed=recipe["run_speed"], disc_speed_rpm=recipe["disc_speed_rpm"])
+            self._applied_process_region_id = first_region
+
+    @motion_action(cancel_result=False, replace=False)
+    def _apply_region_process_for_path_point(self, point, restore_motion=True):
+        region_id = point_region_id(point)
+        if not region_id or region_id == getattr(self, "_applied_process_region_id", ""):
+            return True
+        recipes = getattr(self, "_execution_region_processes", {})
+        recipe = recipes.get(region_id)
+        if recipe is None:
+            self._pause_execution(reason="region_process_missing")
+            self._safe_stop_motion()
+            return False
+        # Hold zero while dynamic_reconfigure changes the process setpoint.
+        self._set_cmd_vel_forward_runtime_active(False, publish_zero=True, reason="region_process_change")
+        self._chassis_settings.update(run_speed=recipe["run_speed"], disc_speed_rpm=recipe["disc_speed_rpm"])
+        runtime = getattr(self, "_task_runtime_parameters", None)
+        try:
+            applied = runtime.apply_region_base_speed(self) if runtime is not None else self._apply_execution_speed_limit()
+            if not applied:
+                raise RuntimeError("Cannot apply region process speed")
+            self.disc_speed_pub.publish(Int16(data=self._configured_disc_speed_rpm()))
+            self._applied_process_region_id = region_id
+            if restore_motion and self.state == SchedulerState.RUNNING and self._exec_active:
+                self._set_cmd_vel_forward_runtime_active(True)
+            return True
+        except MotionCancelled:
+            raise
+        except Exception as exc:
+            rospy.logerr("Region process switch failed: region=%s error=%s", region_id, exc)
+            self._pause_execution(reason="region_process_apply_failed")
+            self._safe_stop_motion()
+            return False
 
     def _configured_disc_speed_rpm(self):
         runtime_parameters = getattr(self, "_task_runtime_parameters", None)
@@ -7941,6 +8007,50 @@ class SchedulerNode:
         response.message = "Settings applied"
         response.geometry_requires_restart = False
         try:
+            if (request.HasField("chassis") or request.HasField("process")) and (
+                getattr(self, "_exec_active", False) or self.state in (SchedulerState.RUNNING, SchedulerState.PAUSED)
+            ):
+                response.result = pb.RESULT_BUSY
+                response.message = "Task active; use task runtime settings to adjust the current job"
+                return response.SerializeToString(), pb.MSG_ID_SETTINGS_WRITE_RESPONSE, pb.COMP_SETTINGS
+            if request.HasField("process"):
+                if request.HasField("chassis") or request.HasField("map") or request.HasField("rpp"):
+                    raise ValueError("Process edits must be sent separately")
+                target = str(request.process_map_id or self._current_map_id())
+                if target != str(self._current_map_id()) and self._find_recorded_map_by_id(target) is None:
+                    raise ValueError("Process map_id not found")
+                recipe = request.process
+                speed, pressure = float(recipe.run_speed), float(recipe.pressure)
+                if (not math.isfinite(speed) or not 0.0 <= speed <= self._max_chassis_run_speed
+                        or not math.isfinite(pressure) or not 0.0 <= pressure <= 477.0
+                        or not 0 <= int(recipe.disc_speed_rpm) <= self._task_runtime_max_disc_speed_rpm):
+                    raise ValueError("Invalid map process speed, disc RPM or pressure")
+                process = dict(run_speed=speed, disc_speed_rpm=int(recipe.disc_speed_rpm),
+                               pressure=pressure, process_type=str(recipe.process_type),
+                               grinding_parameter=str(recipe.grinding_parameter),
+                               concrete_strength=str(recipe.concrete_strength))
+                if target == str(self._current_map_id()):
+                    self._ensure_offline_map_service_for_current_map("process_settings")
+                    process_service = self.map_service
+                else:
+                    process_service = MapService()
+                    process_service.load_local_state(self._map_state_dir(target))
+                region_id = str(request.process_region_id or "").strip()
+                if not region_id:
+                    raise ValueError("process_region_id is required")
+                previous = process_service.get_process_settings(region_id)
+                process_service.set_process_settings(region_id, process)
+                # Persist independently of live/manual chassis preferences.
+                try:
+                    if self._persist_state_enabled:
+                        process_service.save_local_state(self._map_state_dir(target))
+                except Exception:
+                    process_service.set_process_settings(region_id, previous)
+                    raise
+                response.process.CopyFrom(recipe)
+                response.process_map_id = target
+                response.process_region_id = region_id
+                response.message = "Work region process saved; applied when entering this region"
             if request.HasField("chassis"):
                 work_mode = int(request.chassis.work_mode)
                 if work_mode == int(pb.WORK_MODE_AUTO):
@@ -9480,7 +9590,9 @@ class SchedulerNode:
                     )
                 # Carry current overlay regions into newly saved map state.
                 self._save_map_overlay_state_for_map(prev_map_id)
-                self._copy_map_overlay_state(prev_map_id, saved_map_id, overwrite=True)
+                copied = self._copy_map_overlay_state(prev_map_id, saved_map_id, overwrite=True)
+                if self._persist_state_enabled and not copied:
+                    raise RuntimeError("Map assets saved but regions/process settings could not be copied")
                 self._set_active_map_id(saved_map_id, reason="map_save", migrate_bindings=True)
                 if saved_alignment_yaw is not None:
                     self._write_alignment_yaw_to_record(
@@ -11365,6 +11477,8 @@ class SchedulerNode:
         pb_region.closed = bool(region.get("closed", True))
         pb_region.region_type = int(region.get("region_type", default_region_type))
         pb_region.global_direction = str(region.get("global_direction", "") or "")
+        for key, value in dict(region.get("process_settings", {}) or {}).items():
+            setattr(pb_region.process, key, value)
         for point in list(region.get("points", []) or []):
             if not isinstance(point, dict):
                 continue
@@ -11732,6 +11846,15 @@ class SchedulerNode:
     def handle_path_plan_request(self, payload, include_preview=True):
         pb = self.sl_link_server.pb
         request = pb.PathPlanRequest()
+        if getattr(self, "_exec_active", False) or self.state in (SchedulerState.RUNNING, SchedulerState.PAUSED):
+            # Even an old APP's replay planner must not replace an active task.
+            request.ParseFromString(payload)
+            response = pb.PathPlanResponse(
+                request_id=request.request_id, task_id=request.task_id,
+                result=pb.RESULT_BUSY, message="Task active; planning is not a read-only history query",
+                planned=False,
+            )
+            return response.SerializeToString(), pb.MSG_ID_PATH_PLAN_RESPONSE, pb.COMP_SCHEDULER
         try:
             request.ParseFromString(payload)
         except Exception:
