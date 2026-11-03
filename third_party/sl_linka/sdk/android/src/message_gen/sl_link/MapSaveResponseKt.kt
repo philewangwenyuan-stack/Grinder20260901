@@ -341,7 +341,41 @@ public object MapSaveResponseKt {
     @kotlin.jvm.JvmName("clearResidualNodes")
     public fun com.google.protobuf.kotlin.DslList<kotlin.String, ResidualNodesProxy>.clear() {
       _builder.clearResidualNodes()
-    }}
+    }
+    /**
+     * `string request_id = 16;`
+     */
+    public var requestId: kotlin.String
+      @JvmName("getRequestId")
+      get() = _builder.getRequestId()
+      @JvmName("setRequestId")
+      set(value) {
+        _builder.setRequestId(value)
+      }
+    /**
+     * `string request_id = 16;`
+     */
+    public fun clearRequestId() {
+      _builder.clearRequestId()
+    }
+
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     */
+    public var drawingLayerVersion: kotlin.Int
+      @JvmName("getDrawingLayerVersion")
+      get() = _builder.getDrawingLayerVersion()
+      @JvmName("setDrawingLayerVersion")
+      set(value) {
+        _builder.setDrawingLayerVersion(value)
+      }
+    /**
+     * `uint32 drawing_layer_version = 17;`
+     */
+    public fun clearDrawingLayerVersion() {
+      _builder.clearDrawingLayerVersion()
+    }
+  }
 }
 public inline fun sl_link.SlLink.MapSaveResponse.copy(block: `sl_link`.MapSaveResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapSaveResponse =
   `sl_link`.MapSaveResponseKt.Dsl._create(this.toBuilder()).apply { block() }._build()

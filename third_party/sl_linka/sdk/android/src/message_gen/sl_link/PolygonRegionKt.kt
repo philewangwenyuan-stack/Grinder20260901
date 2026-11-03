@@ -286,6 +286,132 @@ public object PolygonRegionKt {
     public fun hasProcess(): kotlin.Boolean {
       return _builder.hasProcess()
     }
+
+    /**
+     * `string subtype = 11;`
+     */
+    public var subtype: kotlin.String
+      @JvmName("getSubtype")
+      get() = _builder.getSubtype()
+      @JvmName("setSubtype")
+      set(value) {
+        _builder.setSubtype(value)
+      }
+    /**
+     * `string subtype = 11;`
+     */
+    public fun clearSubtype() {
+      _builder.clearSubtype()
+    }
+
+    /**
+     * `string source = 12;`
+     */
+    public var source: kotlin.String
+      @JvmName("getSource")
+      get() = _builder.getSource()
+      @JvmName("setSource")
+      set(value) {
+        _builder.setSource(value)
+      }
+    /**
+     * `string source = 12;`
+     */
+    public fun clearSource() {
+      _builder.clearSource()
+    }
+
+    /**
+     * <code>float inflation_m = 13;</code>
+     */
+    public var inflationM: kotlin.Float
+      @JvmName("getInflationM")
+      get() = _builder.getInflationM()
+      @JvmName("setInflationM")
+      set(value) {
+        _builder.setInflationM(value)
+      }
+    /**
+     * `float inflation_m = 13;`
+     */
+    public fun clearInflationM() {
+      _builder.clearInflationM()
+    }
+
+    /**
+     * `string drawing_ref = 14;`
+     */
+    public var drawingRef: kotlin.String
+      @JvmName("getDrawingRef")
+      get() = _builder.getDrawingRef()
+      @JvmName("setDrawingRef")
+      set(value) {
+        _builder.setDrawingRef(value)
+      }
+    /**
+     * `string drawing_ref = 14;`
+     */
+    public fun clearDrawingRef() {
+      _builder.clearDrawingRef()
+    }
+
+    /**
+     * <code>uint32 layer_version = 15;</code>
+     */
+    public var layerVersion: kotlin.Int
+      @JvmName("getLayerVersion")
+      get() = _builder.getLayerVersion()
+      @JvmName("setLayerVersion")
+      set(value) {
+        _builder.setLayerVersion(value)
+      }
+    /**
+     * `uint32 layer_version = 15;`
+     */
+    public fun clearLayerVersion() {
+      _builder.clearLayerVersion()
+    }
+
+    /**
+     * `.sl_link.DrawingObstacleAction drawing_action = 16;`
+     */
+    public var drawingAction: sl_link.SlLink.DrawingObstacleAction
+      @JvmName("getDrawingAction")
+      get() = _builder.getDrawingAction()
+      @JvmName("setDrawingAction")
+      set(value) {
+        _builder.setDrawingAction(value)
+      }
+    public var drawingActionValue: kotlin.Int
+      @JvmName("getDrawingActionValue")
+      get() = _builder.getDrawingActionValue()
+      @JvmName("setDrawingActionValue")
+      set(value) {
+        _builder.setDrawingActionValue(value)
+      }
+    /**
+     * `.sl_link.DrawingObstacleAction drawing_action = 16;`
+     */
+    public fun clearDrawingAction() {
+      _builder.clearDrawingAction()
+    }
+
+    /**
+     * <code>float geometry_error_m = 17;</code>
+     */
+    public var geometryErrorM: kotlin.Float
+      @JvmName("getGeometryErrorM")
+      get() = _builder.getGeometryErrorM()
+      @JvmName("setGeometryErrorM")
+      set(value) {
+        _builder.setGeometryErrorM(value)
+      }
+    /**
+     * `float geometry_error_m = 17;`
+     */
+    public fun clearGeometryErrorM() {
+      _builder.clearGeometryErrorM()
+    }
   }
 }
 public inline fun sl_link.SlLink.PolygonRegion.copy(block: `sl_link`.PolygonRegionKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PolygonRegion =

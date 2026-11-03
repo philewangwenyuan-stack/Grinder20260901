@@ -106,6 +106,57 @@ public object MapSaveRequestKt {
     public fun clearRotationDeg() {
       _builder.clearRotationDeg()
     }
+
+    /**
+     * `string drawing_draft_id = 5;`
+     */
+    public var drawingDraftId: kotlin.String
+      @JvmName("getDrawingDraftId")
+      get() = _builder.getDrawingDraftId()
+      @JvmName("setDrawingDraftId")
+      set(value) {
+        _builder.setDrawingDraftId(value)
+      }
+    /**
+     * `string drawing_draft_id = 5;`
+     */
+    public fun clearDrawingDraftId() {
+      _builder.clearDrawingDraftId()
+    }
+
+    /**
+     * <code>uint32 drawing_draft_version = 6;</code>
+     */
+    public var drawingDraftVersion: kotlin.Int
+      @JvmName("getDrawingDraftVersion")
+      get() = _builder.getDrawingDraftVersion()
+      @JvmName("setDrawingDraftVersion")
+      set(value) {
+        _builder.setDrawingDraftVersion(value)
+      }
+    /**
+     * `uint32 drawing_draft_version = 6;`
+     */
+    public fun clearDrawingDraftVersion() {
+      _builder.clearDrawingDraftVersion()
+    }
+
+    /**
+     * `string request_id = 7;`
+     */
+    public var requestId: kotlin.String
+      @JvmName("getRequestId")
+      get() = _builder.getRequestId()
+      @JvmName("setRequestId")
+      set(value) {
+        _builder.setRequestId(value)
+      }
+    /**
+     * `string request_id = 7;`
+     */
+    public fun clearRequestId() {
+      _builder.clearRequestId()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapSaveRequest.copy(block: `sl_link`.MapSaveRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapSaveRequest =

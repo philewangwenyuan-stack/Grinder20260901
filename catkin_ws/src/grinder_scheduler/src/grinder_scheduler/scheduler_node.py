@@ -57,6 +57,8 @@ from grinder_scheduler.system_health import SystemHealthSampler, fill_system_sta
 from grinder_scheduler.path_geometry import sample_segment, segment_point_spacing
 from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
+from grinder_scheduler.drawing_scheduler import DrawingObstacleMixin, region_response_frames
+from google.protobuf.json_format import ParseDict
 from grinder_scheduler.map_grid_utils import MapGridSource, MapPayloadBuilder, occupancy_grid_array
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
 from grinder_scheduler.map_catalog_response import fill_map_catalog_response
@@ -198,7 +200,7 @@ def _resolve_runtime_path(path_value, base_dir):
     return os.path.normpath(os.path.join(base_dir, normalized))
 
 
-class SchedulerNode:
+class SchedulerNode(DrawingObstacleMixin):
     @staticmethod
     def _sanitize_preview_edge(value, default_edge=PREVIEW_MAX_EDGE_CAP, cap_edge=PREVIEW_MAX_EDGE_CAP):
         if value is None:
@@ -4179,6 +4181,8 @@ class SchedulerNode:
                     "region_type": 3,
                 }
             )
+        # Drawing vectors are planning inputs only, never MapService patches.
+        self.task_config.obstacle_regions.extend(self._drawing_regions())
         valid_region_ids = set()
         for region in self.task_config.work_regions:
             rid = str(region.get("region_id", "")).strip()
@@ -4605,6 +4609,8 @@ class SchedulerNode:
     def _plan_current_task(self, force_use_all_regions=False, request_start_pose=None, request_end_pose=None, request_global_direction=None):
         t_plan_total = time.perf_counter()
         self._ensure_offline_map_service_for_current_map("plan_current_task_entry")
+        if not self._drawing_preflight():
+            return False
         # Always plan against the latest map edit overlay (work/obstacle regions).
         self._sync_task_regions_from_overlay()
         self._merge_task_obstacle_regions_for_planning(
@@ -4794,6 +4800,7 @@ class SchedulerNode:
                 int(planning_map_info.get("height", 0)),
             )
             t_plan_align = time.perf_counter()
+            planning_task_config.drawing_footprint = getattr(self, "_robot_footprint", [])
             planned_path = self.planner.plan(
                 self.task_config.task_id or "task",
                 planning_map,
@@ -4849,6 +4856,9 @@ class SchedulerNode:
             rospy.loginfo("Skip prepending current pose point because request_start_pose is provided")
         else:
             rospy.loginfo("Skip prepending current pose point because has_task_info=false")
+        if not self._drawing_validate_path():
+            self.current_path = None
+            return False
         t_plan_prepend = time.perf_counter()
         self._rebuild_active_segments()
         if plan_task_config.continuation:
@@ -4963,6 +4973,12 @@ class SchedulerNode:
                 int(region.get("order_index", 0) or 0),
                 str(region.get("global_direction", "") or "").lower(),
                 tuple(points),
+                str(region.get("source", "")),
+                float(region.get("inflation_m", 0)),
+                float(region.get("geometry_error_m", 0)),
+                bool(region.get("enabled", True)),
+                int(region.get("drawing_action", 0)),
+                int(region.get("layer_version", 0)),
                 (
                     self._round_float(start_pose.get("x", 0.0), 4),
                     self._round_float(start_pose.get("y", 0.0), 4),
@@ -5006,6 +5022,7 @@ class SchedulerNode:
             self._round_float(map_info.get("origin_y", 0.0), 4),
             tuple(str(item or "") for item in list(selected_ids or [])),
             tuple(sorted((str(k), int(v)) for k, v in dict(self.task_config.region_repeat_config or {}).items())),
+            tuple(getattr(self._drawings().local, "planning", None) or ("", 0)),
             self._region_cache_fingerprint(self.task_config.work_regions),
             self._region_cache_fingerprint(self.task_config.obstacle_regions),
             self._region_cache_fingerprint(self.task_config.erase_regions),
@@ -5043,6 +5060,7 @@ class SchedulerNode:
             str(self._planned_path_preview_format or "").lower(),
             bool(self._planned_path_preview_include_overlay),
             bool(self._planned_path_preview_show_direction),
+            tuple(getattr(self._drawings().local, "planning", None) or ("", 0)),
             self._region_cache_fingerprint(self.task_config.work_regions),
             self._region_cache_fingerprint(self.task_config.obstacle_regions),
             self._region_cache_fingerprint(self.task_config.erase_regions),
@@ -5913,6 +5931,9 @@ class SchedulerNode:
     @localization_arming
     @motion_action(cancel_result=(False, "Task start cancelled by stop/emergency"), replace=True)
     def _start_execution(self):
+        self._drawing_ensure_map()
+        if not self._drawing_preflight():
+            return False, self.last_error
         runtime_parameters = getattr(self, "_task_runtime_parameters", None)
         if runtime_parameters is not None:
             try:
@@ -5970,6 +5991,8 @@ class SchedulerNode:
         if self.current_path is None or not self.current_path.points:
             mark("validate_path_failed")
             return False, "No planned path to execute"
+        if not self._drawing_validate_path(include_pose=True):
+            return False, self.last_error
         self._sync_task_regions_from_overlay()
         self._exec_region_order = self._sorted_work_region_ids()
         active_id = (self.task_config.active_work_region_id or "").strip()
@@ -6146,6 +6169,8 @@ class SchedulerNode:
         heartbeat_ready, heartbeat_reason, _ = self._localization_motion_status()
         if not heartbeat_ready:
             return False, "Super-LIO localization is not ready: {}".format(heartbeat_reason)
+        if not self._drawing_preflight() or not self._drawing_validate_path(include_pose=True, remaining=True):
+            return False, self.last_error
         self._init_segment_execution_cursor()
         if 0 <= self.current_path_index < len(self.current_path.points):
             if not self._apply_region_process_for_path_point(self.current_path.points[self.current_path_index]):
@@ -6176,6 +6201,7 @@ class SchedulerNode:
 
     def _stop_execution(self):
         self._motion.invalidate()
+        self._drawing_forget_task()
         was_active = self._exec_active or self.state == SchedulerState.PAUSED
         self._exec_active = False
         self._disc_auto_cover_desired = False
@@ -7595,6 +7621,7 @@ class SchedulerNode:
             return ""
 
     def _finalize_task_result(self, stop_reason=""):
+        self._drawing_forget_task()
         statistics = getattr(self, "_work_time_statistics", None)
         if statistics is not None:
             statistics.finish()
@@ -8701,6 +8728,16 @@ class SchedulerNode:
             response.message = "map_id mismatch with current map"
             response.task_id = task_id
             return response.SerializeToString(), pb.MSG_ID_TASK_CONFIG_RESPONSE, pb.COMP_SCHEDULER
+        try:
+            self._drawing_ensure_map()
+            self._drawings().authorize(current_map_id, task_id,
+                bool(getattr(request, "skip_stale_drawing_layer", False)),
+                int(getattr(request, "expected_drawing_layer_version", 0)),
+                self._drawing_binding(current_map_id))
+        except ValueError as exc:
+            response = pb.TaskConfigResponse(result=pb.RESULT_INVALID_PARAM,
+                message=str(exc), task_id=task_id)
+            return response.SerializeToString(), pb.MSG_ID_TASK_CONFIG_RESPONSE, pb.COMP_SCHEDULER
         task_obstacle_regions = []
         seen_task_obstacle_ids = set()
         for region in request.obstacle_regions:
@@ -8999,6 +9036,8 @@ class SchedulerNode:
         plan_request.max_chunk_size = int(request.max_chunk_size or 2048)
         plan_request.global_direction = str(request.global_direction or "")
         plan_request.map_id = str(request.map_id or "")
+        plan_request.drawing_draft_id = str(getattr(request, "drawing_draft_id", ""))
+        plan_request.drawing_draft_version = int(getattr(request, "drawing_draft_version", 0))
         if request.HasField("start_pose"):
             plan_request.start_pose.CopyFrom(request.start_pose)
         if request.HasField("end_pose"):
@@ -9402,7 +9441,7 @@ class SchedulerNode:
             response.message = str(exc)
         return response.SerializeToString(), pb.MSG_ID_MAP_IMPORT_TO_RADAR_RESPONSE, pb.COMP_SCHEDULER
 
-    def handle_map_save_request(self, payload):
+    def _handle_map_save_without_drawing(self, payload):
         pb = self.sl_link_server.pb
         request = pb.MapSaveRequest()
         request.ParseFromString(payload)
@@ -10562,6 +10601,7 @@ class SchedulerNode:
                 self._save_map_registry_state()
             response.result = pb.RESULT_SUCCESS
             response.message = "ok"
+            self._drawing_catalog_status(response)
             max_payload_safe = 65000
             response_payload = response.SerializeToString()
             if len(response_payload) > max_payload_safe:
@@ -11448,6 +11488,10 @@ class SchedulerNode:
         pb_region.closed = bool(region.get("closed", True))
         pb_region.region_type = int(region.get("region_type", default_region_type))
         pb_region.global_direction = str(region.get("global_direction", "") or "")
+        if region.get("source") == "drawing":
+            for key in ("source", "subtype", "inflation_m", "drawing_ref", "layer_version", "drawing_action", "geometry_error_m"):
+                if key in region and hasattr(pb_region, key):
+                    setattr(pb_region, key, region[key])
         for key, value in dict(region.get("process_settings", {}) or {}).items():
             setattr(pb_region.process, key, value)
         for point in list(region.get("points", []) or []):
@@ -11504,6 +11548,15 @@ class SchedulerNode:
                     region,
                     pb.REGION_TYPE_OBSTACLE,
                 )
+            if hasattr(response, "drawing_layer"):
+                binding = self._drawing_binding(effective_map_id) if effective_map_id == self._current_map_id() else None
+                drawing = self._drawings().layer(effective_map_id, binding)
+                info = drawing.get("info", {})
+                if drawing.get("pending"):
+                    info = dict(info, status=2, stale_reason="图纸层提交未完成，请重试保存")
+                ParseDict(info, response.drawing_layer)
+                for region in drawing.get("foundations", []):
+                    self._fill_polygon_region_message(response.obstacle_regions.add(), region, pb.REGION_TYPE_OBSTACLE)
             for region in list(regions.get("erase_regions", []) or []):
                 self._fill_polygon_region_message(
                     response.erase_regions.add(),
@@ -11537,13 +11590,9 @@ class SchedulerNode:
                 effective_map_id,
                 exc,
             )
-        return (
-            response.SerializeToString(),
-            pb.MSG_ID_MAP_REGION_POINT_RESPONSE,
-            pb.COMP_SCHEDULER,
-        )
+        return region_response_frames(response, pb)
 
-    def handle_map_edit_command(self, payload):
+    def _handle_map_edit_without_drawing(self, payload):
         pb = self.sl_link_server.pb
         request = pb.MapEditCommand()
         request.ParseFromString(payload)
@@ -11899,7 +11948,7 @@ class SchedulerNode:
         finally:
             self.task_config = original_task_config
 
-    def _handle_path_plan_request_impl_core(
+    def _handle_path_plan_without_drawing(
         self,
         payload,
         task_scoped=True,

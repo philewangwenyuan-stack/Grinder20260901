@@ -316,6 +316,14 @@ public final class SlLink {
      * <code>MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337;</code>
      */
     MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE(1337),
+    /**
+     * <code>MSG_ID_DRAWING_DRAFT_REQUEST = 1338;</code>
+     */
+    MSG_ID_DRAWING_DRAFT_REQUEST(1338),
+    /**
+     * <code>MSG_ID_DRAWING_DRAFT_RESPONSE = 1339;</code>
+     */
+    MSG_ID_DRAWING_DRAFT_RESPONSE(1339),
     UNRECOGNIZED(-1),
     ;
 
@@ -619,6 +627,14 @@ public final class SlLink {
      * <code>MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 1337;</code>
      */
     public static final int MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE_VALUE = 1337;
+    /**
+     * <code>MSG_ID_DRAWING_DRAFT_REQUEST = 1338;</code>
+     */
+    public static final int MSG_ID_DRAWING_DRAFT_REQUEST_VALUE = 1338;
+    /**
+     * <code>MSG_ID_DRAWING_DRAFT_RESPONSE = 1339;</code>
+     */
+    public static final int MSG_ID_DRAWING_DRAFT_RESPONSE_VALUE = 1339;
 
 
     @java.lang.Override
@@ -717,6 +733,8 @@ public final class SlLink {
         case 1335: return MSG_ID_SYSTEM_CACHE_CLEAR_RESPONSE;
         case 1336: return MSG_ID_TASK_RUNTIME_SETTINGS_REQUEST;
         case 1337: return MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE;
+        case 1338: return MSG_ID_DRAWING_DRAFT_REQUEST;
+        case 1339: return MSG_ID_DRAWING_DRAFT_RESPONSE;
         default: return null;
       }
     }
@@ -3008,6 +3026,304 @@ public final class SlLink {
     // @@protoc_insertion_point(enum_scope:sl_link.ChannelSessionAction)
   }
 
+  /**
+   * <pre>
+   * Drawing polygons are persistent vector data, never map raster patches.
+   * </pre>
+   *
+   * Protobuf enum {@code sl_link.DrawingObstacleAction}
+   */
+  public enum DrawingObstacleAction
+      implements com.google.protobuf.Internal.EnumLite {
+    /**
+     * <code>DRAWING_AVOID = 0;</code>
+     */
+    DRAWING_AVOID(0),
+    /**
+     * <code>DRAWING_IGNORE = 1;</code>
+     */
+    DRAWING_IGNORE(1),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>DRAWING_AVOID = 0;</code>
+     */
+    public static final int DRAWING_AVOID_VALUE = 0;
+    /**
+     * <code>DRAWING_IGNORE = 1;</code>
+     */
+    public static final int DRAWING_IGNORE_VALUE = 1;
+
+
+    @java.lang.Override
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The number of the enum to look for.
+     * @return The enum associated with the given number.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static DrawingObstacleAction valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static DrawingObstacleAction forNumber(int value) {
+      switch (value) {
+        case 0: return DRAWING_AVOID;
+        case 1: return DRAWING_IGNORE;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<DrawingObstacleAction>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        DrawingObstacleAction> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<DrawingObstacleAction>() {
+            @java.lang.Override
+            public DrawingObstacleAction findValueByNumber(int number) {
+              return DrawingObstacleAction.forNumber(number);
+            }
+          };
+
+    public static com.google.protobuf.Internal.EnumVerifier
+        internalGetVerifier() {
+      return DrawingObstacleActionVerifier.INSTANCE;
+    }
+
+    private static final class DrawingObstacleActionVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
+            static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new DrawingObstacleActionVerifier();
+            @java.lang.Override
+            public boolean isInRange(int number) {
+              return DrawingObstacleAction.forNumber(number) != null;
+            }
+          };
+
+    private final int value;
+
+    private DrawingObstacleAction(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:sl_link.DrawingObstacleAction)
+  }
+
+  /**
+   * Protobuf enum {@code sl_link.DrawingLayerStatus}
+   */
+  public enum DrawingLayerStatus
+      implements com.google.protobuf.Internal.EnumLite {
+    /**
+     * <code>DRAWING_NONE = 0;</code>
+     */
+    DRAWING_NONE(0),
+    /**
+     * <code>DRAWING_PUBLISHED = 1;</code>
+     */
+    DRAWING_PUBLISHED(1),
+    /**
+     * <code>DRAWING_STALE = 2;</code>
+     */
+    DRAWING_STALE(2),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>DRAWING_NONE = 0;</code>
+     */
+    public static final int DRAWING_NONE_VALUE = 0;
+    /**
+     * <code>DRAWING_PUBLISHED = 1;</code>
+     */
+    public static final int DRAWING_PUBLISHED_VALUE = 1;
+    /**
+     * <code>DRAWING_STALE = 2;</code>
+     */
+    public static final int DRAWING_STALE_VALUE = 2;
+
+
+    @java.lang.Override
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The number of the enum to look for.
+     * @return The enum associated with the given number.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static DrawingLayerStatus valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static DrawingLayerStatus forNumber(int value) {
+      switch (value) {
+        case 0: return DRAWING_NONE;
+        case 1: return DRAWING_PUBLISHED;
+        case 2: return DRAWING_STALE;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<DrawingLayerStatus>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        DrawingLayerStatus> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<DrawingLayerStatus>() {
+            @java.lang.Override
+            public DrawingLayerStatus findValueByNumber(int number) {
+              return DrawingLayerStatus.forNumber(number);
+            }
+          };
+
+    public static com.google.protobuf.Internal.EnumVerifier
+        internalGetVerifier() {
+      return DrawingLayerStatusVerifier.INSTANCE;
+    }
+
+    private static final class DrawingLayerStatusVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
+            static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new DrawingLayerStatusVerifier();
+            @java.lang.Override
+            public boolean isInRange(int number) {
+              return DrawingLayerStatus.forNumber(number) != null;
+            }
+          };
+
+    private final int value;
+
+    private DrawingLayerStatus(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:sl_link.DrawingLayerStatus)
+  }
+
+  /**
+   * Protobuf enum {@code sl_link.DrawingDraftOperation}
+   */
+  public enum DrawingDraftOperation
+      implements com.google.protobuf.Internal.EnumLite {
+    /**
+     * <code>DRAWING_CAPABILITIES = 0;</code>
+     */
+    DRAWING_CAPABILITIES(0),
+    /**
+     * <code>DRAWING_UPLOAD = 1;</code>
+     */
+    DRAWING_UPLOAD(1),
+    /**
+     * <code>DRAWING_VALIDATE = 2;</code>
+     */
+    DRAWING_VALIDATE(2),
+    /**
+     * <code>DRAWING_DISCARD = 3;</code>
+     */
+    DRAWING_DISCARD(3),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>DRAWING_CAPABILITIES = 0;</code>
+     */
+    public static final int DRAWING_CAPABILITIES_VALUE = 0;
+    /**
+     * <code>DRAWING_UPLOAD = 1;</code>
+     */
+    public static final int DRAWING_UPLOAD_VALUE = 1;
+    /**
+     * <code>DRAWING_VALIDATE = 2;</code>
+     */
+    public static final int DRAWING_VALIDATE_VALUE = 2;
+    /**
+     * <code>DRAWING_DISCARD = 3;</code>
+     */
+    public static final int DRAWING_DISCARD_VALUE = 3;
+
+
+    @java.lang.Override
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The number of the enum to look for.
+     * @return The enum associated with the given number.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static DrawingDraftOperation valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static DrawingDraftOperation forNumber(int value) {
+      switch (value) {
+        case 0: return DRAWING_CAPABILITIES;
+        case 1: return DRAWING_UPLOAD;
+        case 2: return DRAWING_VALIDATE;
+        case 3: return DRAWING_DISCARD;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<DrawingDraftOperation>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        DrawingDraftOperation> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<DrawingDraftOperation>() {
+            @java.lang.Override
+            public DrawingDraftOperation findValueByNumber(int number) {
+              return DrawingDraftOperation.forNumber(number);
+            }
+          };
+
+    public static com.google.protobuf.Internal.EnumVerifier
+        internalGetVerifier() {
+      return DrawingDraftOperationVerifier.INSTANCE;
+    }
+
+    private static final class DrawingDraftOperationVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
+            static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new DrawingDraftOperationVerifier();
+            @java.lang.Override
+            public boolean isInRange(int number) {
+              return DrawingDraftOperation.forNumber(number) != null;
+            }
+          };
+
+    private final int value;
+
+    private DrawingDraftOperation(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:sl_link.DrawingDraftOperation)
+  }
+
   public interface WifiConfigOrBuilder extends
       // @@protoc_insertion_point(interface_extends:sl_link.WifiConfig)
       com.google.protobuf.MessageLiteOrBuilder {
@@ -4232,6 +4548,71 @@ public final class SlLink {
      * @return The process.
      */
     sl_link.SlLink.MapProcessSettings getProcess();
+
+    /**
+     * <code>string subtype = 11;</code>
+     * @return The subtype.
+     */
+    java.lang.String getSubtype();
+    /**
+     * <code>string subtype = 11;</code>
+     * @return The bytes for subtype.
+     */
+    com.google.protobuf.ByteString
+        getSubtypeBytes();
+
+    /**
+     * <code>string source = 12;</code>
+     * @return The source.
+     */
+    java.lang.String getSource();
+    /**
+     * <code>string source = 12;</code>
+     * @return The bytes for source.
+     */
+    com.google.protobuf.ByteString
+        getSourceBytes();
+
+    /**
+     * <code>float inflation_m = 13;</code>
+     * @return The inflationM.
+     */
+    float getInflationM();
+
+    /**
+     * <code>string drawing_ref = 14;</code>
+     * @return The drawingRef.
+     */
+    java.lang.String getDrawingRef();
+    /**
+     * <code>string drawing_ref = 14;</code>
+     * @return The bytes for drawingRef.
+     */
+    com.google.protobuf.ByteString
+        getDrawingRefBytes();
+
+    /**
+     * <code>uint32 layer_version = 15;</code>
+     * @return The layerVersion.
+     */
+    int getLayerVersion();
+
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     * @return The enum numeric value on the wire for drawingAction.
+     */
+    int getDrawingActionValue();
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     * @return The drawingAction.
+     */
+    sl_link.SlLink.DrawingObstacleAction getDrawingAction();
+
+    /**
+     * <code>float geometry_error_m = 17;</code>
+     * @return The geometryErrorM.
+     */
+    float getGeometryErrorM();
   }
   /**
    * Protobuf type {@code sl_link.PolygonRegion}
@@ -4246,6 +4627,9 @@ public final class SlLink {
       points_ = emptyProtobufList();
       regionId_ = "";
       globalDirection_ = "";
+      subtype_ = "";
+      source_ = "";
+      drawingRef_ = "";
     }
     private int bitField0_;
     public static final int NAME_FIELD_NUMBER = 1;
@@ -4718,6 +5102,267 @@ public final class SlLink {
      */
     private void clearProcess() {  process_ = null;
       bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static final int SUBTYPE_FIELD_NUMBER = 11;
+    private java.lang.String subtype_;
+    /**
+     * <code>string subtype = 11;</code>
+     * @return The subtype.
+     */
+    @java.lang.Override
+    public java.lang.String getSubtype() {
+      return subtype_;
+    }
+    /**
+     * <code>string subtype = 11;</code>
+     * @return The bytes for subtype.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSubtypeBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(subtype_);
+    }
+    /**
+     * <code>string subtype = 11;</code>
+     * @param value The subtype to set.
+     */
+    private void setSubtype(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      subtype_ = value;
+    }
+    /**
+     * <code>string subtype = 11;</code>
+     */
+    private void clearSubtype() {
+
+      subtype_ = getDefaultInstance().getSubtype();
+    }
+    /**
+     * <code>string subtype = 11;</code>
+     * @param value The bytes for subtype to set.
+     */
+    private void setSubtypeBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      subtype_ = value.toStringUtf8();
+
+    }
+
+    public static final int SOURCE_FIELD_NUMBER = 12;
+    private java.lang.String source_;
+    /**
+     * <code>string source = 12;</code>
+     * @return The source.
+     */
+    @java.lang.Override
+    public java.lang.String getSource() {
+      return source_;
+    }
+    /**
+     * <code>string source = 12;</code>
+     * @return The bytes for source.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSourceBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(source_);
+    }
+    /**
+     * <code>string source = 12;</code>
+     * @param value The source to set.
+     */
+    private void setSource(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      source_ = value;
+    }
+    /**
+     * <code>string source = 12;</code>
+     */
+    private void clearSource() {
+
+      source_ = getDefaultInstance().getSource();
+    }
+    /**
+     * <code>string source = 12;</code>
+     * @param value The bytes for source to set.
+     */
+    private void setSourceBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      source_ = value.toStringUtf8();
+
+    }
+
+    public static final int INFLATION_M_FIELD_NUMBER = 13;
+    private float inflationM_;
+    /**
+     * <code>float inflation_m = 13;</code>
+     * @return The inflationM.
+     */
+    @java.lang.Override
+    public float getInflationM() {
+      return inflationM_;
+    }
+    /**
+     * <code>float inflation_m = 13;</code>
+     * @param value The inflationM to set.
+     */
+    private void setInflationM(float value) {
+
+      inflationM_ = value;
+    }
+    /**
+     * <code>float inflation_m = 13;</code>
+     */
+    private void clearInflationM() {
+
+      inflationM_ = 0F;
+    }
+
+    public static final int DRAWING_REF_FIELD_NUMBER = 14;
+    private java.lang.String drawingRef_;
+    /**
+     * <code>string drawing_ref = 14;</code>
+     * @return The drawingRef.
+     */
+    @java.lang.Override
+    public java.lang.String getDrawingRef() {
+      return drawingRef_;
+    }
+    /**
+     * <code>string drawing_ref = 14;</code>
+     * @return The bytes for drawingRef.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDrawingRefBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(drawingRef_);
+    }
+    /**
+     * <code>string drawing_ref = 14;</code>
+     * @param value The drawingRef to set.
+     */
+    private void setDrawingRef(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      drawingRef_ = value;
+    }
+    /**
+     * <code>string drawing_ref = 14;</code>
+     */
+    private void clearDrawingRef() {
+
+      drawingRef_ = getDefaultInstance().getDrawingRef();
+    }
+    /**
+     * <code>string drawing_ref = 14;</code>
+     * @param value The bytes for drawingRef to set.
+     */
+    private void setDrawingRefBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      drawingRef_ = value.toStringUtf8();
+
+    }
+
+    public static final int LAYER_VERSION_FIELD_NUMBER = 15;
+    private int layerVersion_;
+    /**
+     * <code>uint32 layer_version = 15;</code>
+     * @return The layerVersion.
+     */
+    @java.lang.Override
+    public int getLayerVersion() {
+      return layerVersion_;
+    }
+    /**
+     * <code>uint32 layer_version = 15;</code>
+     * @param value The layerVersion to set.
+     */
+    private void setLayerVersion(int value) {
+
+      layerVersion_ = value;
+    }
+    /**
+     * <code>uint32 layer_version = 15;</code>
+     */
+    private void clearLayerVersion() {
+
+      layerVersion_ = 0;
+    }
+
+    public static final int DRAWING_ACTION_FIELD_NUMBER = 16;
+    private int drawingAction_;
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     * @return The enum numeric value on the wire for drawingAction.
+     */
+    @java.lang.Override
+    public int getDrawingActionValue() {
+      return drawingAction_;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     * @return The drawingAction.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingObstacleAction getDrawingAction() {
+      sl_link.SlLink.DrawingObstacleAction result = sl_link.SlLink.DrawingObstacleAction.forNumber(drawingAction_);
+      return result == null ? sl_link.SlLink.DrawingObstacleAction.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     * @param value The enum numeric value on the wire for drawingAction to set.
+     */
+    private void setDrawingActionValue(int value) {
+        drawingAction_ = value;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     * @param value The drawingAction to set.
+     */
+    private void setDrawingAction(sl_link.SlLink.DrawingObstacleAction value) {
+      drawingAction_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+     */
+    private void clearDrawingAction() {
+
+      drawingAction_ = 0;
+    }
+
+    public static final int GEOMETRY_ERROR_M_FIELD_NUMBER = 17;
+    private float geometryErrorM_;
+    /**
+     * <code>float geometry_error_m = 17;</code>
+     * @return The geometryErrorM.
+     */
+    @java.lang.Override
+    public float getGeometryErrorM() {
+      return geometryErrorM_;
+    }
+    /**
+     * <code>float geometry_error_m = 17;</code>
+     * @param value The geometryErrorM to set.
+     */
+    private void setGeometryErrorM(float value) {
+
+      geometryErrorM_ = value;
+    }
+    /**
+     * <code>float geometry_error_m = 17;</code>
+     */
+    private void clearGeometryErrorM() {
+
+      geometryErrorM_ = 0F;
     }
 
     public static sl_link.SlLink.PolygonRegion parseFrom(
@@ -5320,6 +5965,283 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>string subtype = 11;</code>
+       * @return The subtype.
+       */
+      @java.lang.Override
+      public java.lang.String getSubtype() {
+        return instance.getSubtype();
+      }
+      /**
+       * <code>string subtype = 11;</code>
+       * @return The bytes for subtype.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getSubtypeBytes() {
+        return instance.getSubtypeBytes();
+      }
+      /**
+       * <code>string subtype = 11;</code>
+       * @param value The subtype to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSubtype(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setSubtype(value);
+        return this;
+      }
+      /**
+       * <code>string subtype = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSubtype() {
+        copyOnWrite();
+        instance.clearSubtype();
+        return this;
+      }
+      /**
+       * <code>string subtype = 11;</code>
+       * @param value The bytes for subtype to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSubtypeBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setSubtypeBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string source = 12;</code>
+       * @return The source.
+       */
+      @java.lang.Override
+      public java.lang.String getSource() {
+        return instance.getSource();
+      }
+      /**
+       * <code>string source = 12;</code>
+       * @return The bytes for source.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getSourceBytes() {
+        return instance.getSourceBytes();
+      }
+      /**
+       * <code>string source = 12;</code>
+       * @param value The source to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSource(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setSource(value);
+        return this;
+      }
+      /**
+       * <code>string source = 12;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSource() {
+        copyOnWrite();
+        instance.clearSource();
+        return this;
+      }
+      /**
+       * <code>string source = 12;</code>
+       * @param value The bytes for source to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSourceBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setSourceBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>float inflation_m = 13;</code>
+       * @return The inflationM.
+       */
+      @java.lang.Override
+      public float getInflationM() {
+        return instance.getInflationM();
+      }
+      /**
+       * <code>float inflation_m = 13;</code>
+       * @param value The inflationM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInflationM(float value) {
+        copyOnWrite();
+        instance.setInflationM(value);
+        return this;
+      }
+      /**
+       * <code>float inflation_m = 13;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInflationM() {
+        copyOnWrite();
+        instance.clearInflationM();
+        return this;
+      }
+
+      /**
+       * <code>string drawing_ref = 14;</code>
+       * @return The drawingRef.
+       */
+      @java.lang.Override
+      public java.lang.String getDrawingRef() {
+        return instance.getDrawingRef();
+      }
+      /**
+       * <code>string drawing_ref = 14;</code>
+       * @return The bytes for drawingRef.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDrawingRefBytes() {
+        return instance.getDrawingRefBytes();
+      }
+      /**
+       * <code>string drawing_ref = 14;</code>
+       * @param value The drawingRef to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingRef(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setDrawingRef(value);
+        return this;
+      }
+      /**
+       * <code>string drawing_ref = 14;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingRef() {
+        copyOnWrite();
+        instance.clearDrawingRef();
+        return this;
+      }
+      /**
+       * <code>string drawing_ref = 14;</code>
+       * @param value The bytes for drawingRef to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingRefBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setDrawingRefBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 layer_version = 15;</code>
+       * @return The layerVersion.
+       */
+      @java.lang.Override
+      public int getLayerVersion() {
+        return instance.getLayerVersion();
+      }
+      /**
+       * <code>uint32 layer_version = 15;</code>
+       * @param value The layerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLayerVersion(int value) {
+        copyOnWrite();
+        instance.setLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 layer_version = 15;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLayerVersion() {
+        copyOnWrite();
+        instance.clearLayerVersion();
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+       * @return The enum numeric value on the wire for drawingAction.
+       */
+      @java.lang.Override
+      public int getDrawingActionValue() {
+        return instance.getDrawingActionValue();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+       * @param value The drawingAction to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingActionValue(int value) {
+        copyOnWrite();
+        instance.setDrawingActionValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+       * @return The drawingAction.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingObstacleAction getDrawingAction() {
+        return instance.getDrawingAction();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+       * @param value The enum numeric value on the wire for drawingAction to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingAction(sl_link.SlLink.DrawingObstacleAction value) {
+        copyOnWrite();
+        instance.setDrawingAction(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleAction drawing_action = 16;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingAction() {
+        copyOnWrite();
+        instance.clearDrawingAction();
+        return this;
+      }
+
+      /**
+       * <code>float geometry_error_m = 17;</code>
+       * @return The geometryErrorM.
+       */
+      @java.lang.Override
+      public float getGeometryErrorM() {
+        return instance.getGeometryErrorM();
+      }
+      /**
+       * <code>float geometry_error_m = 17;</code>
+       * @param value The geometryErrorM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGeometryErrorM(float value) {
+        copyOnWrite();
+        instance.setGeometryErrorM(value);
+        return this;
+      }
+      /**
+       * <code>float geometry_error_m = 17;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGeometryErrorM() {
+        copyOnWrite();
+        instance.clearGeometryErrorM();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PolygonRegion)
     }
     @java.lang.Override
@@ -5348,10 +6270,18 @@ public final class SlLink {
               "regionType_",
               "globalDirection_",
               "process_",
+              "subtype_",
+              "source_",
+              "inflationM_",
+              "drawingRef_",
+              "layerVersion_",
+              "drawingAction_",
+              "geometryErrorM_",
             };
             java.lang.String info =
-                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0001\u0000\u0001\u0208\u0002\u001b\u0003\u0208" +
-                "\u0004\u000b\u0005\u0007\u0006\u000b\u0007\u0007\b\f\t\u0208\n\u1009\u0000";
+                "\u0000\u0011\u0000\u0001\u0001\u0011\u0011\u0000\u0001\u0000\u0001\u0208\u0002\u001b" +
+                "\u0003\u0208\u0004\u000b\u0005\u0007\u0006\u000b\u0007\u0007\b\f\t\u0208\n\u1009" +
+                "\u0000\u000b\u0208\f\u0208\r\u0001\u000e\u0208\u000f\u000b\u0010\f\u0011\u0001";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -25727,6 +26657,18 @@ public final class SlLink {
      * <code>repeated .sl_link.RegionRepeatItem region_repeats = 10;</code>
      */
     int getRegionRepeatsCount();
+
+    /**
+     * <code>bool skip_stale_drawing_layer = 11;</code>
+     * @return The skipStaleDrawingLayer.
+     */
+    boolean getSkipStaleDrawingLayer();
+
+    /**
+     * <code>uint32 expected_drawing_layer_version = 12;</code>
+     * @return The expectedDrawingLayerVersion.
+     */
+    int getExpectedDrawingLayerVersion();
   }
   /**
    * Protobuf type {@code sl_link.TaskConfig}
@@ -26315,6 +27257,58 @@ public final class SlLink {
     private void removeRegionRepeats(int index) {
       ensureRegionRepeatsIsMutable();
       regionRepeats_.remove(index);
+    }
+
+    public static final int SKIP_STALE_DRAWING_LAYER_FIELD_NUMBER = 11;
+    private boolean skipStaleDrawingLayer_;
+    /**
+     * <code>bool skip_stale_drawing_layer = 11;</code>
+     * @return The skipStaleDrawingLayer.
+     */
+    @java.lang.Override
+    public boolean getSkipStaleDrawingLayer() {
+      return skipStaleDrawingLayer_;
+    }
+    /**
+     * <code>bool skip_stale_drawing_layer = 11;</code>
+     * @param value The skipStaleDrawingLayer to set.
+     */
+    private void setSkipStaleDrawingLayer(boolean value) {
+
+      skipStaleDrawingLayer_ = value;
+    }
+    /**
+     * <code>bool skip_stale_drawing_layer = 11;</code>
+     */
+    private void clearSkipStaleDrawingLayer() {
+
+      skipStaleDrawingLayer_ = false;
+    }
+
+    public static final int EXPECTED_DRAWING_LAYER_VERSION_FIELD_NUMBER = 12;
+    private int expectedDrawingLayerVersion_;
+    /**
+     * <code>uint32 expected_drawing_layer_version = 12;</code>
+     * @return The expectedDrawingLayerVersion.
+     */
+    @java.lang.Override
+    public int getExpectedDrawingLayerVersion() {
+      return expectedDrawingLayerVersion_;
+    }
+    /**
+     * <code>uint32 expected_drawing_layer_version = 12;</code>
+     * @param value The expectedDrawingLayerVersion to set.
+     */
+    private void setExpectedDrawingLayerVersion(int value) {
+
+      expectedDrawingLayerVersion_ = value;
+    }
+    /**
+     * <code>uint32 expected_drawing_layer_version = 12;</code>
+     */
+    private void clearExpectedDrawingLayerVersion() {
+
+      expectedDrawingLayerVersion_ = 0;
     }
 
     public static sl_link.SlLink.TaskConfig parseFrom(
@@ -27022,6 +28016,62 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>bool skip_stale_drawing_layer = 11;</code>
+       * @return The skipStaleDrawingLayer.
+       */
+      @java.lang.Override
+      public boolean getSkipStaleDrawingLayer() {
+        return instance.getSkipStaleDrawingLayer();
+      }
+      /**
+       * <code>bool skip_stale_drawing_layer = 11;</code>
+       * @param value The skipStaleDrawingLayer to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSkipStaleDrawingLayer(boolean value) {
+        copyOnWrite();
+        instance.setSkipStaleDrawingLayer(value);
+        return this;
+      }
+      /**
+       * <code>bool skip_stale_drawing_layer = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSkipStaleDrawingLayer() {
+        copyOnWrite();
+        instance.clearSkipStaleDrawingLayer();
+        return this;
+      }
+
+      /**
+       * <code>uint32 expected_drawing_layer_version = 12;</code>
+       * @return The expectedDrawingLayerVersion.
+       */
+      @java.lang.Override
+      public int getExpectedDrawingLayerVersion() {
+        return instance.getExpectedDrawingLayerVersion();
+      }
+      /**
+       * <code>uint32 expected_drawing_layer_version = 12;</code>
+       * @param value The expectedDrawingLayerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setExpectedDrawingLayerVersion(int value) {
+        copyOnWrite();
+        instance.setExpectedDrawingLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 expected_drawing_layer_version = 12;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearExpectedDrawingLayerVersion() {
+        copyOnWrite();
+        instance.clearExpectedDrawingLayerVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.TaskConfig)
     }
     @java.lang.Override
@@ -27051,10 +28101,13 @@ public final class SlLink {
               "selectedWorkRegionIds_",
               "regionRepeats_",
               sl_link.SlLink.RegionRepeatItem.class,
+              "skipStaleDrawingLayer_",
+              "expectedDrawingLayerVersion_",
             };
             java.lang.String info =
-                "\u0000\n\u0000\u0000\u0001\n\n\u0000\u0004\u0000\u0001\u0208\u0002\u001b\u0003\u001b" +
-                "\u0004\u0001\u0005\u0001\u0006\u0001\u0007\u0001\b\u0208\t\u021a\n\u001b";
+                "\u0000\f\u0000\u0000\u0001\f\f\u0000\u0004\u0000\u0001\u0208\u0002\u001b\u0003\u001b" +
+                "\u0004\u0001\u0005\u0001\u0006\u0001\u0007\u0001\b\u0208\t\u021a\n\u001b\u000b\u0007" +
+                "\f\u000b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -31458,6 +32511,24 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getMapIdBytes();
+
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     * @return The drawingDraftId.
+     */
+    java.lang.String getDrawingDraftId();
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     * @return The bytes for drawingDraftId.
+     */
+    com.google.protobuf.ByteString
+        getDrawingDraftIdBytes();
+
+    /**
+     * <code>uint32 drawing_draft_version = 10;</code>
+     * @return The drawingDraftVersion.
+     */
+    int getDrawingDraftVersion();
   }
   /**
    * Protobuf type {@code sl_link.PathPointPlanRequest}
@@ -31472,6 +32543,7 @@ public final class SlLink {
       requestId_ = "";
       globalDirection_ = "";
       mapId_ = "";
+      drawingDraftId_ = "";
     }
     private int bitField0_;
     public static final int TASK_ID_FIELD_NUMBER = 1;
@@ -31889,6 +32961,79 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       mapId_ = value.toStringUtf8();
 
+    }
+
+    public static final int DRAWING_DRAFT_ID_FIELD_NUMBER = 9;
+    private java.lang.String drawingDraftId_;
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     * @return The drawingDraftId.
+     */
+    @java.lang.Override
+    public java.lang.String getDrawingDraftId() {
+      return drawingDraftId_;
+    }
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     * @return The bytes for drawingDraftId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDrawingDraftIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(drawingDraftId_);
+    }
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     * @param value The drawingDraftId to set.
+     */
+    private void setDrawingDraftId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      drawingDraftId_ = value;
+    }
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     */
+    private void clearDrawingDraftId() {
+
+      drawingDraftId_ = getDefaultInstance().getDrawingDraftId();
+    }
+    /**
+     * <code>string drawing_draft_id = 9;</code>
+     * @param value The bytes for drawingDraftId to set.
+     */
+    private void setDrawingDraftIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      drawingDraftId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAWING_DRAFT_VERSION_FIELD_NUMBER = 10;
+    private int drawingDraftVersion_;
+    /**
+     * <code>uint32 drawing_draft_version = 10;</code>
+     * @return The drawingDraftVersion.
+     */
+    @java.lang.Override
+    public int getDrawingDraftVersion() {
+      return drawingDraftVersion_;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 10;</code>
+     * @param value The drawingDraftVersion to set.
+     */
+    private void setDrawingDraftVersion(int value) {
+
+      drawingDraftVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 10;</code>
+     */
+    private void clearDrawingDraftVersion() {
+
+      drawingDraftVersion_ = 0;
     }
 
     public static sl_link.SlLink.PathPointPlanRequest parseFrom(
@@ -32423,6 +33568,83 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>string drawing_draft_id = 9;</code>
+       * @return The drawingDraftId.
+       */
+      @java.lang.Override
+      public java.lang.String getDrawingDraftId() {
+        return instance.getDrawingDraftId();
+      }
+      /**
+       * <code>string drawing_draft_id = 9;</code>
+       * @return The bytes for drawingDraftId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDrawingDraftIdBytes() {
+        return instance.getDrawingDraftIdBytes();
+      }
+      /**
+       * <code>string drawing_draft_id = 9;</code>
+       * @param value The drawingDraftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setDrawingDraftId(value);
+        return this;
+      }
+      /**
+       * <code>string drawing_draft_id = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftId() {
+        copyOnWrite();
+        instance.clearDrawingDraftId();
+        return this;
+      }
+      /**
+       * <code>string drawing_draft_id = 9;</code>
+       * @param value The bytes for drawingDraftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setDrawingDraftIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_draft_version = 10;</code>
+       * @return The drawingDraftVersion.
+       */
+      @java.lang.Override
+      public int getDrawingDraftVersion() {
+        return instance.getDrawingDraftVersion();
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 10;</code>
+       * @param value The drawingDraftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftVersion() {
+        copyOnWrite();
+        instance.clearDrawingDraftVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPointPlanRequest)
     }
     @java.lang.Override
@@ -32448,10 +33670,13 @@ public final class SlLink {
               "endPose_",
               "globalDirection_",
               "mapId_",
+              "drawingDraftId_",
+              "drawingDraftVersion_",
             };
             java.lang.String info =
-                "\u0000\b\u0000\u0001\u0001\b\b\u0000\u0000\u0000\u0001\u0208\u0002\u000b\u0003\u0208" +
-                "\u0004\u0007\u0005\u1009\u0000\u0006\u1009\u0001\u0007\u0208\b\u0208";
+                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0000\u0000\u0001\u0208\u0002\u000b\u0003\u0208" +
+                "\u0004\u0007\u0005\u1009\u0000\u0006\u1009\u0001\u0007\u0208\b\u0208\t\u0208\n\u000b" +
+                "";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -32640,6 +33865,18 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getFrameIdBytes();
+
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     * @return The drawingLayerVersion.
+     */
+    int getDrawingLayerVersion();
+
+    /**
+     * <code>uint32 drawing_draft_version = 18;</code>
+     * @return The drawingDraftVersion.
+     */
+    int getDrawingDraftVersion();
   }
   /**
    * Protobuf type {@code sl_link.PathPointPlanResponse}
@@ -33193,6 +34430,58 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       frameId_ = value.toStringUtf8();
 
+    }
+
+    public static final int DRAWING_LAYER_VERSION_FIELD_NUMBER = 17;
+    private int drawingLayerVersion_;
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     * @return The drawingLayerVersion.
+     */
+    @java.lang.Override
+    public int getDrawingLayerVersion() {
+      return drawingLayerVersion_;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     * @param value The drawingLayerVersion to set.
+     */
+    private void setDrawingLayerVersion(int value) {
+
+      drawingLayerVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     */
+    private void clearDrawingLayerVersion() {
+
+      drawingLayerVersion_ = 0;
+    }
+
+    public static final int DRAWING_DRAFT_VERSION_FIELD_NUMBER = 18;
+    private int drawingDraftVersion_;
+    /**
+     * <code>uint32 drawing_draft_version = 18;</code>
+     * @return The drawingDraftVersion.
+     */
+    @java.lang.Override
+    public int getDrawingDraftVersion() {
+      return drawingDraftVersion_;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 18;</code>
+     * @param value The drawingDraftVersion to set.
+     */
+    private void setDrawingDraftVersion(int value) {
+
+      drawingDraftVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 18;</code>
+     */
+    private void clearDrawingDraftVersion() {
+
+      drawingDraftVersion_ = 0;
     }
 
     public static sl_link.SlLink.PathPointPlanResponse parseFrom(
@@ -33863,6 +35152,62 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>uint32 drawing_layer_version = 17;</code>
+       * @return The drawingLayerVersion.
+       */
+      @java.lang.Override
+      public int getDrawingLayerVersion() {
+        return instance.getDrawingLayerVersion();
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 17;</code>
+       * @param value The drawingLayerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingLayerVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 17;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingLayerVersion() {
+        copyOnWrite();
+        instance.clearDrawingLayerVersion();
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_draft_version = 18;</code>
+       * @return The drawingDraftVersion.
+       */
+      @java.lang.Override
+      public int getDrawingDraftVersion() {
+        return instance.getDrawingDraftVersion();
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 18;</code>
+       * @param value The drawingDraftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 18;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftVersion() {
+        copyOnWrite();
+        instance.clearDrawingDraftVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPointPlanResponse)
     }
     @java.lang.Override
@@ -33895,11 +35240,14 @@ public final class SlLink {
               "totalWorkAreaM2_",
               "estimatedTimeS_",
               "frameId_",
+              "drawingLayerVersion_",
+              "drawingDraftVersion_",
             };
             java.lang.String info =
-                "\u0000\u0010\u0000\u0000\u0001\u0010\u0010\u0000\u0000\u0000\u0001\u0208\u0002\u000b" +
+                "\u0000\u0012\u0000\u0000\u0001\u0012\u0012\u0000\u0000\u0000\u0001\u0208\u0002\u000b" +
                 "\u0003\u000b\u0004\u000b\u0005\n\u0006\u0208\u0007\u0208\b\f\t\u0208\n\u0007\u000b" +
-                "\u000b\f\u000b\r\u0001\u000e\u0001\u000f\u0001\u0010\u0208";
+                "\u000b\f\u000b\r\u0001\u000e\u0001\u000f\u0001\u0010\u0208\u0011\u000b\u0012\u000b" +
+                "";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -37295,6 +38643,69 @@ public final class SlLink {
      * @return The cropRegion.
      */
     sl_link.SlLink.PolygonRegion getCropRegion();
+
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     * @return Whether the drawingLayer field is set.
+     */
+    boolean hasDrawingLayer();
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     * @return The drawingLayer.
+     */
+    sl_link.SlLink.DrawingObstacleLayerInfo getDrawingLayer();
+
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The transferId.
+     */
+    java.lang.String getTransferId();
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The bytes for transferId.
+     */
+    com.google.protobuf.ByteString
+        getTransferIdBytes();
+
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     * @return The chunkIndex.
+     */
+    int getChunkIndex();
+
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     * @return The totalChunks.
+     */
+    int getTotalChunks();
+
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     * @return The chunkData.
+     */
+    com.google.protobuf.ByteString getChunkData();
+
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The payloadSha256.
+     */
+    java.lang.String getPayloadSha256();
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The bytes for payloadSha256.
+     */
+    com.google.protobuf.ByteString
+        getPayloadSha256Bytes();
   }
   /**
    * Protobuf type {@code sl_link.MapRegionPointResponse}
@@ -37310,6 +38721,9 @@ public final class SlLink {
       workRegions_ = emptyProtobufList();
       obstacleRegions_ = emptyProtobufList();
       eraseRegions_ = emptyProtobufList();
+      transferId_ = "";
+      chunkData_ = com.google.protobuf.ByteString.EMPTY;
+      payloadSha256_ = "";
     }
     private int bitField0_;
     public static final int RESULT_FIELD_NUMBER = 1;
@@ -37826,6 +39240,250 @@ public final class SlLink {
      */
     private void clearCropRegion() {  cropRegion_ = null;
       bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static final int DRAWING_LAYER_FIELD_NUMBER = 10;
+    private sl_link.SlLink.DrawingObstacleLayerInfo drawingLayer_;
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     */
+    @java.lang.Override
+    public boolean hasDrawingLayer() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingObstacleLayerInfo getDrawingLayer() {
+      return drawingLayer_ == null ? sl_link.SlLink.DrawingObstacleLayerInfo.getDefaultInstance() : drawingLayer_;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     */
+    private void setDrawingLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+      value.getClass();
+  drawingLayer_ = value;
+      bitField0_ |= 0x00000002;
+      }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeDrawingLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+      value.getClass();
+  if (drawingLayer_ != null &&
+          drawingLayer_ != sl_link.SlLink.DrawingObstacleLayerInfo.getDefaultInstance()) {
+        drawingLayer_ =
+          sl_link.SlLink.DrawingObstacleLayerInfo.newBuilder(drawingLayer_).mergeFrom(value).buildPartial();
+      } else {
+        drawingLayer_ = value;
+      }
+      bitField0_ |= 0x00000002;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+     */
+    private void clearDrawingLayer() {  drawingLayer_ = null;
+      bitField0_ = (bitField0_ & ~0x00000002);
+    }
+
+    public static final int TRANSFER_ID_FIELD_NUMBER = 11;
+    private java.lang.String transferId_;
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The transferId.
+     */
+    @java.lang.Override
+    public java.lang.String getTransferId() {
+      return transferId_;
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @return The bytes for transferId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTransferIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(transferId_);
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @param value The transferId to set.
+     */
+    private void setTransferId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      transferId_ = value;
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     */
+    private void clearTransferId() {
+
+      transferId_ = getDefaultInstance().getTransferId();
+    }
+    /**
+     * <pre>
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * </pre>
+     *
+     * <code>string transfer_id = 11;</code>
+     * @param value The bytes for transferId to set.
+     */
+    private void setTransferIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      transferId_ = value.toStringUtf8();
+
+    }
+
+    public static final int CHUNK_INDEX_FIELD_NUMBER = 12;
+    private int chunkIndex_;
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     * @return The chunkIndex.
+     */
+    @java.lang.Override
+    public int getChunkIndex() {
+      return chunkIndex_;
+    }
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     * @param value The chunkIndex to set.
+     */
+    private void setChunkIndex(int value) {
+
+      chunkIndex_ = value;
+    }
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     */
+    private void clearChunkIndex() {
+
+      chunkIndex_ = 0;
+    }
+
+    public static final int TOTAL_CHUNKS_FIELD_NUMBER = 13;
+    private int totalChunks_;
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     * @return The totalChunks.
+     */
+    @java.lang.Override
+    public int getTotalChunks() {
+      return totalChunks_;
+    }
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     * @param value The totalChunks to set.
+     */
+    private void setTotalChunks(int value) {
+
+      totalChunks_ = value;
+    }
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     */
+    private void clearTotalChunks() {
+
+      totalChunks_ = 0;
+    }
+
+    public static final int CHUNK_DATA_FIELD_NUMBER = 14;
+    private com.google.protobuf.ByteString chunkData_;
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     * @return The chunkData.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getChunkData() {
+      return chunkData_;
+    }
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     * @param value The chunkData to set.
+     */
+    private void setChunkData(com.google.protobuf.ByteString value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      chunkData_ = value;
+    }
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     */
+    private void clearChunkData() {
+
+      chunkData_ = getDefaultInstance().getChunkData();
+    }
+
+    public static final int PAYLOAD_SHA256_FIELD_NUMBER = 15;
+    private java.lang.String payloadSha256_;
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The payloadSha256.
+     */
+    @java.lang.Override
+    public java.lang.String getPayloadSha256() {
+      return payloadSha256_;
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @return The bytes for payloadSha256.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPayloadSha256Bytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(payloadSha256_);
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @param value The payloadSha256 to set.
+     */
+    private void setPayloadSha256(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      payloadSha256_ = value;
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     */
+    private void clearPayloadSha256() {
+
+      payloadSha256_ = getDefaultInstance().getPayloadSha256();
+    }
+    /**
+     * <code>string payload_sha256 = 15;</code>
+     * @param value The bytes for payloadSha256 to set.
+     */
+    private void setPayloadSha256Bytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      payloadSha256_ = value.toStringUtf8();
+
     }
 
     public static sl_link.SlLink.MapRegionPointResponse parseFrom(
@@ -38478,6 +40136,260 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+       */
+      @java.lang.Override
+      public boolean hasDrawingLayer() {
+        return instance.hasDrawingLayer();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingObstacleLayerInfo getDrawingLayer() {
+        return instance.getDrawingLayer();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+       */
+      public Builder setDrawingLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+        copyOnWrite();
+        instance.setDrawingLayer(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+       */
+      public Builder setDrawingLayer(
+          sl_link.SlLink.DrawingObstacleLayerInfo.Builder builderForValue) {
+        copyOnWrite();
+        instance.setDrawingLayer(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+       */
+      public Builder mergeDrawingLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+        copyOnWrite();
+        instance.mergeDrawingLayer(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;</code>
+       */
+      public Builder clearDrawingLayer() {  copyOnWrite();
+        instance.clearDrawingLayer();
+        return this;
+      }
+
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @return The transferId.
+       */
+      @java.lang.Override
+      public java.lang.String getTransferId() {
+        return instance.getTransferId();
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @return The bytes for transferId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getTransferIdBytes() {
+        return instance.getTransferIdBytes();
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @param value The transferId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTransferId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setTransferId(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTransferId() {
+        copyOnWrite();
+        instance.clearTransferId();
+        return this;
+      }
+      /**
+       * <pre>
+       * Large annotation snapshots are serialized once, then carried in bounded
+       * envelopes on the same message ID. Publish only after SHA-256 verification.
+       * </pre>
+       *
+       * <code>string transfer_id = 11;</code>
+       * @param value The bytes for transferId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTransferIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setTransferIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 chunk_index = 12;</code>
+       * @return The chunkIndex.
+       */
+      @java.lang.Override
+      public int getChunkIndex() {
+        return instance.getChunkIndex();
+      }
+      /**
+       * <code>uint32 chunk_index = 12;</code>
+       * @param value The chunkIndex to set.
+       * @return This builder for chaining.
+       */
+      public Builder setChunkIndex(int value) {
+        copyOnWrite();
+        instance.setChunkIndex(value);
+        return this;
+      }
+      /**
+       * <code>uint32 chunk_index = 12;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearChunkIndex() {
+        copyOnWrite();
+        instance.clearChunkIndex();
+        return this;
+      }
+
+      /**
+       * <code>uint32 total_chunks = 13;</code>
+       * @return The totalChunks.
+       */
+      @java.lang.Override
+      public int getTotalChunks() {
+        return instance.getTotalChunks();
+      }
+      /**
+       * <code>uint32 total_chunks = 13;</code>
+       * @param value The totalChunks to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTotalChunks(int value) {
+        copyOnWrite();
+        instance.setTotalChunks(value);
+        return this;
+      }
+      /**
+       * <code>uint32 total_chunks = 13;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTotalChunks() {
+        copyOnWrite();
+        instance.clearTotalChunks();
+        return this;
+      }
+
+      /**
+       * <code>bytes chunk_data = 14;</code>
+       * @return The chunkData.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getChunkData() {
+        return instance.getChunkData();
+      }
+      /**
+       * <code>bytes chunk_data = 14;</code>
+       * @param value The chunkData to set.
+       * @return This builder for chaining.
+       */
+      public Builder setChunkData(com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setChunkData(value);
+        return this;
+      }
+      /**
+       * <code>bytes chunk_data = 14;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearChunkData() {
+        copyOnWrite();
+        instance.clearChunkData();
+        return this;
+      }
+
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @return The payloadSha256.
+       */
+      @java.lang.Override
+      public java.lang.String getPayloadSha256() {
+        return instance.getPayloadSha256();
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @return The bytes for payloadSha256.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getPayloadSha256Bytes() {
+        return instance.getPayloadSha256Bytes();
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @param value The payloadSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadSha256(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setPayloadSha256(value);
+        return this;
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPayloadSha256() {
+        copyOnWrite();
+        instance.clearPayloadSha256();
+        return this;
+      }
+      /**
+       * <code>string payload_sha256 = 15;</code>
+       * @param value The bytes for payloadSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadSha256Bytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setPayloadSha256Bytes(value);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapRegionPointResponse)
     }
     @java.lang.Override
@@ -38507,10 +40419,17 @@ public final class SlLink {
               sl_link.SlLink.PolygonRegion.class,
               "cropRegionAvailable_",
               "cropRegion_",
+              "drawingLayer_",
+              "transferId_",
+              "chunkIndex_",
+              "totalChunks_",
+              "chunkData_",
+              "payloadSha256_",
             };
             java.lang.String info =
-                "\u0000\t\u0000\u0001\u0001\t\t\u0000\u0003\u0000\u0001\f\u0002\u0208\u0003\u0208" +
-                "\u0004\u000b\u0005\u001b\u0006\u001b\u0007\u001b\b\u0007\t\u1009\u0000";
+                "\u0000\u000f\u0000\u0001\u0001\u000f\u000f\u0000\u0003\u0000\u0001\f\u0002\u0208" +
+                "\u0003\u0208\u0004\u000b\u0005\u001b\u0006\u001b\u0007\u001b\b\u0007\t\u1009\u0000" +
+                "\n\u1009\u0001\u000b\u0208\f\u000b\r\u000b\u000e\n\u000f\u0208";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -42249,6 +44168,24 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getMapIdBytes();
+
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     * @return The drawingDraftId.
+     */
+    java.lang.String getDrawingDraftId();
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     * @return The bytes for drawingDraftId.
+     */
+    com.google.protobuf.ByteString
+        getDrawingDraftIdBytes();
+
+    /**
+     * <code>uint32 drawing_draft_version = 11;</code>
+     * @return The drawingDraftVersion.
+     */
+    int getDrawingDraftVersion();
   }
   /**
    * Protobuf type {@code sl_link.PathPlanRequest}
@@ -42263,6 +44200,7 @@ public final class SlLink {
       taskId_ = "";
       globalDirection_ = "";
       mapId_ = "";
+      drawingDraftId_ = "";
     }
     private int bitField0_;
     public static final int REQUEST_ID_FIELD_NUMBER = 1;
@@ -42661,6 +44599,79 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       mapId_ = value.toStringUtf8();
 
+    }
+
+    public static final int DRAWING_DRAFT_ID_FIELD_NUMBER = 10;
+    private java.lang.String drawingDraftId_;
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     * @return The drawingDraftId.
+     */
+    @java.lang.Override
+    public java.lang.String getDrawingDraftId() {
+      return drawingDraftId_;
+    }
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     * @return The bytes for drawingDraftId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDrawingDraftIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(drawingDraftId_);
+    }
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     * @param value The drawingDraftId to set.
+     */
+    private void setDrawingDraftId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      drawingDraftId_ = value;
+    }
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     */
+    private void clearDrawingDraftId() {
+
+      drawingDraftId_ = getDefaultInstance().getDrawingDraftId();
+    }
+    /**
+     * <code>string drawing_draft_id = 10;</code>
+     * @param value The bytes for drawingDraftId to set.
+     */
+    private void setDrawingDraftIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      drawingDraftId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAWING_DRAFT_VERSION_FIELD_NUMBER = 11;
+    private int drawingDraftVersion_;
+    /**
+     * <code>uint32 drawing_draft_version = 11;</code>
+     * @return The drawingDraftVersion.
+     */
+    @java.lang.Override
+    public int getDrawingDraftVersion() {
+      return drawingDraftVersion_;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 11;</code>
+     * @param value The drawingDraftVersion to set.
+     */
+    private void setDrawingDraftVersion(int value) {
+
+      drawingDraftVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 11;</code>
+     */
+    private void clearDrawingDraftVersion() {
+
+      drawingDraftVersion_ = 0;
     }
 
     public static sl_link.SlLink.PathPlanRequest parseFrom(
@@ -43174,6 +45185,83 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>string drawing_draft_id = 10;</code>
+       * @return The drawingDraftId.
+       */
+      @java.lang.Override
+      public java.lang.String getDrawingDraftId() {
+        return instance.getDrawingDraftId();
+      }
+      /**
+       * <code>string drawing_draft_id = 10;</code>
+       * @return The bytes for drawingDraftId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDrawingDraftIdBytes() {
+        return instance.getDrawingDraftIdBytes();
+      }
+      /**
+       * <code>string drawing_draft_id = 10;</code>
+       * @param value The drawingDraftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setDrawingDraftId(value);
+        return this;
+      }
+      /**
+       * <code>string drawing_draft_id = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftId() {
+        copyOnWrite();
+        instance.clearDrawingDraftId();
+        return this;
+      }
+      /**
+       * <code>string drawing_draft_id = 10;</code>
+       * @param value The bytes for drawingDraftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setDrawingDraftIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_draft_version = 11;</code>
+       * @return The drawingDraftVersion.
+       */
+      @java.lang.Override
+      public int getDrawingDraftVersion() {
+        return instance.getDrawingDraftVersion();
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 11;</code>
+       * @param value The drawingDraftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftVersion() {
+        copyOnWrite();
+        instance.clearDrawingDraftVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPlanRequest)
     }
     @java.lang.Override
@@ -43200,10 +45288,13 @@ public final class SlLink {
               "endPose_",
               "globalDirection_",
               "mapId_",
+              "drawingDraftId_",
+              "drawingDraftVersion_",
             };
             java.lang.String info =
-                "\u0000\t\u0000\u0001\u0001\t\t\u0000\u0000\u0000\u0001\u0208\u0002\u0208\u0003\u0007" +
-                "\u0004\u0007\u0005\u000b\u0006\u1009\u0000\u0007\u1009\u0001\b\u0208\t\u0208";
+                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
+                "\u0003\u0007\u0004\u0007\u0005\u000b\u0006\u1009\u0000\u0007\u1009\u0001\b\u0208" +
+                "\t\u0208\n\u0208\u000b\u000b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -43460,6 +45551,18 @@ public final class SlLink {
      * @return The rotationAlignmentDeltaDeg.
      */
     float getRotationAlignmentDeltaDeg();
+
+    /**
+     * <code>uint32 drawing_layer_version = 26;</code>
+     * @return The drawingLayerVersion.
+     */
+    int getDrawingLayerVersion();
+
+    /**
+     * <code>uint32 drawing_draft_version = 27;</code>
+     * @return The drawingDraftVersion.
+     */
+    int getDrawingDraftVersion();
   }
   /**
    * Protobuf type {@code sl_link.PathPlanResponse}
@@ -44300,6 +46403,58 @@ public final class SlLink {
     private void clearRotationAlignmentDeltaDeg() {
 
       rotationAlignmentDeltaDeg_ = 0F;
+    }
+
+    public static final int DRAWING_LAYER_VERSION_FIELD_NUMBER = 26;
+    private int drawingLayerVersion_;
+    /**
+     * <code>uint32 drawing_layer_version = 26;</code>
+     * @return The drawingLayerVersion.
+     */
+    @java.lang.Override
+    public int getDrawingLayerVersion() {
+      return drawingLayerVersion_;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 26;</code>
+     * @param value The drawingLayerVersion to set.
+     */
+    private void setDrawingLayerVersion(int value) {
+
+      drawingLayerVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 26;</code>
+     */
+    private void clearDrawingLayerVersion() {
+
+      drawingLayerVersion_ = 0;
+    }
+
+    public static final int DRAWING_DRAFT_VERSION_FIELD_NUMBER = 27;
+    private int drawingDraftVersion_;
+    /**
+     * <code>uint32 drawing_draft_version = 27;</code>
+     * @return The drawingDraftVersion.
+     */
+    @java.lang.Override
+    public int getDrawingDraftVersion() {
+      return drawingDraftVersion_;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 27;</code>
+     * @param value The drawingDraftVersion to set.
+     */
+    private void setDrawingDraftVersion(int value) {
+
+      drawingDraftVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 27;</code>
+     */
+    private void clearDrawingDraftVersion() {
+
+      drawingDraftVersion_ = 0;
     }
 
     public static sl_link.SlLink.PathPlanResponse parseFrom(
@@ -45272,6 +47427,62 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>uint32 drawing_layer_version = 26;</code>
+       * @return The drawingLayerVersion.
+       */
+      @java.lang.Override
+      public int getDrawingLayerVersion() {
+        return instance.getDrawingLayerVersion();
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 26;</code>
+       * @param value The drawingLayerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingLayerVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 26;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingLayerVersion() {
+        copyOnWrite();
+        instance.clearDrawingLayerVersion();
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_draft_version = 27;</code>
+       * @return The drawingDraftVersion.
+       */
+      @java.lang.Override
+      public int getDrawingDraftVersion() {
+        return instance.getDrawingDraftVersion();
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 27;</code>
+       * @param value The drawingDraftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 27;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftVersion() {
+        copyOnWrite();
+        instance.clearDrawingDraftVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPlanResponse)
     }
     @java.lang.Override
@@ -45314,13 +47525,15 @@ public final class SlLink {
               "alignmentYawDeg_",
               "appRotationDeg_",
               "rotationAlignmentDeltaDeg_",
+              "drawingLayerVersion_",
+              "drawingDraftVersion_",
             };
             java.lang.String info =
-                "\u0000\u0019\u0000\u0001\u0001\u0019\u0019\u0000\u0000\u0000\u0001\f\u0002\u0208" +
+                "\u0000\u001b\u0000\u0001\u0001\u001b\u001b\u0000\u0000\u0000\u0001\f\u0002\u0208" +
                 "\u0003\u0208\u0004\u0208\u0005\u000b\u0006\u000b\u0007\u000b\b\u0001\t\u0007\n\u0007" +
                 "\u000b\n\f\u0208\r\u000b\u000e\u000b\u000f\u0001\u0010\u1009\u0000\u0011\u0208\u0012" +
                 "\u0001\u0013\u0001\u0014\u0001\u0015\u0001\u0016\u1009\u0001\u0017\u0001\u0018\u0001" +
-                "\u0019\u0001";
+                "\u0019\u0001\u001a\u000b\u001b\u000b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -51315,6 +53528,23 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getMapRevisionBytes();
+
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     * @return The enum numeric value on the wire for drawingLayerStatus.
+     */
+    int getDrawingLayerStatusValue();
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     * @return The drawingLayerStatus.
+     */
+    sl_link.SlLink.DrawingLayerStatus getDrawingLayerStatus();
+
+    /**
+     * <code>uint32 drawing_layer_version = 14;</code>
+     * @return The drawingLayerVersion.
+     */
+    int getDrawingLayerVersion();
   }
   /**
    * Protobuf type {@code sl_link.MapCatalogItem}
@@ -51768,6 +53998,74 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       mapRevision_ = value.toStringUtf8();
 
+    }
+
+    public static final int DRAWING_LAYER_STATUS_FIELD_NUMBER = 13;
+    private int drawingLayerStatus_;
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     * @return The enum numeric value on the wire for drawingLayerStatus.
+     */
+    @java.lang.Override
+    public int getDrawingLayerStatusValue() {
+      return drawingLayerStatus_;
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     * @return The drawingLayerStatus.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingLayerStatus getDrawingLayerStatus() {
+      sl_link.SlLink.DrawingLayerStatus result = sl_link.SlLink.DrawingLayerStatus.forNumber(drawingLayerStatus_);
+      return result == null ? sl_link.SlLink.DrawingLayerStatus.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     * @param value The enum numeric value on the wire for drawingLayerStatus to set.
+     */
+    private void setDrawingLayerStatusValue(int value) {
+        drawingLayerStatus_ = value;
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     * @param value The drawingLayerStatus to set.
+     */
+    private void setDrawingLayerStatus(sl_link.SlLink.DrawingLayerStatus value) {
+      drawingLayerStatus_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+     */
+    private void clearDrawingLayerStatus() {
+
+      drawingLayerStatus_ = 0;
+    }
+
+    public static final int DRAWING_LAYER_VERSION_FIELD_NUMBER = 14;
+    private int drawingLayerVersion_;
+    /**
+     * <code>uint32 drawing_layer_version = 14;</code>
+     * @return The drawingLayerVersion.
+     */
+    @java.lang.Override
+    public int getDrawingLayerVersion() {
+      return drawingLayerVersion_;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 14;</code>
+     * @param value The drawingLayerVersion to set.
+     */
+    private void setDrawingLayerVersion(int value) {
+
+      drawingLayerVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 14;</code>
+     */
+    private void clearDrawingLayerVersion() {
+
+      drawingLayerVersion_ = 0;
     }
 
     public static sl_link.SlLink.MapCatalogItem parseFrom(
@@ -52329,6 +54627,80 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+       * @return The enum numeric value on the wire for drawingLayerStatus.
+       */
+      @java.lang.Override
+      public int getDrawingLayerStatusValue() {
+        return instance.getDrawingLayerStatusValue();
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+       * @param value The drawingLayerStatus to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingLayerStatusValue(int value) {
+        copyOnWrite();
+        instance.setDrawingLayerStatusValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+       * @return The drawingLayerStatus.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingLayerStatus getDrawingLayerStatus() {
+        return instance.getDrawingLayerStatus();
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+       * @param value The enum numeric value on the wire for drawingLayerStatus to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingLayerStatus(sl_link.SlLink.DrawingLayerStatus value) {
+        copyOnWrite();
+        instance.setDrawingLayerStatus(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus drawing_layer_status = 13;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingLayerStatus() {
+        copyOnWrite();
+        instance.clearDrawingLayerStatus();
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_layer_version = 14;</code>
+       * @return The drawingLayerVersion.
+       */
+      @java.lang.Override
+      public int getDrawingLayerVersion() {
+        return instance.getDrawingLayerVersion();
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 14;</code>
+       * @param value The drawingLayerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingLayerVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 14;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingLayerVersion() {
+        copyOnWrite();
+        instance.clearDrawingLayerVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapCatalogItem)
     }
     @java.lang.Override
@@ -52357,11 +54729,13 @@ public final class SlLink {
               "thumbnailImageB64_",
               "createdAt_",
               "mapRevision_",
+              "drawingLayerStatus_",
+              "drawingLayerVersion_",
             };
             java.lang.String info =
-                "\u0000\f\u0000\u0000\u0001\f\f\u0000\u0000\u0000\u0001\u0208\u0002\u0208\u0003\u0003" +
-                "\u0004\u0003\u0005\u0001\u0006\u0001\u0007\u0208\b\u000b\t\u000b\n\u0208\u000b\u0208" +
-                "\f\u0208";
+                "\u0000\u000e\u0000\u0000\u0001\u000e\u000e\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
+                "\u0003\u0003\u0004\u0003\u0005\u0001\u0006\u0001\u0007\u0208\b\u000b\t\u000b\n\u0208" +
+                "\u000b\u0208\f\u0208\r\f\u000e\u000b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -54283,6 +56657,36 @@ public final class SlLink {
      * @return The rotationDeg.
      */
     float getRotationDeg();
+
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     * @return The drawingDraftId.
+     */
+    java.lang.String getDrawingDraftId();
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     * @return The bytes for drawingDraftId.
+     */
+    com.google.protobuf.ByteString
+        getDrawingDraftIdBytes();
+
+    /**
+     * <code>uint32 drawing_draft_version = 6;</code>
+     * @return The drawingDraftVersion.
+     */
+    int getDrawingDraftVersion();
+
+    /**
+     * <code>string request_id = 7;</code>
+     * @return The requestId.
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 7;</code>
+     * @return The bytes for requestId.
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
   }
   /**
    * Protobuf type {@code sl_link.MapSaveRequest}
@@ -54295,6 +56699,8 @@ public final class SlLink {
     private MapSaveRequest() {
       mapName_ = "";
       mapId_ = "";
+      drawingDraftId_ = "";
+      requestId_ = "";
     }
     public static final int MAP_NAME_FIELD_NUMBER = 1;
     private java.lang.String mapName_;
@@ -54458,6 +56864,126 @@ public final class SlLink {
     private void clearRotationDeg() {
 
       rotationDeg_ = 0F;
+    }
+
+    public static final int DRAWING_DRAFT_ID_FIELD_NUMBER = 5;
+    private java.lang.String drawingDraftId_;
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     * @return The drawingDraftId.
+     */
+    @java.lang.Override
+    public java.lang.String getDrawingDraftId() {
+      return drawingDraftId_;
+    }
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     * @return The bytes for drawingDraftId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDrawingDraftIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(drawingDraftId_);
+    }
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     * @param value The drawingDraftId to set.
+     */
+    private void setDrawingDraftId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      drawingDraftId_ = value;
+    }
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     */
+    private void clearDrawingDraftId() {
+
+      drawingDraftId_ = getDefaultInstance().getDrawingDraftId();
+    }
+    /**
+     * <code>string drawing_draft_id = 5;</code>
+     * @param value The bytes for drawingDraftId to set.
+     */
+    private void setDrawingDraftIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      drawingDraftId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAWING_DRAFT_VERSION_FIELD_NUMBER = 6;
+    private int drawingDraftVersion_;
+    /**
+     * <code>uint32 drawing_draft_version = 6;</code>
+     * @return The drawingDraftVersion.
+     */
+    @java.lang.Override
+    public int getDrawingDraftVersion() {
+      return drawingDraftVersion_;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 6;</code>
+     * @param value The drawingDraftVersion to set.
+     */
+    private void setDrawingDraftVersion(int value) {
+
+      drawingDraftVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_draft_version = 6;</code>
+     */
+    private void clearDrawingDraftVersion() {
+
+      drawingDraftVersion_ = 0;
+    }
+
+    public static final int REQUEST_ID_FIELD_NUMBER = 7;
+    private java.lang.String requestId_;
+    /**
+     * <code>string request_id = 7;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public java.lang.String getRequestId() {
+      return requestId_;
+    }
+    /**
+     * <code>string request_id = 7;</code>
+     * @return The bytes for requestId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(requestId_);
+    }
+    /**
+     * <code>string request_id = 7;</code>
+     * @param value The requestId to set.
+     */
+    private void setRequestId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      requestId_ = value;
+    }
+    /**
+     * <code>string request_id = 7;</code>
+     */
+    private void clearRequestId() {
+
+      requestId_ = getDefaultInstance().getRequestId();
+    }
+    /**
+     * <code>string request_id = 7;</code>
+     * @param value The bytes for requestId to set.
+     */
+    private void setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      requestId_ = value.toStringUtf8();
+
     }
 
     public static sl_link.SlLink.MapSaveRequest parseFrom(
@@ -54729,6 +57255,132 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>string drawing_draft_id = 5;</code>
+       * @return The drawingDraftId.
+       */
+      @java.lang.Override
+      public java.lang.String getDrawingDraftId() {
+        return instance.getDrawingDraftId();
+      }
+      /**
+       * <code>string drawing_draft_id = 5;</code>
+       * @return The bytes for drawingDraftId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDrawingDraftIdBytes() {
+        return instance.getDrawingDraftIdBytes();
+      }
+      /**
+       * <code>string drawing_draft_id = 5;</code>
+       * @param value The drawingDraftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setDrawingDraftId(value);
+        return this;
+      }
+      /**
+       * <code>string drawing_draft_id = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftId() {
+        copyOnWrite();
+        instance.clearDrawingDraftId();
+        return this;
+      }
+      /**
+       * <code>string drawing_draft_id = 5;</code>
+       * @param value The bytes for drawingDraftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setDrawingDraftIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_draft_version = 6;</code>
+       * @return The drawingDraftVersion.
+       */
+      @java.lang.Override
+      public int getDrawingDraftVersion() {
+        return instance.getDrawingDraftVersion();
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 6;</code>
+       * @param value The drawingDraftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_draft_version = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingDraftVersion() {
+        copyOnWrite();
+        instance.clearDrawingDraftVersion();
+        return this;
+      }
+
+      /**
+       * <code>string request_id = 7;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public java.lang.String getRequestId() {
+        return instance.getRequestId();
+      }
+      /**
+       * <code>string request_id = 7;</code>
+       * @return The bytes for requestId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        return instance.getRequestIdBytes();
+      }
+      /**
+       * <code>string request_id = 7;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRequestId(value);
+        return this;
+      }
+      /**
+       * <code>string request_id = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        copyOnWrite();
+        instance.clearRequestId();
+        return this;
+      }
+      /**
+       * <code>string request_id = 7;</code>
+       * @param value The bytes for requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRequestIdBytes(value);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapSaveRequest)
     }
     @java.lang.Override
@@ -54749,10 +57401,13 @@ public final class SlLink {
               "mapId_",
               "hasRotationDeg_",
               "rotationDeg_",
+              "drawingDraftId_",
+              "drawingDraftVersion_",
+              "requestId_",
             };
             java.lang.String info =
-                "\u0000\u0004\u0000\u0000\u0001\u0004\u0004\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
-                "\u0003\u0007\u0004\u0001";
+                "\u0000\u0007\u0000\u0000\u0001\u0007\u0007\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
+                "\u0003\u0007\u0004\u0001\u0005\u0208\u0006\u000b\u0007\u0208";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -54972,6 +57627,24 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getResidualNodesBytes(int index);
+
+    /**
+     * <code>string request_id = 16;</code>
+     * @return The requestId.
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 16;</code>
+     * @return The bytes for requestId.
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     * @return The drawingLayerVersion.
+     */
+    int getDrawingLayerVersion();
   }
   /**
    * Protobuf type {@code sl_link.MapSaveResponse}
@@ -54991,6 +57664,7 @@ public final class SlLink {
       mapRevision_ = "";
       lifecycleState_ = "";
       residualNodes_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
+      requestId_ = "";
     }
     public static final int RESULT_FIELD_NUMBER = 1;
     private int result_;
@@ -55631,6 +58305,79 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       ensureResidualNodesIsMutable();
       residualNodes_.add(value.toStringUtf8());
+    }
+
+    public static final int REQUEST_ID_FIELD_NUMBER = 16;
+    private java.lang.String requestId_;
+    /**
+     * <code>string request_id = 16;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public java.lang.String getRequestId() {
+      return requestId_;
+    }
+    /**
+     * <code>string request_id = 16;</code>
+     * @return The bytes for requestId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(requestId_);
+    }
+    /**
+     * <code>string request_id = 16;</code>
+     * @param value The requestId to set.
+     */
+    private void setRequestId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      requestId_ = value;
+    }
+    /**
+     * <code>string request_id = 16;</code>
+     */
+    private void clearRequestId() {
+
+      requestId_ = getDefaultInstance().getRequestId();
+    }
+    /**
+     * <code>string request_id = 16;</code>
+     * @param value The bytes for requestId to set.
+     */
+    private void setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      requestId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAWING_LAYER_VERSION_FIELD_NUMBER = 17;
+    private int drawingLayerVersion_;
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     * @return The drawingLayerVersion.
+     */
+    @java.lang.Override
+    public int getDrawingLayerVersion() {
+      return drawingLayerVersion_;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     * @param value The drawingLayerVersion to set.
+     */
+    private void setDrawingLayerVersion(int value) {
+
+      drawingLayerVersion_ = value;
+    }
+    /**
+     * <code>uint32 drawing_layer_version = 17;</code>
+     */
+    private void clearDrawingLayerVersion() {
+
+      drawingLayerVersion_ = 0;
     }
 
     public static sl_link.SlLink.MapSaveResponse parseFrom(
@@ -56400,6 +59147,83 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>string request_id = 16;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public java.lang.String getRequestId() {
+        return instance.getRequestId();
+      }
+      /**
+       * <code>string request_id = 16;</code>
+       * @return The bytes for requestId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        return instance.getRequestIdBytes();
+      }
+      /**
+       * <code>string request_id = 16;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRequestId(value);
+        return this;
+      }
+      /**
+       * <code>string request_id = 16;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        copyOnWrite();
+        instance.clearRequestId();
+        return this;
+      }
+      /**
+       * <code>string request_id = 16;</code>
+       * @param value The bytes for requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRequestIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 drawing_layer_version = 17;</code>
+       * @return The drawingLayerVersion.
+       */
+      @java.lang.Override
+      public int getDrawingLayerVersion() {
+        return instance.getDrawingLayerVersion();
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 17;</code>
+       * @param value The drawingLayerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingLayerVersion(int value) {
+        copyOnWrite();
+        instance.setDrawingLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 drawing_layer_version = 17;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingLayerVersion() {
+        copyOnWrite();
+        instance.clearDrawingLayerVersion();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapSaveResponse)
     }
     @java.lang.Override
@@ -56431,11 +59255,13 @@ public final class SlLink {
               "mappingStopped_",
               "localizationStarted_",
               "residualNodes_",
+              "requestId_",
+              "drawingLayerVersion_",
             };
             java.lang.String info =
-                "\u0000\u000f\u0000\u0000\u0001\u000f\u000f\u0000\u0001\u0000\u0001\f\u0002\u0208" +
+                "\u0000\u0011\u0000\u0000\u0001\u0011\u0011\u0000\u0001\u0000\u0001\f\u0002\u0208" +
                 "\u0003\u0208\u0004\u0208\u0005\u0208\u0006\u0208\u0007\u0007\b\u0001\t\u0001\n\u0208" +
-                "\u000b\u0208\f\u0208\r\u0007\u000e\u0007\u000f\u021a";
+                "\u000b\u0208\f\u0208\r\u0007\u000e\u0007\u000f\u021a\u0010\u0208\u0011\u000b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -82225,6 +85051,6826 @@ public final class SlLink {
     private static volatile com.google.protobuf.Parser<ControlCommandResponse> PARSER;
 
     public static com.google.protobuf.Parser<ControlCommandResponse> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingControlPointOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingControlPoint)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>double drawing_x_mm = 1;</code>
+     * @return The drawingXMm.
+     */
+    double getDrawingXMm();
+
+    /**
+     * <code>double drawing_y_mm = 2;</code>
+     * @return The drawingYMm.
+     */
+    double getDrawingYMm();
+
+    /**
+     * <code>double map_x_m = 3;</code>
+     * @return The mapXM.
+     */
+    double getMapXM();
+
+    /**
+     * <code>double map_y_m = 4;</code>
+     * @return The mapYM.
+     */
+    double getMapYM();
+
+    /**
+     * <code>double residual_m = 5;</code>
+     * @return The residualM.
+     */
+    double getResidualM();
+
+    /**
+     * <code>string label = 6;</code>
+     * @return The label.
+     */
+    java.lang.String getLabel();
+    /**
+     * <code>string label = 6;</code>
+     * @return The bytes for label.
+     */
+    com.google.protobuf.ByteString
+        getLabelBytes();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingControlPoint}
+   */
+  public  static final class DrawingControlPoint extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingControlPoint, DrawingControlPoint.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingControlPoint)
+      DrawingControlPointOrBuilder {
+    private DrawingControlPoint() {
+      label_ = "";
+    }
+    public static final int DRAWING_X_MM_FIELD_NUMBER = 1;
+    private double drawingXMm_;
+    /**
+     * <code>double drawing_x_mm = 1;</code>
+     * @return The drawingXMm.
+     */
+    @java.lang.Override
+    public double getDrawingXMm() {
+      return drawingXMm_;
+    }
+    /**
+     * <code>double drawing_x_mm = 1;</code>
+     * @param value The drawingXMm to set.
+     */
+    private void setDrawingXMm(double value) {
+
+      drawingXMm_ = value;
+    }
+    /**
+     * <code>double drawing_x_mm = 1;</code>
+     */
+    private void clearDrawingXMm() {
+
+      drawingXMm_ = 0D;
+    }
+
+    public static final int DRAWING_Y_MM_FIELD_NUMBER = 2;
+    private double drawingYMm_;
+    /**
+     * <code>double drawing_y_mm = 2;</code>
+     * @return The drawingYMm.
+     */
+    @java.lang.Override
+    public double getDrawingYMm() {
+      return drawingYMm_;
+    }
+    /**
+     * <code>double drawing_y_mm = 2;</code>
+     * @param value The drawingYMm to set.
+     */
+    private void setDrawingYMm(double value) {
+
+      drawingYMm_ = value;
+    }
+    /**
+     * <code>double drawing_y_mm = 2;</code>
+     */
+    private void clearDrawingYMm() {
+
+      drawingYMm_ = 0D;
+    }
+
+    public static final int MAP_X_M_FIELD_NUMBER = 3;
+    private double mapXM_;
+    /**
+     * <code>double map_x_m = 3;</code>
+     * @return The mapXM.
+     */
+    @java.lang.Override
+    public double getMapXM() {
+      return mapXM_;
+    }
+    /**
+     * <code>double map_x_m = 3;</code>
+     * @param value The mapXM to set.
+     */
+    private void setMapXM(double value) {
+
+      mapXM_ = value;
+    }
+    /**
+     * <code>double map_x_m = 3;</code>
+     */
+    private void clearMapXM() {
+
+      mapXM_ = 0D;
+    }
+
+    public static final int MAP_Y_M_FIELD_NUMBER = 4;
+    private double mapYM_;
+    /**
+     * <code>double map_y_m = 4;</code>
+     * @return The mapYM.
+     */
+    @java.lang.Override
+    public double getMapYM() {
+      return mapYM_;
+    }
+    /**
+     * <code>double map_y_m = 4;</code>
+     * @param value The mapYM to set.
+     */
+    private void setMapYM(double value) {
+
+      mapYM_ = value;
+    }
+    /**
+     * <code>double map_y_m = 4;</code>
+     */
+    private void clearMapYM() {
+
+      mapYM_ = 0D;
+    }
+
+    public static final int RESIDUAL_M_FIELD_NUMBER = 5;
+    private double residualM_;
+    /**
+     * <code>double residual_m = 5;</code>
+     * @return The residualM.
+     */
+    @java.lang.Override
+    public double getResidualM() {
+      return residualM_;
+    }
+    /**
+     * <code>double residual_m = 5;</code>
+     * @param value The residualM to set.
+     */
+    private void setResidualM(double value) {
+
+      residualM_ = value;
+    }
+    /**
+     * <code>double residual_m = 5;</code>
+     */
+    private void clearResidualM() {
+
+      residualM_ = 0D;
+    }
+
+    public static final int LABEL_FIELD_NUMBER = 6;
+    private java.lang.String label_;
+    /**
+     * <code>string label = 6;</code>
+     * @return The label.
+     */
+    @java.lang.Override
+    public java.lang.String getLabel() {
+      return label_;
+    }
+    /**
+     * <code>string label = 6;</code>
+     * @return The bytes for label.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getLabelBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(label_);
+    }
+    /**
+     * <code>string label = 6;</code>
+     * @param value The label to set.
+     */
+    private void setLabel(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      label_ = value;
+    }
+    /**
+     * <code>string label = 6;</code>
+     */
+    private void clearLabel() {
+
+      label_ = getDefaultInstance().getLabel();
+    }
+    /**
+     * <code>string label = 6;</code>
+     * @param value The bytes for label to set.
+     */
+    private void setLabelBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      label_ = value.toStringUtf8();
+
+    }
+
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingControlPoint parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingControlPoint parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingControlPoint parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingControlPoint prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingControlPoint}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingControlPoint, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingControlPoint)
+        sl_link.SlLink.DrawingControlPointOrBuilder {
+      // Construct using sl_link.SlLink.DrawingControlPoint.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>double drawing_x_mm = 1;</code>
+       * @return The drawingXMm.
+       */
+      @java.lang.Override
+      public double getDrawingXMm() {
+        return instance.getDrawingXMm();
+      }
+      /**
+       * <code>double drawing_x_mm = 1;</code>
+       * @param value The drawingXMm to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingXMm(double value) {
+        copyOnWrite();
+        instance.setDrawingXMm(value);
+        return this;
+      }
+      /**
+       * <code>double drawing_x_mm = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingXMm() {
+        copyOnWrite();
+        instance.clearDrawingXMm();
+        return this;
+      }
+
+      /**
+       * <code>double drawing_y_mm = 2;</code>
+       * @return The drawingYMm.
+       */
+      @java.lang.Override
+      public double getDrawingYMm() {
+        return instance.getDrawingYMm();
+      }
+      /**
+       * <code>double drawing_y_mm = 2;</code>
+       * @param value The drawingYMm to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDrawingYMm(double value) {
+        copyOnWrite();
+        instance.setDrawingYMm(value);
+        return this;
+      }
+      /**
+       * <code>double drawing_y_mm = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDrawingYMm() {
+        copyOnWrite();
+        instance.clearDrawingYMm();
+        return this;
+      }
+
+      /**
+       * <code>double map_x_m = 3;</code>
+       * @return The mapXM.
+       */
+      @java.lang.Override
+      public double getMapXM() {
+        return instance.getMapXM();
+      }
+      /**
+       * <code>double map_x_m = 3;</code>
+       * @param value The mapXM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapXM(double value) {
+        copyOnWrite();
+        instance.setMapXM(value);
+        return this;
+      }
+      /**
+       * <code>double map_x_m = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMapXM() {
+        copyOnWrite();
+        instance.clearMapXM();
+        return this;
+      }
+
+      /**
+       * <code>double map_y_m = 4;</code>
+       * @return The mapYM.
+       */
+      @java.lang.Override
+      public double getMapYM() {
+        return instance.getMapYM();
+      }
+      /**
+       * <code>double map_y_m = 4;</code>
+       * @param value The mapYM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapYM(double value) {
+        copyOnWrite();
+        instance.setMapYM(value);
+        return this;
+      }
+      /**
+       * <code>double map_y_m = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMapYM() {
+        copyOnWrite();
+        instance.clearMapYM();
+        return this;
+      }
+
+      /**
+       * <code>double residual_m = 5;</code>
+       * @return The residualM.
+       */
+      @java.lang.Override
+      public double getResidualM() {
+        return instance.getResidualM();
+      }
+      /**
+       * <code>double residual_m = 5;</code>
+       * @param value The residualM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResidualM(double value) {
+        copyOnWrite();
+        instance.setResidualM(value);
+        return this;
+      }
+      /**
+       * <code>double residual_m = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResidualM() {
+        copyOnWrite();
+        instance.clearResidualM();
+        return this;
+      }
+
+      /**
+       * <code>string label = 6;</code>
+       * @return The label.
+       */
+      @java.lang.Override
+      public java.lang.String getLabel() {
+        return instance.getLabel();
+      }
+      /**
+       * <code>string label = 6;</code>
+       * @return The bytes for label.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getLabelBytes() {
+        return instance.getLabelBytes();
+      }
+      /**
+       * <code>string label = 6;</code>
+       * @param value The label to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLabel(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setLabel(value);
+        return this;
+      }
+      /**
+       * <code>string label = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLabel() {
+        copyOnWrite();
+        instance.clearLabel();
+        return this;
+      }
+      /**
+       * <code>string label = 6;</code>
+       * @param value The bytes for label to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLabelBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setLabelBytes(value);
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingControlPoint)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingControlPoint();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "drawingXMm_",
+              "drawingYMm_",
+              "mapXM_",
+              "mapYM_",
+              "residualM_",
+              "label_",
+            };
+            java.lang.String info =
+                "\u0000\u0006\u0000\u0000\u0001\u0006\u0006\u0000\u0000\u0000\u0001\u0000\u0002\u0000" +
+                "\u0003\u0000\u0004\u0000\u0005\u0000\u0006\u0208";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingControlPoint> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingControlPoint.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingControlPoint>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingControlPoint)
+    private static final sl_link.SlLink.DrawingControlPoint DEFAULT_INSTANCE;
+    static {
+      DrawingControlPoint defaultInstance = new DrawingControlPoint();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingControlPoint.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingControlPoint getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingControlPoint> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingControlPoint> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingTransformOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingTransform)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>double theta_deg = 1;</code>
+     * @return The thetaDeg.
+     */
+    double getThetaDeg();
+
+    /**
+     * <code>double tx_m = 2;</code>
+     * @return The txM.
+     */
+    double getTxM();
+
+    /**
+     * <code>double ty_m = 3;</code>
+     * @return The tyM.
+     */
+    double getTyM();
+
+    /**
+     * <code>double scale = 4;</code>
+     * @return The scale.
+     */
+    double getScale();
+
+    /**
+     * <code>double rms_m = 5;</code>
+     * @return The rmsM.
+     */
+    double getRmsM();
+
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    java.util.List<sl_link.SlLink.DrawingControlPoint>
+        getControlPointsList();
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    sl_link.SlLink.DrawingControlPoint getControlPoints(int index);
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    int getControlPointsCount();
+
+    /**
+     * <code>bool scale_locked = 7;</code>
+     * @return The scaleLocked.
+     */
+    boolean getScaleLocked();
+
+    /**
+     * <code>double measured_scale = 8;</code>
+     * @return The measuredScale.
+     */
+    double getMeasuredScale();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingTransform}
+   */
+  public  static final class DrawingTransform extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingTransform, DrawingTransform.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingTransform)
+      DrawingTransformOrBuilder {
+    private DrawingTransform() {
+      controlPoints_ = emptyProtobufList();
+    }
+    public static final int THETA_DEG_FIELD_NUMBER = 1;
+    private double thetaDeg_;
+    /**
+     * <code>double theta_deg = 1;</code>
+     * @return The thetaDeg.
+     */
+    @java.lang.Override
+    public double getThetaDeg() {
+      return thetaDeg_;
+    }
+    /**
+     * <code>double theta_deg = 1;</code>
+     * @param value The thetaDeg to set.
+     */
+    private void setThetaDeg(double value) {
+
+      thetaDeg_ = value;
+    }
+    /**
+     * <code>double theta_deg = 1;</code>
+     */
+    private void clearThetaDeg() {
+
+      thetaDeg_ = 0D;
+    }
+
+    public static final int TX_M_FIELD_NUMBER = 2;
+    private double txM_;
+    /**
+     * <code>double tx_m = 2;</code>
+     * @return The txM.
+     */
+    @java.lang.Override
+    public double getTxM() {
+      return txM_;
+    }
+    /**
+     * <code>double tx_m = 2;</code>
+     * @param value The txM to set.
+     */
+    private void setTxM(double value) {
+
+      txM_ = value;
+    }
+    /**
+     * <code>double tx_m = 2;</code>
+     */
+    private void clearTxM() {
+
+      txM_ = 0D;
+    }
+
+    public static final int TY_M_FIELD_NUMBER = 3;
+    private double tyM_;
+    /**
+     * <code>double ty_m = 3;</code>
+     * @return The tyM.
+     */
+    @java.lang.Override
+    public double getTyM() {
+      return tyM_;
+    }
+    /**
+     * <code>double ty_m = 3;</code>
+     * @param value The tyM to set.
+     */
+    private void setTyM(double value) {
+
+      tyM_ = value;
+    }
+    /**
+     * <code>double ty_m = 3;</code>
+     */
+    private void clearTyM() {
+
+      tyM_ = 0D;
+    }
+
+    public static final int SCALE_FIELD_NUMBER = 4;
+    private double scale_;
+    /**
+     * <code>double scale = 4;</code>
+     * @return The scale.
+     */
+    @java.lang.Override
+    public double getScale() {
+      return scale_;
+    }
+    /**
+     * <code>double scale = 4;</code>
+     * @param value The scale to set.
+     */
+    private void setScale(double value) {
+
+      scale_ = value;
+    }
+    /**
+     * <code>double scale = 4;</code>
+     */
+    private void clearScale() {
+
+      scale_ = 0D;
+    }
+
+    public static final int RMS_M_FIELD_NUMBER = 5;
+    private double rmsM_;
+    /**
+     * <code>double rms_m = 5;</code>
+     * @return The rmsM.
+     */
+    @java.lang.Override
+    public double getRmsM() {
+      return rmsM_;
+    }
+    /**
+     * <code>double rms_m = 5;</code>
+     * @param value The rmsM to set.
+     */
+    private void setRmsM(double value) {
+
+      rmsM_ = value;
+    }
+    /**
+     * <code>double rms_m = 5;</code>
+     */
+    private void clearRmsM() {
+
+      rmsM_ = 0D;
+    }
+
+    public static final int CONTROL_POINTS_FIELD_NUMBER = 6;
+    private com.google.protobuf.Internal.ProtobufList<sl_link.SlLink.DrawingControlPoint> controlPoints_;
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    @java.lang.Override
+    public java.util.List<sl_link.SlLink.DrawingControlPoint> getControlPointsList() {
+      return controlPoints_;
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.DrawingControlPointOrBuilder>
+        getControlPointsOrBuilderList() {
+      return controlPoints_;
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    @java.lang.Override
+    public int getControlPointsCount() {
+      return controlPoints_.size();
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingControlPoint getControlPoints(int index) {
+      return controlPoints_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    public sl_link.SlLink.DrawingControlPointOrBuilder getControlPointsOrBuilder(
+        int index) {
+      return controlPoints_.get(index);
+    }
+    private void ensureControlPointsIsMutable() {
+      com.google.protobuf.Internal.ProtobufList<sl_link.SlLink.DrawingControlPoint> tmp = controlPoints_;
+      if (!tmp.isModifiable()) {
+        controlPoints_ =
+            com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
+       }
+    }
+
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    private void setControlPoints(
+        int index, sl_link.SlLink.DrawingControlPoint value) {
+      value.getClass();
+  ensureControlPointsIsMutable();
+      controlPoints_.set(index, value);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    private void addControlPoints(sl_link.SlLink.DrawingControlPoint value) {
+      value.getClass();
+  ensureControlPointsIsMutable();
+      controlPoints_.add(value);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    private void addControlPoints(
+        int index, sl_link.SlLink.DrawingControlPoint value) {
+      value.getClass();
+  ensureControlPointsIsMutable();
+      controlPoints_.add(index, value);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    private void addAllControlPoints(
+        java.lang.Iterable<? extends sl_link.SlLink.DrawingControlPoint> values) {
+      ensureControlPointsIsMutable();
+      com.google.protobuf.AbstractMessageLite.addAll(
+          values, controlPoints_);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    private void clearControlPoints() {
+      controlPoints_ = emptyProtobufList();
+    }
+    /**
+     * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+     */
+    private void removeControlPoints(int index) {
+      ensureControlPointsIsMutable();
+      controlPoints_.remove(index);
+    }
+
+    public static final int SCALE_LOCKED_FIELD_NUMBER = 7;
+    private boolean scaleLocked_;
+    /**
+     * <code>bool scale_locked = 7;</code>
+     * @return The scaleLocked.
+     */
+    @java.lang.Override
+    public boolean getScaleLocked() {
+      return scaleLocked_;
+    }
+    /**
+     * <code>bool scale_locked = 7;</code>
+     * @param value The scaleLocked to set.
+     */
+    private void setScaleLocked(boolean value) {
+
+      scaleLocked_ = value;
+    }
+    /**
+     * <code>bool scale_locked = 7;</code>
+     */
+    private void clearScaleLocked() {
+
+      scaleLocked_ = false;
+    }
+
+    public static final int MEASURED_SCALE_FIELD_NUMBER = 8;
+    private double measuredScale_;
+    /**
+     * <code>double measured_scale = 8;</code>
+     * @return The measuredScale.
+     */
+    @java.lang.Override
+    public double getMeasuredScale() {
+      return measuredScale_;
+    }
+    /**
+     * <code>double measured_scale = 8;</code>
+     * @param value The measuredScale to set.
+     */
+    private void setMeasuredScale(double value) {
+
+      measuredScale_ = value;
+    }
+    /**
+     * <code>double measured_scale = 8;</code>
+     */
+    private void clearMeasuredScale() {
+
+      measuredScale_ = 0D;
+    }
+
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingTransform parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingTransform parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingTransform parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingTransform prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingTransform}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingTransform, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingTransform)
+        sl_link.SlLink.DrawingTransformOrBuilder {
+      // Construct using sl_link.SlLink.DrawingTransform.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>double theta_deg = 1;</code>
+       * @return The thetaDeg.
+       */
+      @java.lang.Override
+      public double getThetaDeg() {
+        return instance.getThetaDeg();
+      }
+      /**
+       * <code>double theta_deg = 1;</code>
+       * @param value The thetaDeg to set.
+       * @return This builder for chaining.
+       */
+      public Builder setThetaDeg(double value) {
+        copyOnWrite();
+        instance.setThetaDeg(value);
+        return this;
+      }
+      /**
+       * <code>double theta_deg = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearThetaDeg() {
+        copyOnWrite();
+        instance.clearThetaDeg();
+        return this;
+      }
+
+      /**
+       * <code>double tx_m = 2;</code>
+       * @return The txM.
+       */
+      @java.lang.Override
+      public double getTxM() {
+        return instance.getTxM();
+      }
+      /**
+       * <code>double tx_m = 2;</code>
+       * @param value The txM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTxM(double value) {
+        copyOnWrite();
+        instance.setTxM(value);
+        return this;
+      }
+      /**
+       * <code>double tx_m = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTxM() {
+        copyOnWrite();
+        instance.clearTxM();
+        return this;
+      }
+
+      /**
+       * <code>double ty_m = 3;</code>
+       * @return The tyM.
+       */
+      @java.lang.Override
+      public double getTyM() {
+        return instance.getTyM();
+      }
+      /**
+       * <code>double ty_m = 3;</code>
+       * @param value The tyM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTyM(double value) {
+        copyOnWrite();
+        instance.setTyM(value);
+        return this;
+      }
+      /**
+       * <code>double ty_m = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTyM() {
+        copyOnWrite();
+        instance.clearTyM();
+        return this;
+      }
+
+      /**
+       * <code>double scale = 4;</code>
+       * @return The scale.
+       */
+      @java.lang.Override
+      public double getScale() {
+        return instance.getScale();
+      }
+      /**
+       * <code>double scale = 4;</code>
+       * @param value The scale to set.
+       * @return This builder for chaining.
+       */
+      public Builder setScale(double value) {
+        copyOnWrite();
+        instance.setScale(value);
+        return this;
+      }
+      /**
+       * <code>double scale = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearScale() {
+        copyOnWrite();
+        instance.clearScale();
+        return this;
+      }
+
+      /**
+       * <code>double rms_m = 5;</code>
+       * @return The rmsM.
+       */
+      @java.lang.Override
+      public double getRmsM() {
+        return instance.getRmsM();
+      }
+      /**
+       * <code>double rms_m = 5;</code>
+       * @param value The rmsM to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRmsM(double value) {
+        copyOnWrite();
+        instance.setRmsM(value);
+        return this;
+      }
+      /**
+       * <code>double rms_m = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRmsM() {
+        copyOnWrite();
+        instance.clearRmsM();
+        return this;
+      }
+
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      @java.lang.Override
+      public java.util.List<sl_link.SlLink.DrawingControlPoint> getControlPointsList() {
+        return java.util.Collections.unmodifiableList(
+            instance.getControlPointsList());
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      @java.lang.Override
+      public int getControlPointsCount() {
+        return instance.getControlPointsCount();
+      }/**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingControlPoint getControlPoints(int index) {
+        return instance.getControlPoints(index);
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder setControlPoints(
+          int index, sl_link.SlLink.DrawingControlPoint value) {
+        copyOnWrite();
+        instance.setControlPoints(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder setControlPoints(
+          int index, sl_link.SlLink.DrawingControlPoint.Builder builderForValue) {
+        copyOnWrite();
+        instance.setControlPoints(index,
+            builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder addControlPoints(sl_link.SlLink.DrawingControlPoint value) {
+        copyOnWrite();
+        instance.addControlPoints(value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder addControlPoints(
+          int index, sl_link.SlLink.DrawingControlPoint value) {
+        copyOnWrite();
+        instance.addControlPoints(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder addControlPoints(
+          sl_link.SlLink.DrawingControlPoint.Builder builderForValue) {
+        copyOnWrite();
+        instance.addControlPoints(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder addControlPoints(
+          int index, sl_link.SlLink.DrawingControlPoint.Builder builderForValue) {
+        copyOnWrite();
+        instance.addControlPoints(index,
+            builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder addAllControlPoints(
+          java.lang.Iterable<? extends sl_link.SlLink.DrawingControlPoint> values) {
+        copyOnWrite();
+        instance.addAllControlPoints(values);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder clearControlPoints() {
+        copyOnWrite();
+        instance.clearControlPoints();
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingControlPoint control_points = 6;</code>
+       */
+      public Builder removeControlPoints(int index) {
+        copyOnWrite();
+        instance.removeControlPoints(index);
+        return this;
+      }
+
+      /**
+       * <code>bool scale_locked = 7;</code>
+       * @return The scaleLocked.
+       */
+      @java.lang.Override
+      public boolean getScaleLocked() {
+        return instance.getScaleLocked();
+      }
+      /**
+       * <code>bool scale_locked = 7;</code>
+       * @param value The scaleLocked to set.
+       * @return This builder for chaining.
+       */
+      public Builder setScaleLocked(boolean value) {
+        copyOnWrite();
+        instance.setScaleLocked(value);
+        return this;
+      }
+      /**
+       * <code>bool scale_locked = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearScaleLocked() {
+        copyOnWrite();
+        instance.clearScaleLocked();
+        return this;
+      }
+
+      /**
+       * <code>double measured_scale = 8;</code>
+       * @return The measuredScale.
+       */
+      @java.lang.Override
+      public double getMeasuredScale() {
+        return instance.getMeasuredScale();
+      }
+      /**
+       * <code>double measured_scale = 8;</code>
+       * @param value The measuredScale to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMeasuredScale(double value) {
+        copyOnWrite();
+        instance.setMeasuredScale(value);
+        return this;
+      }
+      /**
+       * <code>double measured_scale = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMeasuredScale() {
+        copyOnWrite();
+        instance.clearMeasuredScale();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingTransform)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingTransform();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "thetaDeg_",
+              "txM_",
+              "tyM_",
+              "scale_",
+              "rmsM_",
+              "controlPoints_",
+              sl_link.SlLink.DrawingControlPoint.class,
+              "scaleLocked_",
+              "measuredScale_",
+            };
+            java.lang.String info =
+                "\u0000\b\u0000\u0000\u0001\b\b\u0000\u0001\u0000\u0001\u0000\u0002\u0000\u0003\u0000" +
+                "\u0004\u0000\u0005\u0000\u0006\u001b\u0007\u0007\b\u0000";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingTransform> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingTransform.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingTransform>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingTransform)
+    private static final sl_link.SlLink.DrawingTransform DEFAULT_INSTANCE;
+    static {
+      DrawingTransform defaultInstance = new DrawingTransform();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingTransform.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingTransform getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingTransform> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingTransform> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingMapBindingOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingMapBinding)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>uint32 width = 1;</code>
+     * @return The width.
+     */
+    int getWidth();
+
+    /**
+     * <code>uint32 height = 2;</code>
+     * @return The height.
+     */
+    int getHeight();
+
+    /**
+     * <code>double resolution = 3;</code>
+     * @return The resolution.
+     */
+    double getResolution();
+
+    /**
+     * <code>double origin_x = 4;</code>
+     * @return The originX.
+     */
+    double getOriginX();
+
+    /**
+     * <code>double origin_y = 5;</code>
+     * @return The originY.
+     */
+    double getOriginY();
+
+    /**
+     * <code>double heading_deg = 6;</code>
+     * @return The headingDeg.
+     */
+    double getHeadingDeg();
+
+    /**
+     * <code>string frame_id = 7;</code>
+     * @return The frameId.
+     */
+    java.lang.String getFrameId();
+    /**
+     * <code>string frame_id = 7;</code>
+     * @return The bytes for frameId.
+     */
+    com.google.protobuf.ByteString
+        getFrameIdBytes();
+
+    /**
+     * <code>string map_revision = 8;</code>
+     * @return The mapRevision.
+     */
+    java.lang.String getMapRevision();
+    /**
+     * <code>string map_revision = 8;</code>
+     * @return The bytes for mapRevision.
+     */
+    com.google.protobuf.ByteString
+        getMapRevisionBytes();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingMapBinding}
+   */
+  public  static final class DrawingMapBinding extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingMapBinding, DrawingMapBinding.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingMapBinding)
+      DrawingMapBindingOrBuilder {
+    private DrawingMapBinding() {
+      frameId_ = "";
+      mapRevision_ = "";
+    }
+    public static final int WIDTH_FIELD_NUMBER = 1;
+    private int width_;
+    /**
+     * <code>uint32 width = 1;</code>
+     * @return The width.
+     */
+    @java.lang.Override
+    public int getWidth() {
+      return width_;
+    }
+    /**
+     * <code>uint32 width = 1;</code>
+     * @param value The width to set.
+     */
+    private void setWidth(int value) {
+
+      width_ = value;
+    }
+    /**
+     * <code>uint32 width = 1;</code>
+     */
+    private void clearWidth() {
+
+      width_ = 0;
+    }
+
+    public static final int HEIGHT_FIELD_NUMBER = 2;
+    private int height_;
+    /**
+     * <code>uint32 height = 2;</code>
+     * @return The height.
+     */
+    @java.lang.Override
+    public int getHeight() {
+      return height_;
+    }
+    /**
+     * <code>uint32 height = 2;</code>
+     * @param value The height to set.
+     */
+    private void setHeight(int value) {
+
+      height_ = value;
+    }
+    /**
+     * <code>uint32 height = 2;</code>
+     */
+    private void clearHeight() {
+
+      height_ = 0;
+    }
+
+    public static final int RESOLUTION_FIELD_NUMBER = 3;
+    private double resolution_;
+    /**
+     * <code>double resolution = 3;</code>
+     * @return The resolution.
+     */
+    @java.lang.Override
+    public double getResolution() {
+      return resolution_;
+    }
+    /**
+     * <code>double resolution = 3;</code>
+     * @param value The resolution to set.
+     */
+    private void setResolution(double value) {
+
+      resolution_ = value;
+    }
+    /**
+     * <code>double resolution = 3;</code>
+     */
+    private void clearResolution() {
+
+      resolution_ = 0D;
+    }
+
+    public static final int ORIGIN_X_FIELD_NUMBER = 4;
+    private double originX_;
+    /**
+     * <code>double origin_x = 4;</code>
+     * @return The originX.
+     */
+    @java.lang.Override
+    public double getOriginX() {
+      return originX_;
+    }
+    /**
+     * <code>double origin_x = 4;</code>
+     * @param value The originX to set.
+     */
+    private void setOriginX(double value) {
+
+      originX_ = value;
+    }
+    /**
+     * <code>double origin_x = 4;</code>
+     */
+    private void clearOriginX() {
+
+      originX_ = 0D;
+    }
+
+    public static final int ORIGIN_Y_FIELD_NUMBER = 5;
+    private double originY_;
+    /**
+     * <code>double origin_y = 5;</code>
+     * @return The originY.
+     */
+    @java.lang.Override
+    public double getOriginY() {
+      return originY_;
+    }
+    /**
+     * <code>double origin_y = 5;</code>
+     * @param value The originY to set.
+     */
+    private void setOriginY(double value) {
+
+      originY_ = value;
+    }
+    /**
+     * <code>double origin_y = 5;</code>
+     */
+    private void clearOriginY() {
+
+      originY_ = 0D;
+    }
+
+    public static final int HEADING_DEG_FIELD_NUMBER = 6;
+    private double headingDeg_;
+    /**
+     * <code>double heading_deg = 6;</code>
+     * @return The headingDeg.
+     */
+    @java.lang.Override
+    public double getHeadingDeg() {
+      return headingDeg_;
+    }
+    /**
+     * <code>double heading_deg = 6;</code>
+     * @param value The headingDeg to set.
+     */
+    private void setHeadingDeg(double value) {
+
+      headingDeg_ = value;
+    }
+    /**
+     * <code>double heading_deg = 6;</code>
+     */
+    private void clearHeadingDeg() {
+
+      headingDeg_ = 0D;
+    }
+
+    public static final int FRAME_ID_FIELD_NUMBER = 7;
+    private java.lang.String frameId_;
+    /**
+     * <code>string frame_id = 7;</code>
+     * @return The frameId.
+     */
+    @java.lang.Override
+    public java.lang.String getFrameId() {
+      return frameId_;
+    }
+    /**
+     * <code>string frame_id = 7;</code>
+     * @return The bytes for frameId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getFrameIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(frameId_);
+    }
+    /**
+     * <code>string frame_id = 7;</code>
+     * @param value The frameId to set.
+     */
+    private void setFrameId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      frameId_ = value;
+    }
+    /**
+     * <code>string frame_id = 7;</code>
+     */
+    private void clearFrameId() {
+
+      frameId_ = getDefaultInstance().getFrameId();
+    }
+    /**
+     * <code>string frame_id = 7;</code>
+     * @param value The bytes for frameId to set.
+     */
+    private void setFrameIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      frameId_ = value.toStringUtf8();
+
+    }
+
+    public static final int MAP_REVISION_FIELD_NUMBER = 8;
+    private java.lang.String mapRevision_;
+    /**
+     * <code>string map_revision = 8;</code>
+     * @return The mapRevision.
+     */
+    @java.lang.Override
+    public java.lang.String getMapRevision() {
+      return mapRevision_;
+    }
+    /**
+     * <code>string map_revision = 8;</code>
+     * @return The bytes for mapRevision.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMapRevisionBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(mapRevision_);
+    }
+    /**
+     * <code>string map_revision = 8;</code>
+     * @param value The mapRevision to set.
+     */
+    private void setMapRevision(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      mapRevision_ = value;
+    }
+    /**
+     * <code>string map_revision = 8;</code>
+     */
+    private void clearMapRevision() {
+
+      mapRevision_ = getDefaultInstance().getMapRevision();
+    }
+    /**
+     * <code>string map_revision = 8;</code>
+     * @param value The bytes for mapRevision to set.
+     */
+    private void setMapRevisionBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      mapRevision_ = value.toStringUtf8();
+
+    }
+
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingMapBinding parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingMapBinding parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingMapBinding parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingMapBinding prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingMapBinding}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingMapBinding, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingMapBinding)
+        sl_link.SlLink.DrawingMapBindingOrBuilder {
+      // Construct using sl_link.SlLink.DrawingMapBinding.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>uint32 width = 1;</code>
+       * @return The width.
+       */
+      @java.lang.Override
+      public int getWidth() {
+        return instance.getWidth();
+      }
+      /**
+       * <code>uint32 width = 1;</code>
+       * @param value The width to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWidth(int value) {
+        copyOnWrite();
+        instance.setWidth(value);
+        return this;
+      }
+      /**
+       * <code>uint32 width = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWidth() {
+        copyOnWrite();
+        instance.clearWidth();
+        return this;
+      }
+
+      /**
+       * <code>uint32 height = 2;</code>
+       * @return The height.
+       */
+      @java.lang.Override
+      public int getHeight() {
+        return instance.getHeight();
+      }
+      /**
+       * <code>uint32 height = 2;</code>
+       * @param value The height to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeight(int value) {
+        copyOnWrite();
+        instance.setHeight(value);
+        return this;
+      }
+      /**
+       * <code>uint32 height = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeight() {
+        copyOnWrite();
+        instance.clearHeight();
+        return this;
+      }
+
+      /**
+       * <code>double resolution = 3;</code>
+       * @return The resolution.
+       */
+      @java.lang.Override
+      public double getResolution() {
+        return instance.getResolution();
+      }
+      /**
+       * <code>double resolution = 3;</code>
+       * @param value The resolution to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResolution(double value) {
+        copyOnWrite();
+        instance.setResolution(value);
+        return this;
+      }
+      /**
+       * <code>double resolution = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResolution() {
+        copyOnWrite();
+        instance.clearResolution();
+        return this;
+      }
+
+      /**
+       * <code>double origin_x = 4;</code>
+       * @return The originX.
+       */
+      @java.lang.Override
+      public double getOriginX() {
+        return instance.getOriginX();
+      }
+      /**
+       * <code>double origin_x = 4;</code>
+       * @param value The originX to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOriginX(double value) {
+        copyOnWrite();
+        instance.setOriginX(value);
+        return this;
+      }
+      /**
+       * <code>double origin_x = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOriginX() {
+        copyOnWrite();
+        instance.clearOriginX();
+        return this;
+      }
+
+      /**
+       * <code>double origin_y = 5;</code>
+       * @return The originY.
+       */
+      @java.lang.Override
+      public double getOriginY() {
+        return instance.getOriginY();
+      }
+      /**
+       * <code>double origin_y = 5;</code>
+       * @param value The originY to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOriginY(double value) {
+        copyOnWrite();
+        instance.setOriginY(value);
+        return this;
+      }
+      /**
+       * <code>double origin_y = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOriginY() {
+        copyOnWrite();
+        instance.clearOriginY();
+        return this;
+      }
+
+      /**
+       * <code>double heading_deg = 6;</code>
+       * @return The headingDeg.
+       */
+      @java.lang.Override
+      public double getHeadingDeg() {
+        return instance.getHeadingDeg();
+      }
+      /**
+       * <code>double heading_deg = 6;</code>
+       * @param value The headingDeg to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadingDeg(double value) {
+        copyOnWrite();
+        instance.setHeadingDeg(value);
+        return this;
+      }
+      /**
+       * <code>double heading_deg = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadingDeg() {
+        copyOnWrite();
+        instance.clearHeadingDeg();
+        return this;
+      }
+
+      /**
+       * <code>string frame_id = 7;</code>
+       * @return The frameId.
+       */
+      @java.lang.Override
+      public java.lang.String getFrameId() {
+        return instance.getFrameId();
+      }
+      /**
+       * <code>string frame_id = 7;</code>
+       * @return The bytes for frameId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getFrameIdBytes() {
+        return instance.getFrameIdBytes();
+      }
+      /**
+       * <code>string frame_id = 7;</code>
+       * @param value The frameId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFrameId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setFrameId(value);
+        return this;
+      }
+      /**
+       * <code>string frame_id = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFrameId() {
+        copyOnWrite();
+        instance.clearFrameId();
+        return this;
+      }
+      /**
+       * <code>string frame_id = 7;</code>
+       * @param value The bytes for frameId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFrameIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setFrameIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string map_revision = 8;</code>
+       * @return The mapRevision.
+       */
+      @java.lang.Override
+      public java.lang.String getMapRevision() {
+        return instance.getMapRevision();
+      }
+      /**
+       * <code>string map_revision = 8;</code>
+       * @return The bytes for mapRevision.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMapRevisionBytes() {
+        return instance.getMapRevisionBytes();
+      }
+      /**
+       * <code>string map_revision = 8;</code>
+       * @param value The mapRevision to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapRevision(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMapRevision(value);
+        return this;
+      }
+      /**
+       * <code>string map_revision = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMapRevision() {
+        copyOnWrite();
+        instance.clearMapRevision();
+        return this;
+      }
+      /**
+       * <code>string map_revision = 8;</code>
+       * @param value The bytes for mapRevision to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapRevisionBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMapRevisionBytes(value);
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingMapBinding)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingMapBinding();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "width_",
+              "height_",
+              "resolution_",
+              "originX_",
+              "originY_",
+              "headingDeg_",
+              "frameId_",
+              "mapRevision_",
+            };
+            java.lang.String info =
+                "\u0000\b\u0000\u0000\u0001\b\b\u0000\u0000\u0000\u0001\u000b\u0002\u000b\u0003\u0000" +
+                "\u0004\u0000\u0005\u0000\u0006\u0000\u0007\u0208\b\u0208";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingMapBinding> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingMapBinding.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingMapBinding>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingMapBinding)
+    private static final sl_link.SlLink.DrawingMapBinding DEFAULT_INSTANCE;
+    static {
+      DrawingMapBinding defaultInstance = new DrawingMapBinding();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingMapBinding.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingMapBinding getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingMapBinding> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingMapBinding> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingObstacleLayerInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingObstacleLayerInfo)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string layer_id = 1;</code>
+     * @return The layerId.
+     */
+    java.lang.String getLayerId();
+    /**
+     * <code>string layer_id = 1;</code>
+     * @return The bytes for layerId.
+     */
+    com.google.protobuf.ByteString
+        getLayerIdBytes();
+
+    /**
+     * <code>uint32 version = 2;</code>
+     * @return The version.
+     */
+    int getVersion();
+
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     * @return The enum numeric value on the wire for status.
+     */
+    int getStatusValue();
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     * @return The status.
+     */
+    sl_link.SlLink.DrawingLayerStatus getStatus();
+
+    /**
+     * <code>string stale_reason = 4;</code>
+     * @return The staleReason.
+     */
+    java.lang.String getStaleReason();
+    /**
+     * <code>string stale_reason = 4;</code>
+     * @return The bytes for staleReason.
+     */
+    com.google.protobuf.ByteString
+        getStaleReasonBytes();
+
+    /**
+     * <code>string source_file = 5;</code>
+     * @return The sourceFile.
+     */
+    java.lang.String getSourceFile();
+    /**
+     * <code>string source_file = 5;</code>
+     * @return The bytes for sourceFile.
+     */
+    com.google.protobuf.ByteString
+        getSourceFileBytes();
+
+    /**
+     * <code>string source_sha256 = 6;</code>
+     * @return The sourceSha256.
+     */
+    java.lang.String getSourceSha256();
+    /**
+     * <code>string source_sha256 = 6;</code>
+     * @return The bytes for sourceSha256.
+     */
+    com.google.protobuf.ByteString
+        getSourceSha256Bytes();
+
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     * @return Whether the transform field is set.
+     */
+    boolean hasTransform();
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     * @return The transform.
+     */
+    sl_link.SlLink.DrawingTransform getTransform();
+
+    /**
+     * <code>uint64 published_at_ms = 8;</code>
+     * @return The publishedAtMs.
+     */
+    long getPublishedAtMs();
+
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     * @return Whether the binding field is set.
+     */
+    boolean hasBinding();
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     * @return The binding.
+     */
+    sl_link.SlLink.DrawingMapBinding getBinding();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingObstacleLayerInfo}
+   */
+  public  static final class DrawingObstacleLayerInfo extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingObstacleLayerInfo, DrawingObstacleLayerInfo.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingObstacleLayerInfo)
+      DrawingObstacleLayerInfoOrBuilder {
+    private DrawingObstacleLayerInfo() {
+      layerId_ = "";
+      staleReason_ = "";
+      sourceFile_ = "";
+      sourceSha256_ = "";
+    }
+    private int bitField0_;
+    public static final int LAYER_ID_FIELD_NUMBER = 1;
+    private java.lang.String layerId_;
+    /**
+     * <code>string layer_id = 1;</code>
+     * @return The layerId.
+     */
+    @java.lang.Override
+    public java.lang.String getLayerId() {
+      return layerId_;
+    }
+    /**
+     * <code>string layer_id = 1;</code>
+     * @return The bytes for layerId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getLayerIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(layerId_);
+    }
+    /**
+     * <code>string layer_id = 1;</code>
+     * @param value The layerId to set.
+     */
+    private void setLayerId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      layerId_ = value;
+    }
+    /**
+     * <code>string layer_id = 1;</code>
+     */
+    private void clearLayerId() {
+
+      layerId_ = getDefaultInstance().getLayerId();
+    }
+    /**
+     * <code>string layer_id = 1;</code>
+     * @param value The bytes for layerId to set.
+     */
+    private void setLayerIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      layerId_ = value.toStringUtf8();
+
+    }
+
+    public static final int VERSION_FIELD_NUMBER = 2;
+    private int version_;
+    /**
+     * <code>uint32 version = 2;</code>
+     * @return The version.
+     */
+    @java.lang.Override
+    public int getVersion() {
+      return version_;
+    }
+    /**
+     * <code>uint32 version = 2;</code>
+     * @param value The version to set.
+     */
+    private void setVersion(int value) {
+
+      version_ = value;
+    }
+    /**
+     * <code>uint32 version = 2;</code>
+     */
+    private void clearVersion() {
+
+      version_ = 0;
+    }
+
+    public static final int STATUS_FIELD_NUMBER = 3;
+    private int status_;
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     * @return The enum numeric value on the wire for status.
+     */
+    @java.lang.Override
+    public int getStatusValue() {
+      return status_;
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     * @return The status.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingLayerStatus getStatus() {
+      sl_link.SlLink.DrawingLayerStatus result = sl_link.SlLink.DrawingLayerStatus.forNumber(status_);
+      return result == null ? sl_link.SlLink.DrawingLayerStatus.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     * @param value The enum numeric value on the wire for status to set.
+     */
+    private void setStatusValue(int value) {
+        status_ = value;
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     * @param value The status to set.
+     */
+    private void setStatus(sl_link.SlLink.DrawingLayerStatus value) {
+      status_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+     */
+    private void clearStatus() {
+
+      status_ = 0;
+    }
+
+    public static final int STALE_REASON_FIELD_NUMBER = 4;
+    private java.lang.String staleReason_;
+    /**
+     * <code>string stale_reason = 4;</code>
+     * @return The staleReason.
+     */
+    @java.lang.Override
+    public java.lang.String getStaleReason() {
+      return staleReason_;
+    }
+    /**
+     * <code>string stale_reason = 4;</code>
+     * @return The bytes for staleReason.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getStaleReasonBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(staleReason_);
+    }
+    /**
+     * <code>string stale_reason = 4;</code>
+     * @param value The staleReason to set.
+     */
+    private void setStaleReason(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      staleReason_ = value;
+    }
+    /**
+     * <code>string stale_reason = 4;</code>
+     */
+    private void clearStaleReason() {
+
+      staleReason_ = getDefaultInstance().getStaleReason();
+    }
+    /**
+     * <code>string stale_reason = 4;</code>
+     * @param value The bytes for staleReason to set.
+     */
+    private void setStaleReasonBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      staleReason_ = value.toStringUtf8();
+
+    }
+
+    public static final int SOURCE_FILE_FIELD_NUMBER = 5;
+    private java.lang.String sourceFile_;
+    /**
+     * <code>string source_file = 5;</code>
+     * @return The sourceFile.
+     */
+    @java.lang.Override
+    public java.lang.String getSourceFile() {
+      return sourceFile_;
+    }
+    /**
+     * <code>string source_file = 5;</code>
+     * @return The bytes for sourceFile.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSourceFileBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(sourceFile_);
+    }
+    /**
+     * <code>string source_file = 5;</code>
+     * @param value The sourceFile to set.
+     */
+    private void setSourceFile(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      sourceFile_ = value;
+    }
+    /**
+     * <code>string source_file = 5;</code>
+     */
+    private void clearSourceFile() {
+
+      sourceFile_ = getDefaultInstance().getSourceFile();
+    }
+    /**
+     * <code>string source_file = 5;</code>
+     * @param value The bytes for sourceFile to set.
+     */
+    private void setSourceFileBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      sourceFile_ = value.toStringUtf8();
+
+    }
+
+    public static final int SOURCE_SHA256_FIELD_NUMBER = 6;
+    private java.lang.String sourceSha256_;
+    /**
+     * <code>string source_sha256 = 6;</code>
+     * @return The sourceSha256.
+     */
+    @java.lang.Override
+    public java.lang.String getSourceSha256() {
+      return sourceSha256_;
+    }
+    /**
+     * <code>string source_sha256 = 6;</code>
+     * @return The bytes for sourceSha256.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSourceSha256Bytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(sourceSha256_);
+    }
+    /**
+     * <code>string source_sha256 = 6;</code>
+     * @param value The sourceSha256 to set.
+     */
+    private void setSourceSha256(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      sourceSha256_ = value;
+    }
+    /**
+     * <code>string source_sha256 = 6;</code>
+     */
+    private void clearSourceSha256() {
+
+      sourceSha256_ = getDefaultInstance().getSourceSha256();
+    }
+    /**
+     * <code>string source_sha256 = 6;</code>
+     * @param value The bytes for sourceSha256 to set.
+     */
+    private void setSourceSha256Bytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      sourceSha256_ = value.toStringUtf8();
+
+    }
+
+    public static final int TRANSFORM_FIELD_NUMBER = 7;
+    private sl_link.SlLink.DrawingTransform transform_;
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     */
+    @java.lang.Override
+    public boolean hasTransform() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingTransform getTransform() {
+      return transform_ == null ? sl_link.SlLink.DrawingTransform.getDefaultInstance() : transform_;
+    }
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     */
+    private void setTransform(sl_link.SlLink.DrawingTransform value) {
+      value.getClass();
+  transform_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeTransform(sl_link.SlLink.DrawingTransform value) {
+      value.getClass();
+  if (transform_ != null &&
+          transform_ != sl_link.SlLink.DrawingTransform.getDefaultInstance()) {
+        transform_ =
+          sl_link.SlLink.DrawingTransform.newBuilder(transform_).mergeFrom(value).buildPartial();
+      } else {
+        transform_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.DrawingTransform transform = 7;</code>
+     */
+    private void clearTransform() {  transform_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static final int PUBLISHED_AT_MS_FIELD_NUMBER = 8;
+    private long publishedAtMs_;
+    /**
+     * <code>uint64 published_at_ms = 8;</code>
+     * @return The publishedAtMs.
+     */
+    @java.lang.Override
+    public long getPublishedAtMs() {
+      return publishedAtMs_;
+    }
+    /**
+     * <code>uint64 published_at_ms = 8;</code>
+     * @param value The publishedAtMs to set.
+     */
+    private void setPublishedAtMs(long value) {
+
+      publishedAtMs_ = value;
+    }
+    /**
+     * <code>uint64 published_at_ms = 8;</code>
+     */
+    private void clearPublishedAtMs() {
+
+      publishedAtMs_ = 0L;
+    }
+
+    public static final int BINDING_FIELD_NUMBER = 9;
+    private sl_link.SlLink.DrawingMapBinding binding_;
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     */
+    @java.lang.Override
+    public boolean hasBinding() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingMapBinding getBinding() {
+      return binding_ == null ? sl_link.SlLink.DrawingMapBinding.getDefaultInstance() : binding_;
+    }
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     */
+    private void setBinding(sl_link.SlLink.DrawingMapBinding value) {
+      value.getClass();
+  binding_ = value;
+      bitField0_ |= 0x00000002;
+      }
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeBinding(sl_link.SlLink.DrawingMapBinding value) {
+      value.getClass();
+  if (binding_ != null &&
+          binding_ != sl_link.SlLink.DrawingMapBinding.getDefaultInstance()) {
+        binding_ =
+          sl_link.SlLink.DrawingMapBinding.newBuilder(binding_).mergeFrom(value).buildPartial();
+      } else {
+        binding_ = value;
+      }
+      bitField0_ |= 0x00000002;
+    }
+    /**
+     * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+     */
+    private void clearBinding() {  binding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000002);
+    }
+
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingObstacleLayerInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingObstacleLayerInfo prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingObstacleLayerInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingObstacleLayerInfo, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingObstacleLayerInfo)
+        sl_link.SlLink.DrawingObstacleLayerInfoOrBuilder {
+      // Construct using sl_link.SlLink.DrawingObstacleLayerInfo.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string layer_id = 1;</code>
+       * @return The layerId.
+       */
+      @java.lang.Override
+      public java.lang.String getLayerId() {
+        return instance.getLayerId();
+      }
+      /**
+       * <code>string layer_id = 1;</code>
+       * @return The bytes for layerId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getLayerIdBytes() {
+        return instance.getLayerIdBytes();
+      }
+      /**
+       * <code>string layer_id = 1;</code>
+       * @param value The layerId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLayerId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setLayerId(value);
+        return this;
+      }
+      /**
+       * <code>string layer_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLayerId() {
+        copyOnWrite();
+        instance.clearLayerId();
+        return this;
+      }
+      /**
+       * <code>string layer_id = 1;</code>
+       * @param value The bytes for layerId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLayerIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setLayerIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 version = 2;</code>
+       * @return The version.
+       */
+      @java.lang.Override
+      public int getVersion() {
+        return instance.getVersion();
+      }
+      /**
+       * <code>uint32 version = 2;</code>
+       * @param value The version to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVersion(int value) {
+        copyOnWrite();
+        instance.setVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 version = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVersion() {
+        copyOnWrite();
+        instance.clearVersion();
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+       * @return The enum numeric value on the wire for status.
+       */
+      @java.lang.Override
+      public int getStatusValue() {
+        return instance.getStatusValue();
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+       * @param value The status to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatusValue(int value) {
+        copyOnWrite();
+        instance.setStatusValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+       * @return The status.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingLayerStatus getStatus() {
+        return instance.getStatus();
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+       * @param value The enum numeric value on the wire for status to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatus(sl_link.SlLink.DrawingLayerStatus value) {
+        copyOnWrite();
+        instance.setStatus(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingLayerStatus status = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearStatus() {
+        copyOnWrite();
+        instance.clearStatus();
+        return this;
+      }
+
+      /**
+       * <code>string stale_reason = 4;</code>
+       * @return The staleReason.
+       */
+      @java.lang.Override
+      public java.lang.String getStaleReason() {
+        return instance.getStaleReason();
+      }
+      /**
+       * <code>string stale_reason = 4;</code>
+       * @return The bytes for staleReason.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getStaleReasonBytes() {
+        return instance.getStaleReasonBytes();
+      }
+      /**
+       * <code>string stale_reason = 4;</code>
+       * @param value The staleReason to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStaleReason(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setStaleReason(value);
+        return this;
+      }
+      /**
+       * <code>string stale_reason = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearStaleReason() {
+        copyOnWrite();
+        instance.clearStaleReason();
+        return this;
+      }
+      /**
+       * <code>string stale_reason = 4;</code>
+       * @param value The bytes for staleReason to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStaleReasonBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setStaleReasonBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string source_file = 5;</code>
+       * @return The sourceFile.
+       */
+      @java.lang.Override
+      public java.lang.String getSourceFile() {
+        return instance.getSourceFile();
+      }
+      /**
+       * <code>string source_file = 5;</code>
+       * @return The bytes for sourceFile.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getSourceFileBytes() {
+        return instance.getSourceFileBytes();
+      }
+      /**
+       * <code>string source_file = 5;</code>
+       * @param value The sourceFile to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSourceFile(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setSourceFile(value);
+        return this;
+      }
+      /**
+       * <code>string source_file = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSourceFile() {
+        copyOnWrite();
+        instance.clearSourceFile();
+        return this;
+      }
+      /**
+       * <code>string source_file = 5;</code>
+       * @param value The bytes for sourceFile to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSourceFileBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setSourceFileBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string source_sha256 = 6;</code>
+       * @return The sourceSha256.
+       */
+      @java.lang.Override
+      public java.lang.String getSourceSha256() {
+        return instance.getSourceSha256();
+      }
+      /**
+       * <code>string source_sha256 = 6;</code>
+       * @return The bytes for sourceSha256.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getSourceSha256Bytes() {
+        return instance.getSourceSha256Bytes();
+      }
+      /**
+       * <code>string source_sha256 = 6;</code>
+       * @param value The sourceSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSourceSha256(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setSourceSha256(value);
+        return this;
+      }
+      /**
+       * <code>string source_sha256 = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSourceSha256() {
+        copyOnWrite();
+        instance.clearSourceSha256();
+        return this;
+      }
+      /**
+       * <code>string source_sha256 = 6;</code>
+       * @param value The bytes for sourceSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSourceSha256Bytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setSourceSha256Bytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.DrawingTransform transform = 7;</code>
+       */
+      @java.lang.Override
+      public boolean hasTransform() {
+        return instance.hasTransform();
+      }
+      /**
+       * <code>.sl_link.DrawingTransform transform = 7;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingTransform getTransform() {
+        return instance.getTransform();
+      }
+      /**
+       * <code>.sl_link.DrawingTransform transform = 7;</code>
+       */
+      public Builder setTransform(sl_link.SlLink.DrawingTransform value) {
+        copyOnWrite();
+        instance.setTransform(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.DrawingTransform transform = 7;</code>
+       */
+      public Builder setTransform(
+          sl_link.SlLink.DrawingTransform.Builder builderForValue) {
+        copyOnWrite();
+        instance.setTransform(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingTransform transform = 7;</code>
+       */
+      public Builder mergeTransform(sl_link.SlLink.DrawingTransform value) {
+        copyOnWrite();
+        instance.mergeTransform(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingTransform transform = 7;</code>
+       */
+      public Builder clearTransform() {  copyOnWrite();
+        instance.clearTransform();
+        return this;
+      }
+
+      /**
+       * <code>uint64 published_at_ms = 8;</code>
+       * @return The publishedAtMs.
+       */
+      @java.lang.Override
+      public long getPublishedAtMs() {
+        return instance.getPublishedAtMs();
+      }
+      /**
+       * <code>uint64 published_at_ms = 8;</code>
+       * @param value The publishedAtMs to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPublishedAtMs(long value) {
+        copyOnWrite();
+        instance.setPublishedAtMs(value);
+        return this;
+      }
+      /**
+       * <code>uint64 published_at_ms = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPublishedAtMs() {
+        copyOnWrite();
+        instance.clearPublishedAtMs();
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+       */
+      @java.lang.Override
+      public boolean hasBinding() {
+        return instance.hasBinding();
+      }
+      /**
+       * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingMapBinding getBinding() {
+        return instance.getBinding();
+      }
+      /**
+       * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+       */
+      public Builder setBinding(sl_link.SlLink.DrawingMapBinding value) {
+        copyOnWrite();
+        instance.setBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+       */
+      public Builder setBinding(
+          sl_link.SlLink.DrawingMapBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+       */
+      public Builder mergeBinding(sl_link.SlLink.DrawingMapBinding value) {
+        copyOnWrite();
+        instance.mergeBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingMapBinding binding = 9;</code>
+       */
+      public Builder clearBinding() {  copyOnWrite();
+        instance.clearBinding();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingObstacleLayerInfo)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingObstacleLayerInfo();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "layerId_",
+              "version_",
+              "status_",
+              "staleReason_",
+              "sourceFile_",
+              "sourceSha256_",
+              "transform_",
+              "publishedAtMs_",
+              "binding_",
+            };
+            java.lang.String info =
+                "\u0000\t\u0000\u0001\u0001\t\t\u0000\u0000\u0000\u0001\u0208\u0002\u000b\u0003\f" +
+                "\u0004\u0208\u0005\u0208\u0006\u0208\u0007\u1009\u0000\b\u0003\t\u1009\u0001";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingObstacleLayerInfo> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingObstacleLayerInfo.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingObstacleLayerInfo>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingObstacleLayerInfo)
+    private static final sl_link.SlLink.DrawingObstacleLayerInfo DEFAULT_INSTANCE;
+    static {
+      DrawingObstacleLayerInfo defaultInstance = new DrawingObstacleLayerInfo();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingObstacleLayerInfo.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingObstacleLayerInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingObstacleLayerInfo> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingObstacleLayerInfo> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingLayerPayloadOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingLayerPayload)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     * @return Whether the info field is set.
+     */
+    boolean hasInfo();
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     * @return The info.
+     */
+    sl_link.SlLink.DrawingObstacleLayerInfo getInfo();
+
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    java.util.List<sl_link.SlLink.PolygonRegion>
+        getFoundationsList();
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    sl_link.SlLink.PolygonRegion getFoundations(int index);
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    int getFoundationsCount();
+
+    /**
+     * <pre>
+     * Empty selection alone must never remove a previously published layer.
+     * </pre>
+     *
+     * <code>bool remove_layer = 3;</code>
+     * @return The removeLayer.
+     */
+    boolean getRemoveLayer();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingLayerPayload}
+   */
+  public  static final class DrawingLayerPayload extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingLayerPayload, DrawingLayerPayload.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingLayerPayload)
+      DrawingLayerPayloadOrBuilder {
+    private DrawingLayerPayload() {
+      foundations_ = emptyProtobufList();
+    }
+    private int bitField0_;
+    public static final int INFO_FIELD_NUMBER = 1;
+    private sl_link.SlLink.DrawingObstacleLayerInfo info_;
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     */
+    @java.lang.Override
+    public boolean hasInfo() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingObstacleLayerInfo getInfo() {
+      return info_ == null ? sl_link.SlLink.DrawingObstacleLayerInfo.getDefaultInstance() : info_;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     */
+    private void setInfo(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+      value.getClass();
+  info_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeInfo(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+      value.getClass();
+  if (info_ != null &&
+          info_ != sl_link.SlLink.DrawingObstacleLayerInfo.getDefaultInstance()) {
+        info_ =
+          sl_link.SlLink.DrawingObstacleLayerInfo.newBuilder(info_).mergeFrom(value).buildPartial();
+      } else {
+        info_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+     */
+    private void clearInfo() {  info_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static final int FOUNDATIONS_FIELD_NUMBER = 2;
+    private com.google.protobuf.Internal.ProtobufList<sl_link.SlLink.PolygonRegion> foundations_;
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    @java.lang.Override
+    public java.util.List<sl_link.SlLink.PolygonRegion> getFoundationsList() {
+      return foundations_;
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.PolygonRegionOrBuilder>
+        getFoundationsOrBuilderList() {
+      return foundations_;
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    @java.lang.Override
+    public int getFoundationsCount() {
+      return foundations_.size();
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.PolygonRegion getFoundations(int index) {
+      return foundations_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    public sl_link.SlLink.PolygonRegionOrBuilder getFoundationsOrBuilder(
+        int index) {
+      return foundations_.get(index);
+    }
+    private void ensureFoundationsIsMutable() {
+      com.google.protobuf.Internal.ProtobufList<sl_link.SlLink.PolygonRegion> tmp = foundations_;
+      if (!tmp.isModifiable()) {
+        foundations_ =
+            com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
+       }
+    }
+
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    private void setFoundations(
+        int index, sl_link.SlLink.PolygonRegion value) {
+      value.getClass();
+  ensureFoundationsIsMutable();
+      foundations_.set(index, value);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    private void addFoundations(sl_link.SlLink.PolygonRegion value) {
+      value.getClass();
+  ensureFoundationsIsMutable();
+      foundations_.add(value);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    private void addFoundations(
+        int index, sl_link.SlLink.PolygonRegion value) {
+      value.getClass();
+  ensureFoundationsIsMutable();
+      foundations_.add(index, value);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    private void addAllFoundations(
+        java.lang.Iterable<? extends sl_link.SlLink.PolygonRegion> values) {
+      ensureFoundationsIsMutable();
+      com.google.protobuf.AbstractMessageLite.addAll(
+          values, foundations_);
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    private void clearFoundations() {
+      foundations_ = emptyProtobufList();
+    }
+    /**
+     * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+     */
+    private void removeFoundations(int index) {
+      ensureFoundationsIsMutable();
+      foundations_.remove(index);
+    }
+
+    public static final int REMOVE_LAYER_FIELD_NUMBER = 3;
+    private boolean removeLayer_;
+    /**
+     * <pre>
+     * Empty selection alone must never remove a previously published layer.
+     * </pre>
+     *
+     * <code>bool remove_layer = 3;</code>
+     * @return The removeLayer.
+     */
+    @java.lang.Override
+    public boolean getRemoveLayer() {
+      return removeLayer_;
+    }
+    /**
+     * <pre>
+     * Empty selection alone must never remove a previously published layer.
+     * </pre>
+     *
+     * <code>bool remove_layer = 3;</code>
+     * @param value The removeLayer to set.
+     */
+    private void setRemoveLayer(boolean value) {
+
+      removeLayer_ = value;
+    }
+    /**
+     * <pre>
+     * Empty selection alone must never remove a previously published layer.
+     * </pre>
+     *
+     * <code>bool remove_layer = 3;</code>
+     */
+    private void clearRemoveLayer() {
+
+      removeLayer_ = false;
+    }
+
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingLayerPayload parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingLayerPayload parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingLayerPayload parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingLayerPayload prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingLayerPayload}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingLayerPayload, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingLayerPayload)
+        sl_link.SlLink.DrawingLayerPayloadOrBuilder {
+      // Construct using sl_link.SlLink.DrawingLayerPayload.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+       */
+      @java.lang.Override
+      public boolean hasInfo() {
+        return instance.hasInfo();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingObstacleLayerInfo getInfo() {
+        return instance.getInfo();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+       */
+      public Builder setInfo(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+        copyOnWrite();
+        instance.setInfo(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+       */
+      public Builder setInfo(
+          sl_link.SlLink.DrawingObstacleLayerInfo.Builder builderForValue) {
+        copyOnWrite();
+        instance.setInfo(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+       */
+      public Builder mergeInfo(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+        copyOnWrite();
+        instance.mergeInfo(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo info = 1;</code>
+       */
+      public Builder clearInfo() {  copyOnWrite();
+        instance.clearInfo();
+        return this;
+      }
+
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      @java.lang.Override
+      public java.util.List<sl_link.SlLink.PolygonRegion> getFoundationsList() {
+        return java.util.Collections.unmodifiableList(
+            instance.getFoundationsList());
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      @java.lang.Override
+      public int getFoundationsCount() {
+        return instance.getFoundationsCount();
+      }/**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.PolygonRegion getFoundations(int index) {
+        return instance.getFoundations(index);
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder setFoundations(
+          int index, sl_link.SlLink.PolygonRegion value) {
+        copyOnWrite();
+        instance.setFoundations(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder setFoundations(
+          int index, sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        copyOnWrite();
+        instance.setFoundations(index,
+            builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder addFoundations(sl_link.SlLink.PolygonRegion value) {
+        copyOnWrite();
+        instance.addFoundations(value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder addFoundations(
+          int index, sl_link.SlLink.PolygonRegion value) {
+        copyOnWrite();
+        instance.addFoundations(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder addFoundations(
+          sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        copyOnWrite();
+        instance.addFoundations(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder addFoundations(
+          int index, sl_link.SlLink.PolygonRegion.Builder builderForValue) {
+        copyOnWrite();
+        instance.addFoundations(index,
+            builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder addAllFoundations(
+          java.lang.Iterable<? extends sl_link.SlLink.PolygonRegion> values) {
+        copyOnWrite();
+        instance.addAllFoundations(values);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder clearFoundations() {
+        copyOnWrite();
+        instance.clearFoundations();
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.PolygonRegion foundations = 2;</code>
+       */
+      public Builder removeFoundations(int index) {
+        copyOnWrite();
+        instance.removeFoundations(index);
+        return this;
+      }
+
+      /**
+       * <pre>
+       * Empty selection alone must never remove a previously published layer.
+       * </pre>
+       *
+       * <code>bool remove_layer = 3;</code>
+       * @return The removeLayer.
+       */
+      @java.lang.Override
+      public boolean getRemoveLayer() {
+        return instance.getRemoveLayer();
+      }
+      /**
+       * <pre>
+       * Empty selection alone must never remove a previously published layer.
+       * </pre>
+       *
+       * <code>bool remove_layer = 3;</code>
+       * @param value The removeLayer to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRemoveLayer(boolean value) {
+        copyOnWrite();
+        instance.setRemoveLayer(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Empty selection alone must never remove a previously published layer.
+       * </pre>
+       *
+       * <code>bool remove_layer = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRemoveLayer() {
+        copyOnWrite();
+        instance.clearRemoveLayer();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingLayerPayload)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingLayerPayload();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "info_",
+              "foundations_",
+              sl_link.SlLink.PolygonRegion.class,
+              "removeLayer_",
+            };
+            java.lang.String info =
+                "\u0000\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0001\u0000\u0001\u1009\u0000\u0002" +
+                "\u001b\u0003\u0007";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingLayerPayload> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingLayerPayload.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingLayerPayload>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingLayerPayload)
+    private static final sl_link.SlLink.DrawingLayerPayload DEFAULT_INSTANCE;
+    static {
+      DrawingLayerPayload defaultInstance = new DrawingLayerPayload();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingLayerPayload.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingLayerPayload getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingLayerPayload> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingLayerPayload> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingDraftRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingDraftRequest)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The requestId.
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The bytes for requestId.
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>string map_id = 2;</code>
+     * @return The mapId.
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 2;</code>
+     * @return The bytes for mapId.
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     * @return The enum numeric value on the wire for operation.
+     */
+    int getOperationValue();
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     * @return The operation.
+     */
+    sl_link.SlLink.DrawingDraftOperation getOperation();
+
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The draftId.
+     */
+    java.lang.String getDraftId();
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The bytes for draftId.
+     */
+    com.google.protobuf.ByteString
+        getDraftIdBytes();
+
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     * @return The draftVersion.
+     */
+    int getDraftVersion();
+
+    /**
+     * <pre>
+     * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+     * </pre>
+     *
+     * <code>bytes data = 6;</code>
+     * @return The data.
+     */
+    com.google.protobuf.ByteString getData();
+
+    /**
+     * <code>uint32 chunk_index = 7;</code>
+     * @return The chunkIndex.
+     */
+    int getChunkIndex();
+
+    /**
+     * <code>uint32 total_chunks = 8;</code>
+     * @return The totalChunks.
+     */
+    int getTotalChunks();
+
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     * @return The payloadSha256.
+     */
+    java.lang.String getPayloadSha256();
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     * @return The bytes for payloadSha256.
+     */
+    com.google.protobuf.ByteString
+        getPayloadSha256Bytes();
+
+    /**
+     * <code>uint32 expected_layer_version = 10;</code>
+     * @return The expectedLayerVersion.
+     */
+    int getExpectedLayerVersion();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingDraftRequest}
+   */
+  public  static final class DrawingDraftRequest extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingDraftRequest, DrawingDraftRequest.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingDraftRequest)
+      DrawingDraftRequestOrBuilder {
+    private DrawingDraftRequest() {
+      requestId_ = "";
+      mapId_ = "";
+      draftId_ = "";
+      data_ = com.google.protobuf.ByteString.EMPTY;
+      payloadSha256_ = "";
+    }
+    public static final int REQUEST_ID_FIELD_NUMBER = 1;
+    private java.lang.String requestId_;
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public java.lang.String getRequestId() {
+      return requestId_;
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The bytes for requestId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(requestId_);
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @param value The requestId to set.
+     */
+    private void setRequestId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      requestId_ = value;
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     */
+    private void clearRequestId() {
+
+      requestId_ = getDefaultInstance().getRequestId();
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @param value The bytes for requestId to set.
+     */
+    private void setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      requestId_ = value.toStringUtf8();
+
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 2;
+    private java.lang.String mapId_;
+    /**
+     * <code>string map_id = 2;</code>
+     * @return The mapId.
+     */
+    @java.lang.Override
+    public java.lang.String getMapId() {
+      return mapId_;
+    }
+    /**
+     * <code>string map_id = 2;</code>
+     * @return The bytes for mapId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(mapId_);
+    }
+    /**
+     * <code>string map_id = 2;</code>
+     * @param value The mapId to set.
+     */
+    private void setMapId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      mapId_ = value;
+    }
+    /**
+     * <code>string map_id = 2;</code>
+     */
+    private void clearMapId() {
+
+      mapId_ = getDefaultInstance().getMapId();
+    }
+    /**
+     * <code>string map_id = 2;</code>
+     * @param value The bytes for mapId to set.
+     */
+    private void setMapIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      mapId_ = value.toStringUtf8();
+
+    }
+
+    public static final int OPERATION_FIELD_NUMBER = 3;
+    private int operation_;
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     * @return The enum numeric value on the wire for operation.
+     */
+    @java.lang.Override
+    public int getOperationValue() {
+      return operation_;
+    }
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     * @return The operation.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingDraftOperation getOperation() {
+      sl_link.SlLink.DrawingDraftOperation result = sl_link.SlLink.DrawingDraftOperation.forNumber(operation_);
+      return result == null ? sl_link.SlLink.DrawingDraftOperation.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     * @param value The enum numeric value on the wire for operation to set.
+     */
+    private void setOperationValue(int value) {
+        operation_ = value;
+    }
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     * @param value The operation to set.
+     */
+    private void setOperation(sl_link.SlLink.DrawingDraftOperation value) {
+      operation_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+     */
+    private void clearOperation() {
+
+      operation_ = 0;
+    }
+
+    public static final int DRAFT_ID_FIELD_NUMBER = 4;
+    private java.lang.String draftId_;
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The draftId.
+     */
+    @java.lang.Override
+    public java.lang.String getDraftId() {
+      return draftId_;
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The bytes for draftId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDraftIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(draftId_);
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     * @param value The draftId to set.
+     */
+    private void setDraftId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      draftId_ = value;
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     */
+    private void clearDraftId() {
+
+      draftId_ = getDefaultInstance().getDraftId();
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     * @param value The bytes for draftId to set.
+     */
+    private void setDraftIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      draftId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAFT_VERSION_FIELD_NUMBER = 5;
+    private int draftVersion_;
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     * @return The draftVersion.
+     */
+    @java.lang.Override
+    public int getDraftVersion() {
+      return draftVersion_;
+    }
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     * @param value The draftVersion to set.
+     */
+    private void setDraftVersion(int value) {
+
+      draftVersion_ = value;
+    }
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     */
+    private void clearDraftVersion() {
+
+      draftVersion_ = 0;
+    }
+
+    public static final int DATA_FIELD_NUMBER = 6;
+    private com.google.protobuf.ByteString data_;
+    /**
+     * <pre>
+     * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+     * </pre>
+     *
+     * <code>bytes data = 6;</code>
+     * @return The data.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getData() {
+      return data_;
+    }
+    /**
+     * <pre>
+     * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+     * </pre>
+     *
+     * <code>bytes data = 6;</code>
+     * @param value The data to set.
+     */
+    private void setData(com.google.protobuf.ByteString value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      data_ = value;
+    }
+    /**
+     * <pre>
+     * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+     * </pre>
+     *
+     * <code>bytes data = 6;</code>
+     */
+    private void clearData() {
+
+      data_ = getDefaultInstance().getData();
+    }
+
+    public static final int CHUNK_INDEX_FIELD_NUMBER = 7;
+    private int chunkIndex_;
+    /**
+     * <code>uint32 chunk_index = 7;</code>
+     * @return The chunkIndex.
+     */
+    @java.lang.Override
+    public int getChunkIndex() {
+      return chunkIndex_;
+    }
+    /**
+     * <code>uint32 chunk_index = 7;</code>
+     * @param value The chunkIndex to set.
+     */
+    private void setChunkIndex(int value) {
+
+      chunkIndex_ = value;
+    }
+    /**
+     * <code>uint32 chunk_index = 7;</code>
+     */
+    private void clearChunkIndex() {
+
+      chunkIndex_ = 0;
+    }
+
+    public static final int TOTAL_CHUNKS_FIELD_NUMBER = 8;
+    private int totalChunks_;
+    /**
+     * <code>uint32 total_chunks = 8;</code>
+     * @return The totalChunks.
+     */
+    @java.lang.Override
+    public int getTotalChunks() {
+      return totalChunks_;
+    }
+    /**
+     * <code>uint32 total_chunks = 8;</code>
+     * @param value The totalChunks to set.
+     */
+    private void setTotalChunks(int value) {
+
+      totalChunks_ = value;
+    }
+    /**
+     * <code>uint32 total_chunks = 8;</code>
+     */
+    private void clearTotalChunks() {
+
+      totalChunks_ = 0;
+    }
+
+    public static final int PAYLOAD_SHA256_FIELD_NUMBER = 9;
+    private java.lang.String payloadSha256_;
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     * @return The payloadSha256.
+     */
+    @java.lang.Override
+    public java.lang.String getPayloadSha256() {
+      return payloadSha256_;
+    }
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     * @return The bytes for payloadSha256.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPayloadSha256Bytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(payloadSha256_);
+    }
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     * @param value The payloadSha256 to set.
+     */
+    private void setPayloadSha256(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      payloadSha256_ = value;
+    }
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     */
+    private void clearPayloadSha256() {
+
+      payloadSha256_ = getDefaultInstance().getPayloadSha256();
+    }
+    /**
+     * <code>string payload_sha256 = 9;</code>
+     * @param value The bytes for payloadSha256 to set.
+     */
+    private void setPayloadSha256Bytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      payloadSha256_ = value.toStringUtf8();
+
+    }
+
+    public static final int EXPECTED_LAYER_VERSION_FIELD_NUMBER = 10;
+    private int expectedLayerVersion_;
+    /**
+     * <code>uint32 expected_layer_version = 10;</code>
+     * @return The expectedLayerVersion.
+     */
+    @java.lang.Override
+    public int getExpectedLayerVersion() {
+      return expectedLayerVersion_;
+    }
+    /**
+     * <code>uint32 expected_layer_version = 10;</code>
+     * @param value The expectedLayerVersion to set.
+     */
+    private void setExpectedLayerVersion(int value) {
+
+      expectedLayerVersion_ = value;
+    }
+    /**
+     * <code>uint32 expected_layer_version = 10;</code>
+     */
+    private void clearExpectedLayerVersion() {
+
+      expectedLayerVersion_ = 0;
+    }
+
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingDraftRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingDraftRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingDraftRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingDraftRequest prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingDraftRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingDraftRequest, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingDraftRequest)
+        sl_link.SlLink.DrawingDraftRequestOrBuilder {
+      // Construct using sl_link.SlLink.DrawingDraftRequest.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string request_id = 1;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public java.lang.String getRequestId() {
+        return instance.getRequestId();
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @return The bytes for requestId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        return instance.getRequestIdBytes();
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRequestId(value);
+        return this;
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        copyOnWrite();
+        instance.clearRequestId();
+        return this;
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @param value The bytes for requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRequestIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string map_id = 2;</code>
+       * @return The mapId.
+       */
+      @java.lang.Override
+      public java.lang.String getMapId() {
+        return instance.getMapId();
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       * @return The bytes for mapId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        return instance.getMapIdBytes();
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       * @param value The mapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMapId(value);
+        return this;
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMapId() {
+        copyOnWrite();
+        instance.clearMapId();
+        return this;
+      }
+      /**
+       * <code>string map_id = 2;</code>
+       * @param value The bytes for mapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMapIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+       * @return The enum numeric value on the wire for operation.
+       */
+      @java.lang.Override
+      public int getOperationValue() {
+        return instance.getOperationValue();
+      }
+      /**
+       * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+       * @param value The operation to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOperationValue(int value) {
+        copyOnWrite();
+        instance.setOperationValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+       * @return The operation.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingDraftOperation getOperation() {
+        return instance.getOperation();
+      }
+      /**
+       * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+       * @param value The enum numeric value on the wire for operation to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOperation(sl_link.SlLink.DrawingDraftOperation value) {
+        copyOnWrite();
+        instance.setOperation(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingDraftOperation operation = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOperation() {
+        copyOnWrite();
+        instance.clearOperation();
+        return this;
+      }
+
+      /**
+       * <code>string draft_id = 4;</code>
+       * @return The draftId.
+       */
+      @java.lang.Override
+      public java.lang.String getDraftId() {
+        return instance.getDraftId();
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @return The bytes for draftId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDraftIdBytes() {
+        return instance.getDraftIdBytes();
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @param value The draftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDraftId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setDraftId(value);
+        return this;
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDraftId() {
+        copyOnWrite();
+        instance.clearDraftId();
+        return this;
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @param value The bytes for draftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDraftIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setDraftIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 draft_version = 5;</code>
+       * @return The draftVersion.
+       */
+      @java.lang.Override
+      public int getDraftVersion() {
+        return instance.getDraftVersion();
+      }
+      /**
+       * <code>uint32 draft_version = 5;</code>
+       * @param value The draftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 draft_version = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDraftVersion() {
+        copyOnWrite();
+        instance.clearDraftVersion();
+        return this;
+      }
+
+      /**
+       * <pre>
+       * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+       * </pre>
+       *
+       * <code>bytes data = 6;</code>
+       * @return The data.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getData() {
+        return instance.getData();
+      }
+      /**
+       * <pre>
+       * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+       * </pre>
+       *
+       * <code>bytes data = 6;</code>
+       * @param value The data to set.
+       * @return This builder for chaining.
+       */
+      public Builder setData(com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setData(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Upload serializes DrawingLayerPayload then splits it into &lt;=48KiB chunks.
+       * </pre>
+       *
+       * <code>bytes data = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearData() {
+        copyOnWrite();
+        instance.clearData();
+        return this;
+      }
+
+      /**
+       * <code>uint32 chunk_index = 7;</code>
+       * @return The chunkIndex.
+       */
+      @java.lang.Override
+      public int getChunkIndex() {
+        return instance.getChunkIndex();
+      }
+      /**
+       * <code>uint32 chunk_index = 7;</code>
+       * @param value The chunkIndex to set.
+       * @return This builder for chaining.
+       */
+      public Builder setChunkIndex(int value) {
+        copyOnWrite();
+        instance.setChunkIndex(value);
+        return this;
+      }
+      /**
+       * <code>uint32 chunk_index = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearChunkIndex() {
+        copyOnWrite();
+        instance.clearChunkIndex();
+        return this;
+      }
+
+      /**
+       * <code>uint32 total_chunks = 8;</code>
+       * @return The totalChunks.
+       */
+      @java.lang.Override
+      public int getTotalChunks() {
+        return instance.getTotalChunks();
+      }
+      /**
+       * <code>uint32 total_chunks = 8;</code>
+       * @param value The totalChunks to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTotalChunks(int value) {
+        copyOnWrite();
+        instance.setTotalChunks(value);
+        return this;
+      }
+      /**
+       * <code>uint32 total_chunks = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTotalChunks() {
+        copyOnWrite();
+        instance.clearTotalChunks();
+        return this;
+      }
+
+      /**
+       * <code>string payload_sha256 = 9;</code>
+       * @return The payloadSha256.
+       */
+      @java.lang.Override
+      public java.lang.String getPayloadSha256() {
+        return instance.getPayloadSha256();
+      }
+      /**
+       * <code>string payload_sha256 = 9;</code>
+       * @return The bytes for payloadSha256.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getPayloadSha256Bytes() {
+        return instance.getPayloadSha256Bytes();
+      }
+      /**
+       * <code>string payload_sha256 = 9;</code>
+       * @param value The payloadSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadSha256(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setPayloadSha256(value);
+        return this;
+      }
+      /**
+       * <code>string payload_sha256 = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPayloadSha256() {
+        copyOnWrite();
+        instance.clearPayloadSha256();
+        return this;
+      }
+      /**
+       * <code>string payload_sha256 = 9;</code>
+       * @param value The bytes for payloadSha256 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadSha256Bytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setPayloadSha256Bytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 expected_layer_version = 10;</code>
+       * @return The expectedLayerVersion.
+       */
+      @java.lang.Override
+      public int getExpectedLayerVersion() {
+        return instance.getExpectedLayerVersion();
+      }
+      /**
+       * <code>uint32 expected_layer_version = 10;</code>
+       * @param value The expectedLayerVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setExpectedLayerVersion(int value) {
+        copyOnWrite();
+        instance.setExpectedLayerVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 expected_layer_version = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearExpectedLayerVersion() {
+        copyOnWrite();
+        instance.clearExpectedLayerVersion();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingDraftRequest)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingDraftRequest();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "requestId_",
+              "mapId_",
+              "operation_",
+              "draftId_",
+              "draftVersion_",
+              "data_",
+              "chunkIndex_",
+              "totalChunks_",
+              "payloadSha256_",
+              "expectedLayerVersion_",
+            };
+            java.lang.String info =
+                "\u0000\n\u0000\u0000\u0001\n\n\u0000\u0000\u0000\u0001\u0208\u0002\u0208\u0003\f" +
+                "\u0004\u0208\u0005\u000b\u0006\n\u0007\u000b\b\u000b\t\u0208\n\u000b";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingDraftRequest> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingDraftRequest.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingDraftRequest>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingDraftRequest)
+    private static final sl_link.SlLink.DrawingDraftRequest DEFAULT_INSTANCE;
+    static {
+      DrawingDraftRequest defaultInstance = new DrawingDraftRequest();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingDraftRequest.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingDraftRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingDraftRequest> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingDraftRequest> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingCheckItemOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingCheckItem)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string level = 1;</code>
+     * @return The level.
+     */
+    java.lang.String getLevel();
+    /**
+     * <code>string level = 1;</code>
+     * @return The bytes for level.
+     */
+    com.google.protobuf.ByteString
+        getLevelBytes();
+
+    /**
+     * <code>string code = 2;</code>
+     * @return The code.
+     */
+    java.lang.String getCode();
+    /**
+     * <code>string code = 2;</code>
+     * @return The bytes for code.
+     */
+    com.google.protobuf.ByteString
+        getCodeBytes();
+
+    /**
+     * <code>string region_id = 3;</code>
+     * @return The regionId.
+     */
+    java.lang.String getRegionId();
+    /**
+     * <code>string region_id = 3;</code>
+     * @return The bytes for regionId.
+     */
+    com.google.protobuf.ByteString
+        getRegionIdBytes();
+
+    /**
+     * <code>string message = 4;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 4;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     * @return Whether the position field is set.
+     */
+    boolean hasPosition();
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     * @return The position.
+     */
+    sl_link.SlLink.PolygonPoint getPosition();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingCheckItem}
+   */
+  public  static final class DrawingCheckItem extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingCheckItem, DrawingCheckItem.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingCheckItem)
+      DrawingCheckItemOrBuilder {
+    private DrawingCheckItem() {
+      level_ = "";
+      code_ = "";
+      regionId_ = "";
+      message_ = "";
+    }
+    private int bitField0_;
+    public static final int LEVEL_FIELD_NUMBER = 1;
+    private java.lang.String level_;
+    /**
+     * <code>string level = 1;</code>
+     * @return The level.
+     */
+    @java.lang.Override
+    public java.lang.String getLevel() {
+      return level_;
+    }
+    /**
+     * <code>string level = 1;</code>
+     * @return The bytes for level.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getLevelBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(level_);
+    }
+    /**
+     * <code>string level = 1;</code>
+     * @param value The level to set.
+     */
+    private void setLevel(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      level_ = value;
+    }
+    /**
+     * <code>string level = 1;</code>
+     */
+    private void clearLevel() {
+
+      level_ = getDefaultInstance().getLevel();
+    }
+    /**
+     * <code>string level = 1;</code>
+     * @param value The bytes for level to set.
+     */
+    private void setLevelBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      level_ = value.toStringUtf8();
+
+    }
+
+    public static final int CODE_FIELD_NUMBER = 2;
+    private java.lang.String code_;
+    /**
+     * <code>string code = 2;</code>
+     * @return The code.
+     */
+    @java.lang.Override
+    public java.lang.String getCode() {
+      return code_;
+    }
+    /**
+     * <code>string code = 2;</code>
+     * @return The bytes for code.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getCodeBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(code_);
+    }
+    /**
+     * <code>string code = 2;</code>
+     * @param value The code to set.
+     */
+    private void setCode(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      code_ = value;
+    }
+    /**
+     * <code>string code = 2;</code>
+     */
+    private void clearCode() {
+
+      code_ = getDefaultInstance().getCode();
+    }
+    /**
+     * <code>string code = 2;</code>
+     * @param value The bytes for code to set.
+     */
+    private void setCodeBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      code_ = value.toStringUtf8();
+
+    }
+
+    public static final int REGION_ID_FIELD_NUMBER = 3;
+    private java.lang.String regionId_;
+    /**
+     * <code>string region_id = 3;</code>
+     * @return The regionId.
+     */
+    @java.lang.Override
+    public java.lang.String getRegionId() {
+      return regionId_;
+    }
+    /**
+     * <code>string region_id = 3;</code>
+     * @return The bytes for regionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRegionIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(regionId_);
+    }
+    /**
+     * <code>string region_id = 3;</code>
+     * @param value The regionId to set.
+     */
+    private void setRegionId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      regionId_ = value;
+    }
+    /**
+     * <code>string region_id = 3;</code>
+     */
+    private void clearRegionId() {
+
+      regionId_ = getDefaultInstance().getRegionId();
+    }
+    /**
+     * <code>string region_id = 3;</code>
+     * @param value The bytes for regionId to set.
+     */
+    private void setRegionIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      regionId_ = value.toStringUtf8();
+
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 4;
+    private java.lang.String message_;
+    /**
+     * <code>string message = 4;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      return message_;
+    }
+    /**
+     * <code>string message = 4;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(message_);
+    }
+    /**
+     * <code>string message = 4;</code>
+     * @param value The message to set.
+     */
+    private void setMessage(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      message_ = value;
+    }
+    /**
+     * <code>string message = 4;</code>
+     */
+    private void clearMessage() {
+
+      message_ = getDefaultInstance().getMessage();
+    }
+    /**
+     * <code>string message = 4;</code>
+     * @param value The bytes for message to set.
+     */
+    private void setMessageBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      message_ = value.toStringUtf8();
+
+    }
+
+    public static final int POSITION_FIELD_NUMBER = 5;
+    private sl_link.SlLink.PolygonPoint position_;
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     */
+    @java.lang.Override
+    public boolean hasPosition() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.PolygonPoint getPosition() {
+      return position_ == null ? sl_link.SlLink.PolygonPoint.getDefaultInstance() : position_;
+    }
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     */
+    private void setPosition(sl_link.SlLink.PolygonPoint value) {
+      value.getClass();
+  position_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergePosition(sl_link.SlLink.PolygonPoint value) {
+      value.getClass();
+  if (position_ != null &&
+          position_ != sl_link.SlLink.PolygonPoint.getDefaultInstance()) {
+        position_ =
+          sl_link.SlLink.PolygonPoint.newBuilder(position_).mergeFrom(value).buildPartial();
+      } else {
+        position_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.PolygonPoint position = 5;</code>
+     */
+    private void clearPosition() {  position_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingCheckItem parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingCheckItem parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingCheckItem parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingCheckItem prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingCheckItem}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingCheckItem, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingCheckItem)
+        sl_link.SlLink.DrawingCheckItemOrBuilder {
+      // Construct using sl_link.SlLink.DrawingCheckItem.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string level = 1;</code>
+       * @return The level.
+       */
+      @java.lang.Override
+      public java.lang.String getLevel() {
+        return instance.getLevel();
+      }
+      /**
+       * <code>string level = 1;</code>
+       * @return The bytes for level.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getLevelBytes() {
+        return instance.getLevelBytes();
+      }
+      /**
+       * <code>string level = 1;</code>
+       * @param value The level to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLevel(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setLevel(value);
+        return this;
+      }
+      /**
+       * <code>string level = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLevel() {
+        copyOnWrite();
+        instance.clearLevel();
+        return this;
+      }
+      /**
+       * <code>string level = 1;</code>
+       * @param value The bytes for level to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLevelBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setLevelBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string code = 2;</code>
+       * @return The code.
+       */
+      @java.lang.Override
+      public java.lang.String getCode() {
+        return instance.getCode();
+      }
+      /**
+       * <code>string code = 2;</code>
+       * @return The bytes for code.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getCodeBytes() {
+        return instance.getCodeBytes();
+      }
+      /**
+       * <code>string code = 2;</code>
+       * @param value The code to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCode(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setCode(value);
+        return this;
+      }
+      /**
+       * <code>string code = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCode() {
+        copyOnWrite();
+        instance.clearCode();
+        return this;
+      }
+      /**
+       * <code>string code = 2;</code>
+       * @param value The bytes for code to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCodeBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setCodeBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string region_id = 3;</code>
+       * @return The regionId.
+       */
+      @java.lang.Override
+      public java.lang.String getRegionId() {
+        return instance.getRegionId();
+      }
+      /**
+       * <code>string region_id = 3;</code>
+       * @return The bytes for regionId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRegionIdBytes() {
+        return instance.getRegionIdBytes();
+      }
+      /**
+       * <code>string region_id = 3;</code>
+       * @param value The regionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRegionId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRegionId(value);
+        return this;
+      }
+      /**
+       * <code>string region_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRegionId() {
+        copyOnWrite();
+        instance.clearRegionId();
+        return this;
+      }
+      /**
+       * <code>string region_id = 3;</code>
+       * @param value The bytes for regionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRegionIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRegionIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string message = 4;</code>
+       * @return The message.
+       */
+      @java.lang.Override
+      public java.lang.String getMessage() {
+        return instance.getMessage();
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @return The bytes for message.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        return instance.getMessageBytes();
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMessage(value);
+        return this;
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        copyOnWrite();
+        instance.clearMessage();
+        return this;
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMessageBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.PolygonPoint position = 5;</code>
+       */
+      @java.lang.Override
+      public boolean hasPosition() {
+        return instance.hasPosition();
+      }
+      /**
+       * <code>.sl_link.PolygonPoint position = 5;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.PolygonPoint getPosition() {
+        return instance.getPosition();
+      }
+      /**
+       * <code>.sl_link.PolygonPoint position = 5;</code>
+       */
+      public Builder setPosition(sl_link.SlLink.PolygonPoint value) {
+        copyOnWrite();
+        instance.setPosition(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.PolygonPoint position = 5;</code>
+       */
+      public Builder setPosition(
+          sl_link.SlLink.PolygonPoint.Builder builderForValue) {
+        copyOnWrite();
+        instance.setPosition(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonPoint position = 5;</code>
+       */
+      public Builder mergePosition(sl_link.SlLink.PolygonPoint value) {
+        copyOnWrite();
+        instance.mergePosition(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.PolygonPoint position = 5;</code>
+       */
+      public Builder clearPosition() {  copyOnWrite();
+        instance.clearPosition();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingCheckItem)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingCheckItem();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "level_",
+              "code_",
+              "regionId_",
+              "message_",
+              "position_",
+            };
+            java.lang.String info =
+                "\u0000\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
+                "\u0003\u0208\u0004\u0208\u0005\u1009\u0000";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingCheckItem> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingCheckItem.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingCheckItem>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingCheckItem)
+    private static final sl_link.SlLink.DrawingCheckItem DEFAULT_INSTANCE;
+    static {
+      DrawingCheckItem defaultInstance = new DrawingCheckItem();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingCheckItem.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingCheckItem getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingCheckItem> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingCheckItem> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface DrawingDraftResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.DrawingDraftResponse)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The result.
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>string request_id = 3;</code>
+     * @return The requestId.
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 3;</code>
+     * @return The bytes for requestId.
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The draftId.
+     */
+    java.lang.String getDraftId();
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The bytes for draftId.
+     */
+    com.google.protobuf.ByteString
+        getDraftIdBytes();
+
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     * @return The draftVersion.
+     */
+    int getDraftVersion();
+
+    /**
+     * <code>bool complete = 6;</code>
+     * @return The complete.
+     */
+    boolean getComplete();
+
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    java.util.List<sl_link.SlLink.DrawingCheckItem>
+        getChecksList();
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    sl_link.SlLink.DrawingCheckItem getChecks(int index);
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    int getChecksCount();
+
+    /**
+     * <code>uint32 feature_version = 8;</code>
+     * @return The featureVersion.
+     */
+    int getFeatureVersion();
+
+    /**
+     * <code>uint32 max_chunk_bytes = 9;</code>
+     * @return The maxChunkBytes.
+     */
+    int getMaxChunkBytes();
+
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     * @return Whether the layer field is set.
+     */
+    boolean hasLayer();
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     * @return The layer.
+     */
+    sl_link.SlLink.DrawingObstacleLayerInfo getLayer();
+  }
+  /**
+   * Protobuf type {@code sl_link.DrawingDraftResponse}
+   */
+  public  static final class DrawingDraftResponse extends
+      com.google.protobuf.GeneratedMessageLite<
+          DrawingDraftResponse, DrawingDraftResponse.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.DrawingDraftResponse)
+      DrawingDraftResponseOrBuilder {
+    private DrawingDraftResponse() {
+      message_ = "";
+      requestId_ = "";
+      draftId_ = "";
+      checks_ = emptyProtobufList();
+    }
+    private int bitField0_;
+    public static final int RESULT_FIELD_NUMBER = 1;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    @java.lang.Override
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ResultCode getResult() {
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.forNumber(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @param value The enum numeric value on the wire for result to set.
+     */
+    private void setResultValue(int value) {
+        result_ = value;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     * @param value The result to set.
+     */
+    private void setResult(sl_link.SlLink.ResultCode value) {
+      result_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 1;</code>
+     */
+    private void clearResult() {
+
+      result_ = 0;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private java.lang.String message_;
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      return message_;
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(message_);
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @param value The message to set.
+     */
+    private void setMessage(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      message_ = value;
+    }
+    /**
+     * <code>string message = 2;</code>
+     */
+    private void clearMessage() {
+
+      message_ = getDefaultInstance().getMessage();
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @param value The bytes for message to set.
+     */
+    private void setMessageBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      message_ = value.toStringUtf8();
+
+    }
+
+    public static final int REQUEST_ID_FIELD_NUMBER = 3;
+    private java.lang.String requestId_;
+    /**
+     * <code>string request_id = 3;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public java.lang.String getRequestId() {
+      return requestId_;
+    }
+    /**
+     * <code>string request_id = 3;</code>
+     * @return The bytes for requestId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(requestId_);
+    }
+    /**
+     * <code>string request_id = 3;</code>
+     * @param value The requestId to set.
+     */
+    private void setRequestId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      requestId_ = value;
+    }
+    /**
+     * <code>string request_id = 3;</code>
+     */
+    private void clearRequestId() {
+
+      requestId_ = getDefaultInstance().getRequestId();
+    }
+    /**
+     * <code>string request_id = 3;</code>
+     * @param value The bytes for requestId to set.
+     */
+    private void setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      requestId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAFT_ID_FIELD_NUMBER = 4;
+    private java.lang.String draftId_;
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The draftId.
+     */
+    @java.lang.Override
+    public java.lang.String getDraftId() {
+      return draftId_;
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     * @return The bytes for draftId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDraftIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(draftId_);
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     * @param value The draftId to set.
+     */
+    private void setDraftId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      draftId_ = value;
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     */
+    private void clearDraftId() {
+
+      draftId_ = getDefaultInstance().getDraftId();
+    }
+    /**
+     * <code>string draft_id = 4;</code>
+     * @param value The bytes for draftId to set.
+     */
+    private void setDraftIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      draftId_ = value.toStringUtf8();
+
+    }
+
+    public static final int DRAFT_VERSION_FIELD_NUMBER = 5;
+    private int draftVersion_;
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     * @return The draftVersion.
+     */
+    @java.lang.Override
+    public int getDraftVersion() {
+      return draftVersion_;
+    }
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     * @param value The draftVersion to set.
+     */
+    private void setDraftVersion(int value) {
+
+      draftVersion_ = value;
+    }
+    /**
+     * <code>uint32 draft_version = 5;</code>
+     */
+    private void clearDraftVersion() {
+
+      draftVersion_ = 0;
+    }
+
+    public static final int COMPLETE_FIELD_NUMBER = 6;
+    private boolean complete_;
+    /**
+     * <code>bool complete = 6;</code>
+     * @return The complete.
+     */
+    @java.lang.Override
+    public boolean getComplete() {
+      return complete_;
+    }
+    /**
+     * <code>bool complete = 6;</code>
+     * @param value The complete to set.
+     */
+    private void setComplete(boolean value) {
+
+      complete_ = value;
+    }
+    /**
+     * <code>bool complete = 6;</code>
+     */
+    private void clearComplete() {
+
+      complete_ = false;
+    }
+
+    public static final int CHECKS_FIELD_NUMBER = 7;
+    private com.google.protobuf.Internal.ProtobufList<sl_link.SlLink.DrawingCheckItem> checks_;
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    @java.lang.Override
+    public java.util.List<sl_link.SlLink.DrawingCheckItem> getChecksList() {
+      return checks_;
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    public java.util.List<? extends sl_link.SlLink.DrawingCheckItemOrBuilder>
+        getChecksOrBuilderList() {
+      return checks_;
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    @java.lang.Override
+    public int getChecksCount() {
+      return checks_.size();
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingCheckItem getChecks(int index) {
+      return checks_.get(index);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    public sl_link.SlLink.DrawingCheckItemOrBuilder getChecksOrBuilder(
+        int index) {
+      return checks_.get(index);
+    }
+    private void ensureChecksIsMutable() {
+      com.google.protobuf.Internal.ProtobufList<sl_link.SlLink.DrawingCheckItem> tmp = checks_;
+      if (!tmp.isModifiable()) {
+        checks_ =
+            com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
+       }
+    }
+
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    private void setChecks(
+        int index, sl_link.SlLink.DrawingCheckItem value) {
+      value.getClass();
+  ensureChecksIsMutable();
+      checks_.set(index, value);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    private void addChecks(sl_link.SlLink.DrawingCheckItem value) {
+      value.getClass();
+  ensureChecksIsMutable();
+      checks_.add(value);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    private void addChecks(
+        int index, sl_link.SlLink.DrawingCheckItem value) {
+      value.getClass();
+  ensureChecksIsMutable();
+      checks_.add(index, value);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    private void addAllChecks(
+        java.lang.Iterable<? extends sl_link.SlLink.DrawingCheckItem> values) {
+      ensureChecksIsMutable();
+      com.google.protobuf.AbstractMessageLite.addAll(
+          values, checks_);
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    private void clearChecks() {
+      checks_ = emptyProtobufList();
+    }
+    /**
+     * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+     */
+    private void removeChecks(int index) {
+      ensureChecksIsMutable();
+      checks_.remove(index);
+    }
+
+    public static final int FEATURE_VERSION_FIELD_NUMBER = 8;
+    private int featureVersion_;
+    /**
+     * <code>uint32 feature_version = 8;</code>
+     * @return The featureVersion.
+     */
+    @java.lang.Override
+    public int getFeatureVersion() {
+      return featureVersion_;
+    }
+    /**
+     * <code>uint32 feature_version = 8;</code>
+     * @param value The featureVersion to set.
+     */
+    private void setFeatureVersion(int value) {
+
+      featureVersion_ = value;
+    }
+    /**
+     * <code>uint32 feature_version = 8;</code>
+     */
+    private void clearFeatureVersion() {
+
+      featureVersion_ = 0;
+    }
+
+    public static final int MAX_CHUNK_BYTES_FIELD_NUMBER = 9;
+    private int maxChunkBytes_;
+    /**
+     * <code>uint32 max_chunk_bytes = 9;</code>
+     * @return The maxChunkBytes.
+     */
+    @java.lang.Override
+    public int getMaxChunkBytes() {
+      return maxChunkBytes_;
+    }
+    /**
+     * <code>uint32 max_chunk_bytes = 9;</code>
+     * @param value The maxChunkBytes to set.
+     */
+    private void setMaxChunkBytes(int value) {
+
+      maxChunkBytes_ = value;
+    }
+    /**
+     * <code>uint32 max_chunk_bytes = 9;</code>
+     */
+    private void clearMaxChunkBytes() {
+
+      maxChunkBytes_ = 0;
+    }
+
+    public static final int LAYER_FIELD_NUMBER = 10;
+    private sl_link.SlLink.DrawingObstacleLayerInfo layer_;
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     */
+    @java.lang.Override
+    public boolean hasLayer() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.DrawingObstacleLayerInfo getLayer() {
+      return layer_ == null ? sl_link.SlLink.DrawingObstacleLayerInfo.getDefaultInstance() : layer_;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     */
+    private void setLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+      value.getClass();
+  layer_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+      value.getClass();
+  if (layer_ != null &&
+          layer_ != sl_link.SlLink.DrawingObstacleLayerInfo.getDefaultInstance()) {
+        layer_ =
+          sl_link.SlLink.DrawingObstacleLayerInfo.newBuilder(layer_).mergeFrom(value).buildPartial();
+      } else {
+        layer_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+     */
+    private void clearLayer() {  layer_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.DrawingDraftResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.DrawingDraftResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.DrawingDraftResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.DrawingDraftResponse prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.DrawingDraftResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.DrawingDraftResponse, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.DrawingDraftResponse)
+        sl_link.SlLink.DrawingDraftResponseOrBuilder {
+      // Construct using sl_link.SlLink.DrawingDraftResponse.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return The enum numeric value on the wire for result.
+       */
+      @java.lang.Override
+      public int getResultValue() {
+        return instance.getResultValue();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultValue(int value) {
+        copyOnWrite();
+        instance.setResultValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return The result.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ResultCode getResult() {
+        return instance.getResult();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @param value The enum numeric value on the wire for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        copyOnWrite();
+        instance.setResult(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        copyOnWrite();
+        instance.clearResult();
+        return this;
+      }
+
+      /**
+       * <code>string message = 2;</code>
+       * @return The message.
+       */
+      @java.lang.Override
+      public java.lang.String getMessage() {
+        return instance.getMessage();
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return The bytes for message.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        return instance.getMessageBytes();
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMessage(value);
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        copyOnWrite();
+        instance.clearMessage();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMessageBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string request_id = 3;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public java.lang.String getRequestId() {
+        return instance.getRequestId();
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       * @return The bytes for requestId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        return instance.getRequestIdBytes();
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRequestId(value);
+        return this;
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        copyOnWrite();
+        instance.clearRequestId();
+        return this;
+      }
+      /**
+       * <code>string request_id = 3;</code>
+       * @param value The bytes for requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRequestIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string draft_id = 4;</code>
+       * @return The draftId.
+       */
+      @java.lang.Override
+      public java.lang.String getDraftId() {
+        return instance.getDraftId();
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @return The bytes for draftId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDraftIdBytes() {
+        return instance.getDraftIdBytes();
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @param value The draftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDraftId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setDraftId(value);
+        return this;
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDraftId() {
+        copyOnWrite();
+        instance.clearDraftId();
+        return this;
+      }
+      /**
+       * <code>string draft_id = 4;</code>
+       * @param value The bytes for draftId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDraftIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setDraftIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 draft_version = 5;</code>
+       * @return The draftVersion.
+       */
+      @java.lang.Override
+      public int getDraftVersion() {
+        return instance.getDraftVersion();
+      }
+      /**
+       * <code>uint32 draft_version = 5;</code>
+       * @param value The draftVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDraftVersion(int value) {
+        copyOnWrite();
+        instance.setDraftVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 draft_version = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDraftVersion() {
+        copyOnWrite();
+        instance.clearDraftVersion();
+        return this;
+      }
+
+      /**
+       * <code>bool complete = 6;</code>
+       * @return The complete.
+       */
+      @java.lang.Override
+      public boolean getComplete() {
+        return instance.getComplete();
+      }
+      /**
+       * <code>bool complete = 6;</code>
+       * @param value The complete to set.
+       * @return This builder for chaining.
+       */
+      public Builder setComplete(boolean value) {
+        copyOnWrite();
+        instance.setComplete(value);
+        return this;
+      }
+      /**
+       * <code>bool complete = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearComplete() {
+        copyOnWrite();
+        instance.clearComplete();
+        return this;
+      }
+
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      @java.lang.Override
+      public java.util.List<sl_link.SlLink.DrawingCheckItem> getChecksList() {
+        return java.util.Collections.unmodifiableList(
+            instance.getChecksList());
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      @java.lang.Override
+      public int getChecksCount() {
+        return instance.getChecksCount();
+      }/**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingCheckItem getChecks(int index) {
+        return instance.getChecks(index);
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder setChecks(
+          int index, sl_link.SlLink.DrawingCheckItem value) {
+        copyOnWrite();
+        instance.setChecks(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder setChecks(
+          int index, sl_link.SlLink.DrawingCheckItem.Builder builderForValue) {
+        copyOnWrite();
+        instance.setChecks(index,
+            builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder addChecks(sl_link.SlLink.DrawingCheckItem value) {
+        copyOnWrite();
+        instance.addChecks(value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder addChecks(
+          int index, sl_link.SlLink.DrawingCheckItem value) {
+        copyOnWrite();
+        instance.addChecks(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder addChecks(
+          sl_link.SlLink.DrawingCheckItem.Builder builderForValue) {
+        copyOnWrite();
+        instance.addChecks(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder addChecks(
+          int index, sl_link.SlLink.DrawingCheckItem.Builder builderForValue) {
+        copyOnWrite();
+        instance.addChecks(index,
+            builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder addAllChecks(
+          java.lang.Iterable<? extends sl_link.SlLink.DrawingCheckItem> values) {
+        copyOnWrite();
+        instance.addAllChecks(values);
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder clearChecks() {
+        copyOnWrite();
+        instance.clearChecks();
+        return this;
+      }
+      /**
+       * <code>repeated .sl_link.DrawingCheckItem checks = 7;</code>
+       */
+      public Builder removeChecks(int index) {
+        copyOnWrite();
+        instance.removeChecks(index);
+        return this;
+      }
+
+      /**
+       * <code>uint32 feature_version = 8;</code>
+       * @return The featureVersion.
+       */
+      @java.lang.Override
+      public int getFeatureVersion() {
+        return instance.getFeatureVersion();
+      }
+      /**
+       * <code>uint32 feature_version = 8;</code>
+       * @param value The featureVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFeatureVersion(int value) {
+        copyOnWrite();
+        instance.setFeatureVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 feature_version = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFeatureVersion() {
+        copyOnWrite();
+        instance.clearFeatureVersion();
+        return this;
+      }
+
+      /**
+       * <code>uint32 max_chunk_bytes = 9;</code>
+       * @return The maxChunkBytes.
+       */
+      @java.lang.Override
+      public int getMaxChunkBytes() {
+        return instance.getMaxChunkBytes();
+      }
+      /**
+       * <code>uint32 max_chunk_bytes = 9;</code>
+       * @param value The maxChunkBytes to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMaxChunkBytes(int value) {
+        copyOnWrite();
+        instance.setMaxChunkBytes(value);
+        return this;
+      }
+      /**
+       * <code>uint32 max_chunk_bytes = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMaxChunkBytes() {
+        copyOnWrite();
+        instance.clearMaxChunkBytes();
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+       */
+      @java.lang.Override
+      public boolean hasLayer() {
+        return instance.hasLayer();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.DrawingObstacleLayerInfo getLayer() {
+        return instance.getLayer();
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+       */
+      public Builder setLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+        copyOnWrite();
+        instance.setLayer(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+       */
+      public Builder setLayer(
+          sl_link.SlLink.DrawingObstacleLayerInfo.Builder builderForValue) {
+        copyOnWrite();
+        instance.setLayer(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+       */
+      public Builder mergeLayer(sl_link.SlLink.DrawingObstacleLayerInfo value) {
+        copyOnWrite();
+        instance.mergeLayer(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.DrawingObstacleLayerInfo layer = 10;</code>
+       */
+      public Builder clearLayer() {  copyOnWrite();
+        instance.clearLayer();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.DrawingDraftResponse)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.DrawingDraftResponse();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "result_",
+              "message_",
+              "requestId_",
+              "draftId_",
+              "draftVersion_",
+              "complete_",
+              "checks_",
+              sl_link.SlLink.DrawingCheckItem.class,
+              "featureVersion_",
+              "maxChunkBytes_",
+              "layer_",
+            };
+            java.lang.String info =
+                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0001\u0000\u0001\f\u0002\u0208\u0003\u0208" +
+                "\u0004\u0208\u0005\u000b\u0006\u0007\u0007\u001b\b\u000b\t\u000b\n\u1009\u0000";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.DrawingDraftResponse> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.DrawingDraftResponse.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.DrawingDraftResponse>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.DrawingDraftResponse)
+    private static final sl_link.SlLink.DrawingDraftResponse DEFAULT_INSTANCE;
+    static {
+      DrawingDraftResponse defaultInstance = new DrawingDraftResponse();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        DrawingDraftResponse.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.DrawingDraftResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<DrawingDraftResponse> PARSER;
+
+    public static com.google.protobuf.Parser<DrawingDraftResponse> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

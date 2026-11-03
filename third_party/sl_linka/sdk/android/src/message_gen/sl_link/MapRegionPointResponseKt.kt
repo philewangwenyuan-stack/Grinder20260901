@@ -355,6 +355,125 @@ public object MapRegionPointResponseKt {
     public fun hasCropRegion(): kotlin.Boolean {
       return _builder.hasCropRegion()
     }
+
+    /**
+     * `.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;`
+     */
+    public var drawingLayer: sl_link.SlLink.DrawingObstacleLayerInfo
+      @JvmName("getDrawingLayer")
+      get() = _builder.getDrawingLayer()
+      @JvmName("setDrawingLayer")
+      set(value) {
+        _builder.setDrawingLayer(value)
+      }
+    /**
+     * `.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;`
+     */
+    public fun clearDrawingLayer() {
+      _builder.clearDrawingLayer()
+    }
+    /**
+     * `.sl_link.DrawingObstacleLayerInfo drawing_layer = 10;`
+     * @return Whether the drawingLayer field is set.
+     */
+    public fun hasDrawingLayer(): kotlin.Boolean {
+      return _builder.hasDrawingLayer()
+    }
+
+    /**
+     * ```
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * ```
+     *
+     * `string transfer_id = 11;`
+     */
+    public var transferId: kotlin.String
+      @JvmName("getTransferId")
+      get() = _builder.getTransferId()
+      @JvmName("setTransferId")
+      set(value) {
+        _builder.setTransferId(value)
+      }
+    /**
+     * ```
+     * Large annotation snapshots are serialized once, then carried in bounded
+     * envelopes on the same message ID. Publish only after SHA-256 verification.
+     * ```
+     *
+     * `string transfer_id = 11;`
+     */
+    public fun clearTransferId() {
+      _builder.clearTransferId()
+    }
+
+    /**
+     * <code>uint32 chunk_index = 12;</code>
+     */
+    public var chunkIndex: kotlin.Int
+      @JvmName("getChunkIndex")
+      get() = _builder.getChunkIndex()
+      @JvmName("setChunkIndex")
+      set(value) {
+        _builder.setChunkIndex(value)
+      }
+    /**
+     * `uint32 chunk_index = 12;`
+     */
+    public fun clearChunkIndex() {
+      _builder.clearChunkIndex()
+    }
+
+    /**
+     * <code>uint32 total_chunks = 13;</code>
+     */
+    public var totalChunks: kotlin.Int
+      @JvmName("getTotalChunks")
+      get() = _builder.getTotalChunks()
+      @JvmName("setTotalChunks")
+      set(value) {
+        _builder.setTotalChunks(value)
+      }
+    /**
+     * `uint32 total_chunks = 13;`
+     */
+    public fun clearTotalChunks() {
+      _builder.clearTotalChunks()
+    }
+
+    /**
+     * <code>bytes chunk_data = 14;</code>
+     */
+    public var chunkData: com.google.protobuf.ByteString
+      @JvmName("getChunkData")
+      get() = _builder.getChunkData()
+      @JvmName("setChunkData")
+      set(value) {
+        _builder.setChunkData(value)
+      }
+    /**
+     * `bytes chunk_data = 14;`
+     */
+    public fun clearChunkData() {
+      _builder.clearChunkData()
+    }
+
+    /**
+     * `string payload_sha256 = 15;`
+     */
+    public var payloadSha256: kotlin.String
+      @JvmName("getPayloadSha256")
+      get() = _builder.getPayloadSha256()
+      @JvmName("setPayloadSha256")
+      set(value) {
+        _builder.setPayloadSha256(value)
+      }
+    /**
+     * `string payload_sha256 = 15;`
+     */
+    public fun clearPayloadSha256() {
+      _builder.clearPayloadSha256()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapRegionPointResponse.copy(block: `sl_link`.MapRegionPointResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapRegionPointResponse =
@@ -362,4 +481,7 @@ public inline fun sl_link.SlLink.MapRegionPointResponse.copy(block: `sl_link`.Ma
 
 public val sl_link.SlLink.MapRegionPointResponseOrBuilder.cropRegionOrNull: sl_link.SlLink.PolygonRegion?
   get() = if (hasCropRegion()) getCropRegion() else null
+
+public val sl_link.SlLink.MapRegionPointResponseOrBuilder.drawingLayerOrNull: sl_link.SlLink.DrawingObstacleLayerInfo?
+  get() = if (hasDrawingLayer()) getDrawingLayer() else null
 

@@ -11,6 +11,7 @@ from pathlib import Path as FsPath
 import cv2
 import numpy as np
 from grinder_scheduler.path_geometry import compact_planner_polyline
+from grinder_scheduler.drawing_obstacles import foundation_mask, path_avoids_foundations
 import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path as NavPath
@@ -109,6 +110,28 @@ class PlannerAdapter:
             return None
 
     def plan(self, task_id, composed_grid, map_info, task_config):
+        foundations = [r for r in getattr(task_config, "obstacle_regions", [])
+            if isinstance(r, dict) and r.get("source") == "drawing"
+            and r.get("enabled", True) and int(r.get("drawing_action", 0)) == 0]
+        if not foundations:
+            return self._plan_without_drawing(task_id, composed_grid, map_info, task_config)
+        mask = foundation_mask(composed_grid.shape[:2], map_info, foundations)
+        # A request-owned grid copy: never hand drawing pixels to map export.
+        grid = np.array(composed_grid, copy=True)
+        grid[mask > 0] = 100
+        result = self._plan_without_drawing(task_id, grid, map_info, task_config)
+        if not result.points:
+            return result
+        footprint = getattr(task_config, "drawing_footprint", [])
+        if not footprint:
+            width = float(getattr(task_config, "vehicle_width", 0.8)) / 2
+            length = float(getattr(task_config, "vehicle_length", 1.6)) / 2
+            footprint = [(-length,-width),(length,-width),(length,width),(-length,width)]
+        if not path_avoids_foundations(result.points, mask, map_info, footprint=footprint):
+            raise ValueError("全局路径或车体包络与图纸地基相交，无法生成安全路径")
+        return result
+
+    def _plan_without_drawing(self, task_id, composed_grid, map_info, task_config):
         t0_total = time.perf_counter()
         if self._planner_module is None:
             if self._planner_import_error is not None:
@@ -962,7 +985,17 @@ class PlannerAdapter:
             goal = {"point": {"x": gx, "y": gy}, "orientation": q}
 
             obstacles = []
+            foundations = [r for r in list(getattr(task_config, "obstacle_regions", []) or []) if isinstance(r, dict) and r.get("source") == "drawing"]
+            if foundations:
+                mask = foundation_mask((int(map_info["height"]), int(map_info["width"])), map_info, foundations)
+                contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                for contour in contours:
+                    world = [(float(p[0][0])*resolution+origin_x, float(p[0][1])*resolution+origin_y) for p in contour]
+                    if len(world) >= 3:
+                        obstacles.append(self._hybrid_module.PolygonObstacle(points=world))
             for region in list(getattr(task_config, "obstacle_regions", []) or []):
+                if isinstance(region, dict) and region.get("source") == "drawing":
+                    continue
                 points = region.get("points", []) if isinstance(region, dict) else []
                 if len(points) < 3:
                     continue
@@ -1227,8 +1260,11 @@ class PlannerAdapter:
         resolution = float(map_info["resolution"])
         origin_x = float(map_info["origin_x"])
         origin_y = float(map_info["origin_y"])
-        obstacle_mask = np.zeros((height, width), dtype=np.uint8)
+        drawing = [r for r in obstacle_regions if isinstance(r, dict) and r.get("source") == "drawing"]
+        obstacle_mask = foundation_mask((height, width), map_info, drawing) if drawing else np.zeros((height, width), dtype=np.uint8)
         for region in obstacle_regions:
+            if isinstance(region, dict) and region.get("source") == "drawing":
+                continue
             if not isinstance(region, dict) or not bool(region.get("enabled", True)):
                 continue
             points = region.get("points", []) or []

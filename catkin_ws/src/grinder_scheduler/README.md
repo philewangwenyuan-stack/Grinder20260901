@@ -320,3 +320,18 @@ TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更�
 
 需配套更新APP与板端。旧区域须逐个确认保存工艺。本次仅源码和离线验证，未部署、未安装、未进行实机作业验收。
 回归：scheduler `test_history_process.py`、`test_execution_settings.py`、`test_task_runtime_parameters.py`、急停/续跑回归；APP `core:tcp/MapProcessSettingsTest`、`feature:map/MapProcessSettingsTest`。
+
+
+## DXF 图纸地基独立障碍层
+
+`drawing_obstacles.py` 管理地图向量 JSON、分片草稿、pending 保存日志和任务版本授权；`drawing_scheduler.py` 接入现有保存、查询、任务门禁及路径检查。协议 `0x053A/0x053B`，必须配套更新生成 SDK。APP 负责 ASCII DXF 解析、配准和地基选择，板端复核控制点残差、多边形和地图绑定；确认页只做几何检查，划分工作区后的原有预览才规划。
+
+图纸保存于 `persist_state_dir/drawing_layers/<map-id-sha256>.json`，仅在全局规划请求的栅格副本上合入，绝不写 MapService、overlay.npy、原始或导航 PGM，不改变局部 costmap、扫描或 RPP。规划后复检全部线段和车体包络，追加起步连接、启动及恢复也校验。旧普通禁区和任务障碍仍走原有逻辑。地图几何/原始资产变更使层失效，默认阻止任务；明确跳过仅绑定该地图、任务和图纸版本，停止/结束撤销。
+
+上传单片48KiB、总量8MiB，SHA-256校验；半包5分钟、完整草稿24小时。最终地图保存前先持久化pending，保存成功再发布版本；相同request_id可重试，重启后pending也支持原请求重试。中断/pending期间禁止启动，地图几何改变须重新对齐。两个文件保存不是跨文件原子事务。关闭现有persist_state_enabled时图纸不能跨重启保留。
+
+离线回归逐文件运行：`test/test_drawing_obstacles.py`、`test/test_drawing_integration.py`、`test/test_drawing_planning.py`，另跑 `test_live_map_save.py`、`test_planner_preprocessing.py`。纯编辑环境需NumPy、OpenCV、protobuf及规划器测试依赖；scheduler/chassis源码目录和Python SDK加入PYTHONPATH。真实ROS/运动急停回归需Linux与Catkin，Windows缺少termios，不能代替实机验证。
+
+未部署硬件。现场须用真实二维基础DXF独立校核配准点外的位置、车体转弯/起步连接、窄通道、地图失效、保存中断恢复和原有禁区；核对发布前后PGM/overlay哈希不变。完整APP交互及现场清单见配套APP仓库 `docs/drawing_obstacles.md`。
+
+区域查询超过65000字节时在原0x052F响应上分片回读，单片48KiB、总量16MiB、独立transfer_id及SHA-256；APP校验完整快照后一次发布，断线清理半包。小响应保持原格式。测试覆盖分片顺序/重复/损坏/过期及完整地基回读。

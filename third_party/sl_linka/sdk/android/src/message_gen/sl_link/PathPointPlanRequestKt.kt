@@ -214,6 +214,40 @@ public object PathPointPlanRequestKt {
     public fun clearMapId() {
       _builder.clearMapId()
     }
+
+    /**
+     * `string drawing_draft_id = 9;`
+     */
+    public var drawingDraftId: kotlin.String
+      @JvmName("getDrawingDraftId")
+      get() = _builder.getDrawingDraftId()
+      @JvmName("setDrawingDraftId")
+      set(value) {
+        _builder.setDrawingDraftId(value)
+      }
+    /**
+     * `string drawing_draft_id = 9;`
+     */
+    public fun clearDrawingDraftId() {
+      _builder.clearDrawingDraftId()
+    }
+
+    /**
+     * <code>uint32 drawing_draft_version = 10;</code>
+     */
+    public var drawingDraftVersion: kotlin.Int
+      @JvmName("getDrawingDraftVersion")
+      get() = _builder.getDrawingDraftVersion()
+      @JvmName("setDrawingDraftVersion")
+      set(value) {
+        _builder.setDrawingDraftVersion(value)
+      }
+    /**
+     * `uint32 drawing_draft_version = 10;`
+     */
+    public fun clearDrawingDraftVersion() {
+      _builder.clearDrawingDraftVersion()
+    }
   }
 }
 public inline fun sl_link.SlLink.PathPointPlanRequest.copy(block: `sl_link`.PathPointPlanRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PathPointPlanRequest =
