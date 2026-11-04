@@ -353,6 +353,30 @@ public object MapEditCommandKt {
     public fun clearMapId() {
       _builder.clearMapId()
     }
+
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 15;`
+     */
+    public var editBinding: sl_link.SlLink.MapDraftBinding
+      @JvmName("getEditBinding")
+      get() = _builder.getEditBinding()
+      @JvmName("setEditBinding")
+      set(value) {
+        _builder.setEditBinding(value)
+      }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 15;`
+     */
+    public fun clearEditBinding() {
+      _builder.clearEditBinding()
+    }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 15;`
+     * @return Whether the editBinding field is set.
+     */
+    public fun hasEditBinding(): kotlin.Boolean {
+      return _builder.hasEditBinding()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapEditCommand.copy(block: `sl_link`.MapEditCommandKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapEditCommand =
@@ -367,3 +391,5 @@ public val sl_link.SlLink.MapEditCommandOrBuilder.startPoseOrNull: sl_link.SlLin
 public val sl_link.SlLink.MapEditCommandOrBuilder.endPoseOrNull: sl_link.SlLink.Pose2D?
   get() = if (hasEndPose()) getEndPose() else null
 
+public val sl_link.SlLink.MapEditCommandOrBuilder.editBindingOrNull: sl_link.SlLink.MapDraftBinding?
+  get() = if (hasEditBinding()) getEditBinding() else null

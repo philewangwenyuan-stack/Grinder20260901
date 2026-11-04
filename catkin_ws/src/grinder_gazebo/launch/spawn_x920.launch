@@ -1,6 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
   <arg name="paused" default="false" />
+  <arg name="world_name" default="$(eval optenv('GRINDER_SIM_WORLD', find('grinder_gazebo') + '/worlds/factory_floor.world'))" />
   <arg name="visual_mesh" default="false" />
   <arg name="lidar_x" default="0.20" />
   <arg name="lidar_y" default="0.0" />
@@ -22,7 +23,7 @@
          command="$(find xacro)/xacro '$(find grinder_gazebo)/urdf/x920_grinder.urdf.xacro' visual_mesh:=$(arg visual_mesh) lidar_x:=$(arg lidar_x) lidar_y:=$(arg lidar_y) lidar_z:=$(arg lidar_z) lidar_horizontal_samples:=$(arg lidar_horizontal_samples) lidar_vertical_samples:=$(arg lidar_vertical_samples) lidar_max_range:=$(arg lidar_max_range) sensor_noise_config:=$(arg sensor_noise_config)" />
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find grinder_gazebo)/worlds/factory_floor.world" />
+    <arg name="world_name" value="$(arg world_name)" />
     <arg name="gui" value="$(arg gui)" />
     <arg name="paused" value="$(arg paused)" />
     <arg name="use_sim_time" value="true" />

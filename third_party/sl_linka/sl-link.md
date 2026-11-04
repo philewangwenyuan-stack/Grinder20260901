@@ -1422,3 +1422,12 @@ SettingsWriteRequest.process（7）/process_map_id（8）/process_region_id（9�
 成功响应回显SettingsWriteResponse.process（9）/process_map_id（10）/process_region_id（11），APP以精确ACK和区域身份关联。旧端忽略新字段的通用success不能确认保存。
 MapRegionPointResponse.work_regions[].region.process（PolygonRegion字段10）返回每区工艺，包含run_speed、disc_speed_rpm、process_type、grinding_parameter、concrete_strength、pressure。
 保存地图保留各区域工艺；启动/进入区域时应用对应执行快照，重复轮次复用本区工艺，连接段保持转场策略。缺失区域工艺需明确补存，禁止从其他区域或遥控参数推断。
+
+
+## 固定地图编辑草稿（0x053C / 0x053D）
+
+`MapDraftRequest` 带 `request_id`，支持 QUERY/FREEZE/RESUME/RESTART/DISCARD；响应回显请求编号、`feature_version=1`、`exists`、`mapping_stopped` 和 `MapDraftBinding(map_id, base_revision, edit_version)`。FREEZE 响应成功且 mapping_stopped 后 APP 才进入编辑。QUERY 不切换地图；普通退出保留草稿；RESTART 创建新扫描、不继承旧编辑。请求与响应走数据通道。
+
+草稿的 MapEditCommand、PathPlanRequest、PathPointPlanRequest、DrawingDraftRequest、MapAlignmentRequest、区域工艺 SettingsWriteRequest 和 MapSaveRequest 必须携带 `edit_binding`。MapEditResponse、SettingsWriteResponse 返回更新后的绑定；迟到回复只更新相同地图和底图 revision 的客户端会话。旧客户端缺少绑定不能修改隐藏草稿。正式地图的原接口保持兼容。
+
+最终 MapSaveRequest 携带固定草稿 ID、请求编号及绑定发布；重试同一发布请求返回已提交响应。MapDraft DISCARD 只标记放弃，不隐式删文件。底图资产不可变，编辑层单独持久化，图纸地基仍仅作用于全局规划内存副本。

@@ -321,6 +321,17 @@ PB_BIND(sl_link_DrawingCheckItem, sl_link_DrawingCheckItem, AUTO)
 PB_BIND(sl_link_DrawingDraftResponse, sl_link_DrawingDraftResponse, 2)
 
 
+PB_BIND(sl_link_MapDraftBinding, sl_link_MapDraftBinding, AUTO)
+
+
+PB_BIND(sl_link_MapDraftRequest, sl_link_MapDraftRequest, AUTO)
+
+
+PB_BIND(sl_link_MapDraftResponse, sl_link_MapDraftResponse, AUTO)
+
+
+
+
 
 
 

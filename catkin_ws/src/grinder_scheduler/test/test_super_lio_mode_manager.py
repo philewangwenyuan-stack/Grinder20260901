@@ -509,5 +509,47 @@ class SuperLioAssetValidationTest(unittest.TestCase):
         self.assertIn("/relocation_node", manager._message)
 
 
+class FreezeMappingInputsTest(unittest.TestCase):
+    def manager(self):
+        from unittest.mock import Mock
+        manager = SuperLioModeManager.__new__(SuperLioModeManager)
+        manager._wait_service = Mock()
+        return manager
+
+    def test_waits_for_final_cloud_before_snapshot(self):
+        from unittest.mock import Mock
+        from types import SimpleNamespace
+        calls = []
+        grid = Mock(side_effect=[SimpleNamespace(success=False, message="pending"), SimpleNamespace(success=True)])
+        def proxy(name, _type):
+            calls.append(name)
+            return (lambda: SimpleNamespace(success=True, message="123456789")) if name == "/lio/freeze_mapping" else grid
+        with patch("grinder_scheduler.super_lio_mode_manager.rospy.ServiceProxy", side_effect=proxy, create=True), \
+                patch("grinder_scheduler.super_lio_mode_manager.rospy.set_param", create=True) as set_param, \
+                patch("grinder_scheduler.super_lio_mode_manager.time.sleep"):
+            self.manager()._freeze_mapping_inputs()
+        self.assertEqual(calls, ["/lio/freeze_mapping", "/cloud_to_occupancy_grid/freeze_map"])
+        self.assertEqual(grid.call_count, 2)
+        set_param.assert_called_once_with("/cloud_to_occupancy_grid/freeze_target_stamp_ns", "123456789")
+
+    def test_lio_failure_does_not_freeze_or_save_grid(self):
+        from types import SimpleNamespace
+        with patch("grinder_scheduler.super_lio_mode_manager.rospy.ServiceProxy", create=True) as proxy:
+            proxy.return_value.return_value = SimpleNamespace(success=False, message="not ready")
+            with self.assertRaisesRegex(RuntimeError, "not ready"):
+                self.manager()._freeze_mapping_inputs()
+        self.assertEqual(proxy.call_count, 1)
+
+    def test_grid_timeout_is_bounded(self):
+        from types import SimpleNamespace
+        def proxy(name, _type):
+            return lambda: SimpleNamespace(success=name == "/lio/freeze_mapping", message="pending")
+        with patch("grinder_scheduler.super_lio_mode_manager.rospy.ServiceProxy", side_effect=proxy, create=True), \
+                patch("grinder_scheduler.super_lio_mode_manager.rospy.set_param", create=True), \
+                patch("grinder_scheduler.super_lio_mode_manager.time.monotonic", side_effect=[0, 11]):
+            with self.assertRaisesRegex(RuntimeError, "timed out"):
+                self.manager()._freeze_mapping_inputs()
+
+
 if __name__ == "__main__":
     unittest.main()

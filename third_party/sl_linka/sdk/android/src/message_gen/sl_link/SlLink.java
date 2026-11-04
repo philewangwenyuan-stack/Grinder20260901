@@ -324,6 +324,14 @@ public final class SlLink {
      * <code>MSG_ID_DRAWING_DRAFT_RESPONSE = 1339;</code>
      */
     MSG_ID_DRAWING_DRAFT_RESPONSE(1339),
+    /**
+     * <code>MSG_ID_MAP_DRAFT_REQUEST = 1340;</code>
+     */
+    MSG_ID_MAP_DRAFT_REQUEST(1340),
+    /**
+     * <code>MSG_ID_MAP_DRAFT_RESPONSE = 1341;</code>
+     */
+    MSG_ID_MAP_DRAFT_RESPONSE(1341),
     UNRECOGNIZED(-1),
     ;
 
@@ -635,6 +643,14 @@ public final class SlLink {
      * <code>MSG_ID_DRAWING_DRAFT_RESPONSE = 1339;</code>
      */
     public static final int MSG_ID_DRAWING_DRAFT_RESPONSE_VALUE = 1339;
+    /**
+     * <code>MSG_ID_MAP_DRAFT_REQUEST = 1340;</code>
+     */
+    public static final int MSG_ID_MAP_DRAFT_REQUEST_VALUE = 1340;
+    /**
+     * <code>MSG_ID_MAP_DRAFT_RESPONSE = 1341;</code>
+     */
+    public static final int MSG_ID_MAP_DRAFT_RESPONSE_VALUE = 1341;
 
 
     @java.lang.Override
@@ -735,6 +751,8 @@ public final class SlLink {
         case 1337: return MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE;
         case 1338: return MSG_ID_DRAWING_DRAFT_REQUEST;
         case 1339: return MSG_ID_DRAWING_DRAFT_RESPONSE;
+        case 1340: return MSG_ID_MAP_DRAFT_REQUEST;
+        case 1341: return MSG_ID_MAP_DRAFT_RESPONSE;
         default: return null;
       }
     }
@@ -3322,6 +3340,122 @@ public final class SlLink {
     }
 
     // @@protoc_insertion_point(enum_scope:sl_link.DrawingDraftOperation)
+  }
+
+  /**
+   * Protobuf enum {@code sl_link.MapDraftOperation}
+   */
+  public enum MapDraftOperation
+      implements com.google.protobuf.Internal.EnumLite {
+    /**
+     * <code>MAP_DRAFT_QUERY = 0;</code>
+     */
+    MAP_DRAFT_QUERY(0),
+    /**
+     * <code>MAP_DRAFT_FREEZE = 1;</code>
+     */
+    MAP_DRAFT_FREEZE(1),
+    /**
+     * <code>MAP_DRAFT_RESUME = 2;</code>
+     */
+    MAP_DRAFT_RESUME(2),
+    /**
+     * <code>MAP_DRAFT_RESTART = 3;</code>
+     */
+    MAP_DRAFT_RESTART(3),
+    /**
+     * <code>MAP_DRAFT_DISCARD = 4;</code>
+     */
+    MAP_DRAFT_DISCARD(4),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>MAP_DRAFT_QUERY = 0;</code>
+     */
+    public static final int MAP_DRAFT_QUERY_VALUE = 0;
+    /**
+     * <code>MAP_DRAFT_FREEZE = 1;</code>
+     */
+    public static final int MAP_DRAFT_FREEZE_VALUE = 1;
+    /**
+     * <code>MAP_DRAFT_RESUME = 2;</code>
+     */
+    public static final int MAP_DRAFT_RESUME_VALUE = 2;
+    /**
+     * <code>MAP_DRAFT_RESTART = 3;</code>
+     */
+    public static final int MAP_DRAFT_RESTART_VALUE = 3;
+    /**
+     * <code>MAP_DRAFT_DISCARD = 4;</code>
+     */
+    public static final int MAP_DRAFT_DISCARD_VALUE = 4;
+
+
+    @java.lang.Override
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The number of the enum to look for.
+     * @return The enum associated with the given number.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static MapDraftOperation valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static MapDraftOperation forNumber(int value) {
+      switch (value) {
+        case 0: return MAP_DRAFT_QUERY;
+        case 1: return MAP_DRAFT_FREEZE;
+        case 2: return MAP_DRAFT_RESUME;
+        case 3: return MAP_DRAFT_RESTART;
+        case 4: return MAP_DRAFT_DISCARD;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<MapDraftOperation>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        MapDraftOperation> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<MapDraftOperation>() {
+            @java.lang.Override
+            public MapDraftOperation findValueByNumber(int number) {
+              return MapDraftOperation.forNumber(number);
+            }
+          };
+
+    public static com.google.protobuf.Internal.EnumVerifier
+        internalGetVerifier() {
+      return MapDraftOperationVerifier.INSTANCE;
+    }
+
+    private static final class MapDraftOperationVerifier implements
+         com.google.protobuf.Internal.EnumVerifier {
+            static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new MapDraftOperationVerifier();
+            @java.lang.Override
+            public boolean isInRange(int number) {
+              return MapDraftOperation.forNumber(number) != null;
+            }
+          };
+
+    private final int value;
+
+    private MapDraftOperation(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:sl_link.MapDraftOperation)
   }
 
   public interface WifiConfigOrBuilder extends
@@ -14485,6 +14619,17 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getProcessRegionIdBytes();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.SettingsWriteRequest}
@@ -14903,6 +15048,52 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       processRegionId_ = value.toStringUtf8();
 
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 10;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000010;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000010;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000010);
     }
 
     public static sl_link.SlLink.SettingsWriteRequest parseFrom(
@@ -15426,6 +15617,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 10;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.SettingsWriteRequest)
     }
     @java.lang.Override
@@ -15452,11 +15690,12 @@ public final class SlLink {
               "process_",
               "processMapId_",
               "processRegionId_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\t\u0000\u0001\u0001\t\t\u0000\u0000\u0000\u0001\u1009\u0000\u0002\u1009\u0001" +
+                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0000\u0000\u0001\u1009\u0000\u0002\u1009\u0001" +
                 "\u0003\u1009\u0002\u0004\u0007\u0005\u0007\u0006\u0003\u0007\u1009\u0003\b\u0208" +
-                "\t\u0208";
+                "\t\u0208\n\u1009\u0004";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -15623,6 +15862,17 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getProcessRegionIdBytes();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.SettingsWriteResponse}
@@ -16081,6 +16331,52 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       processRegionId_ = value.toStringUtf8();
 
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 12;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000010;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000010;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000010);
     }
 
     public static sl_link.SlLink.SettingsWriteResponse parseFrom(
@@ -16645,6 +16941,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.SettingsWriteResponse)
     }
     @java.lang.Override
@@ -16673,11 +17016,12 @@ public final class SlLink {
               "process_",
               "processMapId_",
               "processRegionId_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\f\u0002\u0208" +
-                "\u0003\u1009\u0000\u0004\u1009\u0001\u0005\u1009\u0002\u0006\u0007\u0007\u0007\b" +
-                "\u0007\t\u1009\u0003\n\u0208\u000b\u0208";
+                "\u0000\f\u0000\u0001\u0001\f\f\u0000\u0000\u0000\u0001\f\u0002\u0208\u0003\u1009" +
+                "\u0000\u0004\u1009\u0001\u0005\u1009\u0002\u0006\u0007\u0007\u0007\b\u0007\t\u1009" +
+                "\u0003\n\u0208\u000b\u0208\f\u1009\u0004";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -32529,6 +32873,17 @@ public final class SlLink {
      * @return The drawingDraftVersion.
      */
     int getDrawingDraftVersion();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.PathPointPlanRequest}
@@ -33034,6 +33389,52 @@ public final class SlLink {
     private void clearDrawingDraftVersion() {
 
       drawingDraftVersion_ = 0;
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 11;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000004;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000004;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000004);
     }
 
     public static sl_link.SlLink.PathPointPlanRequest parseFrom(
@@ -33645,6 +34046,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPointPlanRequest)
     }
     @java.lang.Override
@@ -33672,11 +34120,12 @@ public final class SlLink {
               "mapId_",
               "drawingDraftId_",
               "drawingDraftVersion_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\n\u0000\u0001\u0001\n\n\u0000\u0000\u0000\u0001\u0208\u0002\u000b\u0003\u0208" +
-                "\u0004\u0007\u0005\u1009\u0000\u0006\u1009\u0001\u0007\u0208\b\u0208\t\u0208\n\u000b" +
-                "";
+                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\u0208\u0002\u000b" +
+                "\u0003\u0208\u0004\u0007\u0005\u1009\u0000\u0006\u1009\u0001\u0007\u0208\b\u0208" +
+                "\t\u0208\n\u000b\u000b\u1009\u0002";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -40628,6 +41077,17 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getMapIdBytes();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.MapEditCommand}
@@ -41251,6 +41711,52 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       mapId_ = value.toStringUtf8();
 
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 15;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000008;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000008;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000008);
     }
 
     public static sl_link.SlLink.MapEditCommand parseFrom(
@@ -41993,6 +42499,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 15;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapEditCommand)
     }
     @java.lang.Override
@@ -42025,11 +42578,12 @@ public final class SlLink {
               "startPose_",
               "endPose_",
               "mapId_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\u000e\u0000\u0001\u0001\u000e\u000e\u0000\u0001\u0000\u0001\u0208\u0002\f" +
+                "\u0000\u000f\u0000\u0001\u0001\u000f\u000f\u0000\u0001\u0000\u0001\u0208\u0002\f" +
                 "\u0003\u0208\u0004\u1009\u0000\u0005\u001b\u0006\u0001\u0007\u0004\b\u0208\t\f\n" +
-                "\u000b\u000b\u0007\f\u1009\u0001\r\u1009\u0002\u000e\u0208";
+                "\u000b\u000b\u0007\f\u1009\u0001\r\u1009\u0002\u000e\u0208\u000f\u1009\u0003";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -42116,6 +42670,17 @@ public final class SlLink {
      * @return The mapVersion.
      */
     int getMapVersion();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.MapEditResponse}
@@ -42128,6 +42693,7 @@ public final class SlLink {
     private MapEditResponse() {
       message_ = "";
     }
+    private int bitField0_;
     public static final int RESULT_FIELD_NUMBER = 1;
     private int result_;
     /**
@@ -42241,6 +42807,52 @@ public final class SlLink {
     private void clearMapVersion() {
 
       mapVersion_ = 0;
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 4;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
     }
 
     public static sl_link.SlLink.MapEditResponse parseFrom(
@@ -42463,6 +43075,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapEditResponse)
     }
     @java.lang.Override
@@ -42479,13 +43138,15 @@ public final class SlLink {
         }
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
               "result_",
               "message_",
               "mapVersion_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\u0003\u0000\u0000\u0001\u0003\u0003\u0000\u0000\u0000\u0001\f\u0002\u0208" +
-                "\u0003\u000b";
+                "\u0000\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0000\u0001\f\u0002\u0208" +
+                "\u0003\u000b\u0004\u1009\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -44186,6 +44847,17 @@ public final class SlLink {
      * @return The drawingDraftVersion.
      */
     int getDrawingDraftVersion();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.PathPlanRequest}
@@ -44672,6 +45344,52 @@ public final class SlLink {
     private void clearDrawingDraftVersion() {
 
       drawingDraftVersion_ = 0;
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 12;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000004;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000004;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000004);
     }
 
     public static sl_link.SlLink.PathPlanRequest parseFrom(
@@ -45262,6 +45980,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 12;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPlanRequest)
     }
     @java.lang.Override
@@ -45290,11 +46055,12 @@ public final class SlLink {
               "mapId_",
               "drawingDraftId_",
               "drawingDraftVersion_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
-                "\u0003\u0007\u0004\u0007\u0005\u000b\u0006\u1009\u0000\u0007\u1009\u0001\b\u0208" +
-                "\t\u0208\n\u0208\u000b\u000b";
+                "\u0000\f\u0000\u0001\u0001\f\f\u0000\u0000\u0000\u0001\u0208\u0002\u0208\u0003\u0007" +
+                "\u0004\u0007\u0005\u000b\u0006\u1009\u0000\u0007\u1009\u0001\b\u0208\t\u0208\n\u0208" +
+                "\u000b\u000b\f\u1009\u0002";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -52115,6 +52881,17 @@ public final class SlLink {
      * @return The rotationDeg.
      */
     float getRotationDeg();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.MapAlignmentRequest}
@@ -52127,6 +52904,7 @@ public final class SlLink {
     private MapAlignmentRequest() {
       mapId_ = "";
     }
+    private int bitField0_;
     public static final int MAP_ID_FIELD_NUMBER = 1;
     private java.lang.String mapId_;
     /**
@@ -52216,6 +52994,52 @@ public final class SlLink {
     private void clearRotationDeg() {
 
       rotationDeg_ = 0F;
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 3;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
     }
 
     public static sl_link.SlLink.MapAlignmentRequest parseFrom(
@@ -52410,6 +53234,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 3;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapAlignmentRequest)
     }
     @java.lang.Override
@@ -52426,12 +53297,14 @@ public final class SlLink {
         }
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
               "mapId_",
               "rotationDeg_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\u0002\u0000\u0000\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0208\u0002\u0001" +
-                "";
+                "\u0000\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0208\u0002\u0001" +
+                "\u0003\u1009\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -56687,6 +57560,17 @@ public final class SlLink {
      */
     com.google.protobuf.ByteString
         getRequestIdBytes();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.MapSaveRequest}
@@ -56702,6 +57586,7 @@ public final class SlLink {
       drawingDraftId_ = "";
       requestId_ = "";
     }
+    private int bitField0_;
     public static final int MAP_NAME_FIELD_NUMBER = 1;
     private java.lang.String mapName_;
     /**
@@ -56984,6 +57869,52 @@ public final class SlLink {
       checkByteStringIsUtf8(value);
       requestId_ = value.toStringUtf8();
 
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 8;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
     }
 
     public static sl_link.SlLink.MapSaveRequest parseFrom(
@@ -57381,6 +58312,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 8;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.MapSaveRequest)
     }
     @java.lang.Override
@@ -57397,6 +58375,7 @@ public final class SlLink {
         }
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
               "mapName_",
               "mapId_",
               "hasRotationDeg_",
@@ -57404,10 +58383,11 @@ public final class SlLink {
               "drawingDraftId_",
               "drawingDraftVersion_",
               "requestId_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\u0007\u0000\u0000\u0001\u0007\u0007\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
-                "\u0003\u0007\u0004\u0001\u0005\u0208\u0006\u000b\u0007\u0208";
+                "\u0000\b\u0000\u0001\u0001\b\b\u0000\u0000\u0000\u0001\u0208\u0002\u0208\u0003\u0007" +
+                "\u0004\u0001\u0005\u0208\u0006\u000b\u0007\u0208\b\u1009\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -89000,6 +89980,17 @@ public final class SlLink {
      * @return The expectedLayerVersion.
      */
     int getExpectedLayerVersion();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
   }
   /**
    * Protobuf type {@code sl_link.DrawingDraftRequest}
@@ -89016,6 +90007,7 @@ public final class SlLink {
       data_ = com.google.protobuf.ByteString.EMPTY;
       payloadSha256_ = "";
     }
+    private int bitField0_;
     public static final int REQUEST_ID_FIELD_NUMBER = 1;
     private java.lang.String requestId_;
     /**
@@ -89387,6 +90379,52 @@ public final class SlLink {
     private void clearExpectedLayerVersion() {
 
       expectedLayerVersion_ = 0;
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 11;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
     }
 
     public static sl_link.SlLink.DrawingDraftRequest parseFrom(
@@ -89880,6 +90918,53 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 11;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.DrawingDraftRequest)
     }
     @java.lang.Override
@@ -89896,6 +90981,7 @@ public final class SlLink {
         }
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
               "requestId_",
               "mapId_",
               "operation_",
@@ -89906,10 +90992,12 @@ public final class SlLink {
               "totalChunks_",
               "payloadSha256_",
               "expectedLayerVersion_",
+              "editBinding_",
             };
             java.lang.String info =
-                "\u0000\n\u0000\u0000\u0001\n\n\u0000\u0000\u0000\u0001\u0208\u0002\u0208\u0003\f" +
-                "\u0004\u0208\u0005\u000b\u0006\n\u0007\u000b\b\u000b\t\u0208\n\u000b";
+                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
+                "\u0003\f\u0004\u0208\u0005\u000b\u0006\n\u0007\u000b\b\u000b\t\u0208\n\u000b\u000b" +
+                "\u1009\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -91871,6 +92959,1887 @@ public final class SlLink {
     private static volatile com.google.protobuf.Parser<DrawingDraftResponse> PARSER;
 
     public static com.google.protobuf.Parser<DrawingDraftResponse> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface MapDraftBindingOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.MapDraftBinding)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string map_id = 1;</code>
+     * @return The mapId.
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 1;</code>
+     * @return The bytes for mapId.
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>string base_revision = 2;</code>
+     * @return The baseRevision.
+     */
+    java.lang.String getBaseRevision();
+    /**
+     * <code>string base_revision = 2;</code>
+     * @return The bytes for baseRevision.
+     */
+    com.google.protobuf.ByteString
+        getBaseRevisionBytes();
+
+    /**
+     * <code>uint32 edit_version = 3;</code>
+     * @return The editVersion.
+     */
+    int getEditVersion();
+  }
+  /**
+   * <pre>
+   * Immutable base identity plus optimistic edit version. Required for hidden drafts.
+   * </pre>
+   *
+   * Protobuf type {@code sl_link.MapDraftBinding}
+   */
+  public  static final class MapDraftBinding extends
+      com.google.protobuf.GeneratedMessageLite<
+          MapDraftBinding, MapDraftBinding.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.MapDraftBinding)
+      MapDraftBindingOrBuilder {
+    private MapDraftBinding() {
+      mapId_ = "";
+      baseRevision_ = "";
+    }
+    public static final int MAP_ID_FIELD_NUMBER = 1;
+    private java.lang.String mapId_;
+    /**
+     * <code>string map_id = 1;</code>
+     * @return The mapId.
+     */
+    @java.lang.Override
+    public java.lang.String getMapId() {
+      return mapId_;
+    }
+    /**
+     * <code>string map_id = 1;</code>
+     * @return The bytes for mapId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(mapId_);
+    }
+    /**
+     * <code>string map_id = 1;</code>
+     * @param value The mapId to set.
+     */
+    private void setMapId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      mapId_ = value;
+    }
+    /**
+     * <code>string map_id = 1;</code>
+     */
+    private void clearMapId() {
+
+      mapId_ = getDefaultInstance().getMapId();
+    }
+    /**
+     * <code>string map_id = 1;</code>
+     * @param value The bytes for mapId to set.
+     */
+    private void setMapIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      mapId_ = value.toStringUtf8();
+
+    }
+
+    public static final int BASE_REVISION_FIELD_NUMBER = 2;
+    private java.lang.String baseRevision_;
+    /**
+     * <code>string base_revision = 2;</code>
+     * @return The baseRevision.
+     */
+    @java.lang.Override
+    public java.lang.String getBaseRevision() {
+      return baseRevision_;
+    }
+    /**
+     * <code>string base_revision = 2;</code>
+     * @return The bytes for baseRevision.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getBaseRevisionBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(baseRevision_);
+    }
+    /**
+     * <code>string base_revision = 2;</code>
+     * @param value The baseRevision to set.
+     */
+    private void setBaseRevision(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      baseRevision_ = value;
+    }
+    /**
+     * <code>string base_revision = 2;</code>
+     */
+    private void clearBaseRevision() {
+
+      baseRevision_ = getDefaultInstance().getBaseRevision();
+    }
+    /**
+     * <code>string base_revision = 2;</code>
+     * @param value The bytes for baseRevision to set.
+     */
+    private void setBaseRevisionBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      baseRevision_ = value.toStringUtf8();
+
+    }
+
+    public static final int EDIT_VERSION_FIELD_NUMBER = 3;
+    private int editVersion_;
+    /**
+     * <code>uint32 edit_version = 3;</code>
+     * @return The editVersion.
+     */
+    @java.lang.Override
+    public int getEditVersion() {
+      return editVersion_;
+    }
+    /**
+     * <code>uint32 edit_version = 3;</code>
+     * @param value The editVersion to set.
+     */
+    private void setEditVersion(int value) {
+
+      editVersion_ = value;
+    }
+    /**
+     * <code>uint32 edit_version = 3;</code>
+     */
+    private void clearEditVersion() {
+
+      editVersion_ = 0;
+    }
+
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.MapDraftBinding parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.MapDraftBinding parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapDraftBinding parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.MapDraftBinding prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * <pre>
+     * Immutable base identity plus optimistic edit version. Required for hidden drafts.
+     * </pre>
+     *
+     * Protobuf type {@code sl_link.MapDraftBinding}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.MapDraftBinding, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.MapDraftBinding)
+        sl_link.SlLink.MapDraftBindingOrBuilder {
+      // Construct using sl_link.SlLink.MapDraftBinding.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string map_id = 1;</code>
+       * @return The mapId.
+       */
+      @java.lang.Override
+      public java.lang.String getMapId() {
+        return instance.getMapId();
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       * @return The bytes for mapId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        return instance.getMapIdBytes();
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       * @param value The mapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMapId(value);
+        return this;
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMapId() {
+        copyOnWrite();
+        instance.clearMapId();
+        return this;
+      }
+      /**
+       * <code>string map_id = 1;</code>
+       * @param value The bytes for mapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMapIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>string base_revision = 2;</code>
+       * @return The baseRevision.
+       */
+      @java.lang.Override
+      public java.lang.String getBaseRevision() {
+        return instance.getBaseRevision();
+      }
+      /**
+       * <code>string base_revision = 2;</code>
+       * @return The bytes for baseRevision.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getBaseRevisionBytes() {
+        return instance.getBaseRevisionBytes();
+      }
+      /**
+       * <code>string base_revision = 2;</code>
+       * @param value The baseRevision to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBaseRevision(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setBaseRevision(value);
+        return this;
+      }
+      /**
+       * <code>string base_revision = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBaseRevision() {
+        copyOnWrite();
+        instance.clearBaseRevision();
+        return this;
+      }
+      /**
+       * <code>string base_revision = 2;</code>
+       * @param value The bytes for baseRevision to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBaseRevisionBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setBaseRevisionBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>uint32 edit_version = 3;</code>
+       * @return The editVersion.
+       */
+      @java.lang.Override
+      public int getEditVersion() {
+        return instance.getEditVersion();
+      }
+      /**
+       * <code>uint32 edit_version = 3;</code>
+       * @param value The editVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEditVersion(int value) {
+        copyOnWrite();
+        instance.setEditVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 edit_version = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEditVersion() {
+        copyOnWrite();
+        instance.clearEditVersion();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.MapDraftBinding)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.MapDraftBinding();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "mapId_",
+              "baseRevision_",
+              "editVersion_",
+            };
+            java.lang.String info =
+                "\u0000\u0003\u0000\u0000\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
+                "\u0003\u000b";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.MapDraftBinding> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.MapDraftBinding.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.MapDraftBinding>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.MapDraftBinding)
+    private static final sl_link.SlLink.MapDraftBinding DEFAULT_INSTANCE;
+    static {
+      MapDraftBinding defaultInstance = new MapDraftBinding();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        MapDraftBinding.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.MapDraftBinding getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<MapDraftBinding> PARSER;
+
+    public static com.google.protobuf.Parser<MapDraftBinding> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface MapDraftRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.MapDraftRequest)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The requestId.
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The bytes for requestId.
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     * @return The enum numeric value on the wire for operation.
+     */
+    int getOperationValue();
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     * @return The operation.
+     */
+    sl_link.SlLink.MapDraftOperation getOperation();
+
+    /**
+     * <code>string map_id = 3;</code>
+     * @return The mapId.
+     */
+    java.lang.String getMapId();
+    /**
+     * <code>string map_id = 3;</code>
+     * @return The bytes for mapId.
+     */
+    com.google.protobuf.ByteString
+        getMapIdBytes();
+
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     * @return Whether the editBinding field is set.
+     */
+    boolean hasEditBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     * @return The editBinding.
+     */
+    sl_link.SlLink.MapDraftBinding getEditBinding();
+  }
+  /**
+   * Protobuf type {@code sl_link.MapDraftRequest}
+   */
+  public  static final class MapDraftRequest extends
+      com.google.protobuf.GeneratedMessageLite<
+          MapDraftRequest, MapDraftRequest.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.MapDraftRequest)
+      MapDraftRequestOrBuilder {
+    private MapDraftRequest() {
+      requestId_ = "";
+      mapId_ = "";
+    }
+    private int bitField0_;
+    public static final int REQUEST_ID_FIELD_NUMBER = 1;
+    private java.lang.String requestId_;
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public java.lang.String getRequestId() {
+      return requestId_;
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The bytes for requestId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(requestId_);
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @param value The requestId to set.
+     */
+    private void setRequestId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      requestId_ = value;
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     */
+    private void clearRequestId() {
+
+      requestId_ = getDefaultInstance().getRequestId();
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @param value The bytes for requestId to set.
+     */
+    private void setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      requestId_ = value.toStringUtf8();
+
+    }
+
+    public static final int OPERATION_FIELD_NUMBER = 2;
+    private int operation_;
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     * @return The enum numeric value on the wire for operation.
+     */
+    @java.lang.Override
+    public int getOperationValue() {
+      return operation_;
+    }
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     * @return The operation.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftOperation getOperation() {
+      sl_link.SlLink.MapDraftOperation result = sl_link.SlLink.MapDraftOperation.forNumber(operation_);
+      return result == null ? sl_link.SlLink.MapDraftOperation.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     * @param value The enum numeric value on the wire for operation to set.
+     */
+    private void setOperationValue(int value) {
+        operation_ = value;
+    }
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     * @param value The operation to set.
+     */
+    private void setOperation(sl_link.SlLink.MapDraftOperation value) {
+      operation_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.MapDraftOperation operation = 2;</code>
+     */
+    private void clearOperation() {
+
+      operation_ = 0;
+    }
+
+    public static final int MAP_ID_FIELD_NUMBER = 3;
+    private java.lang.String mapId_;
+    /**
+     * <code>string map_id = 3;</code>
+     * @return The mapId.
+     */
+    @java.lang.Override
+    public java.lang.String getMapId() {
+      return mapId_;
+    }
+    /**
+     * <code>string map_id = 3;</code>
+     * @return The bytes for mapId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMapIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(mapId_);
+    }
+    /**
+     * <code>string map_id = 3;</code>
+     * @param value The mapId to set.
+     */
+    private void setMapId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      mapId_ = value;
+    }
+    /**
+     * <code>string map_id = 3;</code>
+     */
+    private void clearMapId() {
+
+      mapId_ = getDefaultInstance().getMapId();
+    }
+    /**
+     * <code>string map_id = 3;</code>
+     * @param value The bytes for mapId to set.
+     */
+    private void setMapIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      mapId_ = value.toStringUtf8();
+
+    }
+
+    public static final int EDIT_BINDING_FIELD_NUMBER = 4;
+    private sl_link.SlLink.MapDraftBinding editBinding_;
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    @java.lang.Override
+    public boolean hasEditBinding() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getEditBinding() {
+      return editBinding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : editBinding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    private void setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  editBinding_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (editBinding_ != null &&
+          editBinding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        editBinding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(editBinding_).mergeFrom(value).buildPartial();
+      } else {
+        editBinding_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+     */
+    private void clearEditBinding() {  editBinding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.MapDraftRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.MapDraftRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapDraftRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.MapDraftRequest prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.MapDraftRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.MapDraftRequest, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.MapDraftRequest)
+        sl_link.SlLink.MapDraftRequestOrBuilder {
+      // Construct using sl_link.SlLink.MapDraftRequest.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string request_id = 1;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public java.lang.String getRequestId() {
+        return instance.getRequestId();
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @return The bytes for requestId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        return instance.getRequestIdBytes();
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRequestId(value);
+        return this;
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        copyOnWrite();
+        instance.clearRequestId();
+        return this;
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @param value The bytes for requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRequestIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.MapDraftOperation operation = 2;</code>
+       * @return The enum numeric value on the wire for operation.
+       */
+      @java.lang.Override
+      public int getOperationValue() {
+        return instance.getOperationValue();
+      }
+      /**
+       * <code>.sl_link.MapDraftOperation operation = 2;</code>
+       * @param value The operation to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOperationValue(int value) {
+        copyOnWrite();
+        instance.setOperationValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftOperation operation = 2;</code>
+       * @return The operation.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftOperation getOperation() {
+        return instance.getOperation();
+      }
+      /**
+       * <code>.sl_link.MapDraftOperation operation = 2;</code>
+       * @param value The enum numeric value on the wire for operation to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOperation(sl_link.SlLink.MapDraftOperation value) {
+        copyOnWrite();
+        instance.setOperation(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftOperation operation = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOperation() {
+        copyOnWrite();
+        instance.clearOperation();
+        return this;
+      }
+
+      /**
+       * <code>string map_id = 3;</code>
+       * @return The mapId.
+       */
+      @java.lang.Override
+      public java.lang.String getMapId() {
+        return instance.getMapId();
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       * @return The bytes for mapId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMapIdBytes() {
+        return instance.getMapIdBytes();
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       * @param value The mapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMapId(value);
+        return this;
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMapId() {
+        copyOnWrite();
+        instance.clearMapId();
+        return this;
+      }
+      /**
+       * <code>string map_id = 3;</code>
+       * @param value The bytes for mapId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMapIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMapIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      @java.lang.Override
+      public boolean hasEditBinding() {
+        return instance.hasEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getEditBinding() {
+        return instance.getEditBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder setEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setEditBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder setEditBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setEditBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder mergeEditBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeEditBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding edit_binding = 4;</code>
+       */
+      public Builder clearEditBinding() {  copyOnWrite();
+        instance.clearEditBinding();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.MapDraftRequest)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.MapDraftRequest();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "requestId_",
+              "operation_",
+              "mapId_",
+              "editBinding_",
+            };
+            java.lang.String info =
+                "\u0000\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0000\u0001\u0208\u0002\f" +
+                "\u0003\u0208\u0004\u1009\u0000";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.MapDraftRequest> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.MapDraftRequest.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.MapDraftRequest>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.MapDraftRequest)
+    private static final sl_link.SlLink.MapDraftRequest DEFAULT_INSTANCE;
+    static {
+      MapDraftRequest defaultInstance = new MapDraftRequest();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        MapDraftRequest.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.MapDraftRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<MapDraftRequest> PARSER;
+
+    public static com.google.protobuf.Parser<MapDraftRequest> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface MapDraftResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sl_link.MapDraftResponse)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The requestId.
+     */
+    java.lang.String getRequestId();
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The bytes for requestId.
+     */
+    com.google.protobuf.ByteString
+        getRequestIdBytes();
+
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    int getResultValue();
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     * @return The result.
+     */
+    sl_link.SlLink.ResultCode getResult();
+
+    /**
+     * <code>string message = 3;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 3;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     * @return Whether the binding field is set.
+     */
+    boolean hasBinding();
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     * @return The binding.
+     */
+    sl_link.SlLink.MapDraftBinding getBinding();
+
+    /**
+     * <code>bool exists = 5;</code>
+     * @return The exists.
+     */
+    boolean getExists();
+
+    /**
+     * <code>bool mapping_stopped = 6;</code>
+     * @return The mappingStopped.
+     */
+    boolean getMappingStopped();
+
+    /**
+     * <code>uint32 feature_version = 7;</code>
+     * @return The featureVersion.
+     */
+    int getFeatureVersion();
+  }
+  /**
+   * Protobuf type {@code sl_link.MapDraftResponse}
+   */
+  public  static final class MapDraftResponse extends
+      com.google.protobuf.GeneratedMessageLite<
+          MapDraftResponse, MapDraftResponse.Builder> implements
+      // @@protoc_insertion_point(message_implements:sl_link.MapDraftResponse)
+      MapDraftResponseOrBuilder {
+    private MapDraftResponse() {
+      requestId_ = "";
+      message_ = "";
+    }
+    private int bitField0_;
+    public static final int REQUEST_ID_FIELD_NUMBER = 1;
+    private java.lang.String requestId_;
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The requestId.
+     */
+    @java.lang.Override
+    public java.lang.String getRequestId() {
+      return requestId_;
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @return The bytes for requestId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(requestId_);
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @param value The requestId to set.
+     */
+    private void setRequestId(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      requestId_ = value;
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     */
+    private void clearRequestId() {
+
+      requestId_ = getDefaultInstance().getRequestId();
+    }
+    /**
+     * <code>string request_id = 1;</code>
+     * @param value The bytes for requestId to set.
+     */
+    private void setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      requestId_ = value.toStringUtf8();
+
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 2;
+    private int result_;
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     * @return The enum numeric value on the wire for result.
+     */
+    @java.lang.Override
+    public int getResultValue() {
+      return result_;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public sl_link.SlLink.ResultCode getResult() {
+      sl_link.SlLink.ResultCode result = sl_link.SlLink.ResultCode.forNumber(result_);
+      return result == null ? sl_link.SlLink.ResultCode.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     * @param value The enum numeric value on the wire for result to set.
+     */
+    private void setResultValue(int value) {
+        result_ = value;
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     * @param value The result to set.
+     */
+    private void setResult(sl_link.SlLink.ResultCode value) {
+      result_ = value.getNumber();
+
+    }
+    /**
+     * <code>.sl_link.ResultCode result = 2;</code>
+     */
+    private void clearResult() {
+
+      result_ = 0;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 3;
+    private java.lang.String message_;
+    /**
+     * <code>string message = 3;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      return message_;
+    }
+    /**
+     * <code>string message = 3;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      return com.google.protobuf.ByteString.copyFromUtf8(message_);
+    }
+    /**
+     * <code>string message = 3;</code>
+     * @param value The message to set.
+     */
+    private void setMessage(
+        java.lang.String value) {
+      java.lang.Class<?> valueClass = value.getClass();
+
+      message_ = value;
+    }
+    /**
+     * <code>string message = 3;</code>
+     */
+    private void clearMessage() {
+
+      message_ = getDefaultInstance().getMessage();
+    }
+    /**
+     * <code>string message = 3;</code>
+     * @param value The bytes for message to set.
+     */
+    private void setMessageBytes(
+        com.google.protobuf.ByteString value) {
+      checkByteStringIsUtf8(value);
+      message_ = value.toStringUtf8();
+
+    }
+
+    public static final int BINDING_FIELD_NUMBER = 4;
+    private sl_link.SlLink.MapDraftBinding binding_;
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     */
+    @java.lang.Override
+    public boolean hasBinding() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     */
+    @java.lang.Override
+    public sl_link.SlLink.MapDraftBinding getBinding() {
+      return binding_ == null ? sl_link.SlLink.MapDraftBinding.getDefaultInstance() : binding_;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     */
+    private void setBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  binding_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeBinding(sl_link.SlLink.MapDraftBinding value) {
+      value.getClass();
+  if (binding_ != null &&
+          binding_ != sl_link.SlLink.MapDraftBinding.getDefaultInstance()) {
+        binding_ =
+          sl_link.SlLink.MapDraftBinding.newBuilder(binding_).mergeFrom(value).buildPartial();
+      } else {
+        binding_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.sl_link.MapDraftBinding binding = 4;</code>
+     */
+    private void clearBinding() {  binding_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static final int EXISTS_FIELD_NUMBER = 5;
+    private boolean exists_;
+    /**
+     * <code>bool exists = 5;</code>
+     * @return The exists.
+     */
+    @java.lang.Override
+    public boolean getExists() {
+      return exists_;
+    }
+    /**
+     * <code>bool exists = 5;</code>
+     * @param value The exists to set.
+     */
+    private void setExists(boolean value) {
+
+      exists_ = value;
+    }
+    /**
+     * <code>bool exists = 5;</code>
+     */
+    private void clearExists() {
+
+      exists_ = false;
+    }
+
+    public static final int MAPPING_STOPPED_FIELD_NUMBER = 6;
+    private boolean mappingStopped_;
+    /**
+     * <code>bool mapping_stopped = 6;</code>
+     * @return The mappingStopped.
+     */
+    @java.lang.Override
+    public boolean getMappingStopped() {
+      return mappingStopped_;
+    }
+    /**
+     * <code>bool mapping_stopped = 6;</code>
+     * @param value The mappingStopped to set.
+     */
+    private void setMappingStopped(boolean value) {
+
+      mappingStopped_ = value;
+    }
+    /**
+     * <code>bool mapping_stopped = 6;</code>
+     */
+    private void clearMappingStopped() {
+
+      mappingStopped_ = false;
+    }
+
+    public static final int FEATURE_VERSION_FIELD_NUMBER = 7;
+    private int featureVersion_;
+    /**
+     * <code>uint32 feature_version = 7;</code>
+     * @return The featureVersion.
+     */
+    @java.lang.Override
+    public int getFeatureVersion() {
+      return featureVersion_;
+    }
+    /**
+     * <code>uint32 feature_version = 7;</code>
+     * @param value The featureVersion to set.
+     */
+    private void setFeatureVersion(int value) {
+
+      featureVersion_ = value;
+    }
+    /**
+     * <code>uint32 feature_version = 7;</code>
+     */
+    private void clearFeatureVersion() {
+
+      featureVersion_ = 0;
+    }
+
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static sl_link.SlLink.MapDraftResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+
+    public static sl_link.SlLink.MapDraftResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static sl_link.SlLink.MapDraftResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(sl_link.SlLink.MapDraftResponse prototype) {
+      return DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code sl_link.MapDraftResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          sl_link.SlLink.MapDraftResponse, Builder> implements
+        // @@protoc_insertion_point(builder_implements:sl_link.MapDraftResponse)
+        sl_link.SlLink.MapDraftResponseOrBuilder {
+      // Construct using sl_link.SlLink.MapDraftResponse.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>string request_id = 1;</code>
+       * @return The requestId.
+       */
+      @java.lang.Override
+      public java.lang.String getRequestId() {
+        return instance.getRequestId();
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @return The bytes for requestId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRequestIdBytes() {
+        return instance.getRequestIdBytes();
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @param value The requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestId(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setRequestId(value);
+        return this;
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRequestId() {
+        copyOnWrite();
+        instance.clearRequestId();
+        return this;
+      }
+      /**
+       * <code>string request_id = 1;</code>
+       * @param value The bytes for requestId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRequestIdBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setRequestIdBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.ResultCode result = 2;</code>
+       * @return The enum numeric value on the wire for result.
+       */
+      @java.lang.Override
+      public int getResultValue() {
+        return instance.getResultValue();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 2;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultValue(int value) {
+        copyOnWrite();
+        instance.setResultValue(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 2;</code>
+       * @return The result.
+       */
+      @java.lang.Override
+      public sl_link.SlLink.ResultCode getResult() {
+        return instance.getResult();
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 2;</code>
+       * @param value The enum numeric value on the wire for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(sl_link.SlLink.ResultCode value) {
+        copyOnWrite();
+        instance.setResult(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.ResultCode result = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        copyOnWrite();
+        instance.clearResult();
+        return this;
+      }
+
+      /**
+       * <code>string message = 3;</code>
+       * @return The message.
+       */
+      @java.lang.Override
+      public java.lang.String getMessage() {
+        return instance.getMessage();
+      }
+      /**
+       * <code>string message = 3;</code>
+       * @return The bytes for message.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        return instance.getMessageBytes();
+      }
+      /**
+       * <code>string message = 3;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setMessage(value);
+        return this;
+      }
+      /**
+       * <code>string message = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        copyOnWrite();
+        instance.clearMessage();
+        return this;
+      }
+      /**
+       * <code>string message = 3;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMessageBytes(value);
+        return this;
+      }
+
+      /**
+       * <code>.sl_link.MapDraftBinding binding = 4;</code>
+       */
+      @java.lang.Override
+      public boolean hasBinding() {
+        return instance.hasBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding binding = 4;</code>
+       */
+      @java.lang.Override
+      public sl_link.SlLink.MapDraftBinding getBinding() {
+        return instance.getBinding();
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding binding = 4;</code>
+       */
+      public Builder setBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.setBinding(value);
+        return this;
+        }
+      /**
+       * <code>.sl_link.MapDraftBinding binding = 4;</code>
+       */
+      public Builder setBinding(
+          sl_link.SlLink.MapDraftBinding.Builder builderForValue) {
+        copyOnWrite();
+        instance.setBinding(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding binding = 4;</code>
+       */
+      public Builder mergeBinding(sl_link.SlLink.MapDraftBinding value) {
+        copyOnWrite();
+        instance.mergeBinding(value);
+        return this;
+      }
+      /**
+       * <code>.sl_link.MapDraftBinding binding = 4;</code>
+       */
+      public Builder clearBinding() {  copyOnWrite();
+        instance.clearBinding();
+        return this;
+      }
+
+      /**
+       * <code>bool exists = 5;</code>
+       * @return The exists.
+       */
+      @java.lang.Override
+      public boolean getExists() {
+        return instance.getExists();
+      }
+      /**
+       * <code>bool exists = 5;</code>
+       * @param value The exists to set.
+       * @return This builder for chaining.
+       */
+      public Builder setExists(boolean value) {
+        copyOnWrite();
+        instance.setExists(value);
+        return this;
+      }
+      /**
+       * <code>bool exists = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearExists() {
+        copyOnWrite();
+        instance.clearExists();
+        return this;
+      }
+
+      /**
+       * <code>bool mapping_stopped = 6;</code>
+       * @return The mappingStopped.
+       */
+      @java.lang.Override
+      public boolean getMappingStopped() {
+        return instance.getMappingStopped();
+      }
+      /**
+       * <code>bool mapping_stopped = 6;</code>
+       * @param value The mappingStopped to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMappingStopped(boolean value) {
+        copyOnWrite();
+        instance.setMappingStopped(value);
+        return this;
+      }
+      /**
+       * <code>bool mapping_stopped = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMappingStopped() {
+        copyOnWrite();
+        instance.clearMappingStopped();
+        return this;
+      }
+
+      /**
+       * <code>uint32 feature_version = 7;</code>
+       * @return The featureVersion.
+       */
+      @java.lang.Override
+      public int getFeatureVersion() {
+        return instance.getFeatureVersion();
+      }
+      /**
+       * <code>uint32 feature_version = 7;</code>
+       * @param value The featureVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFeatureVersion(int value) {
+        copyOnWrite();
+        instance.setFeatureVersion(value);
+        return this;
+      }
+      /**
+       * <code>uint32 feature_version = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFeatureVersion() {
+        copyOnWrite();
+        instance.clearFeatureVersion();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:sl_link.MapDraftResponse)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new sl_link.SlLink.MapDraftResponse();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "requestId_",
+              "result_",
+              "message_",
+              "binding_",
+              "exists_",
+              "mappingStopped_",
+              "featureVersion_",
+            };
+            java.lang.String info =
+                "\u0000\u0007\u0000\u0001\u0001\u0007\u0007\u0000\u0000\u0000\u0001\u0208\u0002\f" +
+                "\u0003\u0208\u0004\u1009\u0000\u0005\u0007\u0006\u0007\u0007\u000b";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<sl_link.SlLink.MapDraftResponse> parser = PARSER;
+          if (parser == null) {
+            synchronized (sl_link.SlLink.MapDraftResponse.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<sl_link.SlLink.MapDraftResponse>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:sl_link.MapDraftResponse)
+    private static final sl_link.SlLink.MapDraftResponse DEFAULT_INSTANCE;
+    static {
+      MapDraftResponse defaultInstance = new MapDraftResponse();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        MapDraftResponse.class, defaultInstance);
+    }
+
+    public static sl_link.SlLink.MapDraftResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<MapDraftResponse> PARSER;
+
+    public static com.google.protobuf.Parser<MapDraftResponse> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

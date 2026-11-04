@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   basic
   pcl_ros
   std_msgs
+  std_srvs
   geometry_msgs
   livox_ros_driver2
   sensor_msgs
@@ -62,7 +63,7 @@ include_directories(
 
 # Package setup for catkin
 catkin_package(
-  CATKIN_DEPENDS basic diagnostic_msgs geometry_msgs livox_ros_driver2 nav_msgs roscpp rospy std_msgs message_runtime
+  CATKIN_DEPENDS basic diagnostic_msgs geometry_msgs livox_ros_driver2 nav_msgs roscpp rospy std_msgs std_srvs message_runtime
   DEPENDS EIGEN3 PCL
   INCLUDE_DIRS include
 )

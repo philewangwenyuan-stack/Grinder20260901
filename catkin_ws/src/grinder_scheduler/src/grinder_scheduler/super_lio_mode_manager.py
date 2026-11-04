@@ -1270,6 +1270,25 @@ class SuperLioModeManager:
                 self._publish_safe()
                 return TriggerResponse(success=False, message=self._message)
 
+    def _freeze_mapping_inputs(self):
+        # Freeze LIO at a processing boundary, then drain the 2D mapper to
+        # the acknowledged final published scan before serializing assets.
+        self._wait_service("/lio/freeze_mapping")
+        frozen_lio = rospy.ServiceProxy("/lio/freeze_mapping", Trigger)()
+        if not frozen_lio.success:
+            raise RuntimeError(frozen_lio.message)
+        rospy.set_param("/cloud_to_occupancy_grid/freeze_target_stamp_ns", frozen_lio.message)
+        self._wait_service("/cloud_to_occupancy_grid/freeze_map")
+        freeze_grid = rospy.ServiceProxy("/cloud_to_occupancy_grid/freeze_map", Trigger)
+        deadline = time.monotonic() + 10.0
+        while True:
+            frozen_grid = freeze_grid()
+            if frozen_grid.success:
+                break
+            if time.monotonic() >= deadline:
+                raise RuntimeError("waiting for final 2D map timed out: " + frozen_grid.message)
+            time.sleep(0.05)
+
     @metrics.timed("super_lio_save_map_ms")
     def _handle_save_map(self, request):
         metrics.counter("super_lio_save_map_attempts").inc()
@@ -1289,6 +1308,8 @@ class SuperLioModeManager:
                 self._state = self.SAVING
                 self._message = "saving map"
                 self._publish_safe()
+
+                self._freeze_mapping_inputs()
 
                 self._wait_service("/lio/get_3dmap")
                 get_map = rospy.ServiceProxy("/lio/get_3dmap", GetMap)

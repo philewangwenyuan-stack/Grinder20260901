@@ -228,7 +228,7 @@ void SuperLIO::run(){
   if(ros::ok() && g_flag_run) LOG(INFO) << GREEN << " ---> Running..." << RESET;
   while(ros::ok() && g_flag_run){
     data_wrapper_->spinOnce();
-    process();
+    if (!data_wrapper_->mappingFrozen()) process();
     loop.sleep();
   }
   

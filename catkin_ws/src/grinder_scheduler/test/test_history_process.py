@@ -15,6 +15,8 @@ sys.path.insert(0, str(ROOT / "third_party/sl_linka/sdk/python"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sl_link.message_gen import sl_link_pb2 as pb
 from grinder_scheduler.map_service import MapService
+from grinder_scheduler.map_edit_drafts import MapEditDraftMixin
+from grinder_scheduler.drawing_scheduler import region_response_frames
 from grinder_scheduler.models import SchedulerState, TaskConfigModel
 
 
@@ -23,9 +25,9 @@ def scheduler_class():
     tree = ast.parse(source.read_text(encoding="utf-8"))
     cls = next(x for x in tree.body if isinstance(x, ast.ClassDef) and x.name == "SchedulerNode")
     cls.body = [x for x in cls.body if isinstance(x, ast.FunctionDef) and x.name in (
-        "handle_map_region_point_request", "_fill_polygon_region_message", "_fill_pose2d_message", "handle_settings_write_request", "handle_path_plan_request",
+        "handle_map_region_point_request", "_fill_polygon_region_message", "_fill_pose2d_message", "_handle_settings_write_without_draft", "handle_path_plan_request",
         "_copy_map_overlay_state")]
-    namespace = dict(math=math, os=os, shutil=shutil, SchedulerState=SchedulerState, MapService=MapService, rospy=mock.Mock())
+    namespace = dict(MapEditDraftMixin=MapEditDraftMixin, region_response_frames=region_response_frames, math=math, os=os, shutil=shutil, SchedulerState=SchedulerState, MapService=MapService, rospy=mock.Mock())
     exec(compile(ast.fix_missing_locations(ast.Module(body=[cls], type_ignores=[])), str(source), "exec"), namespace)
     return namespace["SchedulerNode"]
 

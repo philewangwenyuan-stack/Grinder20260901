@@ -252,6 +252,7 @@ ROSWrapper::ROSWrapper(){
                &ROSWrapper::imuHandler, this, ros::TransportHints().tcpNoDelay());
 
   srv_get_map_ = nh_.advertiseService("/lio/get_mapmeta", &ROSWrapper::GetMapCallback, this);
+  srv_freeze_mapping_ = nh_.advertiseService("/lio/freeze_mapping", &ROSWrapper::FreezeMapping, this);
   srv_get_3dmap_ = nh_.advertiseService("/lio/get_3dmap", &ROSWrapper::Get3DMapCallback, this);
   srv_set_init_state_ = nh_.advertiseService("/lio/set_init_state", 
                   &ROSWrapper::SetInitStateCallback, this);
@@ -274,6 +275,7 @@ ROSWrapper::ROSWrapper(){
 
 
 void ROSWrapper::livoxHandler(const livox_ros_driver2::CustomMsg::ConstPtr& msg){
+  if (mapping_frozen_) return;
   if(msg->point_num < 10) return;
 
   BASIC::CloudPtr cloud_scan(new PointCloudType());
@@ -306,6 +308,7 @@ void ROSWrapper::livoxHandler(const livox_ros_driver2::CustomMsg::ConstPtr& msg)
 
 
 void ROSWrapper::stdMsgHandler(const sensor_msgs::PointCloud2::ConstPtr& msg){
+  if (mapping_frozen_) return;
   if(msg->data.size() < 10) return;
   
   LidarData lidar_data;
@@ -428,6 +431,7 @@ void ROSWrapper::stdMsgHandler(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
 
 void ROSWrapper::imuHandler(const sensor_msgs::Imu::ConstPtr& msg){
+  if (mapping_frozen_) return;
   IMUData data;
   data.secs = msg->header.stamp.toSec();
   data.acc = V3(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
@@ -463,6 +467,20 @@ void ROSWrapper::imuHandler(const sensor_msgs::Imu::ConstPtr& msg){
 
 void ROSWrapper::get3DCloud(BASIC::CloudPtr& pc){;
   *cloud_map_ = *pc;
+}
+
+bool ROSWrapper::FreezeMapping(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res) {
+  // Runs on the same callback queue as SuperLIO::process, at a frame boundary.
+  res.success = g_save_map && !last_world_cloud_stamp_.isZero();
+  if (res.success) {
+    mapping_frozen_ = true;
+    imu_buffer_.clear();
+    lidar_buffer_.clear();
+    res.message = std::to_string(last_world_cloud_stamp_.toNSec());
+  } else {
+    res.message = "mapping cloud is not ready";
+  }
+  return true;
 }
 
 bool ROSWrapper::Get3DMapCallback(super_lio::GetMap::Request& req,
@@ -835,6 +853,7 @@ void ROSWrapper::pub_cloud_world(const CloudPtr& world_pc,double time){
   cloud.header.frame_id = g_world_frame;
   cloud.header.stamp = ros::Time().fromSec(time);
   pub_cloud_world_.publish(cloud);
+  last_world_cloud_stamp_ = cloud.header.stamp;
 }
 
 

@@ -1156,6 +1156,10 @@ class SlLinkAServer:
             for payload, msg_id, comp_id in responses:
                 request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
             return
+        if frame.msg_id == getattr(pb, "MSG_ID_MAP_DRAFT_REQUEST", -1):
+            payload, msg_id, comp_id = self._handler.handle_map_draft_request(frame.payload)
+            request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)
+            return
         if hasattr(pb, "MSG_ID_DRAWING_DRAFT_REQUEST") and frame.msg_id == pb.MSG_ID_DRAWING_DRAFT_REQUEST:
             payload, msg_id, comp_id = self._handler.handle_drawing_draft_request(frame.payload)
             request_handler._send_payload(payload, msg_id, comp_id=comp_id, ack_seq=frame.seq)

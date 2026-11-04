@@ -117,3 +117,10 @@ rosrun map_server map_server /data/maps/current/grinder_map.yaml
 ```
 
 PGM/YAML 只用于二维显示和导航；Super-LIO 重定位仍需单独的三维 PCD。
+
+
+### 编辑草稿冻结
+
+`~freeze_map`（`std_srvs/Trigger`）由模式管理器在 `/lio/freeze_mapping` 成功后调用。管理器先写入 `~freeze_target_stamp_ns`（十进制纳秒字符串）。节点等待该时间戳的点云和当前回环重投影，强制处理最后一帧（绕过频率限制），忽略后续点云/回环版本，并保持发布、保存同一份冻结栅格。未到齐或 TF 尚未就绪返回失败供有界重试；冻结后 `reset_map` 拒绝清空，重新扫描须创建新节点实例。
+
+集成回归（先构建、source devel）：`python3 test/test_mapper_freeze_ros.py`。它使用独立 localhost:11379 master、合成点云，不接入设备。

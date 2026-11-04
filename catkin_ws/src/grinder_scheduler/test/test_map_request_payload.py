@@ -262,6 +262,7 @@ def scheduler_fixture(map_service_class=None):
     path = SOURCE/'grinder_scheduler/scheduler_node.py'
     tree = ast.parse(path.read_text(encoding='utf-8'))
     node = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'SchedulerNode')
+    node.bases = []  # This fixture executes only the selected methods, without unrelated mixins.
     selected = {'_get_map_payload_builder', '_map_grid_source', '_load_saved_raw_grid',
                 '_load_raw_grid_yaml', 'build_map_chunks', '_build_raw_map_snapshot', '_preview_meta',
                 '_build_offline_map_service_for_map', '_export_runtime_map'}

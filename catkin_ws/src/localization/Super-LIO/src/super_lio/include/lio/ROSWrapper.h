@@ -33,6 +33,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Float32.h>
 #include <std_srvs/Empty.h>
+#include <std_srvs/Trigger.h>
 
 #include "params.h"
 #include "basic/alias.h"
@@ -64,6 +65,7 @@ public:
   ~ROSWrapper();
   using Ptr = std::unique_ptr<ROSWrapper>;
   bool sync_measure(MeasureGroup&);
+  bool mappingFrozen() const { return mapping_frozen_; }
   void spinOnce(){
     self_queue_.callAvailable();
   }
@@ -149,6 +151,10 @@ private:
   ros::Subscriber subIMU_;
   ros::ServiceServer srv_get_map_;
   ros::ServiceServer srv_get_3dmap_;
+  ros::ServiceServer srv_freeze_mapping_;
+  bool mapping_frozen_ = false;
+  ros::Time last_world_cloud_stamp_;
+  bool FreezeMapping(std_srvs::Trigger::Request&, std_srvs::Trigger::Response&);
   ros::ServiceServer srv_set_init_state_;
   std::deque<IMUData>   imu_buffer_;
   std::deque<LidarData> lidar_buffer_;

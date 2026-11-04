@@ -106,7 +106,18 @@ class RosDataBridge:
                 tcp_nodelay=True,
             )
 
+    def reset_map(self):
+        """A new scan must not expose the preceding session's latched frame."""
+        with self._lock:
+            self._map_msg = None
+            self._map_seq += 1
+            self._minimum_map_stamp_ns = rospy.Time.now().to_nsec()
+
     def _map_callback(self, msg):
+        stamp = msg.header.stamp
+        stamp_ns = int(getattr(stamp, "secs", 0)) * 1000000000 + int(getattr(stamp, "nsecs", 0))
+        if stamp_ns < getattr(self, "_minimum_map_stamp_ns", 0):
+            return
         width = int(getattr(msg.info, "width", 0) or 0)
         height = int(getattr(msg.info, "height", 0) or 0)
         expected_cells = width * height
@@ -131,6 +142,8 @@ class RosDataBridge:
             rospy.logwarn_throttle(1.0, "Rejected invalid /map array: %s", error)
             return
         with self._lock:
+            if stamp_ns < getattr(self, "_minimum_map_stamp_ns", 0):
+                return
             self._map_msg = msg
             self._map_seq += 1
 

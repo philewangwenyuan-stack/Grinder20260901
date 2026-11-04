@@ -256,6 +256,11 @@ class MapService:
         with self._lock:
             return self._serialize_regions()
 
+    def bump_edit_version(self):
+        with self._lock:
+            self._map_version += 1
+            return self._map_version
+
     def get_map_version(self):
         with self._lock:
             return int(self._map_version)
@@ -939,12 +944,23 @@ class MapService:
             }
             if self._overlay is not None:
                 meta["overlay_shape"] = [int(self._overlay.shape[0]), int(self._overlay.shape[1])]
-                np.save(os.path.join(state_dir, "overlay.npy"), self._overlay.astype(np.int16))
+                with open(os.path.join(state_dir, "overlay.npy"), "wb") as overlay_handle:
+                    np.save(overlay_handle, self._overlay.astype(np.int16))
+                    overlay_handle.flush()
+                    os.fsync(overlay_handle.fileno())
             tmp_meta = os.path.join(state_dir, "map_overlay_state.json.tmp")
             final_meta = os.path.join(state_dir, "map_overlay_state.json")
             with open(tmp_meta, "w", encoding="utf-8") as handle:
                 json.dump(meta, handle, ensure_ascii=False, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
             os.replace(tmp_meta, final_meta)
+            if os.name != "nt":
+                descriptor = os.open(state_dir, os.O_RDONLY)
+                try:
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
 
     def load_local_state(self, state_dir):
         with self._lock:

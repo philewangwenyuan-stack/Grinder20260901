@@ -6,6 +6,46 @@ cd "${WORKSPACE}"
 source "${WORKSPACE}/scripts/scheduler_config.sh"
 configure_scheduler_config "${WORKSPACE}" sim
 
+# Keep the selected external scene across source syncs (temp/ is device-local).
+SIM_WORLD="${GRINDER_SIM_WORLD:-}"
+if [[ -z "${SIM_WORLD}" && -f "${WORKSPACE}/temp/sim_world_path" ]]; then
+  IFS= read -r SIM_WORLD < "${WORKSPACE}/temp/sim_world_path" || true
+  SIM_WORLD="${SIM_WORLD%$'\r'}"
+fi
+for launch_arg in "$@"; do
+  if [[ "${launch_arg}" == world_name:=* ]]; then
+    SIM_WORLD="${launch_arg#world_name:=}"
+  fi
+done
+if [[ -n "${SIM_WORLD}" ]]; then
+  if [[ ! -f "${SIM_WORLD}" ]]; then
+    echo "[ERROR] Simulation world does not exist: ${SIM_WORLD}" >&2
+    exit 1
+  fi
+  export GRINDER_SIM_WORLD="$(realpath "${SIM_WORLD}")"
+  SIM_MODELS_PATH="$(dirname "${GRINDER_SIM_WORLD}")/../models"
+  if [[ -d "${SIM_MODELS_PATH}" ]]; then
+    export GAZEBO_MODEL_PATH="$(realpath "${SIM_MODELS_PATH}")${GAZEBO_MODEL_PATH:+:${GAZEBO_MODEL_PATH}}"
+  fi
+fi
+
+if [[ -f "${WORKSPACE}/temp/sim_spawn_pose" ]]; then
+  SIM_SPAWN_POSE=()
+  read -r -a SIM_SPAWN_POSE < "${WORKSPACE}/temp/sim_spawn_pose" || true
+  if [[ "${#SIM_SPAWN_POSE[@]}" -ne 3 ]]; then
+    echo "[ERROR] temp/sim_spawn_pose must contain: x y yaw (metres, radians)" >&2
+    exit 1
+  fi
+  for pose_value in "${SIM_SPAWN_POSE[@]}"; do
+    if [[ ! "${pose_value}" =~ ^-?[0-9]+([.][0-9]+)?$ ]]; then
+      echo "[ERROR] Invalid simulation spawn coordinate: ${pose_value}" >&2
+      exit 1
+    fi
+  done
+  # Explicit launch arguments remain last and override these device-local defaults.
+  set -- "x:=${SIM_SPAWN_POSE[0]}" "y:=${SIM_SPAWN_POSE[1]}" "yaw:=${SIM_SPAWN_POSE[2]}" "$@"
+fi
+
 if [[ ! -f /opt/ros/noetic/setup.bash ]]; then
   echo "[ERROR] ROS Noetic is not installed at /opt/ros/noetic" >&2
   exit 1
@@ -62,6 +102,7 @@ for port in "${SL_LINKA_PORT}" "${SL_LINKA_CONTROL_PORT}" 8554; do
 done
 
 echo "[INFO] Starting X920 + virtual MID-360S + managed Super-LIO simulator"
+echo "[INFO] World: ${GRINDER_SIM_WORLD:-${SIM_PACKAGE_PATH}/worlds/factory_floor.world}"
 echo "[INFO] Start mapping in the APP; keep stationary until Super-LIO initializes."
 echo "[INFO] APP protocol: tcp://0.0.0.0:${SL_LINKA_PORT}"
 echo "[INFO] APP control: tcp://0.0.0.0:${SL_LINKA_CONTROL_PORT}"

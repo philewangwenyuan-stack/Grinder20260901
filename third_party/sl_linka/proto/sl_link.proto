@@ -91,6 +91,8 @@ enum MessageId {
   MSG_ID_TASK_RUNTIME_SETTINGS_RESPONSE = 0x0539;
   MSG_ID_DRAWING_DRAFT_REQUEST = 0x053A;
   MSG_ID_DRAWING_DRAFT_RESPONSE = 0x053B;
+  MSG_ID_MAP_DRAFT_REQUEST = 0x053C;
+  MSG_ID_MAP_DRAFT_RESPONSE = 0x053D;
 }
 
 enum DeviceId {
@@ -399,6 +401,7 @@ message SettingsWriteRequest {
   MapProcessSettings process = 7;
   string process_map_id = 8;
   string process_region_id = 9;
+  MapDraftBinding edit_binding = 10;
 }
 
 message SettingsWriteResponse {
@@ -413,6 +416,7 @@ message SettingsWriteResponse {
   MapProcessSettings process = 9;
   string process_map_id = 10;
   string process_region_id = 11;
+  MapDraftBinding edit_binding = 12;
 }
 
 message Pose2D {
@@ -657,6 +661,7 @@ message PathPointPlanRequest {
   string map_id = 8;
   string drawing_draft_id = 9;
   uint32 drawing_draft_version = 10;
+  MapDraftBinding edit_binding = 11;
 }
 
 message PathPointPlanResponse {
@@ -759,12 +764,14 @@ message MapEditCommand {
   Pose2D start_pose = 12;
   Pose2D end_pose = 13;
   string map_id = 14;
+  MapDraftBinding edit_binding = 15;
 }
 
 message MapEditResponse {
   ResultCode result = 1;
   string message = 2;
   uint32 map_version = 3;
+  MapDraftBinding edit_binding = 4;
 }
 
 message MapEditStatusReport {
@@ -802,6 +809,7 @@ message PathPlanRequest {
   string map_id = 9;
   string drawing_draft_id = 10;
   uint32 drawing_draft_version = 11;
+  MapDraftBinding edit_binding = 12;
 }
 
 message PathPlanResponse {
@@ -895,6 +903,7 @@ message MapAlignmentRequest {
   // It is stored independently; planning uses alignment_yaw plus the saved
   // rotation difference, but alignment_yaw itself is never overwritten.
   float rotation_deg = 2;
+  MapDraftBinding edit_binding = 3;
 }
 
 message MapAlignmentResponse {
@@ -960,6 +969,7 @@ message MapSaveRequest {
   string drawing_draft_id = 5;
   uint32 drawing_draft_version = 6;
   string request_id = 7;
+  MapDraftBinding edit_binding = 8;
 }
 
 message MapSaveResponse {
@@ -1421,6 +1431,7 @@ message DrawingDraftRequest {
   uint32 total_chunks = 8;
   string payload_sha256 = 9;
   uint32 expected_layer_version = 10;
+  MapDraftBinding edit_binding = 11;
 }
 message DrawingCheckItem {
   string level = 1;
@@ -1440,4 +1451,33 @@ message DrawingDraftResponse {
   uint32 feature_version = 8;
   uint32 max_chunk_bytes = 9;
   DrawingObstacleLayerInfo layer = 10;
+}
+
+// Immutable base identity plus optimistic edit version. Required for hidden drafts.
+message MapDraftBinding {
+  string map_id = 1;
+  string base_revision = 2;
+  uint32 edit_version = 3;
+}
+enum MapDraftOperation {
+  MAP_DRAFT_QUERY = 0;
+  MAP_DRAFT_FREEZE = 1;
+  MAP_DRAFT_RESUME = 2;
+  MAP_DRAFT_RESTART = 3;
+  MAP_DRAFT_DISCARD = 4;
+}
+message MapDraftRequest {
+  string request_id = 1;
+  MapDraftOperation operation = 2;
+  string map_id = 3;
+  MapDraftBinding edit_binding = 4;
+}
+message MapDraftResponse {
+  string request_id = 1;
+  ResultCode result = 2;
+  string message = 3;
+  MapDraftBinding binding = 4;
+  bool exists = 5;
+  bool mapping_stopped = 6;
+  uint32 feature_version = 7;
 }

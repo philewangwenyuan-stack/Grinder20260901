@@ -84,8 +84,34 @@ public object MapEditResponseKt {
     public fun clearMapVersion() {
       _builder.clearMapVersion()
     }
+
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 4;`
+     */
+    public var editBinding: sl_link.SlLink.MapDraftBinding
+      @JvmName("getEditBinding")
+      get() = _builder.getEditBinding()
+      @JvmName("setEditBinding")
+      set(value) {
+        _builder.setEditBinding(value)
+      }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 4;`
+     */
+    public fun clearEditBinding() {
+      _builder.clearEditBinding()
+    }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 4;`
+     * @return Whether the editBinding field is set.
+     */
+    public fun hasEditBinding(): kotlin.Boolean {
+      return _builder.hasEditBinding()
+    }
   }
 }
 public inline fun sl_link.SlLink.MapEditResponse.copy(block: `sl_link`.MapEditResponseKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.MapEditResponse =
   `sl_link`.MapEditResponseKt.Dsl._create(this.toBuilder()).apply { block() }._build()
 
+public val sl_link.SlLink.MapEditResponseOrBuilder.editBindingOrNull: sl_link.SlLink.MapDraftBinding?
+  get() = if (hasEditBinding()) getEditBinding() else null

@@ -239,6 +239,30 @@ public object SettingsWriteRequestKt {
     public fun clearProcessRegionId() {
       _builder.clearProcessRegionId()
     }
+
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 10;`
+     */
+    public var editBinding: sl_link.SlLink.MapDraftBinding
+      @JvmName("getEditBinding")
+      get() = _builder.getEditBinding()
+      @JvmName("setEditBinding")
+      set(value) {
+        _builder.setEditBinding(value)
+      }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 10;`
+     */
+    public fun clearEditBinding() {
+      _builder.clearEditBinding()
+    }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 10;`
+     * @return Whether the editBinding field is set.
+     */
+    public fun hasEditBinding(): kotlin.Boolean {
+      return _builder.hasEditBinding()
+    }
   }
 }
 public inline fun sl_link.SlLink.SettingsWriteRequest.copy(block: `sl_link`.SettingsWriteRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.SettingsWriteRequest =
@@ -256,3 +280,5 @@ public val sl_link.SlLink.SettingsWriteRequestOrBuilder.rppOrNull: sl_link.SlLin
 public val sl_link.SlLink.SettingsWriteRequestOrBuilder.processOrNull: sl_link.SlLink.MapProcessSettings?
   get() = if (hasProcess()) getProcess() else null
 
+public val sl_link.SlLink.SettingsWriteRequestOrBuilder.editBindingOrNull: sl_link.SlLink.MapDraftBinding?
+  get() = if (hasEditBinding()) getEditBinding() else null

@@ -243,6 +243,30 @@ public object PathPlanRequestKt {
     public fun clearDrawingDraftVersion() {
       _builder.clearDrawingDraftVersion()
     }
+
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 12;`
+     */
+    public var editBinding: sl_link.SlLink.MapDraftBinding
+      @JvmName("getEditBinding")
+      get() = _builder.getEditBinding()
+      @JvmName("setEditBinding")
+      set(value) {
+        _builder.setEditBinding(value)
+      }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 12;`
+     */
+    public fun clearEditBinding() {
+      _builder.clearEditBinding()
+    }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 12;`
+     * @return Whether the editBinding field is set.
+     */
+    public fun hasEditBinding(): kotlin.Boolean {
+      return _builder.hasEditBinding()
+    }
   }
 }
 public inline fun sl_link.SlLink.PathPlanRequest.copy(block: `sl_link`.PathPlanRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PathPlanRequest =
@@ -254,3 +278,5 @@ public val sl_link.SlLink.PathPlanRequestOrBuilder.startPoseOrNull: sl_link.SlLi
 public val sl_link.SlLink.PathPlanRequestOrBuilder.endPoseOrNull: sl_link.SlLink.Pose2D?
   get() = if (hasEndPose()) getEndPose() else null
 
+public val sl_link.SlLink.PathPlanRequestOrBuilder.editBindingOrNull: sl_link.SlLink.MapDraftBinding?
+  get() = if (hasEditBinding()) getEditBinding() else null

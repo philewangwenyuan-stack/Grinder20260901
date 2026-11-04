@@ -57,7 +57,8 @@ from grinder_scheduler.system_health import SystemHealthSampler, fill_system_sta
 from grinder_scheduler.path_geometry import sample_segment, segment_point_spacing
 from grinder_scheduler.local_rtsp_server import LocalRtspStreamServer
 from grinder_scheduler.map_service import MapService
-from grinder_scheduler.drawing_scheduler import DrawingObstacleMixin, region_response_frames
+from grinder_scheduler.drawing_scheduler import region_response_frames
+from grinder_scheduler.map_edit_drafts import MapEditDraftMixin
 from google.protobuf.json_format import ParseDict
 from grinder_scheduler.map_grid_utils import MapGridSource, MapPayloadBuilder, occupancy_grid_array
 from grinder_scheduler.media_streamer import FFmpegMediaStreamer
@@ -200,7 +201,7 @@ def _resolve_runtime_path(path_value, base_dir):
     return os.path.normpath(os.path.join(base_dir, normalized))
 
 
-class SchedulerNode(DrawingObstacleMixin):
+class SchedulerNode(MapEditDraftMixin):
     @staticmethod
     def _sanitize_preview_edge(value, default_edge=PREVIEW_MAX_EDGE_CAP, cap_edge=PREVIEW_MAX_EDGE_CAP):
         if value is None:
@@ -2562,6 +2563,9 @@ class SchedulerNode(DrawingObstacleMixin):
         return removed
 
     def _saved_raw_grid_paths_for_map(self, map_id):
+        if self._is_editing_draft(map_id):
+            paths = self._super_lio_bundle_paths(map_id)
+            return paths["yaml_path"], paths["image_path"]
         target_map_id = str(map_id or "").strip()
         if not target_map_id:
             return "", ""
@@ -3596,9 +3600,19 @@ class SchedulerNode(DrawingObstacleMixin):
             tmp_path = self._map_registry_state_file + ".tmp"
             with open(tmp_path, "w", encoding="utf-8") as handle:
                 json.dump(payload, handle, ensure_ascii=False, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
             os.replace(tmp_path, self._map_registry_state_file)
+            if os.name != "nt":
+                descriptor = os.open(self._persist_state_dir, os.O_RDONLY)
+                try:
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
+            return True
         except Exception as exc:
             rospy.logwarn_throttle(2.0, "Failed to save map registry state: %s", exc)
+            return False
 
     def _save_task_registry_state(self):
         if not self._persist_state_enabled:
@@ -5681,7 +5695,7 @@ class SchedulerNode(DrawingObstacleMixin):
 
     def _queue_saved_map_upload(self, map_id, map_name):
         target_map_id = str(map_id or "").strip()
-        if not target_map_id:
+        if not target_map_id or self._is_editing_draft(target_map_id):
             return False
         record = self._find_recorded_map_by_id(target_map_id)
         map_dir = str(record.get("bundle_dir", "") if isinstance(record, dict) else "").strip()
@@ -5793,6 +5807,8 @@ class SchedulerNode(DrawingObstacleMixin):
         target_dir = os.path.abspath(target_dir) if target_dir else ""
         entries = []
         for record in (self._map_registry or {}).values():
+            if isinstance(record, dict) and self._is_editing_draft(record.get("map_id", "")):
+                continue
             if not isinstance(record, dict):
                 continue
             path = os.path.abspath(str(record.get("bundle_dir", "")).strip())
@@ -5931,6 +5947,8 @@ class SchedulerNode(DrawingObstacleMixin):
     @localization_arming
     @motion_action(cancel_result=(False, "Task start cancelled by stop/emergency"), replace=True)
     def _start_execution(self):
+        if self._is_editing_draft(self._current_map_id()):
+            return False, "地图草稿未发布，不能启动任务"
         self._drawing_ensure_map()
         if not self._drawing_preflight():
             return False, self.last_error
@@ -7996,7 +8014,7 @@ class SchedulerNode(DrawingObstacleMixin):
             self._fill_rpp_message(response.rpp, self._read_rpp_settings())
         return response.SerializeToString(), pb.MSG_ID_SETTINGS_READ_RESPONSE, pb.COMP_SETTINGS
 
-    def handle_settings_write_request(self, payload):
+    def _handle_settings_write_without_draft(self, payload):
         pb = self.sl_link_server.pb
         request = pb.SettingsWriteRequest()
         request.ParseFromString(payload)
@@ -9038,6 +9056,8 @@ class SchedulerNode(DrawingObstacleMixin):
         plan_request.map_id = str(request.map_id or "")
         plan_request.drawing_draft_id = str(getattr(request, "drawing_draft_id", ""))
         plan_request.drawing_draft_version = int(getattr(request, "drawing_draft_version", 0))
+        if request.HasField("edit_binding"):
+            plan_request.edit_binding.CopyFrom(request.edit_binding)
         if request.HasField("start_pose"):
             plan_request.start_pose.CopyFrom(request.start_pose)
         if request.HasField("end_pose"):
@@ -10467,6 +10487,9 @@ class SchedulerNode(DrawingObstacleMixin):
         try:
             if request.mode == pb.MAP_MODE_MAPPING:
                 if bool(request.enabled):
+                    active_draft = self._edit_drafts().data.get("active", "")
+                    if active_draft:
+                        raise RuntimeError("存在未完成地图草稿，请继续编辑或明确重新扫描")
                     self._prepare_for_map_mode_switch("super_lio_mapping_start")
                     self._ensure_super_lio_proxies()
                     result = self._super_lio_start_mapping_proxy()
@@ -10479,6 +10502,9 @@ class SchedulerNode(DrawingObstacleMixin):
                         save_prev_overlay=False,
                     )
                     response.result = pb.RESULT_SUCCESS
+                    self.ros_data_bridge.reset_map()
+                    self.map_service.reset_overlay_regions()
+                    self._save_local_state(allow_empty_saved_map_overlay=True)
                     response.message = "super_lio_mapping_started"
                 else:
                     self._prepare_for_map_mode_switch("super_lio_mapping_stop")
@@ -10526,6 +10552,7 @@ class SchedulerNode(DrawingObstacleMixin):
         requested_map_id = str(getattr(request, "map_id", "") or "").strip()
         target_map_id = requested_map_id or self._current_map_id()
         try:
+            self._check_edit_binding(request)
             rotation_deg = float(getattr(request, "rotation_deg", 0.0))
             if not math.isfinite(rotation_deg):
                 raise RuntimeError("invalid rotation_deg")

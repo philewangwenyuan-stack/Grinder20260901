@@ -211,7 +211,34 @@ public object DrawingDraftRequestKt {
     public fun clearExpectedLayerVersion() {
       _builder.clearExpectedLayerVersion()
     }
+
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 11;`
+     */
+    public var editBinding: sl_link.SlLink.MapDraftBinding
+      @JvmName("getEditBinding")
+      get() = _builder.getEditBinding()
+      @JvmName("setEditBinding")
+      set(value) {
+        _builder.setEditBinding(value)
+      }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 11;`
+     */
+    public fun clearEditBinding() {
+      _builder.clearEditBinding()
+    }
+    /**
+     * `.sl_link.MapDraftBinding edit_binding = 11;`
+     * @return Whether the editBinding field is set.
+     */
+    public fun hasEditBinding(): kotlin.Boolean {
+      return _builder.hasEditBinding()
+    }
   }
 }
 public inline fun sl_link.SlLink.DrawingDraftRequest.copy(block: `sl_link`.DrawingDraftRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.DrawingDraftRequest =
   `sl_link`.DrawingDraftRequestKt.Dsl._create(this.toBuilder()).apply { block() }._build()
+
+public val sl_link.SlLink.DrawingDraftRequestOrBuilder.editBindingOrNull: sl_link.SlLink.MapDraftBinding?
+  get() = if (hasEditBinding()) getEditBinding() else null

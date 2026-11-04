@@ -97,6 +97,7 @@ class CloudToOccupancyGrid {
       replay_thread_ = std::thread(&CloudToOccupancyGrid::replayLoop, this);
     }
     save_service_ = private_nh_.advertiseService("save_map", &CloudToOccupancyGrid::saveService, this);
+    freeze_service_ = private_nh_.advertiseService("freeze_map", &CloudToOccupancyGrid::freezeService, this);
     reset_service_ = private_nh_.advertiseService("reset_map", &CloudToOccupancyGrid::resetService, this);
 
     map_publish_timer_ = nh_.createTimer(
@@ -240,6 +241,9 @@ class CloudToOccupancyGrid {
   }
 
   void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud) {
+    std::lock_guard<std::recursive_mutex> input_lock(input_mutex_);
+    if (frozen_) return;
+    latest_cloud_ = cloud;
     if (rebuilding_.load()) return;
     if (cloud->header.stamp.isZero()) {
       ROS_WARN_THROTTLE(2.0, "Ignoring point cloud with zero timestamp");
@@ -346,6 +350,8 @@ class CloudToOccupancyGrid {
   }
 
   void revisionCallback(const std_msgs::UInt64ConstPtr& message) {
+    std::lock_guard<std::recursive_mutex> input_lock(input_mutex_);
+    if (frozen_) return;
     if (message->data <= requested_revision_.load()) return;
     requested_revision_.store(message->data);
     replay_condition_.notify_one();
@@ -709,7 +715,47 @@ class CloudToOccupancyGrid {
     return true;
   }
 
+  bool freezeService(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& response) {
+    std::lock_guard<std::recursive_mutex> input_lock(input_mutex_);
+    std::string target;
+    private_nh_.param<std::string>("freeze_target_stamp_ns", target, "0");
+    std::uint64_t target_stamp = 0;
+    try { target_stamp = std::stoull(target); }
+    catch (const std::exception&) {
+      response.success = false;
+      response.message = "invalid freeze timestamp";
+      return true;
+    }
+    if (rebuilding_.load() || requested_revision_.load() > completed_revision_.load() ||
+        !latest_cloud_ || latest_cloud_->header.stamp.toNSec() < target_stamp) {
+      response.success = false;
+      response.message = "waiting for final cloud / loop reprojection";
+      return true;
+    }
+    if (!frozen_) {
+      last_processed_stamp_ = ros::Time();  // Include the last scan despite rate limiting.
+      cloudCallback(latest_cloud_);
+      if (last_processed_stamp_ != latest_cloud_->header.stamp) {
+        response.success = false;
+        response.message = "final cloud transform is not ready";
+        return true;
+      }
+      frozen_ = true;
+      // Keep subscriptions until node shutdown; dropping callbacks avoids
+      // waiting for another AsyncSpinner thread while holding input_mutex_.
+    }
+    response.success = true;
+    response.message = std::to_string(latest_cloud_->header.stamp.toNSec());
+    return true;
+  }
+
   bool resetService(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& response) {
+    std::lock_guard<std::recursive_mutex> input_lock(input_mutex_);
+    if (frozen_) {
+      response.success = false;
+      response.message = "mapping is frozen; start a new scan to clear it";
+      return true;
+    }
     std::lock_guard<std::mutex> lock(map_mutex_);
     std::fill(log_odds_.begin(), log_odds_.end(), 0.0F);
     std::fill(observed_.begin(), observed_.end(), 0U);
@@ -725,6 +771,10 @@ class CloudToOccupancyGrid {
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
+  std::recursive_mutex input_mutex_;
+  bool frozen_ = false;
+  sensor_msgs::PointCloud2ConstPtr latest_cloud_;
+  ros::ServiceServer freeze_service_;
   ros::Subscriber cloud_sub_;
   ros::Subscriber revision_sub_;
   ros::Publisher map_pub_;

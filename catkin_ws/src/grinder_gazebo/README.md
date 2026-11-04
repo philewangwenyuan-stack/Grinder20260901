@@ -66,6 +66,7 @@ grep --line-buffered -v -E \
 
 常用参数：
 
+- `world_name:=/absolute/path/scene.world`：选择 Gazebo 场景；默认使用 B1。
 - `gui:=true|false`：Gazebo 图形界面。
 - `visual_mesh:=true|false`：真实 STEP visual 或轻量盒体。
 - `start_navigation:=true|false`：启动 move_base + RPP/TEB。
@@ -74,6 +75,25 @@ grep --line-buffered -v -E \
 - `sl_linka_port:=8002`。
 - `lidar_x:=0.20 lidar_y:=0.0 lidar_z:=0.55`：雷达相对运动中心的位置；同时透传模型与 LIO 外参。
 - `sensor_noise_config:=/absolute/path/noise.yaml`：雷达测距噪声、IMU 噪声和偏置漂移；默认见 `config/sensor_noise.yaml`，数值用于仿真，非实测标定。
+
+外部场景可在 `catkin_ws/temp/sim_world_path` 保存世界文件的绝对路径，后续直接
+运行 `bash ./start_grinder_sim.sh` 即加载该场景。该文件不进入 Git，远端源码同步也会保留。
+环境变量 `GRINDER_SIM_WORLD` 可覆盖此选择，命令行 `world_name:=...` 优先级最高。
+脚本自动将世界文件旁的 `../models` 目录加入 `GAZEBO_MODEL_PATH`，并在启动日志打印实际世界路径。
+例如已部署花都模型的远端 WSL：
+
+```bash
+mkdir -p temp
+printf '%s\n' /home/dev/work/huadu_factory_gazebo/worlds/huadu_factory.world > temp/sim_world_path
+DISPLAY=:0 bash ./start_grinder_sim.sh
+```
+
+更换场景前先停止已有仿真实例；世界文件只会在 Gazebo 启动时加载。
+可在 `catkin_ws/temp/sim_spawn_pose` 保存一行 `x y yaw`（米、弧度），
+作为该设备的机器人出生点；命令行 `x:=... y:=... yaw:=...` 可分别覆盖。
+切换场景时应同步调整或移除该出生点文件。首层 `z=0` 对应的车体出生高度仍为 `0.1675m`。
+花都场景保持首层地面 `z=0`，可沿用默认机器人出生点。其完整范围约 `192 x 295m`，
+当前默认建图范围 `[-60,+60]m` 只能覆盖原点附近区域；切换后需重新建图，不复用 B1 定位地图。
 
 更新 C++、ROS 消息或传感器插件后运行 `build` 再重启；Python、launch、YAML 修改后同步并重启相关节点。
 `build` 包含独立 MST27 C++ 扩展，不能仅复制 `.py` 而继续使用旧 `.so`。

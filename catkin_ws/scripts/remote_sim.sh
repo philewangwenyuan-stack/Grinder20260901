@@ -76,7 +76,8 @@ case "${ACTION}" in
     args=''
     for arg in "$@"; do args+=" $(quote "${arg}")"; done
     # Gazebo cameras render on the remote WSLg display, not over the network.
-    remote "set -e; cd '${REMOTE_ROOT}/catkin_ws'; export DISPLAY=\${GRINDER_REMOTE_DISPLAY:-:0}; mkdir -p '${REMOTE_ROOT}/temp/remote_sim'; printf '%s\\n' 'local_rtsp_public_host: 127.0.0.1' > '${REMOTE_ROOT}/temp/remote_sim/scheduler.local.yaml'; exec bash ./start_grinder_sim.sh gui:=false scheduler_local_config:='${REMOTE_ROOT}/temp/remote_sim/scheduler.local.yaml'${args}" ;;
+    # Keep simulation images enabled even when the board defaults to no camera.
+    remote "set -e; cd '${REMOTE_ROOT}/catkin_ws'; export DISPLAY=\${GRINDER_REMOTE_DISPLAY:-:0}; mkdir -p '${REMOTE_ROOT}/temp/remote_sim'; printf '%s\\n' 'local_rtsp_public_host: 127.0.0.1' 'image_inputs_enabled: true' > '${REMOTE_ROOT}/temp/remote_sim/scheduler.local.yaml'; exec bash ./start_grinder_sim.sh gui:=false scheduler_local_config:='${REMOTE_ROOT}/temp/remote_sim/scheduler.local.yaml'${args}" ;;
   rviz)
     check_client; mirror_check
     [[ -n "${DISPLAY:-}" ]] || die 'Local WSLg DISPLAY is missing'

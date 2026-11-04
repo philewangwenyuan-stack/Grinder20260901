@@ -128,3 +128,10 @@ MEDIAMTX_BIN=/home/neardi/work/Grinder/tools/mediamtx/mediamtx AURORA_IP=192.168
 - `Exec format error`：通常是二进制架构不匹配（例如在 RK3588 上用了 x86_64 的 mediamtx）。
 - `catkin_make` 指向旧路径：跨机器拷贝后需要重新编译，脚本会自动备份路径错配或架构冲突的 `build/devel/install`。
 - `Cannot apply task process speed to navigation`：先检查地图到车体 TF，再查 move_base 的 STVL 插件加载、jemalloc 环境和 RPP 参数服务。节点存在不代表服务已就绪，见 [当天排障记录](../README.md#deployment-pitfalls-20261022)。
+
+
+## 固定地图草稿升级（2026-11-04）
+
+扫描结束固定草稿需同步升级调度 Python 模块、Super-LIO、二维 mapper 和 APP 协议。目标 Linux 执行 `PROFILE=mapping ./build_grinder_platform.sh`（含 `std_srvs` 依赖），并按原方式构建/同步调度包。协议 0x053C/D 及编辑绑定已同步 Python、Android、nanopb SDK；新 APP 不会在设备不支持草稿时退回仅冻结图片的旧方式。
+
+验证先用离线测试和 mapping 包 `test/test_mapper_freeze_ros.py`（独立 localhost:11379 master、合成点云）。实车启停、地图切换、移动验证须另外明确授权。草稿编辑期间不自动启动定位；正式发布不等同于导航已加载。
