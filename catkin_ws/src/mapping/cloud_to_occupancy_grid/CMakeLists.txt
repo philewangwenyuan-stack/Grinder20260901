@@ -37,3 +37,11 @@ install(TARGETS cloud_to_occupancy_grid_node
 install(DIRECTORY config launch rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+if(CATKIN_ENABLE_TESTING)
+  add_executable(test_sparse_grid test/test_sparse_grid.cpp)
+  target_compile_features(test_sparse_grid PRIVATE cxx_std_14)
+  # Assertions must remain active in Release builds.
+  target_compile_options(test_sparse_grid PRIVATE -UNDEBUG)
+  add_test(NAME mapper_sparse_grid COMMAND test_sparse_grid)
+endif()

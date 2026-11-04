@@ -1,4 +1,6 @@
 #include <ros/ros.h>
+#include "sparse_grid.h"
+#include <std_msgs/String.h>
 
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -84,6 +86,7 @@ class CloudToOccupancyGrid {
         replay_running_(true) {
     loadParameters();
     initializeMap();
+    storage_pub_ = private_nh_.advertise<std_msgs::String>("storage_status", 1, true);
 
     map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>(map_topic_, 1, true);
     if (!tablet_map_topic_.empty()) {
@@ -143,6 +146,8 @@ class CloudToOccupancyGrid {
                                    "/super_lio_loop/get_keyframe");
 
     private_nh_.param("resolution", resolution_, 0.05);
+    private_nh_.param("max_grid_memory_mb", max_grid_memory_mb_, 256);
+    private_nh_.param("max_snapshot_cells", max_snapshot_cells_, 25000000);
     private_nh_.param("map_width", map_width_, 150.0);
     private_nh_.param("map_height", map_height_, 150.0);
     private_nh_.param("origin_x", origin_x_, -75.0);
@@ -173,7 +178,7 @@ class CloudToOccupancyGrid {
     private_nh_.param("autosave", autosave_, true);
     private_nh_.param("autosave_interval", autosave_interval_, 30.0);
     private_nh_.param("save_only_when_changed", save_only_when_changed_, true);
-    private_nh_.param("publish_cropped_map", publish_cropped_map_, false);
+    private_nh_.param("publish_cropped_map", publish_cropped_map_, true);
     private_nh_.param("save_cropped_map", save_cropped_map_, true);
     private_nh_.param("crop_padding", crop_padding_, 1.0);
     private_nh_.param<std::string>("map_directory", map_directory_, "/data/maps/current");
@@ -184,7 +189,12 @@ class CloudToOccupancyGrid {
         free_probability_ > 0.0 && free_probability_ < 0.5 &&
         free_threshold_ > 0.0 && free_threshold_ < occupied_threshold_ &&
         occupied_threshold_ < 1.0;
-    if (resolution_ <= 0.0 || map_width_ <= 0.0 || map_height_ <= 0.0 ||
+    if (max_grid_memory_mb_ <= 0 || max_snapshot_cells_ <= 0 ||
+        !std::isfinite(resolution_) || !std::isfinite(map_width_) ||
+        !std::isfinite(map_height_) || !std::isfinite(origin_x_) || !std::isfinite(origin_y_) ||
+        map_width_ / resolution_ > std::numeric_limits<int>::max() / 2 ||
+        map_height_ / resolution_ > std::numeric_limits<int>::max() / 2 ||
+        resolution_ <= 0.0 || map_width_ <= 0.0 || map_height_ <= 0.0 ||
         min_range_ < 0.0 || max_range_ <= min_range_ || voxel_size_ <= 0.0 ||
         angular_resolution_degrees_ <= 0.0 || angular_resolution_degrees_ > 360.0 ||
         processing_frequency_ <= 0.0 || map_publish_frequency_ <= 0.0 ||
@@ -206,10 +216,9 @@ class CloudToOccupancyGrid {
   void initializeMap() {
     width_cells_ = static_cast<int>(std::ceil(map_width_ / resolution_));
     height_cells_ = static_cast<int>(std::ceil(map_height_ / resolution_));
-    const std::size_t cell_count = static_cast<std::size_t>(width_cells_) *
-                                   static_cast<std::size_t>(height_cells_);
-    log_odds_.assign(cell_count, 0.0F);
-    observed_.assign(cell_count, 0U);
+    tile_budget_ = std::make_shared<mapper::TileBudget>(
+        static_cast<std::size_t>(max_grid_memory_mb_) * 1024U * 1024U);
+    grid_.reset(new mapper::SparseGrid(tile_budget_));
     map_load_time_ = ros::Time::now();
   }
 
@@ -326,32 +335,40 @@ class CloudToOccupancyGrid {
     }
 
     std::lock_guard<std::mutex> lock(map_mutex_);
-    std::vector<std::size_t> occupied_cells;
-    occupied_cells.reserve(hits.size());
-    for (const AngularHit& hit : hits) {
-      if (!std::isfinite(hit.range)) {
-        continue;
+    if (storage_failed_.load()) return;
+    try {
+      std::vector<std::size_t> occupied_cells;
+      occupied_cells.reserve(hits.size());
+      bool observed_cells = false;
+      for (const AngularHit& hit : hits) {
+        if (!std::isfinite(hit.range)) {
+          continue;
+        }
+        int endpoint_x = 0;
+        int endpoint_y = 0;
+        worldToRawCell(hit.x, hit.y, &endpoint_x, &endpoint_y);
+        raytraceFree(sensor_cell_x, sensor_cell_y, endpoint_x, endpoint_y);
+        observed_cells = true;
+        if (cellInBounds(endpoint_x, endpoint_y)) {
+          occupied_cells.push_back(cellIndex(endpoint_x, endpoint_y));
+        }
       }
-      int endpoint_x = 0;
-      int endpoint_y = 0;
-      worldToRawCell(hit.x, hit.y, &endpoint_x, &endpoint_y);
-      raytraceFree(sensor_cell_x, sensor_cell_y, endpoint_x, endpoint_y);
-      if (cellInBounds(endpoint_x, endpoint_y)) {
-        occupied_cells.push_back(cellIndex(endpoint_x, endpoint_y));
+      for (const std::size_t index : occupied_cells) {
+        updateCell(index, occupied_log_odds_increment_);
       }
+      if (observed_cells) {
+        ++update_sequence_;
+      }
+      last_processed_stamp_ = cloud->header.stamp;
+    } catch (const std::exception& error) {
+      storage_failed_.store(true);
+      ROS_ERROR_STREAM("2D mapping stopped: " << error.what());
     }
-    for (const std::size_t index : occupied_cells) {
-      updateCell(index, occupied_log_odds_increment_);
-    }
-    if (!occupied_cells.empty()) {
-      ++update_sequence_;
-    }
-    last_processed_stamp_ = cloud->header.stamp;
   }
 
   void revisionCallback(const std_msgs::UInt64ConstPtr& message) {
     std::lock_guard<std::recursive_mutex> input_lock(input_mutex_);
-    if (frozen_) return;
+    if (frozen_ || storage_failed_.load()) return;
     if (message->data <= requested_revision_.load()) return;
     requested_revision_.store(message->data);
     replay_condition_.notify_one();
@@ -374,50 +391,53 @@ class CloudToOccupancyGrid {
 
   void rebuildFromKeyframes(std::uint64_t revision) {
     rebuilding_.store(true);
-    std::vector<float> staged_log_odds(log_odds_.size(), 0.0F);
-    std::vector<uint8_t> staged_observed(observed_.size(), 0U);
-    std::uint32_t total = 0U;
-    bool success = true;
-    for (std::uint32_t index = 0U; success && (index == 0U || index < total); ++index) {
-      if (!replay_running_.load() || requested_revision_.load() != revision) {
-        success = false;
-        break;
+    mapper::SparseGrid staged(tile_budget_);
+    try {
+      std::uint32_t total = 0U;
+      bool success = true;
+      for (std::uint32_t index = 0U; success && (index == 0U || index < total); ++index) {
+        if (!replay_running_.load() || requested_revision_.load() != revision) {
+          success = false;
+          break;
+        }
+        super_lio_loop::GetKeyframe service;
+        service.request.revision = revision;
+        service.request.index = index;
+        if (!keyframe_client_.call(service) || !service.response.success) {
+          ROS_WARN_STREAM("2D map reprojection aborted: " << service.response.message);
+          success = false;
+          break;
+        }
+        total = service.response.total;
+        applyReplayCloud(service.response.cloud, service.response.pose,
+                         &staged);
       }
-      super_lio_loop::GetKeyframe service;
-      service.request.revision = revision;
-      service.request.index = index;
-      if (!keyframe_client_.call(service) || !service.response.success) {
-        ROS_WARN_STREAM("2D map reprojection aborted: " << service.response.message);
-        success = false;
-        break;
+      if (success && total > 0U && requested_revision_.load() == revision) {
+        {
+          std::lock_guard<std::mutex> lock(map_mutex_);
+          grid_->swap(staged);
+          map_load_time_ = ros::Time::now();
+          ++update_sequence_;
+        }
+        completed_revision_.store(revision);
+        ROS_INFO_STREAM("2D map reprojected from " << total
+                        << " optimized keyframes at loop revision " << revision);
+      } else if (requested_revision_.load() == revision) {
+        // Keep the previous coherent grid and wait for the next graph revision;
+        // do not spin on a missing or transiently failed service.
+        completed_revision_.store(revision);
       }
-      total = service.response.total;
-      applyReplayCloud(service.response.cloud, service.response.pose,
-                       &staged_log_odds, &staged_observed);
-    }
-    if (success && total > 0U && requested_revision_.load() == revision) {
-      {
-        std::lock_guard<std::mutex> lock(map_mutex_);
-        log_odds_.swap(staged_log_odds);
-        observed_.swap(staged_observed);
-        map_load_time_ = ros::Time::now();
-        ++update_sequence_;
-      }
+    } catch (const std::exception& error) {
+      storage_failed_.store(true);
       completed_revision_.store(revision);
-      ROS_INFO_STREAM("2D map reprojected from " << total
-                      << " optimized keyframes at loop revision " << revision);
-    } else if (requested_revision_.load() == revision) {
-      // Keep the previous coherent grid and wait for the next graph revision;
-      // do not spin on a missing or transiently failed service.
-      completed_revision_.store(revision);
+      ROS_ERROR_STREAM("2D reprojection failed: " << error.what());
     }
     rebuilding_.store(false);
   }
 
   void applyReplayCloud(const sensor_msgs::PointCloud2& cloud,
                         const geometry_msgs::Pose& pose,
-                        std::vector<float>* log_odds,
-                        std::vector<uint8_t>* observed) {
+                        mapper::SparseGrid* grid) {
     const tf2::Transform global_from_sensor(
         tf2::Quaternion(pose.orientation.x, pose.orientation.y,
                         pose.orientation.z, pose.orientation.w),
@@ -453,14 +473,14 @@ class CloudToOccupancyGrid {
       int end_x = 0;
       int end_y = 0;
       worldToRawCell(hit.x, hit.y, &end_x, &end_y);
-      raytraceFreeInto(sensor_x, sensor_y, end_x, end_y, log_odds, observed);
+      raytraceFreeInto(sensor_x, sensor_y, end_x, end_y, grid);
       if (cellInBounds(end_x, end_y))
-        updateCellInto(cellIndex(end_x, end_y), occupied_log_odds_increment_, log_odds, observed);
+        updateCellInto(cellIndex(end_x, end_y), occupied_log_odds_increment_, grid);
     }
   }
 
   void raytraceFreeInto(int start_x, int start_y, int end_x, int end_y,
-                        std::vector<float>* log_odds, std::vector<uint8_t>* observed) {
+                        mapper::SparseGrid* grid) {
     int x = start_x;
     int y = start_y;
     const int dx = std::abs(end_x - start_x);
@@ -470,50 +490,24 @@ class CloudToOccupancyGrid {
     int error = dx + dy;
     while (x != end_x || y != end_y) {
       if (!cellInBounds(x, y)) break;
-      updateCellInto(cellIndex(x, y), free_log_odds_increment_, log_odds, observed);
+      updateCellInto(cellIndex(x, y), free_log_odds_increment_, grid);
       const int twice = 2 * error;
       if (twice >= dy) { error += dy; x += step_x; }
       if (twice <= dx) { error += dx; y += step_y; }
     }
   }
 
-  void updateCellInto(std::size_t index, double increment,
-                      std::vector<float>* log_odds, std::vector<uint8_t>* observed) {
-    (*log_odds)[index] = static_cast<float>(std::max(
-        min_log_odds_, std::min(max_log_odds_, (*log_odds)[index] + increment)));
-    (*observed)[index] = 1U;
+  void updateCellInto(std::size_t index, double increment, mapper::SparseGrid* grid) {
+    grid->update(static_cast<int>(index % width_cells_), static_cast<int>(index / width_cells_),
+                 increment, min_log_odds_, max_log_odds_);
   }
 
   void raytraceFree(int start_x, int start_y, int end_x, int end_y) {
-    int x = start_x;
-    int y = start_y;
-    const int dx = std::abs(end_x - start_x);
-    const int step_x = start_x < end_x ? 1 : -1;
-    const int dy = -std::abs(end_y - start_y);
-    const int step_y = start_y < end_y ? 1 : -1;
-    int error = dx + dy;
-
-    while (x != end_x || y != end_y) {
-      if (!cellInBounds(x, y)) {
-        break;
-      }
-      updateCell(cellIndex(x, y), free_log_odds_increment_);
-      const int doubled_error = 2 * error;
-      if (doubled_error >= dy) {
-        error += dy;
-        x += step_x;
-      }
-      if (doubled_error <= dx) {
-        error += dx;
-        y += step_y;
-      }
-    }
+    raytraceFreeInto(start_x, start_y, end_x, end_y, grid_.get());
   }
 
   void updateCell(std::size_t index, double increment) {
-    log_odds_[index] = static_cast<float>(std::max(
-        min_log_odds_, std::min(max_log_odds_, log_odds_[index] + increment)));
-    observed_[index] = 1U;
+    updateCellInto(index, increment, grid_.get());
   }
 
   bool worldToCell(double x, double y, int* cell_x, int* cell_y) const {
@@ -542,28 +536,22 @@ class CloudToOccupancyGrid {
     int max_x = width_cells_ - 1;
     int max_y = height_cells_ - 1;
 
+    if (storage_failed_.load()) throw std::runtime_error("map storage failed; reset or restart scan");
     if (crop) {
-      int observed_min_x = width_cells_;
-      int observed_min_y = height_cells_;
-      int observed_max_x = -1;
-      int observed_max_y = -1;
-      for (int y = 0; y < height_cells_; ++y) {
-        for (int x = 0; x < width_cells_; ++x) {
-          if (observed_[cellIndex(x, y)] == 0U) continue;
-          observed_min_x = std::min(observed_min_x, x);
-          observed_min_y = std::min(observed_min_y, y);
-          observed_max_x = std::max(observed_max_x, x);
-          observed_max_y = std::max(observed_max_y, y);
-        }
-      }
-      if (observed_max_x >= 0 && observed_max_y >= 0) {
-        const int padding_cells = static_cast<int>(std::ceil(crop_padding_ / resolution_));
-        min_x = std::max(0, observed_min_x - padding_cells);
-        min_y = std::max(0, observed_min_y - padding_cells);
-        max_x = std::min(width_cells_ - 1, observed_max_x + padding_cells);
-        max_y = std::min(height_cells_ - 1, observed_max_y + padding_cells);
+      // Empty maps are a single unknown cell, never the entire capacity.
+      if (grid_->max_x < 0) { max_x = max_y = 0; }
+      else {
+        const int padding = static_cast<int>(std::min<double>(
+            std::ceil(crop_padding_ / resolution_), std::max(width_cells_, height_cells_)));
+        min_x = std::max(0, grid_->min_x - padding);
+        min_y = std::max(0, grid_->min_y - padding);
+        max_x = std::min(width_cells_ - 1, grid_->max_x + padding);
+        max_y = std::min(height_cells_ - 1, grid_->max_y + padding);
       }
     }
+    if (static_cast<uint64_t>(max_x - min_x + 1) * (max_y - min_y + 1) >
+        static_cast<uint64_t>(max_snapshot_cells_))
+      throw std::runtime_error("map snapshot exceeds max_snapshot_cells");
 
     MapSnapshot snapshot;
     snapshot.width = max_x - min_x + 1;
@@ -573,20 +561,12 @@ class CloudToOccupancyGrid {
     snapshot.data.assign(static_cast<std::size_t>(snapshot.width) *
                          static_cast<std::size_t>(snapshot.height), -1);
 
-    for (int y = min_y; y <= max_y; ++y) {
-      for (int x = min_x; x <= max_x; ++x) {
-        const std::size_t source_index = cellIndex(x, y);
-        if (observed_[source_index] == 0U) continue;
-        const std::size_t target_index =
-            static_cast<std::size_t>(y - min_y) * static_cast<std::size_t>(snapshot.width) +
-            static_cast<std::size_t>(x - min_x);
-        if (log_odds_[source_index] >= occupied_log_odds_threshold_) {
-          snapshot.data[target_index] = 100;
-        } else if (log_odds_[source_index] <= free_log_odds_threshold_) {
-          snapshot.data[target_index] = 0;
-        }
-      }
-    }
+    grid_->visit([&](int x, int y, float odds) {
+      if (x < min_x || x > max_x || y < min_y || y > max_y) return;
+      const std::size_t index = static_cast<std::size_t>(y - min_y) * snapshot.width + x - min_x;
+      if (odds >= occupied_log_odds_threshold_) snapshot.data[index] = 100;
+      else if (odds <= free_log_odds_threshold_) snapshot.data[index] = 0;
+    });
     return snapshot;
   }
 
@@ -606,12 +586,36 @@ class CloudToOccupancyGrid {
     return map;
   }
 
+  void publishStorageStatus() {
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    std_msgs::String status;
+    const int padding = static_cast<int>(std::min<double>(
+        std::ceil(crop_padding_ / resolution_), std::max(width_cells_, height_cells_)));
+    const uint64_t cropped_width = grid_->max_x < 0 ? 1 :
+        std::min(width_cells_ - 1, grid_->max_x + padding) - std::max(0, grid_->min_x - padding) + 1;
+    const uint64_t cropped_height = grid_->max_y < 0 ? 1 :
+        std::min(height_cells_ - 1, grid_->max_y + padding) - std::max(0, grid_->min_y - padding) + 1;
+    const uint64_t crop_cells = cropped_width * cropped_height;
+    const uint64_t full_cells = static_cast<uint64_t>(width_cells_) * height_cells_;
+    const bool snapshot_limit = (publish_cropped_map_ ? crop_cells : full_cells) >
+        static_cast<uint64_t>(max_snapshot_cells_) ||
+        (save_cropped_map_ ? crop_cells : full_cells) > static_cast<uint64_t>(max_snapshot_cells_);
+    status.data = std::string(storage_failed_.load() ? "ERROR" : (snapshot_limit ? "ERROR_SNAPSHOT" : "OK")) +
+        " tile_bytes=" + std::to_string(tile_budget_->used.load()) +
+        " limit_bytes=" + std::to_string(tile_budget_->limit) +
+        " live_tiles=" + std::to_string(grid_->tileCount());
+    storage_pub_.publish(status);
+  }
+
   void publishMapTimer(const ros::TimerEvent&) {
-    map_pub_.publish(buildMapMessage());
+    publishStorageStatus();
+    try { map_pub_.publish(buildMapMessage()); }
+    catch (const std::exception& e) { ROS_ERROR_THROTTLE(5.0, "Map publication blocked: %s", e.what()); }
   }
 
   void publishTabletMapTimer(const ros::TimerEvent&) {
-    tablet_map_pub_.publish(buildMapMessage());
+    try { tablet_map_pub_.publish(buildMapMessage()); }
+    catch (const std::exception& e) { ROS_ERROR_THROTTLE(5.0, "Tablet map blocked: %s", e.what()); }
   }
 
   bool writeMapFiles(const MapSnapshot& snapshot, std::string* error_message) const {
@@ -685,7 +689,9 @@ class CloudToOccupancyGrid {
     if (save_thread_.joinable()) {
       save_thread_.join();
     }
-    MapSnapshot snapshot = occupancySnapshot(save_cropped_map_);
+    MapSnapshot snapshot;
+    try { snapshot = occupancySnapshot(save_cropped_map_); }
+    catch (const std::exception& e) { saving_.store(false); ROS_ERROR_STREAM(e.what()); return; }
     save_thread_ = std::thread([this, snapshot = std::move(snapshot), sequence]() {
       std::string error;
       if (writeMapFiles(snapshot, &error)) {
@@ -705,7 +711,10 @@ class CloudToOccupancyGrid {
       save_thread_.join();
     }
     const std::uint64_t sequence = update_sequence_.load();
-    const MapSnapshot snapshot = occupancySnapshot(save_cropped_map_);
+    MapSnapshot snapshot;
+    try { snapshot = occupancySnapshot(save_cropped_map_); }
+    catch (const std::exception& e) { saving_.store(false); response.success = false;
+      response.message = e.what(); return true; }
     response.success = writeMapFiles(snapshot, &response.message);
     if (response.success) {
       saved_sequence_.store(sequence);
@@ -717,6 +726,9 @@ class CloudToOccupancyGrid {
 
   bool freezeService(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& response) {
     std::lock_guard<std::recursive_mutex> input_lock(input_mutex_);
+    if (storage_failed_.load()) {
+      response.success = false; response.message = "map storage failed; reset or restart scan"; return true;
+    }
     std::string target;
     private_nh_.param<std::string>("freeze_target_stamp_ns", target, "0");
     std::uint64_t target_stamp = 0;
@@ -740,6 +752,8 @@ class CloudToOccupancyGrid {
         response.message = "final cloud transform is not ready";
         return true;
       }
+      try { occupancySnapshot(save_cropped_map_); occupancySnapshot(publish_cropped_map_); }
+      catch (const std::exception& e) { response.success = false; response.message = e.what(); return true; }
       frozen_ = true;
       // Keep subscriptions until node shutdown; dropping callbacks avoids
       // waiting for another AsyncSpinner thread while holding input_mutex_.
@@ -757,8 +771,13 @@ class CloudToOccupancyGrid {
       return true;
     }
     std::lock_guard<std::mutex> lock(map_mutex_);
-    std::fill(log_odds_.begin(), log_odds_.end(), 0.0F);
-    std::fill(observed_.begin(), observed_.end(), 0U);
+    if (rebuilding_.load() || requested_revision_.load() > completed_revision_.load()) {
+      response.success = false; response.message = "loop reprojection in progress"; return true;
+    }
+    grid_->clear();
+    storage_failed_.store(false);
+    latest_cloud_.reset();
+    last_processed_stamp_ = ros::Time();
     map_load_time_ = ros::Time::now();
     ++update_sequence_;
     response.success = true;
@@ -834,8 +853,12 @@ class CloudToOccupancyGrid {
   int width_cells_;
   int height_cells_;
   mutable std::mutex map_mutex_;
-  std::vector<float> log_odds_;
-  std::vector<uint8_t> observed_;
+  std::shared_ptr<mapper::TileBudget> tile_budget_;
+  std::unique_ptr<mapper::SparseGrid> grid_;
+  std::atomic<bool> storage_failed_{false};
+  int max_grid_memory_mb_;
+  int max_snapshot_cells_;
+  ros::Publisher storage_pub_;
   ros::Time map_load_time_;
   ros::Time last_processed_stamp_;
 

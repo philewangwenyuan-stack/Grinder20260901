@@ -15,6 +15,9 @@ cloud_to_occupancy_grid:
   keyframe_service: /super_lio_loop/get_keyframe
 
   resolution: 0.05
+  # Capacity limits only; 64x64 tiles are allocated as observations arrive.
+  max_grid_memory_mb: 1024  # Shared live + loop replay tile payload budget.
+  max_snapshot_cells: 100000000 # Limit each dense publication/save snapshot.
   map_width: 500.0
   map_height: 500.0
   origin_x: -60.0
@@ -48,7 +51,7 @@ cloud_to_occupancy_grid:
   autosave: false
   autosave_interval: 30.0
   save_only_when_changed: false
-  # Keep the live navigation map stable; crop only the saved PGM/YAML.
+  # Live, saved and frozen maps use the same observed bounds + padding.
   publish_cropped_map: true
   save_cropped_map: true
   crop_padding: 1.0

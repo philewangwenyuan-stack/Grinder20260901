@@ -6,6 +6,8 @@
   <arg name="reprojection_enabled" default="true"/>
   <arg name="map_directory" default="/data/maps/current"/>
   <arg name="map_name" default="grinder_map"/>
+  <arg name="max_grid_memory_mb" default="256"/>
+  <arg name="max_snapshot_cells" default="25000000"/>
   <arg name="autosave" default="false"/>
 
   <rosparam command="load" file="$(arg config)"/>
@@ -19,6 +21,8 @@
     <param name="reprojection_enabled" value="$(arg reprojection_enabled)"/>
     <param name="map_directory" value="$(arg map_directory)"/>
     <param name="map_name" value="$(arg map_name)"/>
+    <param name="max_grid_memory_mb" value="$(arg max_grid_memory_mb)"/>
+    <param name="max_snapshot_cells" value="$(arg max_snapshot_cells)"/>
     <param name="autosave" value="$(arg autosave)"/>
   </node>
 </launch>

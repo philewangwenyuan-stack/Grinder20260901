@@ -20,6 +20,10 @@
 
 默认不加载 STEP，Gazebo collision 和 inertia 使用简化几何，以保证姿态稳定和实时性。仿真启动会用 `navigation_sim_overrides.yaml` 将 global/local costmap footprint 对齐到上述方盒尺寸；真实导航参数保持不改。需要查看 CAD 外观时运行 `./start_grinder_sim.sh visual_mesh:=true`。
 
+仿真底盘提供 `/chassis/reset_emergency_stop`：急停锁存后只有复位服务能解除，
+复位会清除旧行走命令并关闭磨盘，保持停车直到收到新的控制命令。
+离线安全回归见 `test/test_sim_emergency_reset.py`。
+
 ## WSL 启动
 
 完整链路：虚拟 MID-360S `/livox/lidar`（CustomMsg，10 Hz）和 `/livox/imu`（200 Hz）

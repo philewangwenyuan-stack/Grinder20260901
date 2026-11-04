@@ -9,6 +9,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, Float32, Int16, UInt16
+from std_srvs.srv import Trigger, TriggerResponse
 
 from grinder_chassis_driver.msg import ChassisStatus, WheelSpeedCommand, WheelSpeedState
 from grinder_chassis_driver.srv import (
@@ -100,6 +101,7 @@ class ChassisSimNode:
 
         rospy.Service("/chassis/enable", EnableChassis, self._handle_enable)
         rospy.Service("/chassis/clear_fault", ClearFault, self._handle_clear_fault)
+        rospy.Service("/chassis/reset_emergency_stop", Trigger, self._reset_emergency_stop)
 
         self._output_timer = rospy.Timer(rospy.Duration(1.0 / self._output_rate), self._output_tick)
         self._status_timer = rospy.Timer(rospy.Duration(1.0 / self._status_rate), self._status_tick)
@@ -169,13 +171,26 @@ class ChassisSimNode:
             self._manual_speed_limit = clamp(float(message.data), 0.0, 1.0)
 
     def _on_emergency_stop(self, message):
+        if not message.data:
+            return
         with self._lock:
-            self._emergency_stop = bool(message.data)
-            if self._emergency_stop:
-                self._task_enabled = False
-                self._auto_stamp = 0.0
-                self._manual_stamp = 0.0
-                self._disc_enabled = False
+            self._emergency_stop = True
+            self._stop_outputs_locked()
+
+    def _stop_outputs_locked(self):
+        self._task_enabled = False
+        self._auto_stamp = self._manual_stamp = 0.0
+        self._auto_command = Twist()
+        self._manual_left_rpm = self._manual_right_rpm = 0.0
+        self._disc_enabled = False
+        self._last_output = Twist()
+        self._sim_cmd_pub.publish(Twist())
+
+    def _reset_emergency_stop(self, _request):
+        with self._lock:
+            self._stop_outputs_locked()
+            self._emergency_stop = False
+        return TriggerResponse(success=True, message="sim emergency released; outputs remain stopped")
 
     def _on_odom(self, message):
         with self._lock:
@@ -198,8 +213,6 @@ class ChassisSimNode:
         return EnableChassisResponse(success=True, message="sim_chassis_enabled" if request.enable else "sim_chassis_disabled")
 
     def _handle_clear_fault(self, _request):
-        with self._lock:
-            self._emergency_stop = False
         return ClearFaultResponse(success=True, message="sim_faults_cleared")
 
     def _select_output_locked(self, now):
@@ -238,14 +251,12 @@ class ChassisSimNode:
         with self._lock:
             output, source = self._select_output_locked(time.monotonic())
             self._last_output = self._copy_twist(output)
-        sim_output = self._copy_twist(output)
-        if source == "navigation":
-            # Gazebo wheel joints use the real motor's -Y installation axis.
-            # Convert ROS body-frame commands back to that joint convention;
-            # manual wheel commands already received drive_left/right_sign above.
-            sim_output.linear.x *= self._sim_drive_axis_sign
-            sim_output.angular.z *= self._sim_drive_axis_sign
-        self._sim_cmd_pub.publish(sim_output)
+            sim_output = self._copy_twist(output)
+            if source == "navigation":
+                # Manual commands have already received the drive signs.
+                sim_output.linear.x *= self._sim_drive_axis_sign
+                sim_output.angular.z *= self._sim_drive_axis_sign
+            self._sim_cmd_pub.publish(sim_output)
 
     def _feedback_rpm_locked(self):
         if self._last_odom is not None:
