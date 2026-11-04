@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import os
+import struct
 import threading
 import time
 from collections import OrderedDict
@@ -30,8 +31,24 @@ def same_geometry(a, b):
         if a.get(key, "" if key == "frame_id" else 0) != b.get(key, "" if key == "frame_id" else 0):
             return False
     for key in ("resolution", "origin_x", "origin_y", "heading_deg"):
-        if abs(float(a.get(key, 0)) - float(b.get(key, 0))) > 1e-6:
+        left=float(a.get(key,0));right=float(b.get(key,0))
+        if not math.isfinite(left) or not math.isfinite(right):
             return False
+        if abs(left-right)>1e-6:
+            # MapChunk.resolution and Pose2D origin/heading are float32. APP
+            # stores that rounded value in DrawingMapBinding's double fields;
+            # compare at wire precision rather than declaring a new base map.
+            # A coarse float32 ULP at very large coordinates must not hide
+            # a physical map shift. Keep rounding allowances below 1 mm
+            # (or 0.001 degree); resolution retains the existing tolerance.
+            allowance=1e-6 if key=="resolution" else 1e-3
+            if abs(left-right)>allowance:
+                return False
+            try:
+                if struct.pack("<f",left)!=struct.pack("<f",right):
+                    return False
+            except (OverflowError,struct.error):
+                return False
     return not (a.get("map_revision") and b.get("map_revision") and a["map_revision"] != b["map_revision"])
 
 

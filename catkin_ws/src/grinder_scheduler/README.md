@@ -351,3 +351,6 @@ APP 扫描页“下一步”使用 `MapDraftRequest/Response (0x053C/0x053D)`：
 APP 需要同步升级协议。APP 本地尚未提交的擦除、撤销记录、工作区编辑和地图名按草稿 ID/底图 revision 保存；已确认编辑以设备端状态为准。换平板时只恢复设备已确认的内容。本流程不修改实时避障算法；停止建图组后不会假定 `/scan` 或位姿仍在发布。现有回环三维保存坐标一致性限制仍需按根 README 的说明验证，本改动不改回环后端。
 
 离线回归：`test_map_edit_drafts.py`、`test_live_map_save.py`、`test_super_lio_mode_manager.py`、`test_history_process.py`、`test_drawing_*.py`。Linux 构建 `PROFILE=mapping`；独立 ROS 验证运行 mapping 包 `test/test_mapper_freeze_ros.py`，只启动端口11379的私有 master 和合成点云 mapper，不连接实车。
+
+
+图纸校验数值精度修复（2026-11-04）：MapChunk/Pose2D的原点、朝向及分辨率以float32传输，APP再写入DrawingMapBinding的double字段。几何比较须识别这种量化往返，不能将-43.6与-43.599998474121094判成底图变化。只容许相同float32编码且有上限的舍入差异（原点不超过1mm、朝向不超过0.001度，分辨率保持原阈值）；尺寸、坐标系和资产版本仍校验，非有限值拒绝。`test_drawing_obstacles.py`覆盖该实测值、草稿提交全链路、真实变更和大坐标量化混叠。修复后运行中的调度进程需要加载新代码，APP可重新检查，无须因该误报重选控制点。

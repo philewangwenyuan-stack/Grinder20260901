@@ -1,5 +1,6 @@
 """Offline drawing contracts. No hardware, ROS node or map-server changes."""
 import hashlib
+import struct
 import sys
 import tempfile
 from copy import deepcopy
@@ -13,11 +14,54 @@ ROOT=Path(__file__).resolve().parents[4]
 sys.path.insert(0,str(ROOT/'catkin_ws/src/grinder_scheduler/src'))
 sys.path.insert(0,str(ROOT/'third_party/sl_linka/sdk/python'))
 from sl_link.message_gen import sl_link_pb2 as pb
-from grinder_scheduler.drawing_obstacles import DrawingStore, validate_payload, foundation_mask, path_avoids_foundations
+from grinder_scheduler.drawing_obstacles import DrawingStore, validate_payload, foundation_mask, path_avoids_foundations, same_geometry
 
 
 def binding():
     return dict(width=100,height=100,resolution=.1,origin_x=0.,origin_y=0.,frame_id='map',map_revision='raw-one')
+
+
+def test_map_chunk_float_origin_round_trip_does_not_invalidate_fixed_drawing():
+    canonical=dict(binding(),origin_x=-11.15,origin_y=-43.6)
+    wire=dict(canonical)
+    for key in ('resolution','origin_x','origin_y','heading_deg'):
+        wire[key]=struct.unpack('<f',struct.pack('<f',canonical.get(key,0)))[0]
+    assert abs(wire['origin_y']-canonical['origin_y'])>1e-6
+    assert same_geometry(wire,canonical)
+    assert same_geometry(canonical,wire)
+    store=DrawingStore();value=payload()
+    value['info']['binding']=wire
+    transform=value['info']['transform']
+    transform.update(tx_m=canonical['origin_x'],ty_m=canonical['origin_y'])
+    for p in transform['control_points']:
+        p['map_x_m']+=canonical['origin_x'];p['map_y_m']+=canonical['origin_y']
+    for p in value['foundations'][0]['points']:
+        p['x']+=canonical['origin_x'];p['y']+=canonical['origin_y']
+    response=upload(store,value,map_binding=canonical)
+    assert response.complete and response.result==pb.RESULT_SUCCESS
+    assert not any(c['code']=='MAP_CHANGED' for c in validate_payload(value,canonical))
+    store.prepare_save('map-one','map-one','draft-one',1,canonical,'save-wire')
+    store.finish_save('map-one',canonical,pb.MapSaveResponse(result=pb.RESULT_SUCCESS,map_id='map-one'))
+    assert store.layer('map-one',canonical)['info']['status']==pb.DRAWING_PUBLISHED
+
+
+@pytest.mark.parametrize('change',[
+    dict(width=101),dict(height=99),dict(resolution=.051),dict(origin_x=-11.10),
+    dict(origin_y=-43.60002),dict(heading_deg=.01),dict(frame_id='odom'),dict(map_revision='replaced')])
+def test_real_geometry_or_asset_change_still_invalidates_drawing(change):
+    base=dict(binding(),origin_x=-11.15,origin_y=-43.6)
+    assert not same_geometry(base,dict(base,**change))
+
+
+@pytest.mark.parametrize('value',[float('nan'),float('inf'),float('-inf')])
+def test_non_finite_geometry_never_compares_equal(value):
+    assert not same_geometry(dict(binding(),origin_y=value),dict(binding(),origin_y=value))
+
+
+def test_large_coordinate_float_alias_does_not_hide_physical_map_shift():
+    left=1000000.01;right=1000000.02
+    assert struct.pack('<f',left)==struct.pack('<f',right)
+    assert not same_geometry(dict(binding(),origin_y=left),dict(binding(),origin_y=right))
 
 
 def payload():
@@ -28,14 +72,14 @@ def payload():
             inflation_m=.3,points=[dict(x=x,y=y) for x,y in [(4,4),(5,4),(5,5),(4,5)]])])
 
 
-def upload(store, value=None, draft_id='draft-one', expected=0, split=300):
+def upload(store, value=None, draft_id='draft-one', expected=0, split=300, map_binding=None):
     message=pb.DrawingLayerPayload();ParseDict(value or payload(),message)
     data=message.SerializeToString();chunks=[data[i:i+split] for i in range(0,len(data),split)]
     result=None
     for i in reversed(range(len(chunks))):
         r=pb.DrawingDraftRequest(request_id='upload',map_id='map-one',operation=pb.DRAWING_UPLOAD,draft_id=draft_id,
             data=chunks[i],chunk_index=i,total_chunks=len(chunks),payload_sha256=hashlib.sha256(data).hexdigest(),expected_layer_version=expected)
-        result=store.request(r,pb,binding())
+        result=store.request(r,pb,map_binding or binding())
     return result
 
 
