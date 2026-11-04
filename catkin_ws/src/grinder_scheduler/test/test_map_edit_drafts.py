@@ -115,6 +115,45 @@ class MapEditDraftTests(unittest.TestCase):
         self.assertTrue(self.node._is_editing_draft(binding.map_id))
         self.assertEqual(self.node.map_id, binding.map_id)
 
+    def test_erase_batch_reply_preserves_status_binding_and_retry_idempotency(self):
+        binding = self.freeze()
+        original = self.node._handle_map_edit_without_drawing
+        status = pb.MapEditStatusReport(map_version=1, applied_to_planner=True, message="refreshed")
+        status_frame = (status.SerializeToString(), pb.MSG_ID_MAP_EDIT_STATUS_REPORT, pb.COMP_SCHEDULER)
+
+        def batch(payload):
+            return [original(payload), status_frame]
+
+        self.node._handle_map_edit_without_drawing = batch
+        request = pb.MapEditCommand(map_id=binding.map_id, edit_id="erase-batch",
+                                   operation=pb.MAP_EDIT_OP_UPSERT_ERASE_REGION, edit_binding=binding)
+        result = self.node.handle_map_edit_command(request.SerializeToString())
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 2)
+        response = pb.MapEditResponse.FromString(result[0][0])
+        self.assertEqual(response.result, pb.RESULT_SUCCESS, response.message)
+        self.assertEqual(response.edit_binding.edit_version, 1)
+        self.assertEqual(result[1], status_frame)
+        repeated = self.node.handle_map_edit_command(request.SerializeToString())
+        self.assertEqual(pb.MapEditResponse.FromString(repeated[0]), response)
+        self.assertEqual(self.node.version, 1)
+        fresh = Node(self.temp.name)
+        fresh._map_registry = self.node._map_registry
+        restored = operation(fresh, pb.MAP_DRAFT_RESUME, map_id=binding.map_id)
+        self.assertEqual(restored.binding.edit_version, 1)
+
+    def test_failed_batch_edit_keeps_failure_and_does_not_commit_new_version(self):
+        binding = self.freeze()
+        response = pb.MapEditResponse(result=pb.RESULT_FAILED, message="invalid erase polygon")
+        status = pb.MapEditStatusReport(applied_to_planner=False)
+        frames = [(status.SerializeToString(), pb.MSG_ID_MAP_EDIT_STATUS_REPORT, pb.COMP_SCHEDULER),
+                  (response.SerializeToString(), pb.MSG_ID_MAP_EDIT_RESPONSE, pb.COMP_SCHEDULER)]
+        self.node._handle_map_edit_without_drawing = lambda _: frames
+        request = pb.MapEditCommand(map_id=binding.map_id, edit_id="bad-erase", edit_binding=binding)
+        result = self.node.handle_map_edit_command(request.SerializeToString())
+        self.assertEqual(result, frames)
+        self.assertEqual(operation(self.node, pb.MAP_DRAFT_RESUME, map_id=binding.map_id).binding.edit_version, 0)
+
     def test_restart_retains_old_draft_and_is_idempotent(self):
         old = self.freeze().map_id
         operation(self.node, pb.MAP_DRAFT_RESTART, "restart")

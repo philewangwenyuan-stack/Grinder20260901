@@ -259,13 +259,23 @@ class MapEditDraftMixin(DrawingObstacleMixin):
                 if draft:
                     self.map_service._draft_commit = None
                 result = super().handle_map_edit_command(payload)
-                response = pb.MapEditResponse.FromString(result[0])
+                # The scheduler normally returns response + status frames;
+                # legacy handlers and cached replies can return one frame.
+                single = isinstance(result, tuple)
+                frames = [result] if single else list(result)
+                response_index = next((i for i, frame in enumerate(frames)
+                                       if frame[1] == pb.MSG_ID_MAP_EDIT_RESPONSE), None)
+                if response_index is None:
+                    raise ValueError("地图编辑未返回确认应答")
+                data, message_id, component = frames[response_index]
+                response = pb.MapEditResponse.FromString(data)
                 if request.HasField("edit_binding") and response.result == pb.RESULT_SUCCESS:
                     response.edit_binding.CopyFrom(request.edit_binding)
                     response.edit_binding.edit_version = response.map_version
                 if draft and response.result == pb.RESULT_SUCCESS:
                     self._commit_draft_edits(map_id, response_key, response.SerializeToString())
-                return response.SerializeToString(), result[1], result[2]
+                frames[response_index] = response.SerializeToString(), message_id, component
+                return frames[0] if single else frames
             except Exception as exc:
                 response = pb.MapEditResponse(result=pb.RESULT_INVALID_PARAM, message=str(exc))
                 return response.SerializeToString(), pb.MSG_ID_MAP_EDIT_RESPONSE, pb.COMP_SCHEDULER
