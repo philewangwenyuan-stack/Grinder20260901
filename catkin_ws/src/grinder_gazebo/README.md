@@ -72,6 +72,7 @@ grep --line-buffered -v -E \
 
 - `world_name:=/absolute/path/scene.world`：选择 Gazebo 场景；默认使用 B1。
 - `gui:=true|false`：Gazebo 图形界面。
+- `sim_speed:=2`：目标2倍仿真速度，默认`1.0`；支持正数，例如`0.5`、`2`、`4`。实际速度受算力限制。
 - `visual_mesh:=true|false`：真实 STEP visual 或轻量盒体。
 - `start_navigation:=true|false`：启动 move_base + RPP/TEB。
 - `navigation_local_planner:=rpp|teb`。
@@ -93,6 +94,16 @@ DISPLAY=:0 bash ./start_grinder_sim.sh
 ```
 
 更换场景前先停止已有仿真实例；世界文件只会在 Gazebo 启动时加载。
+
+启动命令可直接指定目标倍速，无需修改场景world文件：
+
+```bash
+./start_grinder_sim.sh gui:=false sim_speed:=2
+```
+
+远程启动同样透传：`remote_sim.ps1 start sim_speed:=2`。同步修改后的源码及脚本后再使用；本功能不会自动改变已运行的仿真。
+
+`spawn_x920.launch`启动一次性的`set_sim_speed.py`，等待Gazebo物理服务就绪后，读取当前场景的物理时间步长，按“更新频率=目标倍速÷时间步长”设置上限；重力和ODE配置原样保留，不修改原始world或机器人行驶速度。仿真时钟整体加快；实际倍速可用`gz stats`观察。无效参数或服务失败会在启动日志报错。业务实现及离线回归分别见`src/grinder_gazebo/sim_speed.py`与`test/test_sim_speed.py`。
 可在 `catkin_ws/temp/sim_spawn_pose` 保存一行 `x y yaw`（米、弧度），
 作为该设备的机器人出生点；命令行 `x:=... y:=... yaw:=...` 可分别覆盖。
 切换场景时应同步调整或移除该出生点文件。首层 `z=0` 对应的车体出生高度仍为 `0.1675m`。

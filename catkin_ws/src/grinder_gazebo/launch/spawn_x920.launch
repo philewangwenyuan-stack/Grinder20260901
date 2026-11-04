@@ -1,6 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
   <arg name="paused" default="false" />
+  <arg name="sim_speed" default="1.0" />
   <arg name="world_name" default="$(eval optenv('GRINDER_SIM_WORLD', find('grinder_gazebo') + '/worlds/factory_floor.world'))" />
   <arg name="visual_mesh" default="false" />
   <arg name="lidar_x" default="0.20" />
@@ -28,6 +29,11 @@
     <arg name="paused" value="$(arg paused)" />
     <arg name="use_sim_time" value="true" />
   </include>
+
+  <!-- One-shot service update preserves the chosen world's time step, gravity and ODE settings. -->
+  <node pkg="grinder_gazebo" type="set_sim_speed.py" name="grinder_sim_speed" output="screen">
+    <param name="speed" value="$(arg sim_speed)" />
+  </node>
 
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
     <param name="publish_frequency" value="30.0" />

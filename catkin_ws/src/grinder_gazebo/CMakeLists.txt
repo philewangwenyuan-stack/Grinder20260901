@@ -46,6 +46,7 @@ install(TARGETS grinder_mid360_sensor LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_D
 
 catkin_install_python(PROGRAMS
   scripts/chassis_sim_node.py
+  scripts/set_sim_speed.py
   scripts/slamware_sim_bridge.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

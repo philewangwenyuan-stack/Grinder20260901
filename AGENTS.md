@@ -121,6 +121,8 @@ rg -n 'super_lio|cloud_to_occupancy_grid|include' catkin_ws/src/grinder_schedule
 
 ## 常见需求的最短阅读路径
 
+- Gazebo启动倍速：`start_grinder_sim.sh sim_speed:=2`（在catkin_ws内运行），参数经`grinder_gazebo/launch/grinder_sim.launch`、`spawn_x920.launch`透传到`src/grinder_gazebo/sim_speed.py`；只调物理更新频率，保留时间步长/重力/ODE，离线回归`grinder_gazebo/test/test_sim_speed.py`。实际倍速受算力限制。
+
 - 新增/修改协议：`sl_link.proto` -> `sl_linka_adapter.py` -> `scheduler_node.py` 对应处理函数；之后重新生成相关 SDK。
 - 地图问题：`scheduler.yaml` 的存储参数 -> `map_service.py` -> `scheduler_node.py` 中 `handle_map_*`。
 - 路径问题：`scheduler.yaml: planner_script_path` -> `planner_adapter.py` -> `mst27.py`；C++ 加速问题再读 `mst27_cpp.cpp`。
