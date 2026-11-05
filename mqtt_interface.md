@@ -191,6 +191,7 @@ Last Will 示例：
 | 平台属性编码建议 | 类型 | 单位 | 说明 | 调度程序数据来源 |
 |------------------|------|------|------|------------------|
 | `taskId` | string | - | 当前任务 ID | `task_config.task_id` |
+| `pathVersion` | number | - | 当前已存全局路径版本；没有路径时为 0，需结合 taskState 判断执行状态 | `current_path.path_version` |
 | `taskState` | string | - | 当前任务状态 | `state` |
 | `taskProgress` | number | % | 任务进度，0-100 | `_task_progress()` |
 | `taskMessage` | string | - | 任务状态说明/错误信息 | `last_error` 或 `state` |

@@ -4617,7 +4617,13 @@ class SchedulerNode(MapEditDraftMixin):
         self._safe_stop_motion()
         if self._plan_current_task():
             self.replan_requested = False
-            return self._resume_execution()
+            success, message = self._resume_execution()
+            if success:
+                try:
+                    self._publish_task_path_to_mqtt()
+                except Exception as exc:
+                    rospy.logwarn("MQTT replanned task path report failed: %s", exc)
+            return success, message
         return False
 
     @motion_action(cancel_result=False)
@@ -6933,6 +6939,7 @@ class SchedulerNode(MapEditDraftMixin):
         })))
 
     def _mqtt_status_snapshot(self):
+        current_path = self.current_path
         pose = self.ros_data_bridge.get_pose()
         map_info = self.map_service.get_map_info() or {}
         progress = max(0.0, min(1.0, float(self._task_progress())))
@@ -6983,7 +6990,8 @@ class SchedulerNode(MapEditDraftMixin):
             "finishedWorkArea": total_area * progress,
             "remainingWorkArea": max(0.0, total_area * (1.0 - progress)),
             "remainingTime": float(self._estimate_remaining_time_s(progress)),
-            "pathPointCount": len(self.current_path.points) if self.current_path else 0,
+            "pathVersion": int(current_path.path_version) if current_path else 0,
+            "pathPointCount": len(current_path.points) if current_path else 0,
             "currentPathPointIndex": int(self.current_path_index),
             "lastError": str(self.last_error or ""),
         }

@@ -1,5 +1,14 @@
 # grinder_scheduler 包说明
 
+## MQTT 当前路径版本
+
+基础设备数据 Topic 的周期状态包含 `pathVersion`，与 `task/path` 中的版本使用同一份
+`current_path.path_version`。云端按设备、`taskId + mapId + pathVersion` 关联路径；
+没有已存路径时版本为 0，暂停/停止后可能保留已存路径，须结合 `taskState` 判断是否执行中。
+任务成功启动，以及运行中重规划并恢复成功后，发送一次完整 `task/path`。
+上报失败不影响任务控制；消息非 retained，当前没有业务确认或离线重试保证。
+版本计数在调度器重启后重新开始；跨重启复用 taskId 时不能将上述组合视为永久唯一的执行 ID。
+
 ## 导航页只读路径查询
 
 `PathPointPlanRequest.read_only=true`（0x0505）只返回当前任务已保存的完整路径，允许在运行或暂停中查询，沿用0x0506分片响应及request_id。不调用规划器、不切换地图、不修改任务、路径版本或执行游标；任务/地图不匹配或没有已存路径时明确返回失败。`read_only=false`保留原规划语义及运行中拒绝重规划的行为。APP导航页使用只读请求，补取失败或超时保留同任务旧路线，成功后替换。此字段需要两端配套更新。离线回归：`test/test_current_task_path.py`。
