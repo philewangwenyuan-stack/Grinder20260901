@@ -252,29 +252,6 @@ def path_avoids_foundations(points, mask, map_info, safety_m=0, footprint=None):
     return True
 
 
-def clearance_checks(grid,map_info,regions,vehicle_width):
-    enabled=[r for r in regions if r.get("enabled",True) and int(r.get("drawing_action",0))==0]
-    if not enabled or grid is None:
-        return []
-    masks=[foundation_mask(grid.shape[:2],map_info,[r]) for r in enabled]
-    all_foundations=np.maximum.reduce(masks)
-    occupied=(np.asarray(grid)!=0).astype(np.uint8)
-    checks=[]
-    for region,own in zip(enabled,masks):
-        other=np.maximum(occupied,all_foundations)
-        other[own>0]=0
-        if not np.any(other) or not np.any(own):
-            continue
-        distance=cv2.distanceTransform(1-other,cv2.DIST_L2,cv2.DIST_MASK_PRECISE)
-        gap=float(distance[own>0].min())*float(map_info["resolution"])
-        if gap<float(vehicle_width):
-            points=region["points"]
-            checks.append(dict(level="warning",code="NARROW_GAP",region_id=region.get("region_id",""),
-                message="与周边障碍的净距可能不足车宽（{:.2f} m），请在最终路径预览核对".format(vehicle_width),
-                position=dict(x=sum(p["x"] for p in points)/len(points),y=sum(p["y"] for p in points)/len(points))))
-    return checks
-
-
 class DrawingStore:
     def __init__(self, root=None):
         self.root = os.path.join(root, "drawing_layers") if root else None

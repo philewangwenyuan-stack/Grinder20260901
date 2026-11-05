@@ -60,6 +60,9 @@ RTSP 服务链路。两项均在节点初始化时读取，重启后生效。有
 这些转换只发生在上传内容中。已有云端旧文件不自动删除，地图改名后的旧文件也不自动清理。
 离线回归：`test/test_platform_integration.py`。
 
+平台地图 multipart 上传使用明确的 Content-Length，文件按 64 KiB 分块读取发送，
+不再将 PCD/PGM 整体读入内存或拼接完整请求体；上传失败仍由现有任务流程报告。
+
 `map_grid_utils.py` 不依赖 ROS。保存地图的 MapRequest PNG 直接从 PGM 以 LUT
 映射为底图，不再经过 OccupancyGrid 整数列表往返；任务结果的原始地图快照复用同一条路径。
 规划/导航仍使用原来的栅格坐标方向。RosDataBridge 用 `numpy_msg(OccupancyGrid)` 接收地图，
@@ -344,6 +347,9 @@ TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更�
 保存地图的图纸绑定直接读取对应保存栅格的几何，不使用启动时尚未就绪或属于其他地图的 MapService。底图未就绪不会持久化为图纸失效；旧版误标为“地图底图或坐标几何发生变化”的图纸，仅在完整几何和非空原始地图版本均匹配、且没有 pending/损坏状态时自动恢复，不改控制点、变换或图纸版本。
 
 上传单片48KiB、总量8MiB，SHA-256校验；半包5分钟、完整草稿24小时。最终地图保存前先持久化pending，保存成功再发布版本；相同request_id可重试，重启后pending也支持原请求重试。中断/pending期间禁止启动，地图几何改变须重新对齐。两个文件保存不是跨文件原子事务。关闭现有persist_state_enabled时图纸不能跨重启保留。
+
+草稿检查保留几何合法性和地图绑定校验，不生成逐地基全图 mask、不做净距检查；
+后续路径规划在合入地基障碍的栅格上执行原有碰撞检查。
 
 离线回归逐文件运行：`test/test_drawing_obstacles.py`、`test/test_drawing_integration.py`、`test/test_drawing_planning.py`，另跑 `test_live_map_save.py`、`test_planner_preprocessing.py`。纯编辑环境需NumPy、OpenCV、protobuf及规划器测试依赖；scheduler/chassis源码目录和Python SDK加入PYTHONPATH。真实ROS/运动急停回归需Linux与Catkin，Windows缺少termios，不能代替实机验证。
 

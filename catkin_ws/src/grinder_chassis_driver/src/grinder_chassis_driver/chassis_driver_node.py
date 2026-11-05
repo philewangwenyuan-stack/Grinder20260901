@@ -467,6 +467,16 @@ class ChassisDriverNode:
             self._reset_cmd_vel_filter()
             return
         self._last_cmd_vel_recv_monotonic = time.monotonic()
+        if not all(math.isfinite(float(value)) for value in (msg.linear.x, msg.angular.z)):
+            rospy.logwarn_throttle(2.0, "Non-finite cmd_vel rejected; stopping wheels")
+            self._reset_cmd_vel_filter()
+            with self._command_guard():
+                self.command.left_wheel_speed = self.command.right_wheel_speed = 0
+                self.last_command_time = rospy.Time.now()
+                self._last_wheel_command_manual = False
+            if self.enabled:
+                self._write_motion_registers()
+            return
         if self.cmd_vel_wheel_radius_m <= 0.0 or self.cmd_vel_wheel_track_m <= 0.0:
             rospy.logwarn_throttle(
                 2.0,

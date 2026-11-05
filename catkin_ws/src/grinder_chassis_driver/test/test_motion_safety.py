@@ -87,6 +87,8 @@ def load_class(relative, names=None):
     cls = next(n for n in parsed.body if isinstance(n, ast.ClassDef) and n.name in ('ChassisDriverNode', 'GrinderSchedulerNode', 'SchedulerNode'))
     if names is not None:
         cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in names]
+        # This harness loads selected methods only, without ROS/mixin imports.
+        cls.bases = []
     namespace = dict(vars(registers))
     namespace.update(globals())
     namespace.update({name: Message for name in ('Bool', 'Int16', 'UInt16', 'Float32', 'String', 'Twist', 'TwistWithCovarianceStamped', 'Odometry',
@@ -180,6 +182,30 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual(b'\x00\x00\x00\x00', frame[7:11])
         self.assertEqual(0, node.last_sent_left_wheel_speed)
         self.assertEqual(0, node.last_sent_right_wheel_speed)
+
+    def test_nonfinite_cmd_vel_stops_immediately_and_resets_filter(self):
+        node = self.driver()
+        node.task_enable = True
+        node.enable_cmd_ramp_limit = True
+        node.max_cmd_step_rpm = 20
+        for value in (float('nan'), float('inf'), float('-inf')):
+            for axis in ('linear', 'angular'):
+                with self.subTest(value=value, axis=axis):
+                    node.command.left_wheel_speed = node.command.right_wheel_speed = 100
+                    node._write_motion_registers()
+                    node._last_filtered_linear = .2
+                    node._last_filtered_angular = .25
+                    node._pending_angular_sign_count = 1
+                    msg = Message(linear=Message(x=.1), angular=Message(z=.1))
+                    setattr(getattr(msg, axis), 'x' if axis == 'linear' else 'z', value)
+                    node._handle_cmd_vel(msg)
+                    self.assertEqual((0, 0), (node.command.left_wheel_speed, node.command.right_wheel_speed))
+                    self.assertEqual(b'\x00\x00\x00\x00', node._memory_serial.frames[-1][7:11])
+                    self.assertEqual((0.0, 0.0, 0), (node._last_filtered_linear,
+                        node._last_filtered_angular, node._pending_angular_sign_count))
+        node.cmd_vel_filter_enabled = False
+        node._handle_cmd_vel(Message(linear=Message(x=.1), angular=Message(z=0.0)))
+        self.assertTrue(node.command.left_wheel_speed or node.command.right_wheel_speed)
 
     def test_liftless_stop_does_not_write_lift_register(self):
         node = self.driver(False)

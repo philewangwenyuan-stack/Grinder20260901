@@ -8596,6 +8596,12 @@ class SchedulerNode(MapEditDraftMixin):
         max_speed_mps=0.0,
         max_turn_speed_ratio=0.0,
     ):
+        if not all(math.isfinite(float(value)) for value in (
+                speed_ratio, remote_x, remote_y, max_speed_mps, max_turn_speed_ratio)):
+            rospy.logwarn_throttle(2.0, "Non-finite manual drive rejected; stopping wheels")
+            # Use the normal zero-command path to clear pending transitions and
+            # manual activity, including the non-task travel disc state.
+            speed_ratio = remote_x = remote_y = max_speed_mps = max_turn_speed_ratio = 0.0
         saved_run_speed = max(0.0, float(self._chassis_settings.get("run_speed", 0.0)))
         requested_max_speed = float(max_speed_mps)
         manual_speed_limit = (

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import json
+import hashlib
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 import sys
 import tempfile
+import threading
 import types
 import unittest
 from unittest import mock
@@ -93,6 +96,10 @@ class PlatformMapUploadTest(unittest.TestCase):
             requests = []
 
             def request_upload(request, **_kwargs):
+                # Consume while the upload's source file is still open.
+                body = b''.join(request.data)
+                self.assertEqual(int(request.get_header('Content-length')), len(body))
+                request.data = body
                 requests.append(request)
                 response = mock.MagicMock()
                 response.__enter__.return_value.read.return_value = b'{"code":200}'
@@ -129,6 +136,87 @@ class PlatformMapUploadTest(unittest.TestCase):
         self.assertEqual(PlatformFileSync._map_filename_prefix('大厅/东区\\一层\r\n"', "map-1"), '大厅_东区_一层___')
         self.assertEqual(PlatformFileSync._map_filename_prefix(" . ", "map-1"), "map-1")
         self.assertEqual(PlatformFileSync._map_filename_prefix("", ""), "map")
+
+    def test_multipart_reads_bounded_chunks_and_closes_file_on_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'loc_map.pcd')
+            with open(path, 'wb') as handle:
+                handle.write(b'x' * (256 * 1024 + 17))
+            real_open = open
+            sources = []
+
+            def guarded_open(*args, **kwargs):
+                source = real_open(*args, **kwargs)
+                sources.append(source)
+                wrapped = mock.MagicMock(wraps=source)
+                wrapped.__enter__.return_value = wrapped
+                wrapped.__exit__.side_effect = lambda *args: source.close()
+                def read(size=-1):
+                    self.assertGreater(size, 0)
+                    self.assertLessEqual(size, 64 * 1024)
+                    return source.read(size)
+                wrapped.read.side_effect = read
+                return wrapped
+
+            def fail_upload(request, **kwargs):
+                self.assertNotIsInstance(request.data, bytes)
+                self.assertIsNone(request.get_header('Transfer-encoding'))
+                length = sum(len(chunk) for chunk in request.data)
+                self.assertEqual(length, int(request.get_header('Content-length')))
+                raise OSError('connection failed')
+
+            with mock.patch('grinder_scheduler.platform_integration.open', side_effect=guarded_open), \
+                    mock.patch('urllib.request.urlopen', side_effect=fail_upload):
+                with self.assertRaisesRegex(OSError, 'connection failed'):
+                    self.make_sync()._multipart_upload(path, 'folder')
+            self.assertTrue(sources and all(source.closed for source in sources))
+
+    def test_streaming_multipart_over_http_has_correct_length_and_contents(self):
+        received = []
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                received.append((self.headers, self.rfile.read(int(self.headers['Content-Length']))))
+                self.send_response(200)
+                self.send_header('Content-Length', '12')
+                self.end_headers()
+                self.wfile.write(b'{"code":200}')
+            def log_message(self, *args):
+                pass
+        with HTTPServer(('127.0.0.1', 0), Handler) as server:
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                sync = self.make_sync()
+                sync.file_base_url = 'http://127.0.0.1:{}'.format(server.server_port)
+                with tempfile.TemporaryDirectory() as directory:
+                    path = os.path.join(directory, 'loc_map.pcd')
+                    contents = b'pcd-data\x00' * 30000
+                    with open(path, 'wb') as handle:
+                        handle.write(contents)
+                    sync._multipart_upload(path, 'folder')
+                    sync._multipart_upload(path, 'folder', filename='map.yaml', file_data=b'image: map.pgm\n')
+            finally:
+                server.shutdown()
+                thread.join(timeout=3)
+        self.assertEqual(len(received), 2)
+        for (headers, body), expected in zip(received, (contents, b'image: map.pgm\n')):
+            self.assertIsNone(headers.get('Transfer-Encoding'))
+            self.assertEqual(len(body), int(headers['Content-Length']))
+            data = body.split(b'name="File";', 1)[1].split(b'\r\n\r\n', 1)[1].rsplit(b'\r\n--', 1)[0]
+            self.assertEqual(hashlib.sha256(data).digest(), hashlib.sha256(expected).digest())
+
+    def test_file_truncated_during_upload_reports_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'loc_map.pcd')
+            with open(path, 'wb') as handle:
+                handle.write(b'cloud-data')
+            def consume_after_truncation(request, **kwargs):
+                with open(path, 'wb'):
+                    pass
+                list(request.data)
+            with mock.patch('urllib.request.urlopen', side_effect=consume_after_truncation):
+                with self.assertRaisesRegex(RuntimeError, 'upload file truncated'):
+                    self.make_sync()._multipart_upload(path, 'folder')
 
     def test_incomplete_bundle_does_not_start_upload(self):
         with tempfile.TemporaryDirectory() as bundle:

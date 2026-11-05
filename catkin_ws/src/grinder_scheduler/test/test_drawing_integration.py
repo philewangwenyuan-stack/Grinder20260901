@@ -13,7 +13,6 @@ from grinder_scheduler.map_service import MapService
 from grinder_scheduler.models import TaskConfigModel
 from grinder_scheduler.drawing_scheduler import DrawingObstacleMixin
 from grinder_scheduler.drawing_scheduler import region_response_frames
-from grinder_scheduler.drawing_obstacles import clearance_checks
 from test_drawing_obstacles import pb,binding,payload,upload,commit
 
 
@@ -149,11 +148,18 @@ def test_ordinary_obstacle_keeps_original_raster_semantics():
     assert node.map_service.compose_map()[44,44]==100
 
 
-def test_confirmation_clearance_check_is_geometric_without_a_plan():
-    grid=np.zeros((100,100),dtype=np.int16);grid[:,56]=100
-    warnings=clearance_checks(grid,binding(),payload()['foundations'],.94)
-    assert warnings and all(w['code']=='NARROW_GAP' for w in warnings)
-    assert '可能' in warnings[0]['message']
+def test_draft_confirmation_does_not_rasterize_or_check_clearance(monkeypatch):
+    node=Node();assert upload(node._drawings()).complete
+    def forbidden(*args,**kwargs):
+        raise AssertionError('draft validation must not allocate a map raster')
+    monkeypatch.setattr(node.map_service,'compose_map',forbidden)
+    monkeypatch.setattr('grinder_scheduler.drawing_obstacles.foundation_mask',forbidden)
+    request=pb.DrawingDraftRequest(map_id='map-one',operation=pb.DRAWING_VALIDATE,
+        draft_id='draft-one',draft_version=1,request_id='validate')
+    data,_,_=node.handle_drawing_draft_request(request.SerializeToString())
+    response=pb.DrawingDraftResponse.FromString(data)
+    assert response.result==pb.RESULT_SUCCESS, response.message
+    assert not any(check.code=='NARROW_GAP' for check in response.checks)
 
 
 def test_live_map_cannot_be_used_as_final_drawing_binding():

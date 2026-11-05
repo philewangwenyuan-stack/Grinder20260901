@@ -1,4 +1,5 @@
 import base64
+import io
 import json
 import mimetypes
 import os
@@ -661,25 +662,39 @@ class PlatformFileSync:
         boundary = "----GrinderBoundary{}".format(uuid.uuid4().hex)
         filename = filename or os.path.basename(file_path)
         content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-        if file_data is None:
-            with open(file_path, "rb") as handle:
-                file_data = handle.read()
-        chunks = [
+        preamble = b"".join([
             ("--{}\r\nContent-Disposition: form-data; name=\"RegionId\"\r\n\r\n{}\r\n".format(boundary, folder_id)).encode("utf-8"),
             ("--{}\r\nContent-Disposition: form-data; name=\"File\"; filename=\"{}\"\r\nContent-Type: {}\r\n\r\n".format(boundary, filename.replace('"', "_"), content_type)).encode("utf-8"),
-            file_data,
-            "\r\n--{}--\r\n".format(boundary).encode("utf-8"),
-        ]
+        ])
+        trailer = "\r\n--{}--\r\n".format(boundary).encode("utf-8")
         headers = self._file_headers()
         headers["Content-Type"] = "multipart/form-data; boundary={}".format(boundary)
-        request = urllib.request.Request(
-            self.file_base_url + "/api/app/UploadFileToFolder",
-            data=b"".join(chunks),
-            headers=headers,
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=max(self.timeout_sec, 120.0)) as response:
-            result = json.loads(response.read().decode("utf-8", errors="replace"))
+        # Keep the file open through urlopen; urllib/http.client consumes this
+        # iterable synchronously. Explicit length avoids chunked transfer for
+        # compatibility with the existing file server.
+        with (open(file_path, "rb") if file_data is None else io.BytesIO(file_data)) as handle:
+            size = os.fstat(handle.fileno()).st_size if file_data is None else len(file_data)
+            headers["Content-Length"] = str(len(preamble) + size + len(trailer))
+
+            def body():
+                yield preamble
+                remaining = size
+                while remaining:
+                    chunk = handle.read(min(64 * 1024, remaining))
+                    if not chunk:
+                        raise RuntimeError("upload file truncated: {}".format(filename))
+                    remaining -= len(chunk)
+                    yield chunk
+                yield trailer
+
+            request = urllib.request.Request(
+                self.file_base_url + "/api/app/UploadFileToFolder",
+                data=body(),
+                headers=headers,
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=max(self.timeout_sec, 120.0)) as response:
+                result = json.loads(response.read().decode("utf-8", errors="replace"))
         if not _response_ok(result):
             raise RuntimeError("upload {} failed: {}".format(filename, _response_message(result)))
 

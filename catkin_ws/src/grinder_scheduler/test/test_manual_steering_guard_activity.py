@@ -68,6 +68,23 @@ class ManualSteeringGuardActivityTest(unittest.TestCase):
             remote_y=0.0 if stop else -(0.05 / 0.15) * (1.0 - abs(steering)),
             max_speed_mps=0.15, max_turn_speed_ratio=0.7)
 
+    def test_nonfinite_manual_inputs_stop_motion_and_clear_activity(self):
+        node, clock = self.node()
+        for field in ('speed_ratio', 'remote_x', 'remote_y', 'max_speed_mps', 'max_turn_speed_ratio'):
+            for value in (float('nan'), float('inf'), float('-inf')):
+                with self.subTest(field=field, value=value):
+                    self.command(node)
+                    self.assertTrue(node._manual_command_active)
+                    args = dict(speed_ratio=1.0, remote_x=.1, remote_y=.5,
+                                max_speed_mps=.15, max_turn_speed_ratio=.7)
+                    args[field] = value
+                    node._handle_manual_drive_locked(1, **args)
+                    wheel = node.wheel_cmd_pub.messages[-1]
+                    self.assertEqual((0, 0), (wheel.left_wheel_speed, wheel.right_wheel_speed))
+                    self.assertFalse(node._manual_command_active)
+                    self.assertFalse(node._manual_travel_disc_active)
+                    self.assertTrue(all(w.output == 0 for w in node._manual_drive_transition.wheels))
+
     def light(self, node, clock):
         node._publish_status()
         resolver = StateResolver()

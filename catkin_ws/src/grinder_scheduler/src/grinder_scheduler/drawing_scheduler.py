@@ -4,8 +4,7 @@ import hashlib
 import secrets
 from copy import deepcopy
 
-from google.protobuf.json_format import ParseDict
-from grinder_scheduler.drawing_obstacles import DrawingStore, as_dict, clearance_checks
+from grinder_scheduler.drawing_obstacles import DrawingStore, as_dict
 
 _STORE_INIT_LOCK=threading.Lock()
 
@@ -130,15 +129,6 @@ class DrawingObstacleMixin:
                 if "x" in p and "y" in p:
                     pose=(float(p["x"]),float(p["y"]))
             response=self._drawings().request(request,pb,binding,pose)
-            if response.complete and response.draft_id and response.result==pb.RESULT_SUCCESS:
-                draft=self._drawings().draft(request.map_id,response.draft_id,response.draft_version,binding)
-                width=float(getattr(self.task_config,"vehicle_width",.8))
-                footprint=getattr(self,"_robot_footprint",[])
-                if footprint:
-                    width=max(width,max(float(p[1]) for p in footprint)-min(float(p[1]) for p in footprint))
-                grid=self.map_service.compose_map()
-                for check in clearance_checks(grid,binding,draft["payload"].get("foundations",[]),width):
-                    ParseDict(check,response.checks.add())
         except Exception as exc:
             response=pb.DrawingDraftResponse(result=pb.RESULT_INVALID_PARAM,message=str(exc),request_id=request.request_id,feature_version=1)
         return response.SerializeToString(),pb.MSG_ID_DRAWING_DRAFT_RESPONSE,pb.COMP_SCHEDULER
