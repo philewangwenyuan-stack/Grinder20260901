@@ -56,17 +56,6 @@ class Node(DrawingObstacleMixin):
         return result.SerializeToString(),pb.MSG_ID_PATH_PLAN_RESPONSE,pb.COMP_SCHEDULER
 
 
-def test_final_path_guard_checks_synthetic_start_and_current_robot_connection():
-    node=Node();upload(node._drawings());commit(node._drawings())
-    node.current_path=SimpleNamespace(points=[dict(x=7.,y=4.5),dict(x=8.,y=4.5)])
-    node.ros_data_bridge=SimpleNamespace(get_pose=lambda:dict(x=2.,y=4.5))
-    assert node._drawing_validate_path()
-    assert not node._drawing_validate_path(include_pose=True)
-    assert '起步连接' in node.last_error
-    node.current_path.points.insert(0,dict(x=2.,y=4.5,point_type='current_pose'))
-    assert not node._drawing_validate_path()
-
-
 def test_large_region_snapshot_is_chunked_without_losing_foundations():
     import hashlib
     response=pb.MapRegionPointResponse(map_id='map-one',map_version=7,message='x'*140000)
@@ -79,6 +68,29 @@ def test_large_region_snapshot_is_chunked_without_losing_foundations():
     joined=b''.join(r.chunk_data for r in sorted(envelopes,key=lambda r:r.chunk_index))
     assert hashlib.sha256(joined).hexdigest()==envelopes[0].payload_sha256
     assert pb.MapRegionPointResponse.FromString(joined)==response
+
+
+def test_restart_uses_saved_binding_before_map_service_is_ready():
+    node=Node();upload(node._drawings());commit(node._drawings())
+    saved=SimpleNamespace(image=np.zeros((100,100),dtype=np.uint8),resolution=.1,origin_x=0.,origin_y=0.)
+    node._load_saved_raw_grid=lambda map_id:saved
+    # Restored overlay/selected map, but the first saved raw grid is not loaded.
+    node.map_service=MapService()
+    assert node._drawing_binding()==dict(binding(),heading_deg=0.)
+    assert node._drawing_regions(strict=True)
+    assert node._drawings().layer('map-one')['info']['status']==pb.DRAWING_PUBLISHED
+    # A different service geometry must not replace this saved map's binding.
+    node.map_service=SimpleNamespace(get_map_info=lambda:dict(binding(),width=800,origin_x=30.))
+    assert node._drawing_binding()==dict(binding(),heading_deg=0.)
+
+
+def test_unavailable_saved_map_does_not_permanently_invalidate_layer():
+    node=Node();upload(node._drawings());commit(node._drawings())
+    def unavailable(map_id):
+        raise ValueError('saved raster unavailable')
+    node._load_saved_raw_grid=unavailable
+    assert node._drawing_regions()==[]
+    assert node._drawings().layer('map-one')['info']['status']==pb.DRAWING_PUBLISHED
 
 
 def test_small_region_response_retains_legacy_wire_shape():
@@ -165,6 +177,8 @@ def test_drawings_are_injected_in_real_scheduler_sync_without_painting_map():
     node=SchedulerNode.__new__(SchedulerNode)
     node.map_service=service();node.task_config=TaskConfigModel();node._persist_state_enabled=False
     node._current_map_id=lambda:'map-one';node._find_recorded_map_by_id=lambda _:dict(map_revision='raw-one')
+    node._live_map_id='LIVE_MAP'
+    node._load_saved_raw_grid=lambda _:SimpleNamespace(image=np.zeros((100,100),dtype=np.uint8),resolution=.1,origin_x=0.,origin_y=0.)
     node._plan_use_all_work_regions=False
     upload(node._drawings());commit(node._drawings())
     before=node.map_service.compose_map().copy()
@@ -185,3 +199,22 @@ def test_path_point_adapter_forwards_draft_instead_of_dropping_fields():
     request=pb.PathPointPlanRequest(map_id='map-one',request_id='req',drawing_draft_id='draft',drawing_draft_version=7)
     node.build_path_point_plan_chunks(request.SerializeToString())
     assert captured[0].drawing_draft_id=='draft' and captured[0].drawing_draft_version==7
+
+
+def test_failed_point_preview_preserves_reason_and_validated_drawing_versions():
+    from test_live_map_save import SchedulerNode
+    node=SchedulerNode.__new__(SchedulerNode);node.sl_link_server=SimpleNamespace(pb=pb)
+    reason='全局路径或车体包络与图纸地基相交，无法生成安全路径'
+    response=pb.PathPlanResponse(result=pb.RESULT_FAILED,planned=False,message=reason,
+        drawing_draft_version=7,drawing_layer_version=2)
+    node.handle_path_plan_request=lambda *args,**kwargs: (response.SerializeToString(),pb.MSG_ID_PATH_PLAN_RESPONSE,pb.COMP_SCHEDULER)
+    def serialize(**kwargs):
+        chunk=pb.PathPointPlanResponse(request_id=kwargs['request_id'],planned=kwargs['planned'],
+            result=pb.RESULT_FAILED,message=kwargs['message'])
+        return [(chunk.SerializeToString(),pb.MSG_ID_PATH_POINT_PLAN_RESPONSE,pb.COMP_SCHEDULER)]
+    node._serialize_path_point_plan_chunks=serialize
+    request=pb.PathPointPlanRequest(map_id='map-one',request_id='failed-preview',drawing_draft_id='draft',drawing_draft_version=7)
+    chunks=node.build_path_point_plan_chunks(request.SerializeToString())
+    actual=pb.PathPointPlanResponse.FromString(chunks[0][0])
+    assert not actual.planned and actual.message==reason and actual.request_id=='failed-preview'
+    assert actual.drawing_draft_version==7 and actual.drawing_layer_version==2

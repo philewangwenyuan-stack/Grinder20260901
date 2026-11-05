@@ -11,7 +11,7 @@ from pathlib import Path as FsPath
 import cv2
 import numpy as np
 from grinder_scheduler.path_geometry import compact_planner_polyline
-from grinder_scheduler.drawing_obstacles import foundation_mask, path_avoids_foundations
+from grinder_scheduler.drawing_obstacles import foundation_mask
 import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path as NavPath
@@ -119,17 +119,7 @@ class PlannerAdapter:
         # A request-owned grid copy: never hand drawing pixels to map export.
         grid = np.array(composed_grid, copy=True)
         grid[mask > 0] = 100
-        result = self._plan_without_drawing(task_id, grid, map_info, task_config)
-        if not result.points:
-            return result
-        footprint = getattr(task_config, "drawing_footprint", [])
-        if not footprint:
-            width = float(getattr(task_config, "vehicle_width", 0.8)) / 2
-            length = float(getattr(task_config, "vehicle_length", 1.6)) / 2
-            footprint = [(-length,-width),(length,-width),(length,width),(-length,width)]
-        if not path_avoids_foundations(result.points, mask, map_info, footprint=footprint):
-            raise ValueError("全局路径或车体包络与图纸地基相交，无法生成安全路径")
-        return result
+        return self._plan_without_drawing(task_id, grid, map_info, task_config)
 
     def _plan_without_drawing(self, task_id, composed_grid, map_info, task_config):
         t0_total = time.perf_counter()

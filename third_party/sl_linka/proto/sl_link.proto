@@ -662,6 +662,8 @@ message PathPointPlanRequest {
   string drawing_draft_id = 9;
   uint32 drawing_draft_version = 10;
   MapDraftBinding edit_binding = 11;
+  // Return only the existing current-task path. Never plan or alter execution.
+  bool read_only = 12;
 }
 
 message PathPointPlanResponse {

@@ -64,7 +64,8 @@
   </gazebo>
 
   <gazebo reference="laser_link">
-    <sensor type="ray" name="mid360s_lidar">
+    <!-- Gazebo GPU lidar internally splits the full sweep across three cameras. -->
+    <sensor type="${dict(cpu='ray', gpu='gpu_ray')['$(arg lidar_backend)']}" name="mid360s_lidar">
       <always_on>true</always_on>
       <visualize>false</visualize>
       <update_rate>10</update_rate>
@@ -72,18 +73,20 @@
       <ray>
         <scan>
           <horizontal>
-            <samples>$(arg lidar_horizontal_samples)</samples><resolution>1</resolution>
-            <min_angle>-${pi}</min_angle><max_angle>${pi - 2*pi/int('$(arg lidar_horizontal_samples)')}</max_angle>
+            <samples>${int('$(arg lidar_horizontal_samples)') + gpu_sample_offset}</samples><resolution>1</resolution>
+            <min_angle>${-pi - gpu_sample_offset * 2*pi/int('$(arg lidar_horizontal_samples)')}</min_angle><max_angle>${pi - 2*pi/int('$(arg lidar_horizontal_samples)')}</max_angle>
           </horizontal>
           <vertical>
-            <samples>$(arg lidar_vertical_samples)</samples><resolution>1</resolution>
-            <min_angle>${-7*pi/180}</min_angle><max_angle>${52*pi/180}</max_angle>
+            <samples>${int('$(arg lidar_vertical_samples)') + gpu_sample_offset}</samples><resolution>1</resolution>
+            <min_angle>${(-7 - gpu_sample_offset * 59/(int('$(arg lidar_vertical_samples)')-1))*pi/180}</min_angle><max_angle>${52*pi/180}</max_angle>
           </vertical>
         </scan>
         <range><min>0.10</min><max>$(arg lidar_max_range)</max><resolution>0.01</resolution></range>
         <noise><type>gaussian</type><mean>0.0</mean><stddev>${sensor_noise['lidar_range_stddev_m']}</stddev></noise>
       </ray>
-      <plugin name="mid360s_ros" filename="libgrinder_mid360_sensor.so" />
+      <plugin name="mid360s_ros" filename="libgrinder_mid360_sensor.so">
+        <sample_offset>${gpu_sample_offset}</sample_offset>
+      </plugin>
     </sensor>
     <sensor type="imu" name="mid360s_imu">
       <always_on>true</always_on><update_rate>200</update_rate>

@@ -9,6 +9,8 @@
   <arg name="lidar_x" default="0.20" />
   <arg name="lidar_y" default="0.0" />
   <arg name="lidar_z" default="0.55" />
+  <arg name="lidar_backend" default="gpu" />
+  <arg name="gpu_ray_sample_offset" default="1" />
   <arg name="lidar_horizontal_samples" default="360" />
   <arg name="lidar_vertical_samples" default="20" />
   <!-- 虚拟雷达最大量程，单位 m；仅影响仿真，缩短射线查询范围以减轻 CPU 负担。 -->
@@ -19,6 +21,7 @@
   <arg name="start_navigation" default="true" />
   <arg name="navigation_local_planner" default="rpp" />
   <arg name="local_rtsp_enabled" default="true" />
+  <arg name="sim_external_reporting" default="false" />
   <arg name="sl_linka_port" default="8002" />
   <arg name="x" default="0.0" />
   <arg name="y" default="0.0" />
@@ -35,6 +38,8 @@
     <arg name="lidar_x" value="$(arg lidar_x)" />
     <arg name="lidar_y" value="$(arg lidar_y)" />
     <arg name="lidar_z" value="$(arg lidar_z)" />
+    <arg name="lidar_backend" value="$(arg lidar_backend)" />
+    <arg name="gpu_ray_sample_offset" value="$(arg gpu_ray_sample_offset)" />
     <arg name="lidar_horizontal_samples" value="$(arg lidar_horizontal_samples)" />
     <arg name="lidar_vertical_samples" value="$(arg lidar_vertical_samples)" />
     <arg name="lidar_max_range" value="$(arg lidar_max_range)" />
@@ -63,6 +68,7 @@
     <arg name="scheduler_config" value="$(arg scheduler_config)" />
     <arg name="scheduler_local_config" value="$(arg scheduler_local_config)" />
     <arg name="local_rtsp_enabled" value="$(arg local_rtsp_enabled)" />
+    <arg name="sim_external_reporting" value="$(arg sim_external_reporting)" />
     <arg name="sl_linka_port" value="$(arg sl_linka_port)" />
     <arg name="lidar_x" value="$(arg lidar_x)" />
     <arg name="lidar_y" value="$(arg lidar_y)" />

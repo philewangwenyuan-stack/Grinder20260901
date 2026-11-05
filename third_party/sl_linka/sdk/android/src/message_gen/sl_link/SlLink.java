@@ -32884,6 +32884,16 @@ public final class SlLink {
      * @return The editBinding.
      */
     sl_link.SlLink.MapDraftBinding getEditBinding();
+
+    /**
+     * <pre>
+     * Return only the existing current-task path. Never plan or alter execution.
+     * </pre>
+     *
+     * <code>bool read_only = 12;</code>
+     * @return The readOnly.
+     */
+    boolean getReadOnly();
   }
   /**
    * Protobuf type {@code sl_link.PathPointPlanRequest}
@@ -33435,6 +33445,44 @@ public final class SlLink {
      */
     private void clearEditBinding() {  editBinding_ = null;
       bitField0_ = (bitField0_ & ~0x00000004);
+    }
+
+    public static final int READ_ONLY_FIELD_NUMBER = 12;
+    private boolean readOnly_;
+    /**
+     * <pre>
+     * Return only the existing current-task path. Never plan or alter execution.
+     * </pre>
+     *
+     * <code>bool read_only = 12;</code>
+     * @return The readOnly.
+     */
+    @java.lang.Override
+    public boolean getReadOnly() {
+      return readOnly_;
+    }
+    /**
+     * <pre>
+     * Return only the existing current-task path. Never plan or alter execution.
+     * </pre>
+     *
+     * <code>bool read_only = 12;</code>
+     * @param value The readOnly to set.
+     */
+    private void setReadOnly(boolean value) {
+
+      readOnly_ = value;
+    }
+    /**
+     * <pre>
+     * Return only the existing current-task path. Never plan or alter execution.
+     * </pre>
+     *
+     * <code>bool read_only = 12;</code>
+     */
+    private void clearReadOnly() {
+
+      readOnly_ = false;
     }
 
     public static sl_link.SlLink.PathPointPlanRequest parseFrom(
@@ -34093,6 +34141,46 @@ public final class SlLink {
         return this;
       }
 
+      /**
+       * <pre>
+       * Return only the existing current-task path. Never plan or alter execution.
+       * </pre>
+       *
+       * <code>bool read_only = 12;</code>
+       * @return The readOnly.
+       */
+      @java.lang.Override
+      public boolean getReadOnly() {
+        return instance.getReadOnly();
+      }
+      /**
+       * <pre>
+       * Return only the existing current-task path. Never plan or alter execution.
+       * </pre>
+       *
+       * <code>bool read_only = 12;</code>
+       * @param value The readOnly to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReadOnly(boolean value) {
+        copyOnWrite();
+        instance.setReadOnly(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Return only the existing current-task path. Never plan or alter execution.
+       * </pre>
+       *
+       * <code>bool read_only = 12;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearReadOnly() {
+        copyOnWrite();
+        instance.clearReadOnly();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:sl_link.PathPointPlanRequest)
     }
     @java.lang.Override
@@ -34121,11 +34209,12 @@ public final class SlLink {
               "drawingDraftId_",
               "drawingDraftVersion_",
               "editBinding_",
+              "readOnly_",
             };
             java.lang.String info =
-                "\u0000\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\u0208\u0002\u000b" +
-                "\u0003\u0208\u0004\u0007\u0005\u1009\u0000\u0006\u1009\u0001\u0007\u0208\b\u0208" +
-                "\t\u0208\n\u000b\u000b\u1009\u0002";
+                "\u0000\f\u0000\u0001\u0001\f\f\u0000\u0000\u0000\u0001\u0208\u0002\u000b\u0003\u0208" +
+                "\u0004\u0007\u0005\u1009\u0000\u0006\u1009\u0001\u0007\u0208\b\u0208\t\u0208\n\u000b" +
+                "\u000b\u1009\u0002\f\u0007";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

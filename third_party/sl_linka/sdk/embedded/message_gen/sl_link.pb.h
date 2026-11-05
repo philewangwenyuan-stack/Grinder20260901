@@ -1466,6 +1466,8 @@ typedef struct _sl_link_PathPointPlanRequest {
     uint32_t drawing_draft_version;
     bool has_edit_binding;
     sl_link_MapDraftBinding edit_binding;
+    /* Return only the existing current-task path. Never plan or alter execution. */
+    bool read_only;
 } sl_link_PathPointPlanRequest;
 
 typedef struct _sl_link_MapEditCommand {
@@ -1894,7 +1896,7 @@ extern "C" {
 #define sl_link_TaskRuntimeSettingsRequest_init_default {{{NULL}, NULL}, false, 0, false, 0}
 #define sl_link_TaskRuntimeSettingsResponse_init_default {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_default    {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_default, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_default}
-#define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_MapDraftBinding_init_default}
+#define sl_link_PathPointPlanRequest_init_default {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_default, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_MapDraftBinding_init_default, 0}
 #define sl_link_PathPointPlanResponse_init_default {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0}
 #define sl_link_MapPreviewRequest_init_default   {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewResponse_init_default  {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_default, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_default, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -2002,7 +2004,7 @@ extern "C" {
 #define sl_link_TaskRuntimeSettingsRequest_init_zero {{{NULL}, NULL}, false, 0, false, 0}
 #define sl_link_TaskRuntimeSettingsResponse_init_zero {_sl_link_ResultCode_MIN, {{NULL}, NULL}, {{NULL}, NULL}, false, 0, false, 0, 0, 0, 0}
 #define sl_link_TaskStatusReport_init_zero       {{{NULL}, NULL}, _sl_link_TaskState_MIN, 0, 0, {{NULL}, NULL}, false, sl_link_Pose2D_init_zero, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0, 0, false, sl_link_LocalizationCovariance_init_zero}
-#define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_MapDraftBinding_init_zero}
+#define sl_link_PathPointPlanRequest_init_zero   {{{NULL}, NULL}, 0, {{NULL}, NULL}, 0, false, sl_link_Pose2D_init_zero, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, false, sl_link_MapDraftBinding_init_zero, 0}
 #define sl_link_PathPointPlanResponse_init_zero  {{{NULL}, NULL}, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, _sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, 0, 0, {{NULL}, NULL}, 0, 0}
 #define sl_link_MapPreviewRequest_init_zero      {0, {{NULL}, NULL}, 0, {{NULL}, NULL}}
 #define sl_link_MapPreviewResponse_init_zero     {_sl_link_ResultCode_MIN, {{NULL}, NULL}, 0, 0, 0, 0, false, sl_link_Pose2D_init_zero, {{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, false, sl_link_LocalizationCovariance_init_zero, 0, 0, 0, {{NULL}, NULL}, {{NULL}, NULL}}
@@ -2823,6 +2825,7 @@ extern "C" {
 #define sl_link_PathPointPlanRequest_drawing_draft_id_tag 9
 #define sl_link_PathPointPlanRequest_drawing_draft_version_tag 10
 #define sl_link_PathPointPlanRequest_edit_binding_tag 11
+#define sl_link_PathPointPlanRequest_read_only_tag 12
 #define sl_link_MapEditCommand_edit_id_tag       1
 #define sl_link_MapEditCommand_operation_tag     2
 #define sl_link_MapEditCommand_region_name_tag   3
@@ -3332,7 +3335,8 @@ X(a, CALLBACK, SINGULAR, STRING,   global_direction,   7) \
 X(a, CALLBACK, SINGULAR, STRING,   map_id,            8) \
 X(a, CALLBACK, SINGULAR, STRING,   drawing_draft_id,   9) \
 X(a, STATIC,   SINGULAR, UINT32,   drawing_draft_version,  10) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  edit_binding,     11)
+X(a, STATIC,   OPTIONAL, MESSAGE,  edit_binding,     11) \
+X(a, STATIC,   SINGULAR, BOOL,     read_only,        12)
 #define sl_link_PathPointPlanRequest_CALLBACK pb_default_field_callback
 #define sl_link_PathPointPlanRequest_DEFAULT NULL
 #define sl_link_PathPointPlanRequest_start_pose_MSGTYPE sl_link_Pose2D

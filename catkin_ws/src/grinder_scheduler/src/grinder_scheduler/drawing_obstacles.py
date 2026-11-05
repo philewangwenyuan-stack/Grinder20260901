@@ -339,6 +339,15 @@ class DrawingStore:
                 if info.get("status") != 2:
                     info.update(status=2, stale_reason="地图底图或坐标几何发生变化")
                     self._write(map_id,value)
+            elif (info and binding and info.get("status")==2
+                  and info.get("stale_reason")=="地图底图或坐标几何发生变化"
+                  and not value.get("pending") and not value.get("corrupt")
+                  and info.get("binding",{}).get("map_revision")
+                  and info["binding"]["map_revision"]==binding.get("map_revision")):
+                # Recover a startup false invalidation only after both the full
+                # geometry and the original asset revision match again.
+                info.update(status=1 if value.get("foundations") else 0,stale_reason="")
+                self._write(map_id,value)
             return deepcopy(value)
 
     def invalidate(self, map_id, reason):

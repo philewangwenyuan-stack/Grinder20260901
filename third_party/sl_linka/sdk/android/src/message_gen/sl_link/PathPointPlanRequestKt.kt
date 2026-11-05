@@ -272,6 +272,31 @@ public object PathPointPlanRequestKt {
     public fun hasEditBinding(): kotlin.Boolean {
       return _builder.hasEditBinding()
     }
+
+    /**
+     * <pre>
+     * Return only the existing current-task path. Never plan or alter execution.
+     * </pre>
+     *
+     * <code>bool read_only = 12;</code>
+     */
+    public var readOnly: kotlin.Boolean
+      @JvmName("getReadOnly")
+      get() = _builder.getReadOnly()
+      @JvmName("setReadOnly")
+      set(value) {
+        _builder.setReadOnly(value)
+      }
+    /**
+     * ```
+     * Return only the existing current-task path. Never plan or alter execution.
+     * ```
+     *
+     * `bool read_only = 12;`
+     */
+    public fun clearReadOnly() {
+      _builder.clearReadOnly()
+    }
   }
 }
 public inline fun sl_link.SlLink.PathPointPlanRequest.copy(block: `sl_link`.PathPointPlanRequestKt.Dsl.() -> kotlin.Unit): sl_link.SlLink.PathPointPlanRequest =

@@ -5,7 +5,7 @@ import secrets
 from copy import deepcopy
 
 from google.protobuf.json_format import ParseDict
-from grinder_scheduler.drawing_obstacles import DrawingStore, as_dict, clearance_checks, foundation_mask, path_avoids_foundations
+from grinder_scheduler.drawing_obstacles import DrawingStore, as_dict, clearance_checks
 
 _STORE_INIT_LOCK=threading.Lock()
 
@@ -47,32 +47,6 @@ class DrawingObstacleMixin:
         if store is not None:
             store.forget_tasks()
 
-    def _drawing_validate_path(self, include_pose=False, remaining=False):
-        try:
-            regions=self._drawing_regions(strict=True)
-            regions=[r for r in regions if r.get("enabled",True) and int(r.get("drawing_action",0))==0]
-            if not regions:
-                return True
-            binding=self._drawing_binding()
-            mask=foundation_mask((int(binding["height"]),int(binding["width"])),binding,regions)
-            points=list(getattr(getattr(self,"current_path",None),"points",[]) or [])
-            if remaining:
-                points=points[max(0,int(getattr(self,"current_path_index",0))):]
-            if include_pose:
-                pose=self.ros_data_bridge.get_pose() or {}
-                if "x" not in pose or "y" not in pose:
-                    raise ValueError("无法确认机器人与图纸地基的距离")
-                points=[pose]+points
-            footprint=getattr(self,"_robot_footprint",[])
-            if not footprint:
-                raise ValueError("缺少车体轮廓，无法检查图纸地基间距")
-            if not path_avoids_foundations(points,mask,binding,footprint=footprint):
-                raise ValueError("路径、起步连接或车体包络与图纸地基相交，请重新规划或调整机器人位置")
-            return True
-        except ValueError as exc:
-            self._set_error(str(exc))
-            return False
-
     def handle_map_edit_command(self,payload):
         pb=self.sl_link_server.pb;request=pb.MapEditCommand();request.ParseFromString(payload)
         if str(request.region.region_id).startswith("drawing:") or str(request.target_region_id).startswith("drawing:") or getattr(request.region,"source","")=="drawing":
@@ -92,14 +66,27 @@ class DrawingObstacleMixin:
         return store
 
     def _drawing_binding(self, map_id=None):
+        map_id=map_id or self._current_map_id()
         service=getattr(self,"map_service",None)
         getter=getattr(service,"get_map_info",None)
         info=(getter() or {}) if getter else {}
+        # Startup restores the selected map before its MapService raw grid.
+        # Bind saved drawings to the saved raster, never to an empty/live service
+        # or to the service belonging to a different map.
+        is_live=getattr(self,"_is_live_map_id",lambda value:True)
+        load_saved=getattr(self,"_load_saved_raw_grid",None)
+        if not is_live(map_id) and load_saved:
+            raster=load_saved(map_id)
+            info=dict(width=raster.image.shape[1],height=raster.image.shape[0],
+                resolution=raster.resolution,origin_x=raster.origin_x,
+                origin_y=raster.origin_y,frame_id="map",heading_deg=0.0)
+        if int(info.get("width",0))<=0 or int(info.get("height",0))<=0:
+            raise ValueError("地图尚未加载完成")
         binding={k:info.get(k,0) for k in ("width","height","resolution","origin_x","origin_y")}
         binding["frame_id"]=info.get("frame_id","map")
         binding["heading_deg"]=float(info.get("heading_deg",0))
         lookup=getattr(self,"_find_recorded_map_by_id",None)
-        record=lookup(map_id or self._current_map_id()) if lookup else None
+        record=lookup(map_id) if lookup else None
         binding["map_revision"]=str((record or {}).get("map_revision","") or "")
         return binding
 

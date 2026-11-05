@@ -1,10 +1,8 @@
-from copy import deepcopy
 import types
 
 import numpy as np
-import pytest
-
 from test_planner_preprocessing import adapter,adapter_module,mst,TaskConfigModel
+from grinder_scheduler.drawing_obstacles import path_avoids_foundations
 
 
 def inputs():
@@ -26,16 +24,25 @@ def test_real_planner_avoids_foundation_without_mutating_navigation_grid():
     assert result.points
     assert np.array_equal(before,grid)
     mask=adapter_module.foundation_mask(grid.shape,info,config.obstacle_regions)
-    assert adapter_module.path_avoids_foundations(result.points,mask,info,footprint=[[-.3,-.2],[.3,-.2],[.3,.2],[-.3,.2]])
-
-
-def test_fallback_cannot_return_straight_lines_across_foundations():
-    grid,info,config=inputs();planner=adapter();planner._planner_module=None;planner._planner_import_error=None
-    with pytest.raises(ValueError,match='图纸地基'):
-        planner.plan('fallback',grid,info,config)
+    assert path_avoids_foundations(result.points,mask,info,footprint=[[-.3,-.2],[.3,-.2],[.3,.2],[-.3,.2]])
 
 
 def test_ignored_foundation_does_not_change_legacy_fallback_behavior():
     grid,info,config=inputs();config.obstacle_regions[0]['drawing_action']=1
     planner=adapter();planner._planner_module=None;planner._planner_import_error=None
     assert planner.plan('ignored',grid,info,config).points
+
+
+def test_preview_and_task_return_planner_result_with_drawing_raster_without_extra_guard():
+    grid,info,config=inputs();before=grid.copy();planner=adapter()
+    candidate=types.SimpleNamespace(points=[dict(x=10.,y=10.)])
+    captured=[]
+    def plan(task_id,planning_grid,map_info,task_config):
+        captured.append(planning_grid.copy())
+        return candidate
+    planner._plan_without_drawing=plan
+    for task_id in ('', 'task'):
+        config.task_id=task_id
+        assert planner.plan(task_id or 'preview',grid,info,config) is candidate
+        assert captured[-1][100,100]==100
+        assert np.array_equal(before,grid)

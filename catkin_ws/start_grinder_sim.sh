@@ -3,6 +3,11 @@ set -euo pipefail
 
 WORKSPACE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${WORKSPACE}"
+# GPU lidar and simulated cameras need rendering even with gui:=false.
+# SSH shells may omit DISPLAY although the local WSLg server is available.
+if [[ -z "${DISPLAY:-}" && -S /mnt/wslg/.X11-unix/X0 ]]; then
+  export DISPLAY=:0
+fi
 source "${WORKSPACE}/scripts/scheduler_config.sh"
 configure_scheduler_config "${WORKSPACE}" sim
 

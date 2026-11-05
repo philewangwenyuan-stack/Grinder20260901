@@ -26,6 +26,8 @@ def production_scheduler(params, writes):
         "_read_rpp_settings", "_start_execution", "_prepare_region_process_execution", "_apply_region_process_for_path_point",
     }
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "SchedulerNode")
+    # This harness extracts execution methods only; map-edit mixins are not used.
+    cls.bases = []
     cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in names]
     defaults = next(n for n in tree.body if isinstance(n, ast.Assign)
                     and any(isinstance(t, ast.Name) and t.id == "RPP_PARAMETER_DEFAULTS" for t in n.targets))
@@ -60,6 +62,10 @@ class TaskStartSpeedTest(unittest.TestCase):
         self.params = {}
         self.writes = []
         n = self.node = production_scheduler(self.params, self.writes)()
+        n._current_map_id = lambda: "map-a"
+        n._is_editing_draft = lambda map_id: False
+        n._drawing_ensure_map = mock.Mock()
+        n._drawing_preflight = lambda: True
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         n._motion = MotionInterlock(str(Path(directory.name) / 'motion.json'))

@@ -3,10 +3,34 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from grinder_gazebo.sim_speed import configure_speed
+from grinder_gazebo.sim_speed import configure_speed, configure_speed_verified
 
 
 class SimSpeedTests(unittest.TestCase):
+    def test_startup_overwrite_is_retried_and_verified(self):
+        physics = self.physics()
+        physics.max_update_rate = 1000
+        calls = []
+        def setter(**values):
+            physics.max_update_rate = values['max_update_rate']
+            calls.append(values)
+            return SimpleNamespace(success=True)
+        sleeps = []
+        def sleep(_):
+            sleeps.append(True)
+            if len(sleeps) == 2:
+                physics.max_update_rate = 1000
+        self.assertEqual(configure_speed_verified(4, lambda: physics, setter, sleep), 4000)
+        self.assertEqual(len(calls), 2)
+        self.assertGreaterEqual(len(sleeps), 14)
+
+    def test_persistent_overwrite_is_reported(self):
+        physics = self.physics()
+        physics.max_update_rate = 1000
+        with self.assertRaisesRegex(RuntimeError, 'overwritten'):
+            configure_speed_verified(4, lambda: physics,
+                Mock(return_value=SimpleNamespace(success=True)), lambda _: None)
+
     def physics(self, step=.001):
         return SimpleNamespace(success=True, time_step=step, gravity=object(), ode_config=object())
 

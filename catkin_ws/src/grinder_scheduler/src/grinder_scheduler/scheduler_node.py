@@ -13,9 +13,10 @@ import time
 import zlib
 import base64
 import bisect
+import contextlib
 from datetime import datetime
 from collections import deque
-from copy import deepcopy
+from copy import copy, deepcopy
 from dataclasses import asdict
 from functools import wraps
 
@@ -4814,7 +4815,6 @@ class SchedulerNode(MapEditDraftMixin):
                 int(planning_map_info.get("height", 0)),
             )
             t_plan_align = time.perf_counter()
-            planning_task_config.drawing_footprint = getattr(self, "_robot_footprint", [])
             planned_path = self.planner.plan(
                 self.task_config.task_id or "task",
                 planning_map,
@@ -4870,9 +4870,6 @@ class SchedulerNode(MapEditDraftMixin):
             rospy.loginfo("Skip prepending current pose point because request_start_pose is provided")
         else:
             rospy.loginfo("Skip prepending current pose point because has_task_info=false")
-        if not self._drawing_validate_path():
-            self.current_path = None
-            return False
         t_plan_prepend = time.perf_counter()
         self._rebuild_active_segments()
         if plan_task_config.continuation:
@@ -6009,8 +6006,6 @@ class SchedulerNode(MapEditDraftMixin):
         if self.current_path is None or not self.current_path.points:
             mark("validate_path_failed")
             return False, "No planned path to execute"
-        if not self._drawing_validate_path(include_pose=True):
-            return False, self.last_error
         self._sync_task_regions_from_overlay()
         self._exec_region_order = self._sorted_work_region_ids()
         active_id = (self.task_config.active_work_region_id or "").strip()
@@ -6187,7 +6182,7 @@ class SchedulerNode(MapEditDraftMixin):
         heartbeat_ready, heartbeat_reason, _ = self._localization_motion_status()
         if not heartbeat_ready:
             return False, "Super-LIO localization is not ready: {}".format(heartbeat_reason)
-        if not self._drawing_preflight() or not self._drawing_validate_path(include_pose=True, remaining=True):
+        if not self._drawing_preflight():
             return False, self.last_error
         self._init_segment_execution_cursor()
         if 0 <= self.current_path_index < len(self.current_path.points):
@@ -9041,10 +9036,38 @@ class SchedulerNode(MapEditDraftMixin):
         )
         return chunks
 
+    def _current_task_path_chunks(self, request):
+        # Copy display inputs under the motion lock, then serialize outside it.
+        # This endpoint does not enter a motion action or change task/map state.
+        lock = getattr(getattr(self, "_motion", None), "lock", None)
+        with lock if lock is not None else contextlib.nullcontext():
+            snapshot = copy(self)
+            snapshot.task_config = deepcopy(self.task_config)
+            snapshot.current_path = copy(self.current_path) if self.current_path is not None else None
+            if snapshot.current_path is not None:
+                snapshot.current_path.points = list(self.current_path.points)
+        task_id = str(snapshot.task_config.task_id or "")
+        map_id = snapshot._current_map_id()
+        requested_map = str(request.map_id or "")
+        message = ""
+        if request.task_id and request.task_id != task_id:
+            message = "Requested task does not match current task"
+        elif requested_map and not snapshot._is_live_map_id(requested_map) and requested_map != map_id:
+            message = "Requested map does not match current task map"
+        elif (snapshot.current_path is None or not snapshot.current_path.points
+              or snapshot.current_path.task_id != task_id):
+            message = "Current task has no stored path"
+        return snapshot._serialize_path_point_plan_chunks(
+            task_id=task_id, request_id=request.request_id, map_id=map_id,
+            max_chunk_size=request.max_chunk_size, planned=not bool(message),
+            result="failed" if message else "success", message=message or "Current task path snapshot")
+
     def build_path_point_plan_chunks(self, payload):
         pb = self.sl_link_server.pb
         request = pb.PathPointPlanRequest()
         request.ParseFromString(payload)
+        if request.read_only:
+            return self._current_task_path_chunks(request)
 
         plan_request = pb.PathPlanRequest()
         plan_request.request_id = str(request.request_id or "")
@@ -9082,7 +9105,7 @@ class SchedulerNode(MapEditDraftMixin):
             if int(response_msg_id) == int(pb.MSG_ID_PATH_PLAN_RESPONSE):
                 plan_response.ParseFromString(response_payload)
                 break
-        return self._serialize_path_point_plan_chunks(
+        failure_chunks = self._serialize_path_point_plan_chunks(
             task_id=str(request.task_id or ""),
             request_id=str(request.request_id or ""),
             map_id=str(request.map_id or ""),
@@ -9091,6 +9114,15 @@ class SchedulerNode(MapEditDraftMixin):
             result="failed",
             message=str(plan_response.message or "path point planning failed"),
         )
+        # Preserve the validated drawing context even when the planner produced
+        # no point chunks. Default version zero otherwise hides the real error.
+        updated = []
+        for data, msg_id, component in failure_chunks:
+            chunk = pb.PathPointPlanResponse.FromString(data)
+            chunk.drawing_layer_version = plan_response.drawing_layer_version
+            chunk.drawing_draft_version = plan_response.drawing_draft_version
+            updated.append((chunk.SerializeToString(), msg_id, component))
+        return updated
 
     @staticmethod
     def _task_path_point_classification(point):

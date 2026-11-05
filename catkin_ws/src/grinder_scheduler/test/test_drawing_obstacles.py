@@ -123,6 +123,41 @@ def test_stale_requires_version_bound_explicit_task_bypass():
     with pytest.raises(ValueError):store.authorize('map-one','task-one',True,2,changed)
 
 
+def test_matching_saved_asset_recovers_transient_geometry_invalidation():
+    store=DrawingStore();upload(store);commit(store)
+    before=store.layer('map-one')
+    assert store.layer('map-one',dict(binding(),width=0))['info']['status']==pb.DRAWING_STALE
+    recovered=store.layer('map-one',binding())
+    assert recovered['info']['status']==pb.DRAWING_PUBLISHED
+    assert recovered['info']['stale_reason']==''
+    assert recovered['foundations']==before['foundations']
+    assert recovered['info']['transform']==before['info']['transform']
+    assert recovered['info']['version']==before['info']['version']
+
+
+def test_geometry_recovery_survives_store_restart_without_changing_drawing():
+    with tempfile.TemporaryDirectory() as root:
+        store=DrawingStore(root);upload(store);commit(store)
+        before=store.layer('map-one')
+        store.layer('map-one',dict(binding(),width=0))
+        restarted=DrawingStore(root)
+        assert restarted.layer('map-one')['info']['status']==pb.DRAWING_STALE
+        recovered=restarted.layer('map-one',binding())
+        assert recovered['info']['status']==pb.DRAWING_PUBLISHED
+        assert recovered['foundations']==before['foundations']
+        assert recovered['info']['version']==before['info']['version']
+        assert DrawingStore(root).layer('map-one')['info']['status']==pb.DRAWING_PUBLISHED
+
+
+def test_changed_or_unknown_asset_revision_does_not_recover_geometry_invalidation():
+    store=DrawingStore();upload(store);commit(store)
+    store.layer('map-one',dict(binding(),width=0))
+    for revision in ('', 'new-raw'):
+        assert store.layer('map-one',dict(binding(),map_revision=revision))['info']['status']==pb.DRAWING_STALE
+    store.invalidate('map-one','原始地图已替换，请重新对齐')
+    assert store.layer('map-one',binding())['info']['status']==pb.DRAWING_STALE
+
+
 def test_display_angle_does_not_stale_world_coordinates():
     store=DrawingStore();upload(store);commit(store)
     assert store.layer('map-one',dict(binding(),app_rotation_deg=90,map_version=55))['info']['status']==pb.DRAWING_PUBLISHED

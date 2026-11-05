@@ -106,6 +106,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | 板端整套开机自启、配置与 systemd 管理 | `catkin_ws/scripts/grinder-service`、`catkin_ws/install_grinder_service.sh` | 板端 `/etc/grinder/startup.conf`；`start_grinder_super_lio_base.sh` 先启动灯带并监督子进程；离线验证 `scripts/test_grinder_service.py`；根 README 第 12 节 |
 | RK3588 / MID-360S 完整部署、STVL/jemalloc 与部署踩坑 | 根 `README.md` 的安装编译节、`deployment-stvl` / `deployment-20261022` / `deployment-pitfalls-20261022` 锚点 | `catkin_ws/PLATFORM_BUILD_RUN.md` 为快捷入口；当天板端 launch、网络和 systemd 额外配置需按记录复现，不能假定 main 自带 |
 | X920 Gazebo 全链路仿真、STEP 模型、APP 联调 | `catkin_ws/src/grinder_gazebo/README.md` | `launch/grinder_sim.launch` → `spawn_x920.launch` 透传 `world_name`；`catkin_ws/start_grinder_sim.sh` 读取设备本地 `catkin_ws/temp/sim_world_path`、`sim_spawn_pose`（x/y/yaw），自动加入场景 `../models` 搜索路径；模型 `urdf/x920_grinder.urdf.xacro`；远端 WSL 同步/编译/启动与 MuMu 隧道：`catkin_ws/scripts/remote_sim.ps1`、`remote_sim.sh` |
+| GPU MID-360S、CPU回退及WSLg采样补偿 | Gazebo `src/mid360_sensor_plugin.cpp`、两层launch/URDF的 `lidar_backend` / `gpu_ray_sample_offset` | `test/test_gpu_lidar_config.py`；独立房间几何/噪声回归 `test/check_gpu_lidar.py`；包README；`start_grinder_sim.sh` 自动检测WSLg显示 |
 | 虚拟 MID-360S、IMU 噪声、B1 梁柱墙板场景与全链路验证 | `catkin_ws/src/grinder_gazebo/src/mid360_sensor_plugin.cpp`、`config/sensor_noise.yaml`（相对 Gazebo 包） | `urdf/x920_grinder.gazebo.xacro`、`meshes/b1_structure/source_report.json`、`test/check_mid360_chain.py --map-cycle`（仅独立仿真实例）、`test/test_support_geometry.py`；仿真底盘急停复位 `src/grinder_gazebo/chassis_sim_node.py` 和 `test/test_sim_emergency_reset.py`；Livox 构建 `catkin_ws/scripts/build_sim_livox.sh` |
 
 `scheduler_node.py` 超过一万行，不要整文件加载。先用符号搜索定位，例如（均从仓库根目录执行）：
@@ -120,6 +121,8 @@ rg -n 'super_lio|cloud_to_occupancy_grid|include' catkin_ws/src/grinder_schedule
 读取局部代码：Linux 可用 `sed -n '起始行,结束行p' 文件`；PowerShell 可用 `Get-Content 文件 | Select-Object -Skip 起始行减一 -First 行数`。先用上面的搜索获得实际行号。
 
 ## 常见需求的最短阅读路径
+
+- APP导航页当前任务路径查询：`PathPointPlanRequest.read_only=true` -> scheduler `build_path_point_plan_chunks` / `_current_task_path_chunks`，运行/暂停期间只读返回当前路径，不进入规划、地图切换或运动动作；回归 `test_current_task_path.py`。
 
 - Gazebo启动倍速：`start_grinder_sim.sh sim_speed:=2`（在catkin_ws内运行），参数经`grinder_gazebo/launch/grinder_sim.launch`、`spawn_x920.launch`透传到`src/grinder_gazebo/sim_speed.py`；只调物理更新频率，保留时间步长/重力/ODE，离线回归`grinder_gazebo/test/test_sim_speed.py`。实际倍速受算力限制。
 
@@ -217,4 +220,5 @@ rostopic hz /cmd_vel
 2. 运行与改动范围相称的最小验证，并说明未运行的硬件/ROS 验证。
 3. 若新增了模块、协议、启动入口或重要数据流，同步更新本文件的定位表，保持它可用且简短。
 
-图纸地基独立层：scheduler `drawing_obstacles.py` / `drawing_scheduler.py`，规划接入 `planner_adapter.py`。协议0x053A/B；测试 `test_drawing_*.py`、包README。只合入全局规划内存副本，禁止写MapService/导航PGM/costmap；检查确认只校验几何。
+图纸地基独立层：scheduler `drawing_obstacles.py` / `drawing_scheduler.py`，规划接入 `planner_adapter.py`。协议0x053A/B；测试 `test_drawing_*.py`、包README。只合入全局规划内存副本，禁止写MapService/导航PGM/costmap；检查确认只校验几何。按用户要求，建图/任务规划、启动和续跑不追加图纸专用路径或车体包络复检；保留规划栅格障碍、地图绑定检查和原有导航/急停保护，不自行重新加回复检门禁。
+

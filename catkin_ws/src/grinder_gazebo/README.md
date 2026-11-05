@@ -43,6 +43,17 @@ PROFILE=sim ./build_grinder_platform.sh
 ./start_grinder_sim.sh
 ```
 
+仿真默认不连接外部平台。需要让仿真上报 MQTT 和地图时，在 `scheduler.local.yaml`
+配置 broker、设备码和凭据、平台账号后显式开启：
+
+```bash
+GRINDER_SCHEDULER_LOCAL_CONFIG="$PWD/src/grinder_scheduler/config/scheduler.local.yaml" \
+  ./start_grinder_sim.sh sim_external_reporting:=true
+```
+
+MQTT 状态会周期上报；地图文件在 APP 保存地图时上传。已保存的旧地图不会在启动时自动补传，
+需要在开启上报后通过 APP 再保存一次。若平台账号关联多个项目，还要填写 `platform_project_id`。
+
 如果工作区从其它 Linux 路径拷贝而来，构建脚本会自动识别旧
 `CMakeCache.txt`，将 `build/devel/install` 改名为带时间戳的 `.bak.path-mismatch.*`
 备份后重建，不会直接删除旧产物。
@@ -77,6 +88,7 @@ grep --line-buffered -v -E \
 - `start_navigation:=true|false`：启动 move_base + RPP/TEB。
 - `navigation_local_planner:=rpp|teb`。
 - `local_rtsp_enabled:=true|false`。
+- `sim_external_reporting:=true|false`：默认关闭仿真对外 MQTT 和平台地图上传。设为 `true` 后，需要通过 `scheduler.local.yaml` 配置 MQTT broker/设备码/凭据及平台账号；地图在 APP 保存时上传。用于仿真时请确认本地配置指向预期的测试服务。
 - `sl_linka_port:=8002`。
 - `lidar_x:=0.20 lidar_y:=0.0 lidar_z:=0.55`：雷达相对运动中心的位置；同时透传模型与 LIO 外参。
 - `sensor_noise_config:=/absolute/path/noise.yaml`：雷达测距噪声、IMU 噪声和偏置漂移；默认见 `config/sensor_noise.yaml`，数值用于仿真，非实测标定。
@@ -103,7 +115,7 @@ DISPLAY=:0 bash ./start_grinder_sim.sh
 
 远程启动同样透传：`remote_sim.ps1 start sim_speed:=2`。同步修改后的源码及脚本后再使用；本功能不会自动改变已运行的仿真。
 
-`spawn_x920.launch`启动一次性的`set_sim_speed.py`，等待Gazebo物理服务就绪后，读取当前场景的物理时间步长，按“更新频率=目标倍速÷时间步长”设置上限；重力和ODE配置原样保留，不修改原始world或机器人行驶速度。仿真时钟整体加快；实际倍速可用`gz stats`观察。无效参数或服务失败会在启动日志报错。业务实现及离线回归分别见`src/grinder_gazebo/sim_speed.py`与`test/test_sim_speed.py`。
+`spawn_x920.launch`启动一次性的`set_sim_speed.py`，等待Gazebo物理服务和动态配置初始化完成后，读取当前场景的物理时间步长，按“更新频率=目标倍速÷时间步长”设置上限；重力和ODE配置原样保留，不修改原始world或机器人行驶速度。仿真时钟整体加快；实际倍速可用`gz stats`观察。设置后按墙钟读回确认至少3秒，启动期间被动态配置覆盖会重试；持续覆盖、无效参数或服务失败会在启动日志报错。业务实现及离线回归分别见`src/grinder_gazebo/sim_speed.py`与`test/test_sim_speed.py`。
 可在 `catkin_ws/temp/sim_spawn_pose` 保存一行 `x y yaw`（米、弧度），
 作为该设备的机器人出生点；命令行 `x:=... y:=... yaw:=...` 可分别覆盖。
 切换场景时应同步调整或移除该出生点文件。首层 `z=0` 对应的车体出生高度仍为 `0.1675m`。
@@ -199,3 +211,44 @@ export GRINDER_STEP_OUTPUT_STL="catkin_ws/src/grinder_gazebo/meshes/x920_frame.s
 export GRINDER_STEP_REPORT="catkin_ws/src/grinder_gazebo/meshes/x920_frame_report.json"
 freecadcmd catkin_ws/src/grinder_gazebo/tools/step_to_mesh.py
 ```
+
+
+### GPU MID-360S 扫描后端
+
+默认 `lidar_backend:=gpu`，CPU 回退为 `lidar_backend:=cpu`。两种后端均输出
+`/livox/lidar` 的 `livox_ros_driver2/CustomMsg`，保持 `laser_link`、仿真时间戳、
+10 Hz、360×20 扫描网格、水平360°、垂直-7°～52°和 `sensor_noise.yaml` 测距噪声。
+IMU保持独立的原有200 Hz模拟。仍是瞬时规则网格近似，点内时间偏移为0，不是实机非重复扫描轨迹。
+
+```bash
+./start_grinder_sim.sh sim_speed:=4 lidar_backend:=gpu
+# 无图形窗口也需要可用的GPU渲染上下文，例如远端WSLg的 DISPLAY=:0
+./start_grinder_sim.sh gui:=false sim_speed:=4 lidar_backend:=gpu
+```
+
+GPU使用Gazebo 11的 `GpuRaySensor`，内部三相机拼接全周扫描，避免CPU ODE射线扫描占用物理碰撞锁。
+它查询可视几何，CPU射线查询碰撞几何；场景两者应一致。GPU失败不会静默切回CPU，应检查
+Gazebo/Ogre日志和 `/livox/lidar`，或显式指定CPU。WSLg需确认 `glxinfo -B` 显示硬件加速。
+
+当前验证环境是WSL/WSLg、Mesa D3D12、RTX4090。该环境的Classic Ogre点栅格读回存在一行一列偏移，
+默认 `gpu_ray_sample_offset:=1` 通过下边界保护行列补偿，剔除未填充尾部纹素，保持原有视场和点数。
+其他渲染后端需先跑下面的几何回归；若无偏移可指定 `gpu_ray_sample_offset:=0`，不要只凭画面判断。
+本参数经顶层launch、spawn launch、URDF透传给插件，CPU忽略该补偿。
+
+配置回归：`python3 -m unittest discover -s src/grinder_gazebo/test -p test_gpu_lidar_config.py`（catkin_ws内）。
+几何/噪声回归仅在独立终端、独立ROS/Gazebo主端口执行，避免干扰APP实例：
+
+```bash
+source /opt/ros/noetic/setup.bash
+source devel/setup.bash
+export ROS_MASTER_URI=http://127.0.0.1:11381 GAZEBO_MASTER_URI=http://127.0.0.1:11382 DISPLAY=:0
+python3 src/grinder_gazebo/test/check_gpu_lidar.py --write-world /tmp/gpu_room.world
+roslaunch grinder_gazebo spawn_x920.launch gui:=false world_name:=/tmp/gpu_room.world lidar_backend:=gpu
+# 在采用相同环境变量的另一终端执行，完成后Ctrl+C关闭这个独立launch
+python3 src/grinder_gazebo/test/check_gpu_lidar.py --check
+```
+
+回归验证已知四面墙、地面和顶板的点云几何、完整视场、噪声、点数、帧/时间戳和IMU。
+性能以实际 `gz stats` 为准；倍速是目标上限，不保证达到指定倍数。
+
+2026-11-04远端实测：RTX4090/WSLg、花都厂房约541万三角面、目标4倍、保留原场景和相机，CPU雷达约1.18倍，GPU雷达约3.7倍。解析房间输出7200点/帧、10 Hz（仿真时间），平墙误差中位数5.8 mm、99分位22.8 mm、测距样本标准差11.9 mm；独立厂房实例完成建图→保存→定位READY。性能数值仅代表该次测试条件。

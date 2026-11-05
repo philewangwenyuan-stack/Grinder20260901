@@ -2,6 +2,7 @@
   <arg name="scheduler_config" default="$(find grinder_scheduler)/config/scheduler.yaml" />
   <arg name="scheduler_local_config" default="$(optenv GRINDER_SCHEDULER_LOCAL_CONFIG)" />
   <arg name="local_rtsp_enabled" default="true" />
+  <arg name="sim_external_reporting" default="false" />
   <arg name="sl_linka_port" default="8002" />
   <arg name="lidar_x" default="0.20" />
   <arg name="lidar_y" default="0.0" />
@@ -27,6 +28,9 @@
     <rosparam command="load" file="$(find grinder_scheduler)/config/super_lio.yaml" />
     <rosparam if="$(eval bool(arg('scheduler_local_config')))" command="load" file="$(arg scheduler_local_config)" />
     <rosparam command="load" file="$(find grinder_gazebo)/config/scheduler_sim_overrides.yaml" />
+    <!-- External reporting is opt-in for simulations; credentials stay in the local config. -->
+    <param name="mqtt_enabled" value="$(arg sim_external_reporting)" type="bool" />
+    <param name="file_upload_on_map_save" value="$(arg sim_external_reporting)" type="bool" />
     <param name="local_rtsp_enabled" value="$(arg local_rtsp_enabled)" />
     <param name="local_rtsp_start_server" value="$(arg local_rtsp_enabled)" />
     <param name="sl_linka_port" value="$(arg sl_linka_port)" />
