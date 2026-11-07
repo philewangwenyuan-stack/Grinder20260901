@@ -113,11 +113,27 @@ void RegulatedPurePursuitController::initialize(
     private_node_->param<std::string>("odom_topic", odom_topic_, "odom");
     odom_helper_.setOdomTopic( odom_topic_ );
 
+
     // Handles storage and dynamic configuration of parameters.
     // Returns pointer to data current param settings.
     param_handler_ = std::make_unique<ParameterHandler>(
       node_, private_node_, costmap_->getSizeInMetersX());
     params_ = param_handler_->getParams();
+    if (params_->use_line_based_corner_approach) {
+      // The legacy helper drops header.stamp; retain the same topic's original
+      // sample here, without changing shared navigation or chassis semantics.
+      line_odom_sub_ = node_->subscribe<nav_msgs::Odometry>(odom_topic_, 1,
+        [this](const nav_msgs::Odometry::ConstPtr& msg) {
+          std::lock_guard<std::mutex> lock(line_odom_mutex_);
+          line_odom_ = *msg;
+        });
+      // Project supervisor drops task_enable on stop/pause/emergency. Record
+      // invalidation here; mutate controller state only on its compute thread.
+      line_task_enable_sub_ = node_->subscribe<std_msgs::Bool>("/chassis/task_enable", 10,
+        [this](const std_msgs::Bool::ConstPtr& msg) {
+          if (!msg->data) line_reset_requested_.store(true);
+        });
+    }
 
     // Handles global path transformations
     path_handler_ = std::make_unique<PathHandler>(
@@ -372,13 +388,51 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
   nav_msgs::Odometry base_odom;
   odom_helper_.getOdom(base_odom);
   geometry_msgs::Twist speed = base_odom.twist.twist;
+  const bool line_enabled = params_->use_line_based_corner_approach &&
+    params_->use_corner_aware_rotate_to_heading && params_->use_rotate_to_heading;
+  bool line_feedback_fresh = true;
+  const double line_now = ros::Time::now().toSec();
+  if (line_enabled) {
+    if (line_reset_requested_.exchange(false)) {
+      line_route_.reacquire(); resetRotateToHeadingState();
+      line_corner_rotation_=false;
+      line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+      last_cmd_linear_vel_=last_cmd_angular_vel_=0;
+    }
+    { std::lock_guard<std::mutex> lock(line_odom_mutex_); base_odom=line_odom_; }
+    speed=base_odom.twist.twist;
+    line_feedback_fresh=line_corner::fresh(line_now,base_odom.header.stamp.toSec(),
+      params_->line_corner_odom_timeout_s,speed.linear.x,speed.linear.y,speed.angular.z);
+    if (!line_feedback_fresh) {
+      // A successful zero command holds position without requesting recovery
+      // motion. A missing sample must never be treated as stopped feedback.
+      line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+      last_cmd_linear_vel_=last_cmd_angular_vel_=0;
+      message="line_corner_waiting_for_fresh_odom";
+      ROS_WARN_THROTTLE(1.0,"[RPP] Line corner branch holding zero: missing/stale/non-finite odom");
+      return mbf_msgs::ExePathResult::SUCCESS;
+    }
+    if (!line_last_compute_.isZero() &&
+        line_now-line_last_compute_.toSec()>params_->line_corner_odom_timeout_s) {
+      line_route_.reacquire(); resetRotateToHeadingState();
+      line_corner_rotation_=false; line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+    }
+    line_last_compute_=ros::Time::now();
+  }
 
+
+  bool line_pending_corner=false;
+  if (line_enabled && !global_plan_.empty()) {
+    geometry_msgs::PoseStamped p;
+    if (path_handler_->transformPose(global_plan_.front().header.frame_id,pose,p))
+      line_pending_corner=line_route_.current({p.pose.position.x,p.pose.position.y})!=nullptr;
+  }
   geometry_msgs::PoseStamped global_goal = transformed_plan.poses.back();
   double dx_2 = global_goal.pose.position.x * global_goal.pose.position.x;
   double dy_2 = global_goal.pose.position.y * global_goal.pose.position.y;
   double dtheta = angles::normalize_angle(tf2::getYaw(global_goal.pose.orientation));
 
-  if(fabs(std::sqrt(dx_2 + dy_2)) < goal_dist_tol_ && isThetaGoalReached(dtheta, angle_tolerance_, max_angular_vel_, control_duration_) && base_local_planner::stopped(base_odom, theta_stopped_vel_, trans_stopped_vel_))
+  if(!line_pending_corner && fabs(std::sqrt(dx_2 + dy_2)) < goal_dist_tol_ && isThetaGoalReached(dtheta, angle_tolerance_, max_angular_vel_, control_duration_) && base_local_planner::stopped(base_odom, theta_stopped_vel_, trans_stopped_vel_))
   {
       goal_reached_ = true;
       last_cmd_linear_vel_ = 0.0;
@@ -455,7 +509,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
   // and rotate_to_path_carrot_pose for the direction carrot pose:
   //        - equal to "normal" carrot_pose when curvature_lookahead_pose = false
   //        - otherwise equal to curvature_lookahead_pose (which can be interpolated after goal)
-  const bool near_goal = shouldRotateToGoalHeading(carrot_pose);
+  bool near_goal = shouldRotateToGoalHeading(carrot_pose);
   const double angle_to_goal = angles::normalize_angle(
     tf2::getYaw(transformed_plan.poses.back().pose.orientation));
   double angle_to_heading = 0.0;
@@ -465,7 +519,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
   double corner_distance = std::numeric_limits<double>::infinity();
 
   if (!near_goal && params_->use_rotate_to_heading &&
-    params_->use_corner_aware_rotate_to_heading)
+    params_->use_corner_aware_rotate_to_heading && !line_enabled)
   {
     geometry_msgs::Point corner;
     double outgoing_heading = 0.0;
@@ -500,6 +554,61 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     }
   }
 
+  bool line_braking = false;
+  double line_remaining = std::numeric_limits<double>::infinity();
+  if (line_enabled && !global_plan_.empty()) {
+    geometry_msgs::PoseStamped plan_pose;
+    if (!path_handler_->transformPose(global_plan_.front().header.frame_id, pose, plan_pose)) {
+      line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+      last_cmd_linear_vel_=last_cmd_angular_vel_=0;
+      resetRotateToHeadingState(); line_route_.reacquire();
+      message="line_corner_pose_transform_failed";
+      return mbf_msgs::ExePathResult::TF_ERROR;
+    }
+    const line_corner::XY robot{plan_pose.pose.position.x,plan_pose.pose.position.y};
+    const auto* corner=line_route_.current(robot);
+    if (corner) {
+      near_goal=false;
+      const double yaw=tf2::getYaw(plan_pose.pose.orientation);
+      line_remaining=line_route_.remaining(*corner,robot);
+      const double incoming_error=line_corner::wrap(line_corner::angle(corner->incoming)-yaw);
+      const double outgoing_error=line_corner::wrap(line_corner::angle(corner->outgoing)-yaw);
+      // Keep the virtual target on the incoming line, even if the ordinary
+      // lookahead has already crossed onto the outgoing edge.
+      const auto target=line_route_.carrot(*corner,robot,
+        params_->use_fixed_curvature_lookahead ? params_->curvature_lookahead_dist : lookahead_dist)-robot;
+      geometry_msgs::Point local;
+      local.x=std::cos(yaw)*target.x+std::sin(yaw)*target.y;
+      local.y=-std::sin(yaw)*target.x+std::cos(yaw)*target.y;
+      regulation_curvature=calculateCurvature(local);
+      should_enter_path_rotation=false;
+      if (line_route_.phase==line_corner::Phase::Approach) {
+        if (line_remaining<=params_->line_corner_position_tolerance_m) {
+          line_route_.phase=line_corner::Phase::Brake;
+          line_stop_evidence_.reset();
+          // A prior incoming alignment must not survive crossing the corner.
+          resetRotateToHeadingState();
+        } else if (!is_rotating_to_heading_ &&
+          std::abs(incoming_error)>params_->rotate_to_heading_min_angle) {
+          angle_to_heading=incoming_error;
+          should_enter_path_rotation=true;
+        }
+      }
+      if (line_route_.phase==line_corner::Phase::Brake) {
+        line_braking=true;
+        const bool stopped=std::hypot(speed.linear.x,speed.linear.y)<=trans_stopped_vel_ &&
+          std::abs(speed.angular.z)<=theta_stopped_vel_;
+        if (line_stop_evidence_.update(line_now,base_odom.header.stamp.toSec(),stopped,
+            std::max(1,params_->rotate_to_heading_stable_cycles)*control_duration_)) {
+          startRotateToHeading(pose,outgoing_error,params_->rotate_to_heading_exit_angle,false);
+          line_route_.phase=line_corner::Phase::Rotate;
+          line_corner_rotation_=true;
+          line_rotation_evidence_.reset();
+        }
+      }
+    }
+  }
+
   if (!params_->use_rotate_to_heading && is_rotating_to_heading_) {
     resetRotateToHeadingState();
   }
@@ -518,7 +627,8 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     }
   }
 
-  bool hold_for_heading = false;
+  bool hold_for_heading = line_braking;
+  if (line_braking) { linear_vel=0.0; angular_vel=0.0; }
   if (is_rotating_to_heading_) {
     hold_for_heading = true;
     const double robot_yaw = tf2::getYaw(pose.pose.orientation);
@@ -584,13 +694,22 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       rotate_to_heading_last_error_ = heading_error;
     }
 
-    if (rotate_to_heading_stable_count_ >=
+    const bool line_rotation_confirmed = !line_enabled ||
+      line_rotation_evidence_.update(line_now,base_odom.header.stamp.toSec(),
+        rotate_to_heading_settling_ && inside_exit_angle && command_stopped &&
+        robot_stopped && translation_stopped && std::abs(speed.linear.y)<=trans_stopped_vel_,
+        std::max(1,params_->rotate_to_heading_stable_cycles)*control_duration_);
+    if (line_rotation_confirmed && rotate_to_heading_stable_count_ >=
       std::max(1, params_->rotate_to_heading_stable_cycles))
     {
       ROS_INFO(
         "[RPP] Latched rotate-to-heading complete: target=%.3f rad, error=%.3f rad; "
         "driving may resume on the next control cycle",
         rotate_to_heading_target_yaw_, heading_error);
+      if (line_corner_rotation_) {
+        line_route_.complete(); line_corner_rotation_=false;
+      }
+      line_rotation_evidence_.reset();
       resetRotateToHeadingState();
       linear_vel = 0.0;
       angular_vel = 0.0;
@@ -609,6 +728,12 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       speed,
       collision_checker_->costAtPose(pose.pose.position.x, pose.pose.position.y), transformed_plan,
       linear_vel, x_vel_sign);
+
+    if (line_enabled && std::isfinite(line_remaining)) {
+      linear_vel=std::min(std::max(0.0,linear_vel),line_corner::approachSpeed(
+        params_->desired_linear_vel,line_remaining,params_->line_corner_approach_distance_m,
+        params_->min_approach_linear_velocity));
+    }
 
     if (corner_approach_active) {
       const double rotate_distance = std::max(
@@ -1073,6 +1198,13 @@ void RegulatedPurePursuitController::startRotateToHeading(
 
 void RegulatedPurePursuitController::resetRotateToHeadingState()
 {
+  // TF/path failures also reset the shared rotation state. Never leave the
+  // new branch in Rotate without an actual latched rotation: re-brake first.
+  if (line_corner_rotation_) {
+    line_route_.phase=line_corner::Phase::Brake;
+    line_corner_rotation_=false;
+    line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+  }
   is_rotating_to_heading_ = false;
   rotate_to_heading_settling_ = false;
   rotate_to_heading_last_error_ = 0.0;
@@ -1232,6 +1364,17 @@ void RegulatedPurePursuitController::createPathMsg(const std::vector<geometry_ms
     }
 }
 
+bool RegulatedPurePursuitController::cancel()
+{
+  if (!initialized_ || !params_->use_line_based_corner_approach) return false;
+  std::lock_guard<std::mutex> lock(param_handler_->getMutex());
+  resetRotateToHeadingState(); line_route_.reacquire();
+  line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+  line_corner_rotation_=false; line_last_compute_=ros::Time();
+  last_cmd_linear_vel_=last_cmd_angular_vel_=0;
+  return true;
+}
+
 bool RegulatedPurePursuitController::setPlan(const std::vector<geometry_msgs::PoseStamped>& plan)
 {
   if(!initialized_)
@@ -1276,6 +1419,11 @@ bool RegulatedPurePursuitController::setPlan(const std::vector<geometry_msgs::Po
     // A genuinely new segment may require a different heading. Equivalent
     // planner refreshes intentionally keep the already-latched target.
     resetRotateToHeadingState();
+    std::vector<line_corner::XY> points;
+    for (const auto& p:plan) points.push_back({p.pose.position.x,p.pose.position.y});
+    line_route_.set(points,params_->rotate_to_heading_min_angle);
+    line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+    line_corner_rotation_=false; line_last_compute_=ros::Time();
   }
   if (preserved_pruned_count > 0) {
     ROS_INFO_THROTTLE(

@@ -1240,6 +1240,17 @@ APP后台/失焦/300ms界面健康保护、3秒会话租约和底盘串口事务
 离线回归为 `test_dual_channel.py`、`test_continuous_manual.py` 和原有安全测试；APP
 `PairedTcpServiceTest` 使用本机 TCP 验证。整机挂死、弱网和实际停车时间/距离仍需受控实机验收。
 
+### 7.8 RPP 可选入口直线角点控制
+
+`use_line_based_corner_approach` 默认 `false`，保留旧分支。开启后沿入口直线接近角点，
+按纵向距离减速，在 5 cm 纵向容差内制动，通过 `/odom_wheel` 新鲜反馈确认停稳后
+固定出口朝向转向，再停稳恢复行走；不增加横向误差暂停门禁，不倒车追点。
+四项启动参数及新旧区别已注释在导航 `rpp_local_planner_params.yaml`，修改后需停任务并重启 move_base。
+等价路径刷新保留阶段，停止/暂停/急停清理阶段。碰撞和定位保护保持不变。
+实现、Linux Release 构建与独立闭环对照命令见
+[RPP 包说明](catkin_ws/src/2-dnavigation-package/2dnavigation/regulated_pure_pursuit_controller/README.md#可选入口直线角点分支新旧对照)。
+模型仿真不能替代实机验收，也不能由此推断磨盘力矩或真实底盘延迟。
+
 ### 8. 常见故障
 
 | 现象 | 原因 | 处理 |

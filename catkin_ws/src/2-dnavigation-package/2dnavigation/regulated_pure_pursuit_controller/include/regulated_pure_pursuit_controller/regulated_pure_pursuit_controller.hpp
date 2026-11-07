@@ -24,8 +24,10 @@
 #include <algorithm>
 #include <limits>
 #include <mutex>
+#include <atomic>
 
 #include <ros/ros.h>
+#include "regulated_pure_pursuit_controller/line_corner.hpp"
 #include <geometry_msgs/Pose2D.h>
 #include <sensor_msgs/LaserScan.h>
 #include "std_msgs/Bool.h"
@@ -95,9 +97,7 @@ public:
    */
   bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
 
-  bool cancel() { 
-      return false; 
-  };
+  bool cancel() override;
 
   /**
    * @brief Sets the global plan
@@ -296,6 +296,15 @@ protected:
   int rotate_to_heading_stable_count_ = 0;
   bool goal_reached_ = false;
   bool initialized_ = false;
+
+  line_corner::Route line_route_;
+  line_corner::StopEvidence line_stop_evidence_, line_rotation_evidence_;
+  ros::Subscriber line_odom_sub_, line_task_enable_sub_;
+  std::atomic<bool> line_reset_requested_{false};
+  std::mutex line_odom_mutex_;
+  nav_msgs::Odometry line_odom_;
+  ros::Time line_last_compute_;
+  bool line_corner_rotation_ = false;
 
   ros::Publisher global_path_pub_;
   ros::Publisher global_path_origin_pub_;

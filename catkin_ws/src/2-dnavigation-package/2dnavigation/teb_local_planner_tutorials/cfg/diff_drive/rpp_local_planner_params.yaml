@@ -81,11 +81,24 @@ RegulatedPurePursuitController:
   # 差速底盘朝向控制
   use_rotate_to_heading: true    # 路径方向偏差较大时先原地旋转
   rotate_to_heading_angular_vel: 0.2     # 原地对准路径时的角速度，重型研磨机不宜过快
-  rotate_to_heading_min_angle: 0.45      # 进入原地旋转的角度阈值，单位：rad（约 20°）
-  rotate_to_heading_exit_angle: 0.08    # 误差小于约2.9度后进入只刹停、不反向追赶的稳定阶段
-  rotate_to_heading_stable_cycles: 3   # 对正并停稳连续5个控制周期后才恢复前进
+  rotate_to_heading_min_angle: 0.45      # 进入原地旋转的角度阈值，单位：rad（0.45 约 25.8°）
+  rotate_to_heading_exit_angle: 0.08    # 误差进入此容差后先刹停，单位 rad（0.08 约 4.6°）
+  rotate_to_heading_stable_cycles: 3   # 对正并停稳的连续控制周期数；新分支还要求对应持续时间和不同时间戳反馈
+  # 新旧角点控制对照：以下四项只在 move_base 初始化时读取，修改后先停任务再重启 move_base。
+  # false 保留原来的角点追踪；true 沿入口直线接近→制动→/odom_wheel 确认停止→固定出口转向。
+  # 生效还要求 use_rotate_to_heading 和 use_corner_aware_rotate_to_heading 均为 true。
+  use_line_based_corner_approach: false
+  # 新分支：剩余纵向距离进入此范围后按比例降速，仍遵守原速度/加速度约束，单位 m。
+  line_corner_approach_distance_m: 0.35
+  # 新分支：沿入口方向距角点 <= 此值即制动；这是纵向容差，不是径向距离。
+  # 横向误差持续柔性纠偏，不增加横向超差暂停门禁；略过角点后不倒车追点。
+  line_corner_position_tolerance_m: 0.05
+  # 新分支：odom_topic（本配置 /odom_wheel）的原始时间戳超时/未来/非有限速度时保持零速。
+  # 停稳需持续 stable_cycles/controller_frequency 秒，且至少两个不同时间戳样本。
+  # 此检查不替代底盘自身的反馈有效性、急停及通信保护；单位 s。
+  line_corner_odom_timeout_s: 0.6
   use_corner_aware_rotate_to_heading: true  # true：尖角处先走到拐点附近，再对正下一条边
-  rotate_to_heading_corner_distance: 0.03  # 后轮中心距尖角8cm内开始原地对准，容纳定位和点间距误差
+  rotate_to_heading_corner_distance: 0.03  # 仅旧分支：base_link 到角点的径向触发距离，单位 m；新分支用纵向容差
   allow_reversing: false               # false：禁止倒车跟踪，前视点在后方时先旋转
 
   # 目标到达与静止判定

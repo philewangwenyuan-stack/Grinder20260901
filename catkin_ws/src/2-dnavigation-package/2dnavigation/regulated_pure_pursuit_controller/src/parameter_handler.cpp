@@ -1,3 +1,4 @@
+#include <cmath>
 // Copyright (c) 2022 Samsung Research America
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,6 +81,21 @@ ParameterHandler::ParameterHandler(
   private_node_->param<double>(
     "rotate_to_heading_corner_distance",
     params_.rotate_to_heading_corner_distance, 0.08);
+  private_node_->param<bool>("use_line_based_corner_approach", params_.use_line_based_corner_approach, false);
+  private_node_->param<double>("line_corner_approach_distance_m", params_.line_corner_approach_distance_m, 0.35);
+  private_node_->param<double>("line_corner_position_tolerance_m", params_.line_corner_position_tolerance_m, 0.05);
+  private_node_->param<double>("line_corner_odom_timeout_s", params_.line_corner_odom_timeout_s, 0.6);
+  auto positive = [](double& value, double fallback) {
+    if (!std::isfinite(value) || value<=0.0) {
+      ROS_WARN("[RPP] Invalid startup line-corner parameter; using %.3f", fallback);
+      value=fallback;
+    }
+  };
+  positive(params_.line_corner_approach_distance_m, 0.35);
+  positive(params_.line_corner_position_tolerance_m, 0.05);
+  positive(params_.line_corner_odom_timeout_s, 0.6);
+  params_.line_corner_approach_distance_m=std::max(
+    params_.line_corner_approach_distance_m, params_.line_corner_position_tolerance_m+0.001);
   private_node_->param<bool>("allow_reversing", params_.allow_reversing, false);
   private_node_->param<double>("max_robot_pose_search_dist", params_.max_robot_pose_search_dist, 1.0);
   private_node_->param<bool>(

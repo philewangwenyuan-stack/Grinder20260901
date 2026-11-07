@@ -81,6 +81,14 @@ add_library(${PROJECT_NAME} SHARED
   )
 
 if(CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(line_corner_test test/line_corner_test.cpp)
+  if(TARGET line_corner_test)
+    target_link_libraries(line_corner_test ${catkin_LIBRARIES})
+  endif()
+  add_executable(line_corner_sim test/line_corner_sim.cpp)
+  add_dependencies(line_corner_sim ${PROJECT_NAME}_gencfg)
+  target_link_libraries(line_corner_sim ${PROJECT_NAME} ${catkin_LIBRARIES})
+
   catkin_add_gtest(scan_classifier_test test/scan_classifier_test.cpp)
   if(TARGET scan_classifier_test)
     target_link_libraries(scan_classifier_test ${catkin_LIBRARIES})

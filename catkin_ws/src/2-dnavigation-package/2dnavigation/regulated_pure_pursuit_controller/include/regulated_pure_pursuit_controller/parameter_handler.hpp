@@ -65,6 +65,11 @@ struct Parameters
   int rotate_to_heading_stable_cycles;
   bool use_corner_aware_rotate_to_heading;
   double rotate_to_heading_corner_distance;
+  // Startup-only A/B branch; intentionally absent from dynamic_reconfigure.
+  bool use_line_based_corner_approach;
+  double line_corner_approach_distance_m;
+  double line_corner_position_tolerance_m;
+  double line_corner_odom_timeout_s;
   bool allow_reversing;
   double max_robot_pose_search_dist;
   bool preserve_plan_progress_on_update;
