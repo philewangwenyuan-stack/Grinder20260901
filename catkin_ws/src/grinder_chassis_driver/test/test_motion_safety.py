@@ -235,7 +235,7 @@ class SafetyTest(unittest.TestCase):
         node._enforce_command_timeout()
         frame = node._memory_serial.frames[-1]
         self.assertEqual(b'\x00' * 4, frame[7:11])
-        self.assertEqual(b'\x03\xe8\x00\x01', frame[11:15])
+        self.assertEqual(b'\x00\x43\x00\x01', frame[11:15])  # 1000 RPM -> 67/100; disc stays enabled
 
     def test_manual_one_second_timeout_preserves_navigation_half_second_limit(self):
         node=self.driver()

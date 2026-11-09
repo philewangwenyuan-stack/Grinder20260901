@@ -160,3 +160,21 @@ class RegisterSnapshot:
             left_motor_fault_code=to_int16(motor_fault_registers[0]),
             right_motor_fault_code=to_int16(motor_fault_registers[1]),
         )
+
+
+def encode_disc_output_block(start_address, values, full_scale_rpm=1500):
+    """Keep ROS/cache values in RPM; encode only 4012 as signed 0..100 level.
+
+    Nominal open-loop mapping, not a measured mechanical RPM calibration.
+    Negative commands preserve the existing disc direction convention.
+    """
+    if type(full_scale_rpm) is not int or not 1 <= full_scale_rpm <= INT16_MAX:
+        raise ValueError("disc_speed_full_scale_rpm must be an integer in 1..32767")
+    result = list(values)
+    index = REGISTER_DISC_SPEED - start_address
+    if 0 <= index < len(result):
+        rpm = to_int16(int(result[index]))
+        magnitude = min(abs(rpm), full_scale_rpm)
+        level = (magnitude * 100 + full_scale_rpm // 2) // full_scale_rpm
+        result[index] = -level if rpm < 0 else level
+    return result

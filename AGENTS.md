@@ -91,6 +91,7 @@ MID-360 -> Super-LIO -> /lio/odom、点云 -> 可选回环 -> 二维栅格 /map
 | Modbus 帧、串口、CRC | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/modbus_transport.py` | `test/test_modbus_transport.py` |
 | 连续遥控、普通控制阻塞与串口日志争用 | scheduler `sl_linka_adapter.py` 的独立控制 FIFO；chassis `modbus_transport.py` / `raw_log.py` | 完整事务总时限、写优先、有界后台原始日志；`test_continuous_manual.py`、底盘 `test_serial_scheduling.py` / `test_raw_log.py`；根 README 7.6 |
 | 软件急停锁存、取消代号与显式解除 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/motion_safety.py` | 驱动统一输出提交／安全同步；scheduler `_reset_emergency_stop`、`_restore_indicator_reset`（重启恢复已确认解除的清灯请求）；`ignore_chassis_status=true` 允许无底盘测试解除调度锁存；服务及回归见根 README 7.2、`test_motion_safety.py`、`test_emergency_stop_execution.py` |
+| HONGTU磨盘RPM→0～100写入适配 | 底盘 `register_map.py: encode_disc_output_block`、`chassis_driver_node.py: _submit_output` | 仅4012单写/整块输出转换，APP/缓存/读回仍为RPM；`disc_speed_full_scale_rpm`默认1500，`test/test_disc_speed_encoding.py`；故障入口限制见底盘README |
 | 寄存器地址、编解码、底盘命令模型 | `catkin_ws/src/grinder_chassis_driver/src/grinder_chassis_driver/register_map.py` | `test/test_register_map.py`、`test/test_motor_faults.py`；`0x4019/0x401A` 左右电机故障码原值上报 `/chassis/status` 和诊断；`doc/底盘485指令.png` |
 | ROS 消息/服务 | 两个自研包各自的 `msg/`、`srv/` | 对应 `CMakeLists.txt`、`package.xml` |
 | move_base / TEB / RPP 参数 | `catkin_ws/src/2-dnavigation-package/2dnavigation/teb_local_planner_tutorials/cfg/diff_drive/` | 同包 `launch/robot_diff_drive.launch` |

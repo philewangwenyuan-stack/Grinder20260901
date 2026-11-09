@@ -58,6 +58,7 @@ from grinder_chassis_driver.register_map import (
     RegisterSnapshot,
     clamp,
     motor_rpm_to_base_twist,
+    encode_disc_output_block,
     to_int16,
 )
 
@@ -115,6 +116,10 @@ class ChassisDriverNode:
         self.right_speed_max = rospy.get_param("~right_speed_max", INT16_MAX)
         self.disc_speed_min = rospy.get_param("~disc_speed_min", INT16_MIN)
         self.disc_speed_max = rospy.get_param("~disc_speed_max", INT16_MAX)
+        self.disc_speed_full_scale_rpm = rospy.get_param("~disc_speed_full_scale_rpm", 1500)
+        if (type(self.disc_speed_full_scale_rpm) is not int or
+                not 1 <= self.disc_speed_full_scale_rpm <= INT16_MAX):
+            raise ValueError("disc_speed_full_scale_rpm must be an integer in 1..32767")
         self.disc_lift_supported = bool(rospy.get_param("~disc_lift_supported", True))
         self.max_cmd_step_rpm = int(rospy.get_param("~max_cmd_step_rpm", 50))
         self.enable_cmd_ramp_limit = bool(rospy.get_param("~enable_cmd_ramp_limit", True))
@@ -721,6 +726,9 @@ class ChassisDriverNode:
                                                REGISTER_DISC_SPEED, REGISTER_DISC_ENABLE) and bool(block[0]))
                     if safe or moving:
                         self._safe_write_confirmed = False
+            # Apply once at the hardware boundary: all callers and caches stay
+            # in RPM, while HONGTU 4012 expects a signed 0..100 control level.
+            wire_block = encode_disc_output_block(address, block, self.disc_speed_full_scale_rpm)
             serial_started = time.monotonic()
             if kind == "motion":
                 self._motion_submit_delay_ms = (serial_started - getattr(self._motion.local, "callback_arrival", serial_started)) * 1000.0
@@ -729,12 +737,12 @@ class ChassisDriverNode:
             try:
                 if kind == "single":
                     writer = self.transport.write_int16 if signed else self.transport.write_uint16
-                    writer(address, block[0])
+                    writer(address, wire_block[0])
                 elif kind == "all" and not self.disc_lift_supported:
-                    self.transport.write_register_block(address, block[:5])
+                    self.transport.write_register_block(address, wire_block[:5])
                     self.transport.write_uint16(REGISTER_LIGHT, block[6])
                 else:
-                    self.transport.write_register_block(address, block)
+                    self.transport.write_register_block(address, wire_block)
             except ModbusTransportError:
                 with self._lock:
                     self._invalidate_output_cache()

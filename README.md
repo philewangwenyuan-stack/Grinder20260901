@@ -2103,3 +2103,9 @@ TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更�
 
 需配套更新APP与板端。旧区域须逐个确认保存工艺。本次仅源码和离线验证，未部署、未安装、未进行实机作业验收。
 回归：scheduler `test_history_process.py`、`test_execution_settings.py`、`test_task_runtime_parameters.py`、急停/续跑回归；APP `core:tcp/MapProcessSettingsTest`、`feature:map/MapProcessSettingsTest`。
+
+### HONGTU 磨盘控制单位
+
+磨盘对外保持RPM，底盘统一输出层将4012转换为0～100调速量；名义满量程
+`disc_speed_full_scale_rpm=1500`，实际RPM需标定。单写和整块写都转换，左右轮不变。
+接口与故障采集范围见[底盘说明](catkin_ws/src/grinder_chassis_driver/README.md#hongtu-磨盘写入单位与故障采集)。
