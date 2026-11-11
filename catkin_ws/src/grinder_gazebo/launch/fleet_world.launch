@@ -4,6 +4,7 @@
   <arg name="gui" default="true" />
   <arg name="sim_speed" default="1.0" />
   <env name="GAZEBO_RESOURCE_PATH" value="$(find grinder_gazebo):$(optenv GAZEBO_RESOURCE_PATH /usr/share/gazebo-11)" />
+  <env name="GAZEBO_MODEL_PATH" value="$(find grinder_gazebo)/scenes/huadu_factory_gazebo/models:$(optenv GAZEBO_MODEL_PATH)" />
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(arg world_name)" />
     <arg name="gui" value="$(arg gui)" />

@@ -1,6 +1,7 @@
 # One physical world, separate ROS masters and application/state per robot.
 # Empty world/spawn use catkin_ws/temp/sim_world_path and sim_spawn_pose.
 world: ""
+base_spawn: [-84.488228773, 50.231230552, 0.0]
 world_master_port: 11411
 gazebo_master_port: 11445
 gui: true

@@ -57,6 +57,7 @@ install(DIRECTORY
   config
   launch
   meshes
+  scenes
   urdf
   worlds
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

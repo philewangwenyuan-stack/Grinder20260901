@@ -1,0 +1,4070 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.6">
+  <model name="huadu_factory">
+    <static>true</static>
+    <self_collide>false</self_collide>
+    <link name="factory_structure">
+      <collision name="group_000_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_000.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_000_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_000.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_001_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_001.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_001_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_001.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_002_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_002.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_002_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_002.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 0.2</ambient>
+          <diffuse>0.83922 0.83922 0.83922 0.2</diffuse>
+        </material>
+        <transparency>0.8</transparency>
+      </visual>
+      <collision name="group_003_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_003.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_003_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_003.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_004_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_004.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_004_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_004.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.8 0.6 0.4 1</ambient>
+          <diffuse>0.8 0.6 0.4 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_005_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_005.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_005_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_005.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.67451 0.67451 0.67451 1</ambient>
+          <diffuse>0.67451 0.67451 0.67451 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_006_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_006.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_006_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_006.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.51373 0.51373 0.51373 1</ambient>
+          <diffuse>0.51373 0.51373 0.51373 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_007_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_007.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_007_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_007.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 0 2</ambient>
+          <diffuse>1 1 0 2</diffuse>
+        </material>
+        <transparency>-1</transparency>
+      </visual>
+      <collision name="group_008_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_008.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_008_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_008.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_009_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_009.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_009_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_009.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.35686 0.35686 0.35686 1</ambient>
+          <diffuse>0.35686 0.35686 0.35686 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_010_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_010.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_010_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_010.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.74902 0.74902 0.74902 1</ambient>
+          <diffuse>0.74902 0.74902 0.74902 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_011_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_011.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_011_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_011.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 0.5</ambient>
+          <diffuse>0.83922 0.83922 0.83922 0.5</diffuse>
+        </material>
+        <transparency>0.5</transparency>
+      </visual>
+      <collision name="group_012_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_012.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_012_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_012.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 0.1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 0.1</diffuse>
+        </material>
+        <transparency>0.9</transparency>
+      </visual>
+      <collision name="group_013_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_013.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_013_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_013.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 3</ambient>
+          <diffuse>0 1 0 3</diffuse>
+        </material>
+        <transparency>-2</transparency>
+      </visual>
+      <collision name="group_014_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_014.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_014_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_014.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_015_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_015.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_015_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_015.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.4 0.4 0.4 1</ambient>
+          <diffuse>0.4 0.4 0.4 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_016_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_016.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_016_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_016.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.30196 0.89804 0.30196 1</ambient>
+          <diffuse>0.30196 0.89804 0.30196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_017_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_017.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_017_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_017.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.89804 0.4 0 1</ambient>
+          <diffuse>0.89804 0.4 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_018_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_018.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_018_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_018.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.89804 0.89804 0.2 1</ambient>
+          <diffuse>0.89804 0.89804 0.2 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_019_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_019.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_019_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_019.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.2 0.6 0.69804 1</ambient>
+          <diffuse>0.2 0.6 0.69804 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_020_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_020.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_020_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_020.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.89804 0 0.89804 1</ambient>
+          <diffuse>0.89804 0 0.89804 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_021_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_021.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_021_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_021.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 0.30196 0.89804 1</ambient>
+          <diffuse>0 0.30196 0.89804 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_022_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_022.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_022_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_022.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 0.69804 0.8 1</ambient>
+          <diffuse>0 0.69804 0.8 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_023_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_023.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_023_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_023.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.6 0.6 0.6 1</ambient>
+          <diffuse>0.6 0.6 0.6 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_024_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_024.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_024_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_024.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.4 0.69804 0.2 1</ambient>
+          <diffuse>0.4 0.69804 0.2 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_025_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_025.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_025_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_025.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.8 0.4 0.89804 1</ambient>
+          <diffuse>0.8 0.4 0.89804 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_026_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_026.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_026_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_026.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.69804 0.2 0.30196 1</ambient>
+          <diffuse>0.69804 0.2 0.30196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_027_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_027.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_027_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_027.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.89804 0 0 1</ambient>
+          <diffuse>0.89804 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_028_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_028.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_028_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_028.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_029_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_029.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_029_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_029.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_030_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_030.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_030_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_030.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_031_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_031.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_031_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_031.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.49412 0.74902 1 0.7</ambient>
+          <diffuse>0.49412 0.74902 1 0.7</diffuse>
+        </material>
+        <transparency>0.3</transparency>
+      </visual>
+      <collision name="group_032_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_032.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_032_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_032.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_033_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_033.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_033_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_033.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.49412 0.74902 1 0.7</ambient>
+          <diffuse>0.49412 0.74902 1 0.7</diffuse>
+        </material>
+        <transparency>0.3</transparency>
+      </visual>
+      <collision name="group_034_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_034.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_034_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_034.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.74902 0.74902 0.74902 1</ambient>
+          <diffuse>0.74902 0.74902 0.74902 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_035_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_035.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_035_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_035.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_036_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_036.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_036_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_036.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_037_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_037.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_037_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_037.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.49412 0.74902 1 0.7</ambient>
+          <diffuse>0.49412 0.74902 1 0.7</diffuse>
+        </material>
+        <transparency>0.3</transparency>
+      </visual>
+      <collision name="group_038_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_038.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_038_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_038.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_039_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_039.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_039_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_039.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_040_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_040.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_040_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_040.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_041_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_041.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_041_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_041.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.67451 0.67451 0.67451 1</ambient>
+          <diffuse>0.67451 0.67451 0.67451 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_042_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_042.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_042_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_042.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_043_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_043.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_043_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_043.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.74902 0.74902 0.74902 1</ambient>
+          <diffuse>0.74902 0.74902 0.74902 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_044_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_044.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_044_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_044.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_045_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_045.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_045_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_045.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_046_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_046.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_046_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_046.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.74902 0.74902 0.74902 1</ambient>
+          <diffuse>0.74902 0.74902 0.74902 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_047_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_047.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_047_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_047.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.6 0.36863 0.29412 1</ambient>
+          <diffuse>0.6 0.36863 0.29412 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_048_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_048.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_048_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_048.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_049_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_049.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_049_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_049.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_050_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_050.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_050_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_050.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.74902 0.74902 0.74902 1</ambient>
+          <diffuse>0.74902 0.74902 0.74902 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_051_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_051.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_051_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_051.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.49412 0.74902 1 0.7</ambient>
+          <diffuse>0.49412 0.74902 1 0.7</diffuse>
+        </material>
+        <transparency>0.3</transparency>
+      </visual>
+      <collision name="group_052_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_052.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_052_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_052.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 7</ambient>
+          <diffuse>1 1 1 7</diffuse>
+        </material>
+        <transparency>-6</transparency>
+      </visual>
+      <collision name="group_053_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_053.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_053_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_053.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_054_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_054.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_054_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_054.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 3</ambient>
+          <diffuse>0 1 0 3</diffuse>
+        </material>
+        <transparency>-2</transparency>
+      </visual>
+      <collision name="group_055_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_055.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_055_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_055.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 4</ambient>
+          <diffuse>0 1 1 4</diffuse>
+        </material>
+        <transparency>-3</transparency>
+      </visual>
+      <collision name="group_056_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_056.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_056_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_056.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_057_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_057.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_057_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_057.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_058_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_058.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_058_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_058.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 0.49412 1 1</ambient>
+          <diffuse>0 0.49412 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_059_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_059.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_059_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_059.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.67451 0.67451 0.67451 1</ambient>
+          <diffuse>0.67451 0.67451 0.67451 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_060_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_060.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_060_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_060.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 31</ambient>
+          <diffuse>1 0.74902 0.49412 31</diffuse>
+        </material>
+        <transparency>-30</transparency>
+      </visual>
+      <collision name="group_061_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_061.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_061_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_061.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 1</ambient>
+          <diffuse>1 0.74902 0.49412 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_062_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_062.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_062_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_062.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 4</ambient>
+          <diffuse>0 1 1 4</diffuse>
+        </material>
+        <transparency>-3</transparency>
+      </visual>
+      <collision name="group_063_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_063.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_063_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_063.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 1</ambient>
+          <diffuse>0 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_064_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_064.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_064_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_064.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_065_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_065.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_065_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_065.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 3</ambient>
+          <diffuse>0 1 0 3</diffuse>
+        </material>
+        <transparency>-2</transparency>
+      </visual>
+      <collision name="group_066_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_066.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_066_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_066.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_067_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_067.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_067_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_067.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_068_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_068.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_068_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_068.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_069_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_069.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_069_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_069.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 1</ambient>
+          <diffuse>0 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_070_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_070.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_070_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_070.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_071_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_071.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_071_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_071.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 7</ambient>
+          <diffuse>1 1 1 7</diffuse>
+        </material>
+        <transparency>-6</transparency>
+      </visual>
+      <collision name="group_072_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_072.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_072_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_072.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_073_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_073.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_073_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_073.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_074_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_074.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_074_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_074.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 1</ambient>
+          <diffuse>1 0.74902 0.49412 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_075_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_075.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_075_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_075.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_076_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_076.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_076_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_076.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 0 1</ambient>
+          <diffuse>1 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_077_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_077.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_077_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_077.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 1</ambient>
+          <diffuse>0 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_078_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_078.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_078_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_078.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_079_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_079.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_079_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_079.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.29412 0 0.6 1</ambient>
+          <diffuse>0.29412 0 0.6 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_080_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_080.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_080_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_080.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.29412 0.44706 0.6 1</ambient>
+          <diffuse>0.29412 0.44706 0.6 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_081_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_081.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_081_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_081.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_082_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_082.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_082_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_082.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0 1</ambient>
+          <diffuse>1 0.74902 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_083_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_083.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_083_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_083.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.6 0.8 0 1</ambient>
+          <diffuse>0.6 0.8 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_084_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_084.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_084_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_084.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_085_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_085.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_085_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_085.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.49412 0.49412 1</ambient>
+          <diffuse>1 0.49412 0.49412 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_086_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_086.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_086_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_086.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.8 0.6 0.4 1</ambient>
+          <diffuse>0.8 0.6 0.4 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_087_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_087.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_087_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_087.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_088_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_088.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_088_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_088.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 31</ambient>
+          <diffuse>1 0.74902 0.49412 31</diffuse>
+        </material>
+        <transparency>-30</transparency>
+      </visual>
+      <collision name="group_089_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_089.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_089_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_089.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_090_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_090.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_090_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_090.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_091_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_091.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_091_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_091.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 3</ambient>
+          <diffuse>0 1 0 3</diffuse>
+        </material>
+        <transparency>-2</transparency>
+      </visual>
+      <collision name="group_092_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_092.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_092_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_092.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.49412 1 1</ambient>
+          <diffuse>1 0.49412 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_093_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_093.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_093_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_093.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 1</ambient>
+          <diffuse>1 0.74902 0.49412 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_094_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_094.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_094_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_094.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 1</ambient>
+          <diffuse>0 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_095_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_095.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_095_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_095.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_096_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_096.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_096_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_096.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 0 1</ambient>
+          <diffuse>1 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_097_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_097.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_097_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_097.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_098_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_098.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_098_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_098.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.29412 0 0.6 1</ambient>
+          <diffuse>0.29412 0 0.6 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_099_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_099.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_099_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_099.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.6 0.4 0.8 1</ambient>
+          <diffuse>0.6 0.4 0.8 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_100_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_100.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_100_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_100.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.29412 0.44706 0.6 1</ambient>
+          <diffuse>0.29412 0.44706 0.6 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_101_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_101.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_101_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_101.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0 1</ambient>
+          <diffuse>1 0.74902 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_102_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_102.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_102_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_102.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_103_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_103.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_103_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_103.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.6 0.8 0 1</ambient>
+          <diffuse>0.6 0.8 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_104_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_104.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_104_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_104.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.49412 0.49412 1</ambient>
+          <diffuse>1 0.49412 0.49412 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_105_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_105.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_105_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_105.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 1</ambient>
+          <diffuse>0 1 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_106_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_106.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_106_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_106.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.8 0.6 0.4 1</ambient>
+          <diffuse>0.8 0.6 0.4 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_107_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_107.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_107_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_107.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 31</ambient>
+          <diffuse>1 0.74902 0.49412 31</diffuse>
+        </material>
+        <transparency>-30</transparency>
+      </visual>
+      <collision name="group_108_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_108.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_108_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_108.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 10</ambient>
+          <diffuse>1 0 0 10</diffuse>
+        </material>
+        <transparency>-9</transparency>
+      </visual>
+      <collision name="group_109_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_109.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_109_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_109.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 0 2</ambient>
+          <diffuse>1 1 0 2</diffuse>
+        </material>
+        <transparency>-1</transparency>
+      </visual>
+      <collision name="group_110_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_110.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_110_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_110.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 4</ambient>
+          <diffuse>0 1 1 4</diffuse>
+        </material>
+        <transparency>-3</transparency>
+      </visual>
+      <collision name="group_111_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_111.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_111_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_111.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 0 3</ambient>
+          <diffuse>0 1 0 3</diffuse>
+        </material>
+        <transparency>-2</transparency>
+      </visual>
+      <collision name="group_112_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_112.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_112_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_112.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_113_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_113.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_113_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_113.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 7</ambient>
+          <diffuse>1 1 1 7</diffuse>
+        </material>
+        <transparency>-6</transparency>
+      </visual>
+      <collision name="group_114_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_114.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_114_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_114.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_115_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_115.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_115_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_115.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_116_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_116.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_116_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_116.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_117_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_117.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_117_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_117.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 1</ambient>
+          <diffuse>0 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_118_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_118.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_118_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_118.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 7</ambient>
+          <diffuse>1 1 1 7</diffuse>
+        </material>
+        <transparency>-6</transparency>
+      </visual>
+      <collision name="group_119_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_119.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_119_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_119.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.35686 0.35686 0.35686 1</ambient>
+          <diffuse>0.35686 0.35686 0.35686 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_120_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_120.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_120_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_120.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_121_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_121.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_121_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_121.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.74902 0.74902 0.74902 0.1</ambient>
+          <diffuse>0.74902 0.74902 0.74902 0.1</diffuse>
+        </material>
+        <transparency>0.9</transparency>
+      </visual>
+      <collision name="group_122_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_122.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_122_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_122.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.67451 0.67451 0.67451 1</ambient>
+          <diffuse>0.67451 0.67451 0.67451 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_123_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_123.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_123_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_123.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.51373 0.51373 0.51373 1</ambient>
+          <diffuse>0.51373 0.51373 0.51373 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_124_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_124.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_124_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_124.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_125_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_125.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_125_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_125.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.83922 0.83922 0.83922 1</ambient>
+          <diffuse>0.83922 0.83922 0.83922 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_126_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_126.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_126_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_126.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_127_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_127.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_127_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_127.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>1 0.74902 0.49412 31</ambient>
+          <diffuse>1 0.74902 0.49412 31</diffuse>
+        </material>
+        <transparency>-30</transparency>
+      </visual>
+      <collision name="group_128_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_128.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_128_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_128.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0 1 1 4</ambient>
+          <diffuse>0 1 1 4</diffuse>
+        </material>
+        <transparency>-3</transparency>
+      </visual>
+      <collision name="group_129_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_129.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_129_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_129.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.50196 0.50196 0.50196 1</ambient>
+          <diffuse>0.50196 0.50196 0.50196 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+      <collision name="group_130_collision">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_130.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="group_130_visual">
+        <geometry>
+          <mesh>
+            <uri>model://huadu_factory/meshes/group_130.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.49412 0.74902 1 1</ambient>
+          <diffuse>0.49412 0.74902 1 1</diffuse>
+        </material>
+        <transparency>0</transparency>
+      </visual>
+    </link>
+  </model>
+</sdf>

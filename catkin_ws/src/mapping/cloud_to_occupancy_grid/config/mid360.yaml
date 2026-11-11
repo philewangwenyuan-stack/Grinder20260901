@@ -20,8 +20,8 @@ cloud_to_occupancy_grid:
   max_snapshot_cells: 100000000 # Limit each dense publication/save snapshot.
   map_width: 500.0
   map_height: 500.0
-  origin_x: -60.0
-  origin_y: -60.0
+  origin_x: -250.0
+  origin_y: -250.0
 
   min_range: 0.5
   max_range: 30.0

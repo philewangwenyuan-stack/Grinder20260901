@@ -4,7 +4,7 @@
   <arg name="gui" default="true" />
   <arg name="paused" default="false" />
   <arg name="sim_speed" default="1.0" />
-  <arg name="world_name" default="$(eval optenv('GRINDER_SIM_WORLD', find('grinder_gazebo') + '/worlds/factory_floor.world'))" />
+  <arg name="world_name" default="$(eval optenv('GRINDER_SIM_WORLD', find('grinder_gazebo') + '/scenes/huadu_factory_gazebo/worlds/huadu_factory.world'))" />
   <arg name="visual_mesh" default="false" />
   <arg name="lidar_x" default="0.20" />
   <arg name="lidar_y" default="0.0" />
@@ -23,8 +23,8 @@
   <arg name="local_rtsp_enabled" default="true" />
   <arg name="sim_external_reporting" default="false" />
   <arg name="sl_linka_port" default="8002" />
-  <arg name="x" default="0.0" />
-  <arg name="y" default="0.0" />
+  <arg name="x" default="-84.488228773" />
+  <arg name="y" default="50.231230552" />
   <arg name="yaw" default="0.0" />
 
   <param name="use_sim_time" value="true" />

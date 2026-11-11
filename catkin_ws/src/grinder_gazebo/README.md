@@ -1,5 +1,15 @@
 # X920 Gazebo 仿真
 
+仿真开发使用 Git 分支 `gazbo仿真`；`main` 保留在 `4d8ab0b`（修改RPP）。
+本分支包含共享世界多车入口及远端仿真的最新 RPP、地图原点、RViz 配置。
+花都厂房资源已随源码放在 `scenes/huadu_factory_gazebo/`，无需依赖
+`/home/dev/work/huadu_factory_gazebo`。单车主入口与多车入口在没有设备本地覆盖时默认使用该厂房；
+多车基准出生位置来自 `config/fleet.yaml` 的 `base_spawn`，设备本地
+`temp/sim_world_path` / `sim_spawn_pose` 和显式参数仍可覆盖。
+底层 `spawn_x920.launch` 保留原来的通用房间测试默认场景，便于传感器独立回归。
+源码同步前先确认 `git branch --show-current`，不要从 main 覆盖远端仿真源码。
+设备凭据、已保存地图、运行日志和编译产物不随分支迁移。
+
 ## 同一场景运行 2～3 台车
 
 入口 `catkin_ws/start_grinder_fleet.sh`。一个 Gazebo server 加载当前场景并生成
@@ -130,7 +140,7 @@ python3 -m unittest discover -s src/grinder_gazebo/test -p test_fleet.py
 - 驱动轮半径：`0.1475 m`。
 - 减速比：`60.0`。
 - 简化物理碰撞体：`1.30 x 0.94 x 0.30 m`，与仿真代价地图 footprint `[-0.3, 1.0] x [-0.47, 0.47]` 一致；真实导航参数不改。
-- 环境：来自 `S_B1混凝土结构模型_V1.0.rvt` 的梁、柱、墙、板精确三角网格，来源、原点与构件清单见 `meshes/b1_structure/source_report.json`。保留连续支撑地面；二维地图分配范围每轴 `[-60,+60]m`，裁剪外扩不能突破这个分配范围。
+- 默认环境：花都厂房的可视/碰撞几何，资源及来源见 `scenes/huadu_factory_gazebo/`。原 B1 梁柱墙板场景保留在 `worlds/factory_floor.world`，构件清单见 `meshes/b1_structure/source_report.json`。当前二维地图分配范围每轴 `[-250,+250]m`，裁剪外扩不能突破该范围。
 
 默认不加载 STEP，Gazebo collision 和 inertia 使用简化几何，以保证姿态稳定和实时性。仿真启动会用 `navigation_sim_overrides.yaml` 将 global/local costmap footprint 对齐到上述方盒尺寸；真实导航参数保持不改。需要查看 CAD 外观时运行 `./start_grinder_sim.sh visual_mesh:=true`。
 

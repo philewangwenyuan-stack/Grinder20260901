@@ -20,6 +20,7 @@
 
   <!-- Resolve the RVT-derived world meshes in both devel and installed packages. -->
   <env name="GAZEBO_RESOURCE_PATH" value="$(find grinder_gazebo):$(optenv GAZEBO_RESOURCE_PATH /usr/share/gazebo-11)" />
+  <env name="GAZEBO_MODEL_PATH" value="$(find grinder_gazebo)/scenes/huadu_factory_gazebo/models:$(optenv GAZEBO_MODEL_PATH)" />
 
   <param name="use_sim_time" value="true" />
   <param name="robot_description"

@@ -180,7 +180,7 @@ def main():
         config["gui"] = args.gui == "true"
     if args.sim_speed is not None:
         config["sim_speed"] = args.sim_speed
-    base = [0, 0, 0]
+    base = pose(config.get("base_spawn", [0, 0, 0]))
     spawn_file = workspace / "temp/sim_spawn_pose"
     if spawn_file.exists():
         base = pose(spawn_file.read_text().split())
@@ -189,7 +189,7 @@ def main():
     world_file = workspace / "temp/sim_world_path"
     if not world and world_file.exists():
         world = world_file.read_text().strip()
-    world = Path(world).expanduser() if world else package / "worlds/factory_floor.world"
+    world = Path(world).expanduser() if world else package / "scenes/huadu_factory_gazebo/worlds/huadu_factory.world"
     if not world.is_absolute():
         world = config_path.parent / world
     world = world.resolve()
