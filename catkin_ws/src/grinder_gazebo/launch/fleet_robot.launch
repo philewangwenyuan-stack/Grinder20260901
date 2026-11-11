@@ -1,0 +1,41 @@
+<launch>
+  <arg name="robot_description_file" />
+  <arg name="runtime_config" />
+  <arg name="runtime_dir" />
+  <arg name="map_root" />
+  <arg name="scheduler_local_config" default="" />
+  <arg name="app_port" />
+  <arg name="cameras" default="false" />
+  <param name="use_sim_time" value="true" />
+  <param name="robot_description" textfile="$(arg robot_description_file)" />
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
+  <node pkg="grinder_gazebo" type="chassis_sim_node.py" name="grinder_chassis_sim" output="screen" required="true">
+    <param name="wheel_track_m" value="0.70" />
+    <param name="wheel_radius_m" value="0.1475" />
+    <param name="gear_ratio" value="60.0" />
+    <param name="drive_left_sign" value="-1" />
+    <param name="drive_right_sign" value="-1" />
+    <param name="drive_swap_lr" value="false" />
+    <param name="sim_drive_axis_sign" value="1" />
+    <param name="command_timeout" value="0.5" />
+    <param name="sim_command_topic" value="/grinder/sim/cmd_vel" />
+    <param name="sim_odom_topic" value="/grinder/sim/ground_truth/odom" />
+  </node>
+  <include file="$(find grinder_gazebo)/launch/scheduler_sim.launch">
+    <arg name="scheduler_local_config" value="$(arg scheduler_local_config)" />
+    <arg name="local_rtsp_enabled" value="$(arg cameras)" />
+    <arg name="sl_linka_port" value="$(arg app_port)" />
+    <arg name="super_lio_map_root" value="$(arg map_root)" />
+    <arg name="sim_state_dir" value="$(arg runtime_dir)/state" />
+  </include>
+  <include file="$(find teb_local_planner_tutorials)/launch/robot_diff_drive.launch">
+    <arg name="local_planner" value="rpp" />
+    <arg name="use_sim_time" value="true" />
+  </include>
+  <rosparam command="load" file="$(arg runtime_dir)/costmap.yaml" ns="move_base/global_costmap" />
+  <rosparam command="load" file="$(arg runtime_dir)/costmap.yaml" ns="move_base/local_costmap" />
+  <rosparam command="load" file="$(arg runtime_dir)/rpp.yaml" ns="move_base" />
+  <rosparam command="load" file="$(find grinder_gazebo)/config/navigation_sim_overrides.yaml" />
+  <!-- Last: isolate every scheduler-writable file and both application ports. -->
+  <rosparam command="load" file="$(arg runtime_config)" ns="grinder_scheduler" />
+</launch>

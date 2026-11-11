@@ -1,5 +1,119 @@
 # X920 Gazebo 仿真
 
+## 同一场景运行 2～3 台车
+
+入口 `catkin_ws/start_grinder_fleet.sh`。一个 Gazebo server 加载当前场景并生成
+`robot1`、`robot2`、可选 `robot3`，车之间与梁柱墙板共享碰撞物理。
+每台车有独立 ROS Master、Super-LIO、栅格地图、调度器、RPP 导航和 APP 双通道。
+桥接只传该车的虚拟雷达、IMU、轮子关节状态、Gazebo 真值及控制输出；
+不跨车转发 `/tf`、`/map`、任务或急停状态，因此各车保留原有 `map/odom/base_link` 名称。
+Gazebo 真值只供仿真反馈和诊断，不替代 Super-LIO 定位。
+
+原单车入口 `start_grinder_sim.sh` 保留。多车默认使用另一组端口，不会自动关闭已运行的单车。
+同时运行两套场景会额外占用资源，正式多车测试前可在原单车启动终端按 Ctrl+C。
+多车隔离并不包含共享地图、协同调度或会车协调，也不修复已有的定位质量问题。
+
+### 编译与启动（远端 WSL）
+
+在仓库根目录修改源码后，按本 README 的远端同步流程同步本次多车文件；
+不要用较旧 main 的整个 Gazebo 目录覆盖远端定制场景。修改 C++ 插件后必须编译：
+
+```bash
+cd /home/dev/work/Grinder-remote-sim/catkin_ws
+PROFILE=sim CATKIN_JOBS=4 CATKIN_LOAD=6 bash ./build_grinder_platform.sh
+# 查看将采用的场景、出生位置和端口，不启动任何节点
+bash ./start_grinder_fleet.sh --robots 2 --dry-run
+# 两台车；第三台改成 --robots 3
+bash ./start_grinder_fleet.sh --robots 2
+# 不显示 Gazebo 窗口，仍保留 GPU 雷达渲染
+bash ./start_grinder_fleet.sh --robots 2 --gui false
+```
+
+在启动终端 Ctrl+C 停止本次 fleet。脚本只管理自身启动的进程，不执行全局 `pkill`。
+若在后台启动，可在同一工作区执行 `bash ./start_grinder_fleet.sh --stop`；
+脚本核对 PID 的启动命令和工作区后再停止，不会关闭原单车实例。
+机器人建图仍由各自 APP 的扫描操作启动，启动后先保持车辆静止完成 IMU 初始化。
+桥接中断或控制包积压超期时，对应 Gazebo 输入会在实际时间约 0.5 秒内归零；
+桥接进程退出时启动器停止本次 fleet，不持续运行失去控制桥的车辆。
+
+配置为 `config/fleet.yaml`，也可用 `--config /absolute/path/fleet.local.yaml`。
+空的 `world` 自动沿用设备本地 `catkin_ws/temp/sim_world_path`，出生基准沿用
+`catkin_ws/temp/sim_spawn_pose`，各车 `spawn_offset: [x,y,yaw]` 是世界坐标方向的增量。
+也可为每台车填写绝对 `spawn: [x,y,yaw]`；初始位置至少间隔 2m，且需自己选在可行驶区域。
+`--world /absolute/path/scene.world`、`--sim-speed 1` 可覆盖场景及目标倍速。
+默认关闭相机、RTSP、MQTT 和平台上传，避免多台模拟设备共用真实设备身份。
+
+| 用途 | 共享世界 | robot1 | robot2 | robot3 |
+| --- | --- | --- | --- | --- |
+| ROS Master | 11411 | 11421 | 11422 | 11423 |
+| Gazebo Master | 11445（所有车共享） | — | — | — |
+| APP 数据端口 | — | 8102 | 8202 | 8302 |
+| APP 控制端口 | — | 8103 | 8203 | 8303 |
+| 默认出生偏移 | — | `[0,0,0]` | `[0,3,0]` | `[0,6,0]` |
+
+地图分别存于仓库 `maps/sim_fleet/robotN/`；任务/草稿/历史、导航图、RPP/footprint
+可写配置、预览及日志分别存于 `catkin_ws/temp/sim_fleet/robotN/`。
+启动器首次复制 RPP 和 costmap 参数，此后保留各车在 APP 中修改的副本，不回写共享源码。
+更新源码默认参数后，若要更新某车已存在的副本，请先停 fleet，再有选择地更新该车的
+`rpp.yaml` / `costmap.yaml`。不要删除整车数据目录来更新参数。
+运行清单在 `catkin_ws/temp/sim_fleet/manifest.json`，启动/桥接/调度日志也在该目录下。
+
+### 本地 MuMu 的多个 APP 分别连接
+
+**当前 APP 控制端口固定为 8003，不能只填写远端 8102/8202 就认为双通道已连接。**
+每个 MuMu 实例均在 APP 填 `127.0.0.1:8002`，使用下面的脚本把两个通道一起映射到对应车辆。
+一个 MuMu 实例同一时间连接一台车；同时操作两台车需要两个 MuMu 实例，分别安装 APP。
+
+本机 Windows PowerShell 打开并保留一个隧道终端：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File E:\CODE\C++\Grinder\catkin_ws\scripts\fleet_app.ps1 tunnel -Robots 2
+# 三台车使用 -Robots 3
+```
+
+在另一终端用 MuMu 的 adb 查看实际实例序列号，再分别映射：
+
+```powershell
+& 'D:\Program Files\Netease\MuMu Player 12\nx_main\adb.exe' devices
+powershell -ExecutionPolicy Bypass -File E:\CODE\C++\Grinder\catkin_ws\scripts\fleet_app.ps1 app -Robot 1 -AdbSerial 127.0.0.1:16384
+# 下行的序列号要替换成 adb devices 列出的第二个 MuMu 实例
+powershell -ExecutionPolicy Bypass -File E:\CODE\C++\Grinder\catkin_ws\scripts\fleet_app.ps1 app -Robot 2 -AdbSerial <第二个实例序列号>
+```
+
+映射为本机 `18102/18103 → 远端8102/8103`、`18202/18203 → 8202/8203`、
+`18302/18303 → 8302/8303`。如用同一 MuMu 切车，重跑 `app -Robot N` 后在 APP 断开再重连。
+MuMu 重启后需重设 adb reverse。物理平板也需要等价的双端口映射，或后续在 APP 支持可配置控制端口；
+本次没有修改独立 APP 仓库。
+
+### 每台车的 RViz 与验证
+
+在带 X11 转发的 MobaXterm SSH 终端中：
+
+```bash
+cd /home/dev/work/Grinder-remote-sim/catkin_ws
+source /opt/ros/noetic/setup.bash
+source devel/setup.bash
+ROS_MASTER_URI=http://127.0.0.1:11421 ROS_HOSTNAME=127.0.0.1 rviz -d src/grinder_gazebo/config/remote_sim.rviz
+# robot2 改为 11422，robot3 改为 11423
+# 若原来使用 --gui false，可只给共享世界补开一个 Gazebo 窗口
+GAZEBO_MASTER_URI=http://127.0.0.1:11445 gzclient
+```
+
+默认只读检查，确认虚拟传感器、APP 端口、Master 和存储隔离：
+
+```bash
+python3 src/grinder_gazebo/test/check_fleet.py
+# 仅在无人操作、各车均未建图的测试 fleet 中：
+# 同时建图/停止，再经实际 APP 双通道协议逐车短距离行走，检查其他车没有被带动
+python3 src/grinder_gazebo/test/check_fleet.py --map-cycle --drive
+# 同样仅限闲置测试 fleet：暂停共享物理时钟，验证控制桥的实际时间超时归零
+python3 src/grinder_gazebo/test/check_fleet.py --drive --watchdog
+python3 -m unittest discover -s src/grinder_gazebo/test -p test_fleet.py
+```
+
+目标倍速不等于实际倍速；多台雷达和多套 Super-LIO 都消耗资源。先以 1 倍测试，
+并用各车 `/super_lio/localization_status`、`/lio/odom` 和共享 Gazebo 真值检查定位质量。
+
 以当前 main 的调度、MST27 路径规划和导航为基础，使用 Gazebo 虚拟 MID-360S 和 IMU 驱动真实 Super-LIO 建图/定位链路。仅传感器和底盘由仿真替代；默认不启动旧版 `slamware_sim_bridge`。STEP 网格仍可按需打开。
 
 ## 模型参数

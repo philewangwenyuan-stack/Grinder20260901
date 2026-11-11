@@ -2109,3 +2109,43 @@ TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更�
 磨盘对外保持RPM，底盘统一输出层将4012转换为0～100调速量；名义满量程
 `disc_speed_full_scale_rpm=1500`，实际RPM需标定。单写和整块写都转换，左右轮不变。
 接口与故障采集范围见[底盘说明](catkin_ws/src/grinder_chassis_driver/README.md#hongtu-磨盘写入单位与故障采集)。
+
+### 录制调试
+source /opt/ros/noetic/setup.bash
+source /home/ztl/work/Grinder/catkin_ws/devel/setup.bash
+
+mkdir -p ~/bags
+cd ~/bags
+recording_id=tracking_$(date +%Y%m%d_%H%M%S)
+
+# 保存本轮导航、底盘参数
+rosparam dump "${recording_id}_navigation.yaml" /move_base
+rosparam dump "${recording_id}_chassis.yaml" /chassis_driver
+
+rosbag record --split --size=256 \
+  -O "${recording_id}.bag" \
+  /cmd_vel \
+  /lio/odom \
+  /odom_wheel \
+  /chassis/wheel_twist \
+  /chassis/wheel_speed_state \
+  /chassis/status \
+  /chassis/task_enable \
+  /chassis/motion_safety \
+  /chassis/disc_speed_cmd \
+  /chassis/disc_enable_cmd \
+  /grinder/GlobalPlanner/plan \
+  /grinder/navigation/active_segment_plan \
+  /move_base/RegulatedPurePursuitController/received_global_plan \
+  /move_base/RegulatedPurePursuitController/global_plan_origin \
+  /move_base/RegulatedPurePursuitController/lookahead_point \
+  /move_base/RegulatedPurePursuitController/curvature_lookahead_point \
+  /move_base/status \
+  /super_lio/localization_status \
+  /super_lio/registration_diagnostics \
+  /rpp/collision_detail \
+  /rpp/collision_imminent \
+  /scan \
+  /diagnostics \
+  /tf \
+  /tf_static

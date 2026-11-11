@@ -48,6 +48,8 @@ catkin_install_python(PROGRAMS
   scripts/chassis_sim_node.py
   scripts/set_sim_speed.py
   scripts/slamware_sim_bridge.py
+  scripts/fleet_bridge.py
+  scripts/start_fleet.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

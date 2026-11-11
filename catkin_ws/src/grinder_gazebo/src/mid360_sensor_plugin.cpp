@@ -9,6 +9,7 @@
 #include <cmath>
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace grinder_gazebo {
@@ -30,7 +31,9 @@ class Mid360SensorPlugin : public gazebo::SensorPlugin {
       gzerr << "MID-360S sample_offset must be 0 or 1\n";
       return;
     }
-    cloud_pub_ = node_->advertise<livox_ros_driver2::CustomMsg>("/livox/lidar", 2);
+    const std::string topic = sdf->HasElement("topic_name")
+        ? sdf->Get<std::string>("topic_name") : "/livox/lidar";
+    cloud_pub_ = node_->advertise<livox_ros_driver2::CustomMsg>(topic, 2);
     if (gpu_sensor_) {
       connection_ = gpu_sensor_->ConnectUpdated([this]() { OnScan(gpu_sensor_); });
     } else {

@@ -31,6 +31,9 @@
   <exec_depend>carrot_planner</exec_depend>
   <exec_depend>ffmpeg</exec_depend>
   <exec_depend>gazebo_msgs</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>roslib</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>grinder_scheduler</exec_depend>
   <exec_depend>super_lio</exec_depend>

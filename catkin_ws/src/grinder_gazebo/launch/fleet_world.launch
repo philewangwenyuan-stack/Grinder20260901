@@ -1,0 +1,15 @@
+<launch>
+  <!-- The only Gazebo server in a fleet; robots share this collision world. -->
+  <arg name="world_name" />
+  <arg name="gui" default="true" />
+  <arg name="sim_speed" default="1.0" />
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find grinder_gazebo):$(optenv GAZEBO_RESOURCE_PATH /usr/share/gazebo-11)" />
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="use_sim_time" value="true" />
+  </include>
+  <node pkg="grinder_gazebo" type="set_sim_speed.py" name="fleet_sim_speed" output="screen">
+    <param name="speed" value="$(arg sim_speed)" />
+  </node>
+</launch>

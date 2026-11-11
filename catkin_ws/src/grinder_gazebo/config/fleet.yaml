@@ -1,0 +1,28 @@
+# One physical world, separate ROS masters and application/state per robot.
+# Empty world/spawn use catkin_ws/temp/sim_world_path and sim_spawn_pose.
+world: ""
+world_master_port: 11411
+gazebo_master_port: 11445
+gui: true
+sim_speed: 1.0
+lidar_backend: gpu
+lidar_horizontal_samples: 360
+lidar_vertical_samples: 20
+lidar_max_range: 45.0
+cameras: false
+robots:
+  - name: robot1
+    master_port: 11421
+    app_port: 8102
+    control_port: 8103
+    spawn_offset: [0, 0, 0]
+  - name: robot2
+    master_port: 11422
+    app_port: 8202
+    control_port: 8203
+    spawn_offset: [0, 3, 0]
+  - name: robot3
+    master_port: 11423
+    app_port: 8302
+    control_port: 8303
+    spawn_offset: [0, 6, 0]
