@@ -25,18 +25,21 @@ METHODS = {
     "_should_insert_corner_mid", "_segments_parallel_or_opposite", "_angle_abs_diff",
     "_segment_is_turn_between_rows", "_init_segment_execution_cursor", "_activate_segment",
     "_update_progress",
+    "_tick_path_execution",
 }
 
 
 def scheduler_class(source=None):
     tree = ast.parse(source if source is not None else SOURCE.read_text(encoding="utf-8"))
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "SchedulerNode")
+    cls.bases = []
     cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in METHODS]
     def pose():
         return SimpleNamespace(header=SimpleNamespace(frame_id="", stamp=None),
             pose=SimpleNamespace(position=SimpleNamespace(x=0., y=0.),
                                  orientation=SimpleNamespace(x=0., y=0., z=0., w=1.)))
     namespace = dict(math=math, bisect=bisect, time=__import__('time'),
+        motion_action=lambda **kwargs: lambda method: method,
         sample_segment=sample_segment, PoseStamped=pose, SchedulerState=SchedulerState,
         Path=lambda: SimpleNamespace(header=SimpleNamespace(frame_id="", stamp=None), poses=[]),
         rospy=SimpleNamespace(Time=lambda x:x, loginfo=mock.Mock(),
@@ -66,6 +69,35 @@ def points(coords, tag="A__lap_1"):
 
 
 class SparseSegmentsTest(unittest.TestCase):
+    def test_segment_handoff_accepts_11cm_but_not_13cm_and_keeps_final_precision(self):
+        for progress, length, final, should_switch in (
+                (.89, 1., False, True), (.87, 1., False, False),
+                (.6101, .73, False, True), (.60, .73, False, False),
+                (1.89, 1., True, False)):
+            n = node(points([(0, 0), (length, 0), (2, 0)]))
+            n.state = SchedulerState.RUNNING
+            n._exec_active = True
+            n._active_segments = ([dict(start_s=0., end_s=2.)] if final else
+                                  [dict(start_s=0., end_s=length), dict(start_s=length, end_s=2.)])
+            n._active_segment_index = 0
+            n._active_segment_last_progress_s = 0.
+            n._active_segment_stall_progress_s = 0.
+            n._active_segment_progress_epsilon_m = .01
+            n._exec_goal_reach_dist = .05
+            n._segment_switch_distance_m = 2.8
+            n._segment_short_progress_ratio = .85
+            n._active_segment_goal_sent_index = 0
+            n._project_robot_to_active_segment = lambda: dict(progress_s=progress, index=0)
+            n.ros_data_bridge = SimpleNamespace(get_pose=lambda: dict(x=progress, y=0.))
+            n._apply_region_process_for_path_point = lambda point: True
+            n._apply_disc_state_for_path_point = mock.Mock()
+            n._switch_to_next_active_segment = mock.Mock()
+            n._refresh_active_segment_goal_if_stalled = mock.Mock()
+            n._finish_path_execution = mock.Mock()
+            n._tick_path_execution()
+            self.assertEqual(should_switch, n._switch_to_next_active_segment.called)
+            n._finish_path_execution.assert_not_called()
+
     def test_long_edge_slice_keeps_corner_and_partial_edges(self):
         n = node(points([(0,0), (30,0), (30,10)]))
         result = n._slice_path_points_by_arc(25,35)

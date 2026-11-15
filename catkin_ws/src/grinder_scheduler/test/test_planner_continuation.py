@@ -6,9 +6,84 @@ from unittest import mock
 
 from test_planner_preprocessing import adapter, fixture, mst
 from grinder_scheduler.task_continuation import coverage_continuation
+from test_sparse_segments import node as segment_node
 
 
 class PlannerContinuationTest(unittest.TestCase):
+    def check_same_lap_turn(self, native):
+        for direction in ('x', '-x', 'y', '-y'):
+            for angle in (0., 30.):
+                with self.subTest(direction=direction, angle=angle):
+                    grid, info, config = fixture()
+                    grid[1:-1, 1:-1] = 0  # Isolate a regular lane turn from detours.
+                    config.work_regions = config.work_regions[:1]
+                    config.selected_work_region_ids = ['A']
+                    config.region_repeat_config = {'A': 1}
+                    config.work_regions[0]['global_direction'] = direction
+                    config.planning_angle_deg = angle  # Production always supplies this.
+                    # Rotate the region with its sweep axes so each lane has the
+                    # same extent; unequal boundary lengths add valid turn extensions.
+                    rotation = math.radians(angle)
+                    def rotate(point):
+                        x, y = .7 * (point['x'] - 4.5), .7 * (point['y'] - 4.5)
+                        return dict(x=4.5 + x * math.cos(rotation) - y * math.sin(rotation),
+                                    y=4.5 + x * math.sin(rotation) + y * math.cos(rotation))
+                    region = config.work_regions[0]
+                    region['points'] = [rotate(p) for p in region['points']]
+                    region['start_pose'] = rotate(region['start_pose'])
+                    region['end_pose'] = rotate(region['end_pose'])
+                    theta = math.radians(angle + (90 if direction.endswith('y') else 0))
+                    axis = (math.cos(theta), math.sin(theta))
+
+                    def lanes(path):
+                        result = []
+                        arc = 0.
+                        for a, b in zip(path.points, path.points[1:]):
+                            dx, dy = b['x'] - a['x'], b['y'] - a['y']
+                            length = math.hypot(dx, dy)
+                            dot = dx * axis[0] + dy * axis[1]
+                            if (a['path_type'] == b['path_type'] == 'A__lap_1'
+                                    and length > .05 and abs(dot) / length > .98):
+                                result.append((arc, length, dot, a, b))
+                            arc += length
+                        return result
+
+                    with mock.patch.object(mst, '_mst27_cpp', native):
+                        full = adapter().plan('task', grid, info, config)
+                        first = next(edge for edge in lanes(full) if edge[1] > 1.)
+                        for fraction in (.5, 1.):
+                            progress = first[0] + fraction * first[1]
+                            checkpoint = coverage_continuation(
+                                full.points, progress, config.work_regions, angle_deg=angle)
+                            resumed = copy.deepcopy(config)
+                            resumed.continuation = checkpoint
+                            resumed.current_pose = dict(checkpoint['start_pose'])
+                            resumed.start_pose = dict(checkpoint['start_pose'])
+                            path = adapter().plan('task', grid, info, resumed)
+                            edges = lanes(path)
+                            self.assertGreaterEqual(len(edges), 2)
+                            expected_sign = (1 if first[2] > 0 else -1) * (1 if fraction < 1 else -1)
+                            detail = 'fraction={} checkpoint={} edges={}'.format(
+                                fraction, checkpoint, [(e[1], e[2], e[3]['x'], e[3]['y'],
+                                                       e[4]['x'], e[4]['y']) for e in edges[:3]])
+                            self.assertGreater(edges[0][2] * expected_sign, 0., detail)
+                            self.assertLess(edges[0][2] * edges[1][2], 0., detail)
+                            # Verify the actual ROS path builder also reverses heading.
+                            n = segment_node(path.points)
+                            for edge in edges[:2]:
+                                msg = n._build_navigation_path_from_segment_points([edge[3], edge[4]])
+                                q = msg.poses[0].pose.orientation
+                                yaw = 2. * math.atan2(q.z, q.w)
+                                self.assertGreater(math.cos(yaw) * (edge[4]['x'] - edge[3]['x'])
+                                    + math.sin(yaw) * (edge[4]['y'] - edge[3]['y']), 0.)
+
+    def test_python_same_lap_replan_reverses_next_lane_and_navigation_heading(self):
+        self.check_same_lap_turn(None)
+
+    @unittest.skipIf(mst._mst27_cpp is None, 'native C++ extension unavailable')
+    def test_cpp_same_lap_replan_reverses_next_lane_and_navigation_heading(self):
+        self.check_same_lap_turn(mst._mst27_cpp)
+
     def check_backend(self, native, at_turn=False):
         grid, info, config = fixture()
         config.region_repeat_config = {'A': 3, 'B': 1}

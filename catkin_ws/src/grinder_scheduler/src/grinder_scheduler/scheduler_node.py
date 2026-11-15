@@ -6767,14 +6767,15 @@ class SchedulerNode(MapEditDraftMixin):
         should_switch = False
         if segment_len <= float(self._segment_switch_distance_m):
             ratio = 1.0 if segment_len <= 1e-6 else (progress_s - segment_start_s) / segment_len
-            should_switch = ratio >= float(self._segment_short_progress_ratio)
+            should_switch = (ratio >= float(self._segment_short_progress_ratio) or
+                             (segment_end_s - progress_s) <= 0.12)
         else:
             should_switch = (segment_end_s - progress_s) <= float(self._segment_switch_distance_m)
         if progress_s >= segment_end_s - 1e-3:
             should_switch = True
-        if progress_s < next_segment_start_s - 1e-3:
-            # Keep TEB on the current lane until the next segment can start from
-            # the robot's vicinity; the effective early-switch margin is lead-in.
+        if progress_s < next_segment_start_s - 0.12:
+            # Match the RPP goal_dist_tol (0.12 m) at intermediate handoffs;
+            # otherwise RPP can stop before this scheduler permits a switch.
             should_switch = False
         if should_switch:
             self._switch_to_next_active_segment(projection)

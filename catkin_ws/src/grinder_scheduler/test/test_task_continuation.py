@@ -29,6 +29,7 @@ def points(xy, tag='A__lap_1'):
 def scheduler_class():
     tree = ast.parse((SOURCE / 'scheduler_node.py').read_text(encoding='utf-8'))
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'SchedulerNode')
+    cls.bases = []
     names = {'_continuation_identity', '_continuation_map_stamp', '_planning_continuation',
              '_capture_task_continuation', '_prepare_task_continuation_start', '_stop_execution',
              '_init_segment_execution_cursor', '_start_execution'}
@@ -80,6 +81,10 @@ class SchedulerContinuationTest(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.node._motion = MotionInterlock(str(pathlib.Path(directory.name) / 'motion.json'))
         n = self.node
+        n._drawing_forget_task = mock.Mock()
+        n._is_editing_draft = lambda *a: False
+        n._drawing_ensure_map = mock.Mock()
+        n._drawing_preflight = lambda: True
         n._localization_arm_lock = threading.Lock()
         n._localization_arm_count = 0
         n._localization_arming_cancelled = False
