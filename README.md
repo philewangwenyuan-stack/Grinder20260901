@@ -1034,13 +1034,13 @@ rostopic echo /chassis/motion_safety
 
 ### 7.3 遥控响应与松手停车
 
-平板摇杆持续指令周期为100ms；松手零速不等待任务停止回执，等待期间保存的移动目标同步作废。
+平板首次非零操控立即排入发送。后续变化合并到最新目标，最快每50ms发送一次；目标不变或确认积压时按100ms续发。松手双轮零速优先发送并作废旧移动目标。
 板端手动执行线程保留一个最新待处理指令，松手零速替换旧移动指令，不因线程忙直接丢弃。
 排队指令绑定接收时的执行代号，停止、暂停、急停或执行替换后不能恢复旧移动。
 轮速ROS发布／订阅队列均为1并开启TCP_NODELAY，避免慢串口前积压多个旧速度；
 双轮零速不经过轮速斜坡。调度 `manual_command_timeout_sec` 和底盘手控 `manual_command_timeout` 默认均为1秒；底盘自动导航 `command_timeout` 仍为0.5秒。
 正常松手走显式零速，超时只作失联兜底；实际停止时间还包含通信、串口事务和电机响应。
-`manual_reverse_guard_sec` 的换向停顿仍有效，本次保留现有1秒配置。
+`manual_reverse_guard_sec` 默认0.3秒。单轮过零的软件斜坡由 `manual_reverse_ramp_sec` 独立配置，默认0.3秒到达本次最大轮速，按实际时间计算。正常同向输入直接更新目标，双轮零速直接下发。底盘固定步长斜坡默认关闭，避免和调度斜坡叠加。已有设备覆盖值优先。
 
 差速转向的单轮反向由 `manual_wheel_transition.py` 处理：仅该轮有界减速到零，等待两次独立、有效且新鲜的该轮零速测量，或完整保护时间后，再有界反向加速。
 另一轮在当前目标轮速包络内协同保持前后分量，必要时允许低于目标，避免普通弧线转向人为整车停顿；输出不超过所请求的前后速度。
@@ -2109,3 +2109,37 @@ TaskRuntimeSettings的显式临时任务参数保持更高优先级；切区更�
 磨盘对外保持RPM，底盘统一输出层将4012转换为0～100调速量；名义满量程
 `disc_speed_full_scale_rpm=1500`，实际RPM需标定。单写和整块写都转换，左右轮不变。
 接口与故障采集范围见[底盘说明](catkin_ws/src/grinder_chassis_driver/README.md#hongtu-磨盘写入单位与故障采集)。
+
+## 说明
+source /opt/ros/noetic/setup.bash
+source /home/ztl/work/Grinder/catkin_ws/devel/setup.bash
+
+REC_DIR="/home/ztl/work/Grinder/catkin_ws/logs/field_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$REC_DIR"
+touch "$REC_DIR/recording-start.marker"
+echo "录制目录 $REC_DIR"
+df -h "$REC_DIR"
+
+rostopic list -v > "$REC_DIR/ros_topics.txt"
+rosparam dump "$REC_DIR/move_base.yaml" /move_base
+rosparam dump "$REC_DIR/chassis_driver.yaml" /chassis_driver
+rosparam dump "$REC_DIR/lio.yaml" /lio
+for k in x y z roll_deg pitch_deg yaw_deg; do
+  printf 'base_laser_%s: ' "$k"
+  rosparam get "/grinder_scheduler/base_laser_$k"
+done > "$REC_DIR/base_laser_params.txt" 2>&1
+
+rosbag record --split --size=512 --buffsize=256 -O "$REC_DIR/field" \
+  /cmd_vel \
+  /chassis/wheel_speed_cmd /chassis/wheel_speed_state /chassis/wheel_twist \
+  /odom_wheel /chassis/status /chassis/task_enable /chassis/motion_safety \
+  /chassis/disc_speed_cmd /chassis/disc_enable_cmd \
+  /scheduler/control_activity /scheduler/status \
+  /lio/odom /livox/imu /livox/lidar /scan /tf /tf_static \
+  /grinder/GlobalPlanner/plan /grinder/navigation/active_segment_plan \
+  /move_base/RegulatedPurePursuitController/received_global_plan \
+  /move_base/RegulatedPurePursuitController/lookahead_point \
+  /move_base/RegulatedPurePursuitController/curvature_lookahead_point \
+  /move_base/status /rpp/collision_detail /rpp/collision_imminent \
+  /super_lio/localization_status /super_lio/registration_diagnostics \
+  /diagnostics

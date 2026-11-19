@@ -24,8 +24,9 @@ class Wheel:
 
 
 class ManualWheelTransition:
-    def __init__(self, dwell_sec, feedback_timeout=0.5):
+    def __init__(self, dwell_sec, feedback_timeout=0.5, ramp_sec=None):
         self.dwell = max(0.0, float(dwell_sec))
+        self.ramp_sec = max(0.1, float(dwell_sec if ramp_sec is None else ramp_sec))
         self.feedback_timeout = max(0.1, float(feedback_timeout))
         self.lock = threading.RLock()
         self.reset()
@@ -80,7 +81,7 @@ class ManualWheelTransition:
             both_ready = all(state.zero_since is not None and now - state.zero_since >= self.dwell
                              for state in self.wheels)
             dt = 0.1 if self.last_update is None else min(0.1, max(0.0, now - self.last_update))
-            budget = self.ramp_fraction + limit * dt / max(0.1, self.dwell)
+            budget = self.ramp_fraction + limit * dt / self.ramp_sec
             step = int(budget + 1e-9)
             self.ramp_fraction = max(0.0, budget - step)
             outputs, transitioning = [], []

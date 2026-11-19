@@ -714,7 +714,8 @@ class SchedulerNode(MapEditDraftMixin):
             1,
             int(abs(float(rospy.get_param("/chassis_driver/cmd_vel_max_abs_wheel_rpm", 1500.0)))),
         )
-        self._manual_reverse_guard_sec = max(0.0, float(rospy.get_param("~manual_reverse_guard_sec", 0.25)))
+        self._manual_reverse_guard_sec = max(0.0, float(rospy.get_param("~manual_reverse_guard_sec", 0.3)))
+        self._manual_reverse_ramp_sec = max(0.1, float(rospy.get_param("~manual_reverse_ramp_sec", 0.3)))
         self._manual_reverse_until = 0.0
         self._manual_drive_transition = None
         self._manual_last_left_cmd = 0
@@ -8676,7 +8677,8 @@ class SchedulerNode(MapEditDraftMixin):
         transition = getattr(self, "_manual_drive_transition", None)
         if transition is None:
             transition = ManualWheelTransition(self._manual_reverse_guard_sec,
-                getattr(self, "_manual_command_timeout_sec", 1.0))
+                getattr(self, "_manual_command_timeout_sec", 1.0),
+                ramp_sec=getattr(self, "_manual_reverse_ramp_sec", None))
             self._manual_drive_transition = transition
         with self._manual_drive_lock:
             self._motion.check()

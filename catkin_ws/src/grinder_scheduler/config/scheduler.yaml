@@ -350,8 +350,10 @@ path_plan_request_use_all_regions: true
 # TaskConfig 是否立即自动触发路径规划。
 # Android 通常会在 TaskConfig 后再发 PathPlanRequest，默认关闭可避免同一次操作规划两遍。
 task_config_auto_plan_enabled: false
-# 手动换向保护（秒）：双轮反转完整停车等待；单轮过零的减速/加速时基及无有效零速反馈时的等待
-manual_reverse_guard_sec: 1.0
+# 手动换向停车等待（秒）。单轮有两次新鲜零速反馈时可提前进入反向加速。
+manual_reverse_guard_sec: 0.3
+# 手动过零斜坡从零到本次最大轮速（或反向）的名义时长，按实际时间计算。
+manual_reverse_ramp_sec: 0.3
 # 手动摇杆指令看门狗（秒）：超过该时间没有新指令，调度立即发布左右轮零速
 manual_command_timeout_sec: 1.0
 

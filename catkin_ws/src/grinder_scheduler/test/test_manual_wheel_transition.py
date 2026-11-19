@@ -78,6 +78,16 @@ class WheelTransitionTest(unittest.TestCase):
         c.reset()
         self.assertTrue(all(w.output == 0 and not w.accelerating for w in c.wheels))
 
+    def test_point_three_second_guard_and_independent_ramp(self):
+        c = ManualWheelTransition(0.3, ramp_sec=0.3)
+        self.assertEqual((90, 90), c.apply(90, 90, 10.0, 10.0, 90))
+        self.assertEqual((0, 0), c.apply(-90, -90, 10.1, 10.1, 90))
+        self.assertEqual((0, 0), c.apply(-90, -90, 10.39, 10.39, 90))
+        left, right = c.apply(-90, -90, 10.41, 10.41, 90)
+        self.assertEqual(left, right)
+        self.assertTrue(-90 < left < 0)
+        self.assertEqual((0, 0), c.apply(0, 0, 10.42, 10.42, 90))
+
     def test_reducing_steering_cannot_overspeed_other_wheel_to_preserve_translation(self):
         c = ManualWheelTransition(1)
         c.apply(-63, 49, 10, 10, 100)

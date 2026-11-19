@@ -92,7 +92,7 @@ RegulatedPurePursuitController:
   line_corner_approach_distance_m: 0.35
   # 新分支：沿入口方向距角点 <= 此值即制动；这是纵向容差，不是径向距离。
   # 横向误差持续柔性纠偏，不增加横向超差暂停门禁；略过角点后不倒车追点。
-  line_corner_position_tolerance_m: 0.05
+  line_corner_position_tolerance_m: 0.03
   # 新分支：odom_topic（本配置 /odom_wheel）的原始时间戳超时/未来/非有限速度时保持零速。
   # 停稳需持续 stable_cycles/controller_frequency 秒，且至少两个不同时间戳样本。
   # 此检查不替代底盘自身的反馈有效性、急停及通信保护；单位 s。
