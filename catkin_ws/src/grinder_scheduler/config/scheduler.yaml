@@ -205,7 +205,7 @@ turn_radius: 0.1
 # 重叠比例（0-1），建议 0.1-0.2
 overlap_ratio: 0
 # 膨胀半径（米），建议为宽度的 40%-60%
-inflation_radius: 0.6
+inflation_radius: 0.7
 # 扫掠线起止点距作业边界的留边（米）
 endpoint_margin: 2.0
 # 旧协议兼容字段；全局路径固定输出关键点，不再使用此值统一补点。
@@ -242,7 +242,7 @@ sl_linka_bulk_manual_bytes_per_sec: 262144
 sl_linka_bulk_burst_bytes: 8192
 # Nonblocking sockets: receive polling stays at 100ms; each frame write is bounded separately.
 sl_linka_data_send_timeout_sec: 2.0
-sl_linka_control_send_timeout_sec: 1.0
+sl_linka_control_send_timeout_sec: 0.5
 # 生产默认每秒采样一帧，并按周期汇总接收量；排查问题时才开启逐帧帧头日志。
 sl_linka_rx_diagnostic_logging: false
 sl_linka_rx_sample_interval_sec: 1.0
@@ -351,11 +351,11 @@ path_plan_request_use_all_regions: true
 # Android 通常会在 TaskConfig 后再发 PathPlanRequest，默认关闭可避免同一次操作规划两遍。
 task_config_auto_plan_enabled: false
 # 手动换向停车等待（秒）。单轮有两次新鲜零速反馈时可提前进入反向加速。
-manual_reverse_guard_sec: 0.3
-# 手动过零斜坡从零到本次最大轮速（或反向）的名义时长，按实际时间计算。
-manual_reverse_ramp_sec: 0.3
+manual_reverse_guard_sec: 1.0
+# 手动过零斜坡的名义时长（秒）；板端旧版使用同一秒数作为换向等待和斜坡时基。
+manual_reverse_ramp_sec: 1.0
 # 手动摇杆指令看门狗（秒）：超过该时间没有新指令，调度立即发布左右轮零速
-manual_command_timeout_sec: 1.0
+manual_command_timeout_sec: 0.5
 
 # 视频流推送循环频率（Hz）
 stream_push_hz: 20

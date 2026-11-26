@@ -23,6 +23,9 @@ stream_url: ""
 stream_play_url: ""
 
 # Examples of non-secret device overrides:
+# The field-tested board enables MQTT and map upload in its local configuration.
+# After supplying the device endpoints and credentials, also set mqtt_network_latency_enabled: true
+# if the same latency reporting is wanted.
 # image_inputs_enabled: false  # No camera: disable image subscriptions only.
 # local_rtsp_enabled: false    # No camera: do not start MediaMTX/RTSP publishing.
 # local_rtsp_encoder: mpph264enc
