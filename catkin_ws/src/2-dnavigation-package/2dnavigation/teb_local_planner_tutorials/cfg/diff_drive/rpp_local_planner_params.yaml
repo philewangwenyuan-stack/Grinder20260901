@@ -13,7 +13,7 @@ RegulatedPurePursuitController:
   # 研磨机器人速度与加速度限制
   desired_linear_vel: 0.06        # 正常跟踪路径时的目标线速度，单位：m/s
   max_linear_vel: 0.15            # 最终输出的最大线速度，单位：m/s
-  max_angular_vel: 0.25            # 最终输出的最大角速度，单位：rad/s
+  max_angular_vel: 0.12            # 最终输出的最大角速度，单位：rad/s
   max_linear_accel: 0.4             # 最大线加速度，单位：m/s^2
   use_command_velocity_for_accel_limit: false  # true：用上一帧 RPP 指令；false：用 /odom 速度
   use_command_angular_velocity_for_accel_limit: false  # true：用上一帧 RPP 角速度平滑旋转，避免里程计抖动
@@ -87,9 +87,9 @@ RegulatedPurePursuitController:
   # 新旧角点控制对照：以下四项只在 move_base 初始化时读取，修改后先停任务再重启 move_base。
   # false 保留原来的角点追踪；true 沿入口直线接近→制动→/odom_wheel 确认停止→固定出口转向。
   # 生效还要求 use_rotate_to_heading 和 use_corner_aware_rotate_to_heading 均为 true。
-  use_line_based_corner_approach: false
+  use_line_based_corner_approach: true
   # 新分支：剩余纵向距离进入此范围后按比例降速，仍遵守原速度/加速度约束，单位 m。
-  line_corner_approach_distance_m: 0.35
+  line_corner_approach_distance_m: 0.10
   # 新分支：沿入口方向距角点 <= 此值即制动；这是纵向容差，不是径向距离。
   # 横向误差持续柔性纠偏，不增加横向超差暂停门禁；略过角点后不倒车追点。
   line_corner_position_tolerance_m: 0.03

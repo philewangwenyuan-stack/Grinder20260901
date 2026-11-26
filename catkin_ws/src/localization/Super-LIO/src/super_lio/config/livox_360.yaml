@@ -78,7 +78,7 @@ lio:
   # Kalman Filter Parameters
   kf:
     kf_type: 0
-    kf_max_iterations: 4
+    kf_max_iterations: 6
     kf_align_gravity: true
     kf_quit_eps: 0.001
 
