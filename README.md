@@ -900,7 +900,7 @@ rosnode list | grep -E 'super_lio_loop|super_lio_node|relocation_node|map_server
 
 ### 7.1 控制盒状态灯带：板端安装与启用（可选）
 
-硬件采用微雪 ESP32-S3-Zero + 10 cm、6 颗灯珠的 5V WS2812B 灯带，
+硬件采用微雪 ESP32-S3-Zero 和 5 颗灯珠的 5V WS2812B 灯带，
 通过 RK3588 的 USB 同时通信和供电。接线、ESP32 固件编译与烧录详见
 [状态灯带部署说明](firmware/status_strip/README.md)。ESP32 固件可在开发电脑上烧录，
 工控机只需要安装 ROS 节点依赖，不需要安装 PlatformIO。
@@ -962,7 +962,7 @@ MID-360 + Super-LIO 的整套开机启动使用下文统一服务；手动运行
 接回底盘后恢复 `false`。该配置由 ROS 灯带节点读取，无需重新烧录 ESP32；
 ESP32 仅插在 Windows 电脑上时，修改此配置不会直接改变灯效。
 
-状态指示灯对照表（6 颗灯珠同步显示，默认亮度 65%）：
+状态指示灯对照表（5 颗灯珠同步显示，默认亮度 65%）：
 
 | 运行状态 | 灯带颜色与效果 | 含义 |
 | --- | --- | --- |
