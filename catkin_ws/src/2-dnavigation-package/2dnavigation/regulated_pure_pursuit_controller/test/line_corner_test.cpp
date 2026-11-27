@@ -48,4 +48,17 @@ TEST(LineCorner, SpeedCapAndMinimumAreBounded) {
   EXPECT_DOUBLE_EQ(.01,approachSpeed(.03,.06,.35,.01));
   EXPECT_LE(approachSpeed(.005,.06,.35,.01),.005);
 }
+TEST(LineCorner, HeadingBrakeAccountsForFieldDecelerationAndDelay) {
+  const double deceleration = 0.03;
+  const double delay = 0.20;
+  const double capture = 0.08;
+  // The recorded overshoot began at 0.12 rad/s. The new profile limits speed
+  // well before capture, then leaves enough angle for braking inside it.
+  EXPECT_LT(headingSpeedLimit(0.22 - 0.5 * capture, deceleration, delay), 0.12);
+  const double at_capture = headingSpeedLimit(0.5 * capture, deceleration, delay);
+  EXPECT_LT(at_capture, 0.05);
+  EXPECT_GT(at_capture, 0.01);
+  EXPECT_NEAR(0.5 * capture, at_capture * delay + at_capture * at_capture / (2 * deceleration), 1e-9);
+  EXPECT_DOUBLE_EQ(0.0, headingSpeedLimit(0.0, deceleration, delay));
+}
 int main(int argc,char** argv) { testing::InitGoogleTest(&argc,argv); return RUN_ALL_TESTS(); }

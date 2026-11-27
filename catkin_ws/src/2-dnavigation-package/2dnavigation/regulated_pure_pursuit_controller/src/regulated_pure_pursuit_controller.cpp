@@ -646,28 +646,11 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     }
     rotate_to_heading_last_error_ = heading_error;
 
-    if (std::abs(speed.linear.x) > trans_stopped_vel_) {
-      // Finish stopping translation before beginning the in-place rotation.
+    if (std::abs(speed.linear.x) > trans_stopped_vel_ || rotate_to_heading_settling_) {
+      // Drop the target to zero at the capture band and while translation
+      // settles. Following the still-moving feedback here prolongs braking.
       linear_vel = 0.0;
-      const double reference_speed =
-        params_->use_command_angular_velocity_for_accel_limit ?
-        last_cmd_angular_vel_ : speed.angular.z;
-      const double max_step = std::max(0.0, params_->max_angular_accel) *
-        control_duration_;
-      angular_vel = std::clamp(
-        0.0, reference_speed - max_step, reference_speed + max_step);
-      rotate_to_heading_stable_count_ = 0;
-    } else if (rotate_to_heading_settling_) {
-      // The target has been reached. Brake in the current direction and wait
-      // for odometry to stop instead of reversing immediately after overshoot.
-      linear_vel = 0.0;
-      const double reference_speed =
-        params_->use_command_angular_velocity_for_accel_limit ?
-        last_cmd_angular_vel_ : speed.angular.z;
-      const double max_step = std::max(0.0, params_->max_angular_accel) *
-        control_duration_;
-      angular_vel = std::clamp(
-        0.0, reference_speed - max_step, reference_speed + max_step);
+      angular_vel = 0.0;
     } else {
       rotateToHeading(linear_vel, angular_vel, heading_error, speed);
     }
@@ -677,30 +660,28 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     const bool command_stopped = std::abs(angular_vel) <= theta_stopped_vel_;
     const bool robot_stopped = std::abs(speed.angular.z) <= theta_stopped_vel_;
     const bool translation_stopped = std::abs(speed.linear.x) <= trans_stopped_vel_;
-    if (rotate_to_heading_settling_ && inside_exit_angle &&
-      command_stopped && robot_stopped && translation_stopped)
+    const bool stopped = rotate_to_heading_settling_ &&
+      command_stopped && robot_stopped && translation_stopped &&
+      (!line_enabled || std::abs(speed.linear.y) <= trans_stopped_vel_);
+    if (stopped)
     {
       ++rotate_to_heading_stable_count_;
     } else {
       rotate_to_heading_stable_count_ = 0;
     }
 
-    // If inertia carried the stopped robot outside the exit band, perform one
-    // new correction from rest. This avoids rapid left/right command reversal.
-    if (rotate_to_heading_settling_ && command_stopped && robot_stopped &&
-      translation_stopped && !inside_exit_angle)
-    {
-      rotate_to_heading_settling_ = false;
-      rotate_to_heading_last_error_ = heading_error;
-    }
-
+    const int stable_cycles = std::max(1, params_->rotate_to_heading_stable_cycles);
     const bool line_rotation_confirmed = !line_enabled ||
-      line_rotation_evidence_.update(line_now,base_odom.header.stamp.toSec(),
-        rotate_to_heading_settling_ && inside_exit_angle && command_stopped &&
-        robot_stopped && translation_stopped && std::abs(speed.linear.y)<=trans_stopped_vel_,
-        std::max(1,params_->rotate_to_heading_stable_cycles)*control_duration_);
-    if (line_rotation_confirmed && rotate_to_heading_stable_count_ >=
-      std::max(1, params_->rotate_to_heading_stable_cycles))
+      line_rotation_evidence_.update(line_now, base_odom.header.stamp.toSec(),
+        stopped, stable_cycles * control_duration_);
+    const bool settled = line_rotation_confirmed && rotate_to_heading_stable_count_ >= stable_cycles;
+    if (settled && !inside_exit_angle) {
+      // A correction can start only after distinct stopped samples.
+      rotate_to_heading_settling_ = false;
+      rotate_to_heading_stable_count_ = 0;
+      line_rotation_evidence_.reset();
+    }
+    if (settled && inside_exit_angle)
     {
       ROS_INFO(
         "[RPP] Latched rotate-to-heading complete: target=%.3f rad, error=%.3f rad; "
@@ -1152,28 +1133,27 @@ void RegulatedPurePursuitController::rotateToHeading(
   double & linear_vel, double & angular_vel,
   const double & angle_to_path, const geometry_msgs::Twist & curr_speed)
 {
-  // Rotate in place. Slow down early enough to stop inside the exit angle,
-  // then keep commanding zero until both command and odometry are stationary.
   linear_vel = 0.0;
-  const double angular_accel = std::max(0.0, params_->max_angular_accel);
-  const double remaining_angle = std::max(
-    0.0, std::abs(angle_to_path) - rotate_to_heading_exit_angle_latched_);
-  double target_speed = 0.0;
-  if (remaining_angle > 0.0) {
-    const double braking_limited_speed = angular_accel > 0.0 ?
-      std::sqrt(2.0 * angular_accel * remaining_angle) :
-      params_->rotate_to_heading_angular_vel;
-    target_speed = std::min(
-      params_->rotate_to_heading_angular_vel, braking_limited_speed);
-    target_speed = std::copysign(target_speed, angle_to_path);
+  const double direction = std::copysign(1.0, angle_to_path);
+  const double measured_speed = direction * curr_speed.angular.z;
+  if (measured_speed < -theta_stopped_vel_) {
+    angular_vel = 0.0;
+    return;
   }
-
-  const double reference_speed =
-    params_->use_command_angular_velocity_for_accel_limit ?
-    last_cmd_angular_vel_ : curr_speed.angular.z;
-  const double max_step = angular_accel * control_duration_;
-  angular_vel = std::clamp(
-    target_speed, reference_speed - max_step, reference_speed + max_step);
+  // Target half the capture tolerance so the approach still commands useful
+  // torque at the edge of the band. Downward speed limits apply immediately.
+  const double remaining_angle =
+    std::abs(angle_to_path) - 0.5 * rotate_to_heading_exit_angle_latched_;
+  const double brake_limit = line_corner::headingSpeedLimit(
+    remaining_angle, params_->rotate_to_heading_brake_decel,
+    params_->rotate_to_heading_brake_delay_sec);
+  const double previous_speed = std::max(0.0, direction * last_cmd_angular_vel_);
+  const double reference_speed = params_->use_command_angular_velocity_for_accel_limit ?
+    previous_speed : std::max(previous_speed, measured_speed);
+  const double accel_limit =
+    reference_speed + std::max(0.0, params_->max_angular_accel) * control_duration_;
+  angular_vel = direction * std::min({
+    params_->max_angular_vel, params_->rotate_to_heading_angular_vel, brake_limit, accel_limit});
 }
 
 void RegulatedPurePursuitController::startRotateToHeading(

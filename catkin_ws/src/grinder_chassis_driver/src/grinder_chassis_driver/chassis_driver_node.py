@@ -1007,13 +1007,8 @@ class ChassisDriverNode:
         wheel_msg.feedback_valid = connected and actual_speed_valid and feedback_stamp is not None
         self.wheel_speed_pub.publish(wheel_msg)
 
-        self._publish_wheel_odom(
-            now,
-            actual_left_motor_speed,
-            actual_right_motor_speed,
-            connected and actual_speed_valid,
-        )
-        if connected and actual_speed_valid and feedback_stamp is not None:
+        if wheel_msg.feedback_valid:
+            self._publish_wheel_odom(feedback_stamp, actual_left_motor_speed, actual_right_motor_speed)
             self._publish_wheel_twist(feedback_stamp, actual_left_motor_speed, actual_right_motor_speed)
 
         if publish_status:
@@ -1033,24 +1028,22 @@ class ChassisDriverNode:
             status_msg.last_error = last_error or ("status read failed" if not status_fresh else "")
             self.status_pub.publish(status_msg)
 
-    def _publish_wheel_odom(self, stamp, left_motor_rpm, right_motor_rpm, feedback_valid):
-        linear_mps = 0.0
-        angular_radps = 0.0
-        if feedback_valid:
-            try:
-                linear_mps, angular_radps = motor_rpm_to_base_twist(
-                    left_motor_rpm,
-                    right_motor_rpm,
-                    self.cmd_vel_wheel_radius_m,
-                    self.cmd_vel_wheel_track_m,
-                    self.cmd_vel_gear_ratio,
-                    left_sign=self.actual_speed_left_sign,
-                    right_sign=self.actual_speed_right_sign,
-                    swap_lr=self.actual_speed_swap_lr,
-                    motor_speed_scale=self.actual_motor_speed_scale,
-                )
-            except ValueError as exc:
-                rospy.logwarn_throttle(5.0, "Wheel odometry disabled due to invalid geometry: %s", exc)
+    def _publish_wheel_odom(self, stamp, left_motor_rpm, right_motor_rpm):
+        try:
+            linear_mps, angular_radps = motor_rpm_to_base_twist(
+                left_motor_rpm,
+                right_motor_rpm,
+                self.cmd_vel_wheel_radius_m,
+                self.cmd_vel_wheel_track_m,
+                self.cmd_vel_gear_ratio,
+                left_sign=self.actual_speed_left_sign,
+                right_sign=self.actual_speed_right_sign,
+                swap_lr=self.actual_speed_swap_lr,
+                motor_speed_scale=self.actual_motor_speed_scale,
+            )
+        except ValueError as exc:
+            rospy.logwarn_throttle(5.0, "Wheel odometry disabled due to invalid geometry: %s", exc)
+            return
 
         odom_msg = Odometry()
         odom_msg.header.stamp = stamp
@@ -1059,9 +1052,8 @@ class ChassisDriverNode:
         odom_msg.pose.pose.orientation.w = 1.0
         odom_msg.twist.twist.linear.x = linear_mps
         odom_msg.twist.twist.angular.z = angular_radps
-        # This message supplies velocity to RPP. Aurora remains the source of
-        # the authoritative pose/TF, so the wheel-only pose is intentionally
-        # marked unavailable instead of publishing a competing TF tree.
+        # This message supplies measured velocity to RPP; pose and TF come
+        # from the localization backend.
         odom_msg.pose.covariance[0] = 1e6
         odom_msg.pose.covariance[7] = 1e6
         odom_msg.pose.covariance[14] = 1e6

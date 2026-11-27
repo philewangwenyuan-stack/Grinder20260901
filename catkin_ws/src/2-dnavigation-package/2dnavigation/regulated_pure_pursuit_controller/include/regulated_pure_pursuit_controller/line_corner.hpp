@@ -87,5 +87,13 @@ class Route {
 inline double approachSpeed(double desired,double remaining,double distance,double floor) {
   return std::min(desired,std::max(floor,desired*std::clamp(remaining/distance,0.0,1.0)));
 }
+// Invert v * delay + v² / (2 * deceleration) to limit approach speed.
+inline double headingSpeedLimit(double remaining_angle, double deceleration, double delay) {
+  if (remaining_angle <= 0.0) {
+    return 0.0;
+  }
+  return 2.0 * remaining_angle /
+    (delay + std::sqrt(delay * delay + 2.0 * remaining_angle / deceleration));
+}
 } // namespace line_corner
 } // namespace regulated_pure_pursuit_controller

@@ -1,4 +1,4 @@
-"""Runtime coverage checkpoints. Never infer a continuation from robot yaw."""
+"""Runtime coverage checkpoints derived from the executed path."""
 import math
 
 
@@ -49,6 +49,7 @@ def coverage_continuation(points, progress_s, regions, default_direction="x", an
                 return {
                     "region_id": base, "lap": lap,
                     "direction": ("-" if dot < 0.0 else "") + axis,
+                    "heading_deg": math.degrees(math.atan2(dy, dx)),
                     "start_pose": {"x": float(a["x"]) + fraction * dx,
                                    "y": float(a["y"]) + fraction * dy},
                     "end_pose": {"x": float(last["x"]), "y": float(last["y"])},

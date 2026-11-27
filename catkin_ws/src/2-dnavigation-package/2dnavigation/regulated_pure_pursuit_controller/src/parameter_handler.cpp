@@ -73,6 +73,10 @@ ParameterHandler::ParameterHandler(
   private_node_->param<double>("rotate_to_heading_min_angle", params_.rotate_to_heading_min_angle, 0.1);
   private_node_->param<double>(
     "rotate_to_heading_exit_angle", params_.rotate_to_heading_exit_angle, 0.05);
+  private_node_->param<double>(
+    "rotate_to_heading_brake_decel", params_.rotate_to_heading_brake_decel, 0.03);
+  private_node_->param<double>(
+    "rotate_to_heading_brake_delay_sec", params_.rotate_to_heading_brake_delay_sec, 0.20);
   private_node_->param<int>(
     "rotate_to_heading_stable_cycles", params_.rotate_to_heading_stable_cycles, 5);
   private_node_->param<bool>(
@@ -94,6 +98,12 @@ ParameterHandler::ParameterHandler(
   positive(params_.line_corner_approach_distance_m, 0.35);
   positive(params_.line_corner_position_tolerance_m, 0.05);
   positive(params_.line_corner_odom_timeout_s, 0.6);
+  positive(params_.rotate_to_heading_brake_decel, 0.03);
+  if (!std::isfinite(params_.rotate_to_heading_brake_delay_sec) ||
+      params_.rotate_to_heading_brake_delay_sec < 0.0) {
+    ROS_WARN("[RPP] Invalid heading brake delay; using 0.20 s");
+    params_.rotate_to_heading_brake_delay_sec = 0.20;
+  }
   params_.line_corner_approach_distance_m=std::max(
     params_.line_corner_approach_distance_m, params_.line_corner_position_tolerance_m+0.001);
   private_node_->param<bool>("allow_reversing", params_.allow_reversing, false);

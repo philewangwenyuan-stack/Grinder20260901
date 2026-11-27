@@ -62,6 +62,8 @@ struct Parameters
   double max_linear_accel;
   double rotate_to_heading_min_angle;
   double rotate_to_heading_exit_angle;
+  double rotate_to_heading_brake_decel;
+  double rotate_to_heading_brake_delay_sec;
   int rotate_to_heading_stable_cycles;
   bool use_corner_aware_rotate_to_heading;
   double rotate_to_heading_corner_distance;

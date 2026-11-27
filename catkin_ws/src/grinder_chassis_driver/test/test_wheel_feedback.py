@@ -82,7 +82,7 @@ class WheelFeedbackTest(unittest.TestCase):
         n._poll_once(None)
         self.assertAlmostEqual(98.98,n._actual_feedback_stamp)
 
-    def test_invalid_feedback_still_feeds_rpp_but_not_fusion(self):
+    def test_rpp_and_fusion_receive_only_valid_measurement_timestamps(self):
         cls,ns=load_class(DRIVER, {'_publish_state'})
         ns['rospy']=NS(Time=NS(now=lambda:Stamp(100)))
         ns['WheelSpeedState']=lambda:NS(header=NS())
@@ -105,10 +105,11 @@ class WheelFeedbackTest(unittest.TestCase):
         n._publish_wheel_odom=lambda *args:rpp.append(args)
         n._publish_wheel_twist=lambda *args:fusion.append(args)
         n._publish_state(publish_status=False)
-        self.assertEqual(1,len(rpp))
+        self.assertEqual([],rpp)
         self.assertEqual([],fusion)
         n.actual_speed_valid=True
         n._publish_state(publish_status=False)
+        self.assertEqual(Stamp(99),rpp[0][0])
         self.assertEqual(1,len(fusion))
         self.assertEqual(Stamp(99),fusion[0][0])
         self.assertEqual(Stamp(99), n.wheel_speed_pub.messages[-1].header.stamp)
@@ -117,6 +118,8 @@ class WheelFeedbackTest(unittest.TestCase):
         n._actual_feedback_stamp=None
         n._publish_state(publish_status=False)
         self.assertFalse(n.wheel_speed_pub.messages[-1].feedback_valid)
+        self.assertEqual(2,len(rpp))
+        self.assertEqual(2,len(fusion))
 
 
 if __name__ == '__main__':

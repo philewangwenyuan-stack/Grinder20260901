@@ -83,6 +83,8 @@ RegulatedPurePursuitController:
   rotate_to_heading_angular_vel: 0.2     # 原地对准路径时的角速度，重型研磨机不宜过快
   rotate_to_heading_min_angle: 0.45      # 进入原地旋转的角度阈值，单位：rad（0.45 约 25.8°）
   rotate_to_heading_exit_angle: 0.08    # 误差进入此容差后先刹停，单位 rad（0.08 约 4.6°）
+  rotate_to_heading_brake_decel: 0.03   # 对齐制动模型的实测保守减速度，单位 rad/s²
+  rotate_to_heading_brake_delay_sec: 0.20 # 对齐制动模型预留的响应时间，单位 s
   rotate_to_heading_stable_cycles: 3   # 对正并停稳的连续控制周期数；新分支还要求对应持续时间和不同时间戳反馈
   # 新旧角点控制对照：以下四项只在 move_base 初始化时读取，修改后先停任务再重启 move_base。
   # false 保留原来的角点追踪；true 沿入口直线接近→制动→/odom_wheel 确认停止→固定出口转向。

@@ -34,7 +34,8 @@ def scheduler_class():
              '_capture_task_continuation', '_prepare_task_continuation_start', '_stop_execution',
              '_init_segment_execution_cursor', '_start_execution'}
     cls.body = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in names]
-    namespace = dict(json=json, math=math, time=time, asdict=asdict, motion_action=motion_action, wraps=wraps,
+    namespace = dict(json=json, math=math, time=time, asdict=asdict, copy=copy.copy,
+                     motion_action=motion_action, wraps=wraps,
                      coverage_continuation=coverage_continuation, SchedulerState=SchedulerState,
                      Bool=lambda **kw: types.SimpleNamespace(**kw),
                      UInt16=lambda **kw: types.SimpleNamespace(**kw),
@@ -91,6 +92,9 @@ class SchedulerContinuationTest(unittest.TestCase):
         n.task_config = TaskConfigModel(task_id='task', map_id='map',
             work_regions=[dict(region_id='A', global_direction='x')], selected_work_region_ids=['A'])
         n._current_map_id = lambda: 'map'
+        self.map_record = dict(map_revision='revision-a')
+        n._find_recorded_map_by_id = lambda map_id: self.map_record
+        n._merge_task_obstacle_regions_for_planning = mock.Mock()
         n._alignment_yaw_deg_for_sl_link_report = lambda *a: 0.
         n._rotation_alignment_delta_deg_for_map_id = lambda *a: 0.
         self.pose = dict(x=10., y=1., heading_deg=0.)
@@ -113,9 +117,11 @@ class SchedulerContinuationTest(unittest.TestCase):
         self.assertEqual(11., n._continuation_checkpoint['progress_s'])
         self.assertEqual('-x', n._planning_continuation(self.pose)['direction'])
 
-    def test_production_start_keeps_checkpoint_until_cursor_initialized(self):
+    def test_production_start_with_new_id_keeps_checkpoint_until_cursor_initialized(self):
         n = self.node
         original = n.current_path
+        n.task_config.task_id = 'new_task'
+        self.pose['heading_deg'] = -179.
         n.current_path = None
         n._chassis_settings = {'run_speed': .1}
         n._collision_imminent_lock = threading.Lock()
@@ -143,7 +149,8 @@ class SchedulerContinuationTest(unittest.TestCase):
         n._prepare_region_process_execution = lambda: None
         success, _ = n._start_execution()
         self.assertTrue(success)
-        self.assertIs(original, n.current_path)
+        self.assertEqual('new_task', n.current_path.task_id)
+        self.assertIs(original.points, n.current_path.points)
         self.assertEqual(1, n._activate_segment.call_args.args[0])
         self.assertEqual({'earlier': 1}, n._exec_region_repeat_done)
         self.assertIsNone(n._continuation_checkpoint)
@@ -172,6 +179,43 @@ class SchedulerContinuationTest(unittest.TestCase):
         n._prepare_task_continuation_start()
         self.assertIsNone(n.current_path)
         self.assertIsNone(n._continuation_checkpoint)
+
+    def test_replacement_task_same_lane_keeps_negative_direction_and_cursor(self):
+        n = self.node
+        original = n.current_path
+        n.task_config.task_id = 'new_task'
+        self.pose['heading_deg'] = -179.
+        n.current_path = object()  # Preview may replace the in-memory plan.
+        n._rebuild_active_segments = mock.Mock()
+        self.assertEqual('-x', n._planning_continuation(self.pose)['direction'])
+        n._prepare_task_continuation_start()
+        self.assertEqual('new_task', n.current_path.task_id)
+        self.assertEqual('task', original.task_id)
+        self.assertIs(n.current_path.points, original.points)
+        self.assertIs(n.current_path, n._continuation_checkpoint['path'])
+        self.assertEqual(11., n._continuation_checkpoint['progress_s'])
+
+    def test_replacement_rejects_new_revision_recipe_or_explicit_start(self):
+        n = self.node
+        n.task_config.task_id = 'new_task'
+        self.pose['heading_deg'] = 178.
+        self.assertEqual({}, n._planning_continuation(self.pose, request_start=self.pose))
+        self.assertEqual({}, n._planning_continuation(dict(self.pose, y=1.3)))
+        n.task_config.region_repeat_config['A'] = 2
+        self.assertEqual({}, n._planning_continuation(self.pose))
+        n.task_config.region_repeat_config.clear()
+        self.map_record['map_revision'] = 'revision-b'
+        self.assertEqual({}, n._planning_continuation(self.pose))
+
+    def test_replacement_preview_cannot_silently_restart_after_repositioning(self):
+        n = self.node
+        n.task_config.task_id = 'new_task'
+        preview = copy.copy(n.current_path)
+        preview.task_id = 'new_task'
+        n.current_path = preview
+        n._continuation_checkpoint['path'] = preview
+        self.assertFalse(n._prepare_task_continuation_start())
+        self.assertIs(preview, n.current_path)
 
     def test_stop_is_safe_before_capture_and_does_not_complete_lap(self):
         n = self.node

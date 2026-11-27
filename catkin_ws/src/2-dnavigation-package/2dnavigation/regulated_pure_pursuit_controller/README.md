@@ -79,7 +79,7 @@ only requires Python's standard library plus the compiled classifier executable.
 配置位于 `teb_local_planner_tutorials/cfg/diff_drive/rpp_local_planner_params.yaml`。
 默认 `use_line_based_corner_approach: false`，保留原控制逻辑。新分支需同时开启
 `use_rotate_to_heading`、`use_corner_aware_rotate_to_heading` 和该开关。
-以下四个参数仅在初始化读取；修改后先停止任务，再重启 move_base，不能用动态参数中途切换：
+以下参数仅在初始化读取，修改后先停止任务，再重启 move_base：
 
 | 参数 | 默认 | 含义 |
 | --- | --- | --- |
@@ -87,6 +87,8 @@ only requires Python's standard library plus the compiled classifier executable.
 | `line_corner_approach_distance_m` | `0.35` | 纵向剩余距离进入此范围后按比例限速，保留最低接近速度与原速度/加速度限制 |
 | `line_corner_position_tolerance_m` | `0.05` | 纵向剩余距离不大于此值开始制动；不是横向或径向验收误差 |
 | `line_corner_odom_timeout_s` | `0.6` | 原始里程计时间戳的新鲜度上限；缺失、未来或非有限速度时输出零速 |
+| `rotate_to_heading_brake_decel` | `0.03` | 原地对齐制动模型保守减速度，单位 rad/s² |
+| `rotate_to_heading_brake_delay_sec` | `0.20` | 原地对齐制动模型预留响应时间，单位 s |
 
 新分支的顺序为：入口直线纠偏 → 按纵向距离减速 → 下发零速 → 停稳确认 →
 固定出口朝向原地转向 → 再次停稳确认 → 沿下一条入口线恢复。
@@ -99,7 +101,10 @@ only requires Python's standard library plus the compiled classifier executable.
 要求速度低于原有静止阈值、持续 `rotate_to_heading_stable_cycles / controller_frequency` 秒，
 且至少出现两个不同时间戳样本；同一个 10 Hz 样本在 20 Hz 控制循环中不会重复充数。
 因此新增一个仅在新分支开启时使用的同话题订阅，避免通用 OdometryHelper 丢弃时间戳。
-该检查只验证 ROS 消息的新鲜度和数值，不改变驱动反馈的来源或无效反馈发布语义。
+生产底盘只在轮速读取成功后发布 `/odom_wheel`，其时间戳来自实际读回。
+对齐按剩余角度、制动减速度和响应时间提前限速，进入对齐容差或越过目标时下发零角速度。
+如停稳后仍超出容差，直线角点分支确认不同时间戳的有效停稳样本后再允许反向修正。
+上述制动参数依据 2026-11-27 现场反馈给出初值，实机需核对磨盘工况下的角速度和停车偏差。
 
 角点从完整输入路径识别，忽略重复点和共线补点，普通分段终点不视为角点。
 等价路径刷新保留角点坐标、出入口方向和阶段；真实重规划与 `cancel()` 清理阶段。

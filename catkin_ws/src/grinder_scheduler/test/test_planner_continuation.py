@@ -50,9 +50,12 @@ class PlannerContinuationTest(unittest.TestCase):
 
                     with mock.patch.object(mst, '_mst27_cpp', native):
                         full = adapter().plan('task', grid, info, config)
-                        first = next(edge for edge in lanes(full) if edge[1] > 1.)
-                        for fraction in (.5, 1.):
-                            progress = first[0] + fraction * first[1]
+                        full_lanes = lanes(full)
+                        first = next(edge for edge in full_lanes if edge[1] > 1.)
+                        second = next(edge for edge in full_lanes
+                                      if edge[0] > first[0] and edge[2] * first[2] < 0.)
+                        for lane, fraction in ((first, .5), (first, 1.), (second, .5)):
+                            progress = lane[0] + fraction * lane[1]
                             checkpoint = coverage_continuation(
                                 full.points, progress, config.work_regions, angle_deg=angle)
                             resumed = copy.deepcopy(config)
@@ -62,7 +65,7 @@ class PlannerContinuationTest(unittest.TestCase):
                             path = adapter().plan('task', grid, info, resumed)
                             edges = lanes(path)
                             self.assertGreaterEqual(len(edges), 2)
-                            expected_sign = (1 if first[2] > 0 else -1) * (1 if fraction < 1 else -1)
+                            expected_sign = (1 if lane[2] > 0 else -1) * (1 if fraction < 1 else -1)
                             detail = 'fraction={} checkpoint={} edges={}'.format(
                                 fraction, checkpoint, [(e[1], e[2], e[3]['x'], e[3]['y'],
                                                        e[4]['x'], e[4]['y']) for e in edges[:3]])

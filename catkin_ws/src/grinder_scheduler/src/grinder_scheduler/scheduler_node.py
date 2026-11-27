@@ -5869,11 +5869,17 @@ class SchedulerNode(MapEditDraftMixin):
 
     def _continuation_identity(self):
         config = asdict(self.task_config)
-        for key in ("current_pose", "start_pose", "end_pose", "active_work_region_id", "continuation", "planning_angle_deg"):
+        for key in ("task_id", "current_pose", "start_pose", "end_pose",
+                    "active_work_region_id", "continuation", "planning_angle_deg"):
             config.pop(key, None)
-        return (json.dumps(config, sort_keys=True),
-                self._alignment_yaw_deg_for_sl_link_report(self._current_map_id()),
-                self._rotation_alignment_delta_deg_for_map_id(self._current_map_id()))
+        map_id = self._current_map_id()
+        record = self._find_recorded_map_by_id(map_id) or {}
+        return {
+            "config": json.dumps(config, sort_keys=True),
+            "map_revision": str(record.get("map_revision") or ""),
+            "alignment": (self._alignment_yaw_deg_for_sl_link_report(map_id),
+                          self._rotation_alignment_delta_deg_for_map_id(map_id)),
+        }
 
     @staticmethod
     def _continuation_map_stamp(map_info):
@@ -5882,7 +5888,8 @@ class SchedulerNode(MapEditDraftMixin):
 
     def _planning_continuation(self, pose, request_start=None, request_end=None):
         checkpoint = getattr(self, "_continuation_checkpoint", None)
-        if not checkpoint or checkpoint["identity"] != self._continuation_identity():
+        task_id = self.task_config.task_id
+        if not checkpoint or not task_id or checkpoint["identity"] != self._continuation_identity():
             return {}
         # A relocated robot or a newly selected endpoint is a fresh plan. Do
         # not silently join an old execution using only its task ID.
@@ -5896,6 +5903,21 @@ class SchedulerNode(MapEditDraftMixin):
         continuation = dict(checkpoint["continuation"])
         if request_end and not near(request_end, continuation["end_pose"]):
             return {}
+        if task_id != checkpoint["task_id"]:
+            # The tablet creates a new ID when its start dialog is reopened.
+            # Only transfer progress on the same recorded map with no explicit
+            # endpoints, while the chassis still faces the saved work edge.
+            if not checkpoint["identity"]["map_revision"] or request_start or request_end:
+                return {}
+            x, y, heading = (float(pose.get(key, math.nan)) for key in ("x", "y", "heading_deg"))
+            if not all(map(math.isfinite, (x, y, heading))):
+                return {}
+            max_distance = min(0.2, self.task_config.default_path_spacing * 0.25)
+            start = continuation["start_pose"]
+            heading_error = (heading - continuation["heading_deg"] + 180.0) % 360.0 - 180.0
+            if (math.hypot(x - start["x"], y - start["y"]) > max_distance
+                    or abs(heading_error) > 45.0):
+                return {}
         map_info = self.map_service.get_map_info() or {}
         if map_info.get("frame_id") != checkpoint["map_stamp"][1]:
             return {}
@@ -5918,7 +5940,8 @@ class SchedulerNode(MapEditDraftMixin):
             self._continuation_checkpoint = None
             return
         self._continuation_checkpoint = {
-            "identity": self._continuation_identity(), "path": self.current_path,
+            "identity": self._continuation_identity(), "task_id": self.task_config.task_id,
+            "path": self.current_path,
             "pose": dict(pose), "progress_s": float(projection["progress_s"]),
             "segment_index": int(self._active_segment_index), "continuation": continuation,
             "repeat_done": dict(self._exec_region_repeat_done),
@@ -5934,12 +5957,24 @@ class SchedulerNode(MapEditDraftMixin):
             return
         pose = self.ros_data_bridge.get_pose()
         if not self._planning_continuation(pose):
+            if (checkpoint["task_id"] != self.task_config.task_id
+                    and checkpoint["path"].task_id == self.task_config.task_id):
+                # The approved preview was a continuation. Require a new
+                # preview if its prerequisites changed before START.
+                return False
             self._continuation_checkpoint = None
             self.current_path = None
             return
         map_info = self.map_service.get_map_info() or {}
         if checkpoint["map_stamp"] == self._continuation_map_stamp(map_info):
             self.current_path = checkpoint["path"]
+            if self.current_path.task_id != self.task_config.task_id:
+                self.current_path = copy(self.current_path)
+                self.current_path.task_id = self.task_config.task_id
+                checkpoint["path"] = self.current_path
+                rospy.loginfo("Task continuation transferred from %s to %s, direction=%s",
+                              checkpoint["task_id"], self.task_config.task_id,
+                              checkpoint["continuation"]["direction"])
             self._rebuild_active_segments()
             rospy.loginfo("Task continuation: reuse saved path and execution cursor")
         else:
@@ -6005,7 +6040,10 @@ class SchedulerNode(MapEditDraftMixin):
             rospy.logwarn("Task start blocked: Super-LIO localization is not ready: %s", exc)
             return False, "Super-LIO localization is not ready: {}".format(exc)
         self._sync_task_regions_from_overlay()
-        self._prepare_task_continuation_start()
+        if getattr(self, "_continuation_checkpoint", None):
+            self._merge_task_obstacle_regions_for_planning(self._current_map_id(), self.task_config.task_id)
+        if self._prepare_task_continuation_start() is False:
+            return False, "续跑条件已变化，请重新预览后启动"
         if self.current_path is None and not self._plan_current_task():
             mark("plan_current_task_failed")
             return False, "Failed to plan task"
