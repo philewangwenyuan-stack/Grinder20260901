@@ -31,6 +31,7 @@ class Fixture : public RegulatedPurePursuitController {
     return c?line_route_.remaining(*c,{pose.pose.position.x,pose.pose.position.y}):1e9;
   }
   bool cornerRotation() const { return line_corner_rotation_; }
+  bool cornerTurning() const { return line_corner_rotation_ && !rotate_to_heading_settling_; }
   void supervisorStop() { line_reset_requested_.store(true); }
 
 };
@@ -122,6 +123,8 @@ int main(int argc,char** argv) {
   cfg.setParam("max_robot_pose_search_dist",2.5);
   double position_tolerance;
   cfg.param("line_corner_position_tolerance_m", position_tolerance, 0.05);
+  double rotation_feedback_bias;
+  cfg.param("rotation_feedback_bias", rotation_feedback_bias, 0.0);
   ros::NodeHandle move_base("/move_base");move_base.setParam("controller_frequency",20.0);
   Fixture controller;controller.initialize("rpp",&tf,&costmap);controller.setPlan(plan);
   if (enabled) {
@@ -144,10 +147,14 @@ int main(int argc,char** argv) {
   }
   std::ofstream output(argv[2]);output<<std::setprecision(12)<<"t,x,y,yaw,v,w,cmd_v,cmd_w,phase,rotating\n";
   const double dt=.05;double v=0,w=0;
+  bool biased_feedback = false;
   for (int step=0;step<100000;++step) {
     const double t=step*dt;ros::Time::setNow(ros::Time(100+t));update_tf();
     if (step%2==0) { nav_msgs::Odometry odom;odom.header.stamp=ros::Time::now();
-      odom.child_frame_id="base_link";odom.twist.twist.linear.x=v;odom.twist.twist.angular.z=w;controller.feedback(odom); }
+      biased_feedback = rotation_feedback_bias != 0.0 && controller.cornerRotation() && std::abs(w) > .025;
+      odom.child_frame_id="base_link";
+      odom.twist.twist.linear.x = v + (biased_feedback ? rotation_feedback_bias : 0.0);
+      odom.twist.twist.angular.z=w;controller.feedback(odom); }
     geometry_msgs::PoseStamped pose;pose.header.frame_id="map";pose.header.stamp=ros::Time::now();
     pose.pose.position.x=x;pose.pose.position.y=y;pose.pose.orientation=quaternion(yaw);
     if (step%20==0) {
@@ -160,6 +167,9 @@ int main(int argc,char** argv) {
     if (result!=mbf_msgs::ExePathResult::SUCCESS) { std::cerr<<message<<"\n"; return 4; }
     if (enabled && controller.cornerRotation() && controller.remaining(pose)>position_tolerance+1e-6) {
       std::cerr<<"Outgoing rotation before longitudinal stop tolerance\n"; return 8;
+    }
+    if (biased_feedback && controller.cornerTurning() && cmd.twist.angular.z == 0.0) {
+      std::cerr<<"Turn interrupted by longitudinal wheel feedback during rotation\n"; return 10;
     }
     output<<t<<','<<x<<','<<y<<','<<yaw<<','<<v<<','<<w<<','<<cmd.twist.linear.x<<','<<cmd.twist.angular.z<<','<<controller.phase()<<','<<controller.rotating()<<'\n';
     if (controller.reached()) return 0;

@@ -408,6 +408,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       // motion. A missing sample must never be treated as stopped feedback.
       line_stop_evidence_.reset(); line_rotation_evidence_.reset();
       line_departure_ramp_.reset();
+      rotate_to_heading_command_started_ = false;
       last_cmd_linear_vel_=last_cmd_angular_vel_=0;
       message="line_corner_waiting_for_fresh_odom";
       ROS_WARN_THROTTLE(1.0,"[RPP] Line corner branch holding zero: missing/stale/non-finite odom");
@@ -647,13 +648,16 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     }
     rotate_to_heading_last_error_ = heading_error;
 
-    if (std::abs(speed.linear.x) > trans_stopped_vel_ || rotate_to_heading_settling_) {
-      // Drop the target to zero at the capture band and while translation
-      // settles. Following the still-moving feedback here prolongs braking.
+    // Check translation before starting a turn. Wheel asymmetry during
+    // the turn can create a longitudinal reading even with v commanded zero.
+    const bool waiting_for_translation = !rotate_to_heading_command_started_ &&
+      std::abs(speed.linear.x) > trans_stopped_vel_;
+    if (waiting_for_translation || rotate_to_heading_settling_) {
       linear_vel = 0.0;
       angular_vel = 0.0;
     } else {
       rotateToHeading(linear_vel, angular_vel, heading_error, speed);
+      rotate_to_heading_command_started_ = rotate_to_heading_command_started_ || angular_vel != 0.0;
     }
 
     const bool inside_exit_angle =
@@ -679,6 +683,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     if (settled && !inside_exit_angle) {
       // A correction can start only after distinct stopped samples.
       rotate_to_heading_settling_ = false;
+      rotate_to_heading_command_started_ = false;
       rotate_to_heading_stable_count_ = 0;
       line_rotation_evidence_.reset();
     }
@@ -851,6 +856,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       message = "Fixed-distance collision threshold reached";
       cmd_vel.twist = geometry_msgs::Twist();
       line_departure_ramp_.reset();
+      rotate_to_heading_command_started_ = false;
       last_cmd_linear_vel_ = 0.0;
       last_cmd_angular_vel_ = 0.0;
       last_cmd_time_ = ros::WallTime();
@@ -884,6 +890,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     message = "Collision detected ahead";
     cmd_vel.twist = geometry_msgs::Twist();
     line_departure_ramp_.reset();
+    rotate_to_heading_command_started_ = false;
     last_cmd_linear_vel_ = 0.0;
     last_cmd_angular_vel_ = 0.0;
     last_cmd_time_ = ros::WallTime();
@@ -1172,6 +1179,7 @@ void RegulatedPurePursuitController::startRotateToHeading(
   double relative_heading_error, double exit_angle, bool goal_heading)
 {
   line_departure_ramp_.reset();
+  rotate_to_heading_command_started_ = false;
   const double robot_yaw = tf2::getYaw(robot_pose.pose.orientation);
   rotate_to_heading_target_yaw_ = angles::normalize_angle(
     robot_yaw + relative_heading_error);
@@ -1191,6 +1199,7 @@ void RegulatedPurePursuitController::startRotateToHeading(
 void RegulatedPurePursuitController::resetRotateToHeadingState()
 {
   line_departure_ramp_.reset();
+  rotate_to_heading_command_started_ = false;
   // TF/path failures also reset the shared rotation state. Never leave the
   // new branch in Rotate without an actual latched rotation: re-brake first.
   if (line_corner_rotation_) {

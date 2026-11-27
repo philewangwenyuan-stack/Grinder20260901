@@ -287,6 +287,7 @@ protected:
   double last_cmd_angular_vel_ = 0.0;
   ros::WallTime last_cmd_time_;
   bool is_rotating_to_heading_ = false;
+  bool rotate_to_heading_command_started_ = false;
   // Once the heading enters the exit band (or crosses the target), only
   // brake to zero. Do not immediately accelerate in the opposite direction,
   // which makes a high-inertia differential drive shake around the target.
