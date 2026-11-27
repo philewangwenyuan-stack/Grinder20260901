@@ -36,6 +36,30 @@ class StopEvidence {
   double first_=0,last_=0;
   unsigned count_=0;
 };
+
+class DepartureRamp {
+ public:
+  void start(double now) { started_at_ = now; }
+  void reset() { started_at_ = -1.0; }
+
+  bool useCommandReference(
+    double now, double measured_forward_speed, double previous_command,
+    double acceleration_step, double stopped_velocity)
+  {
+    constexpr double max_duration_sec = 0.5;
+    const bool caught_up = measured_forward_speed > stopped_velocity &&
+      measured_forward_speed + acceleration_step >= previous_command;
+    if (started_at_ < 0.0 || now < started_at_ || now - started_at_ >= max_duration_sec || caught_up) {
+      reset();
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  double started_at_ = -1.0;
+};
+
 inline bool fresh(double now,double stamp,double timeout,double vx,double vy,double wz) {
   return std::isfinite(now) && std::isfinite(stamp) && stamp>0 && stamp<=now &&
     now-stamp<=timeout && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(wz);

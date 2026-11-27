@@ -43,6 +43,28 @@ TEST(LineCorner, FreshFiniteFeedbackOnly) {
   EXPECT_FALSE(fresh(10,10,.6,NAN,0,0));
   EXPECT_FALSE(fresh(10,10,.6,0,INFINITY,0));
 }
+TEST(LineCorner, DepartureRampsPastTheFirstCommandWithZeroFeedback) {
+  DepartureRamp ramp;
+  constexpr double step = 0.02;
+  EXPECT_FALSE(ramp.useCommandReference(10.0, 0.0, 0.0, step, .01));
+  ramp.start(10.0);
+  EXPECT_TRUE(ramp.useCommandReference(10.05, 0.0, 0.0, step, .01));
+  EXPECT_TRUE(ramp.useCommandReference(10.10, 0.0, .02, step, .01));
+  EXPECT_TRUE(ramp.useCommandReference(10.15, .012, .04, step, .01));
+  EXPECT_FALSE(ramp.useCommandReference(10.20, .041, .06, step, .01));
+  EXPECT_FALSE(ramp.useCommandReference(10.25, 0.0, .06, step, .01));
+}
+TEST(LineCorner, DepartureExpiresAndCanBeCancelledBeforeMotion) {
+  DepartureRamp ramp;
+  ramp.start(10.0);
+  EXPECT_TRUE(ramp.useCommandReference(10.49, 0.0, .06, .02, .01));
+  EXPECT_FALSE(ramp.useCommandReference(10.50, 0.0, .06, .02, .01));
+  ramp.start(11.0);
+  ramp.reset();
+  EXPECT_FALSE(ramp.useCommandReference(11.05, 0.0, .02, .02, .01));
+  ramp.start(12.0);
+  EXPECT_FALSE(ramp.useCommandReference(11.95, 0.0, .02, .02, .01));
+}
 TEST(LineCorner, SpeedCapAndMinimumAreBounded) {
   EXPECT_DOUBLE_EQ(.03,approachSpeed(.03,1,.35,.01));
   EXPECT_DOUBLE_EQ(.01,approachSpeed(.03,.06,.35,.01));

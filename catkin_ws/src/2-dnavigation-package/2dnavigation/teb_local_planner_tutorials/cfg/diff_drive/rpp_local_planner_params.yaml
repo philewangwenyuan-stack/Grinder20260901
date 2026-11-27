@@ -91,7 +91,7 @@ RegulatedPurePursuitController:
   # 生效还要求 use_rotate_to_heading 和 use_corner_aware_rotate_to_heading 均为 true。
   use_line_based_corner_approach: true
   # 新分支：剩余纵向距离进入此范围后按比例降速，仍遵守原速度/加速度约束，单位 m。
-  line_corner_approach_distance_m: 0.10
+  line_corner_approach_distance_m: 0.08
   # 新分支：沿入口方向距角点 <= 此值即制动；这是纵向容差，不是径向距离。
   # 横向误差持续柔性纠偏，不增加横向超差暂停门禁；略过角点后不倒车追点。
   line_corner_position_tolerance_m: 0.03

@@ -407,6 +407,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       // A successful zero command holds position without requesting recovery
       // motion. A missing sample must never be treated as stopped feedback.
       line_stop_evidence_.reset(); line_rotation_evidence_.reset();
+      line_departure_ramp_.reset();
       last_cmd_linear_vel_=last_cmd_angular_vel_=0;
       message="line_corner_waiting_for_fresh_odom";
       ROS_WARN_THROTTLE(1.0,"[RPP] Line corner branch holding zero: missing/stale/non-finite odom");
@@ -687,11 +688,15 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
         "[RPP] Latched rotate-to-heading complete: target=%.3f rad, error=%.3f rad; "
         "driving may resume on the next control cycle",
         rotate_to_heading_target_yaw_, heading_error);
-      if (line_corner_rotation_) {
+      const bool completed_line_corner = line_corner_rotation_;
+      if (completed_line_corner) {
         line_route_.complete(); line_corner_rotation_=false;
       }
       line_rotation_evidence_.reset();
       resetRotateToHeadingState();
+      if (completed_line_corner) {
+        line_departure_ramp_.start(line_now);
+      }
       linear_vel = 0.0;
       angular_vel = 0.0;
     }
@@ -699,16 +704,20 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     // The goal orientation is already within tolerance. Hold zero until odom
     // reports stopped so the goal checker can finish instead of creeping away.
     hold_for_heading = true;
+    line_departure_ramp_.reset();
     linear_vel = 0.0;
     angular_vel = 0.0;
   }
 
   if (!hold_for_heading) {
+    const bool corner_departure = line_enabled && line_departure_ramp_.useCommandReference(
+      line_now, speed.linear.x, last_cmd_linear_vel_,
+      params_->max_linear_accel * control_duration_, trans_stopped_vel_);
     applyConstraints(
       regulation_curvature,
       speed,
       collision_checker_->costAtPose(pose.pose.position.x, pose.pose.position.y), transformed_plan,
-      linear_vel, x_vel_sign);
+      linear_vel, x_vel_sign, corner_departure);
 
     if (line_enabled && std::isfinite(line_remaining)) {
       linear_vel=std::min(std::max(0.0,linear_vel),line_corner::approachSpeed(
@@ -841,6 +850,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
       collision_imminent_pub_.publish(collision_state);
       message = "Fixed-distance collision threshold reached";
       cmd_vel.twist = geometry_msgs::Twist();
+      line_departure_ramp_.reset();
       last_cmd_linear_vel_ = 0.0;
       last_cmd_angular_vel_ = 0.0;
       last_cmd_time_ = ros::WallTime();
@@ -873,6 +883,7 @@ uint32_t RegulatedPurePursuitController::computeVelocityCommands(const geometry_
     collision_imminent_pub_.publish(collision_state);
     message = "Collision detected ahead";
     cmd_vel.twist = geometry_msgs::Twist();
+    line_departure_ramp_.reset();
     last_cmd_linear_vel_ = 0.0;
     last_cmd_angular_vel_ = 0.0;
     last_cmd_time_ = ros::WallTime();
@@ -1160,6 +1171,7 @@ void RegulatedPurePursuitController::startRotateToHeading(
   const geometry_msgs::PoseStamped & robot_pose,
   double relative_heading_error, double exit_angle, bool goal_heading)
 {
+  line_departure_ramp_.reset();
   const double robot_yaw = tf2::getYaw(robot_pose.pose.orientation);
   rotate_to_heading_target_yaw_ = angles::normalize_angle(
     robot_yaw + relative_heading_error);
@@ -1178,6 +1190,7 @@ void RegulatedPurePursuitController::startRotateToHeading(
 
 void RegulatedPurePursuitController::resetRotateToHeadingState()
 {
+  line_departure_ramp_.reset();
   // TF/path failures also reset the shared rotation state. Never leave the
   // new branch in Rotate without an actual latched rotation: re-brake first.
   if (line_corner_rotation_) {
@@ -1296,7 +1309,8 @@ geometry_msgs::PoseStamped RegulatedPurePursuitController::getLookAheadPoint(
 void RegulatedPurePursuitController::applyConstraints(
   const double & curvature,
   const geometry_msgs::Twist & curr_speed,
-  const double & pose_cost, const nav_msgs::Path & path, double & linear_vel, double & sign)
+  const double & pose_cost, const nav_msgs::Path & path, double & linear_vel, double & sign,
+  bool corner_departure)
 {
   double curvature_vel = linear_vel, cost_vel = linear_vel, smooth_vel = linear_vel;
 
@@ -1311,15 +1325,18 @@ void RegulatedPurePursuitController::applyConstraints(
     cost_vel = heuristics::costConstraint(linear_vel, pose_cost, costmap_ros_, params_);
   }
 
-  // Use the previous RPP command by default. Set the parameter false to
-  // restore the original ODOM-based acceleration reference.
-  const double reference_linear_vel = params_->use_command_velocity_for_accel_limit ?
+  // A stationary wheel can keep an odometry-referenced command below the
+  // chassis' breakaway speed. Ramp the command briefly after a confirmed turn.
+  const double reference_linear_vel = (corner_departure || params_->use_command_velocity_for_accel_limit) ?
     std::abs(last_cmd_linear_vel_) : std::abs(curr_speed.linear.x);
   smooth_vel = reference_linear_vel + params_->max_linear_accel * control_duration_;
 
   // Use the lowest of the 2 constraints, but above the minimum translational speed
   linear_vel = std::min({cost_vel, curvature_vel, smooth_vel});
   linear_vel = std::max(linear_vel, params_->regulated_linear_scaling_min_speed);
+  if (corner_departure) {
+    linear_vel = std::min(linear_vel, smooth_vel);
+  }
 
   // A scheduler may feed many intermediate active segments. In that mode each
   // plan endpoint is not a real task goal, so endpoint slowdown would create a

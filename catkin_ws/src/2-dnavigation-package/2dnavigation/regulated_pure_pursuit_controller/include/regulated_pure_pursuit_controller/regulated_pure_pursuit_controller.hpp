@@ -163,12 +163,13 @@ protected:
    * @param curvature curvature of path
    * @param speed Speed of robot
    * @param pose_cost cost at this pose
+   * @param corner_departure whether to ramp from the last command after corner alignment
    */
   void applyConstraints(
     const double & curvature,
     const geometry_msgs::Twist & curr_speed,
     const double & pose_cost, const nav_msgs::Path & path,
-    double & linear_vel, double & sign);
+    double & linear_vel, double & sign, bool corner_departure);
 
   /**
    * @brief Find the intersection a circle and a line segment.
@@ -299,6 +300,7 @@ protected:
 
   line_corner::Route line_route_;
   line_corner::StopEvidence line_stop_evidence_, line_rotation_evidence_;
+  line_corner::DepartureRamp line_departure_ramp_;
   ros::Subscriber line_odom_sub_, line_task_enable_sub_;
   std::atomic<bool> line_reset_requested_{false};
   std::mutex line_odom_mutex_;

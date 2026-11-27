@@ -99,7 +99,10 @@ int main(int argc,char** argv) {
   // Identical A/B settings from the supplied RPP configuration. No calibrated
   // hardware delay is asserted; tau is an explicit sensitivity scenario.
   cfg.setParam("odom_topic","/offline/odom_wheel");
-  cfg.setParam("desired_linear_vel",.03);cfg.setParam("max_linear_vel",.15);
+  double desired_linear_vel;
+  cfg.param("desired_linear_vel", desired_linear_vel, 0.03);
+  cfg.setParam("desired_linear_vel", desired_linear_vel);
+  cfg.setParam("max_linear_vel",.15);
   cfg.setParam("max_angular_vel",.10);cfg.setParam("max_linear_accel",.4);cfg.setParam("max_angular_accel",.4);
   cfg.setParam("lookahead_dist",.9);cfg.setParam("use_velocity_scaled_lookahead_dist",false);
   cfg.setParam("use_fixed_curvature_lookahead",true);cfg.setParam("curvature_lookahead_dist",.55);
@@ -117,6 +120,8 @@ int main(int argc,char** argv) {
   cfg.setParam("goal_dist_tol",.12);cfg.setParam("angle_tol",.05);
   cfg.setParam("theta_stopped_vel",.01);cfg.setParam("trans_stopped_vel",.01);
   cfg.setParam("max_robot_pose_search_dist",2.5);
+  double position_tolerance;
+  cfg.param("line_corner_position_tolerance_m", position_tolerance, 0.05);
   ros::NodeHandle move_base("/move_base");move_base.setParam("controller_frequency",20.0);
   Fixture controller;controller.initialize("rpp",&tf,&costmap);controller.setPlan(plan);
   if (enabled) {
@@ -153,7 +158,7 @@ int main(int argc,char** argv) {
     geometry_msgs::TwistStamped cmd,velocity;std::string message;
     auto result=controller.computeVelocityCommands(pose,velocity,cmd,message);
     if (result!=mbf_msgs::ExePathResult::SUCCESS) { std::cerr<<message<<"\n"; return 4; }
-    if (enabled && controller.cornerRotation() && controller.remaining(pose)>.050001) {
+    if (enabled && controller.cornerRotation() && controller.remaining(pose)>position_tolerance+1e-6) {
       std::cerr<<"Outgoing rotation before longitudinal stop tolerance\n"; return 8;
     }
     output<<t<<','<<x<<','<<y<<','<<yaw<<','<<v<<','<<w<<','<<cmd.twist.linear.x<<','<<cmd.twist.angular.z<<','<<controller.phase()<<','<<controller.rotating()<<'\n';
